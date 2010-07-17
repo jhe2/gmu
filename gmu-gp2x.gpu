@@ -1,0 +1,5 @@
+#!/bin/sh
+cd `dirname $0`
+LD_LIBRARY_PATH=libs.wiz/ ./gmu -c gmu.gp2x.conf
+cd /usr/gp2x
+./gp2xmenu
