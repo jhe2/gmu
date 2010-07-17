@@ -812,6 +812,9 @@ void run_player(char *skin_name, char *decoders_str)
 			case SDL_JOYHATMOTION:
 				printf("sdl_frontend: Joy Hat motion\n");
 				break;
+			case SDL_QUIT:
+				gmu_core_quit();
+				break;
 			default:
 				break;
 		}
