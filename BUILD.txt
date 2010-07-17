@@ -1,0 +1,86 @@
+Gmu Music Player
+Copyright (c) 2006-2010 Johannes Heimansberg
+http://wejp.k.vu/
+
+1. Build Instructions
+
+To compile Gmu you will need a build environment for the desired target. Such
+an environment typically consists of a compiler and additional libraries. It
+is called 'tool chain'.
+Gmu has only been tested with GNU make and GCC, but other C compilers should
+work as well, because Gmu has been written in pure C89. It will probably be 
+necessary to adjust the makefile configuration, though. See below for details.
+
+Gmu needs a few libraries:
+
+Gmu core:
+	- libSDL
+	- libpthread
+
+Gmu SDL frontend
+	- libSDL
+	- libSDL_gfx
+	- libSDL_image
+
+Additional libraries are required for the decoder plugins, e.g. the
+Tremor library is required by the Ogg Vorbis decoder plugin and
+libmikmod is required by the module decoder plugin.
+
+Gmu comes with a few configurations for targets that are supported.
+For each target there is a .mk file which contains the configuration.
+Please note that it might be necessary to modify the .mk files to match
+your configuration. If you have installed your toolchain in a different
+location, you need to modify those paths accordingly.
+
+To build Gmu for target 'dingux' you would invoke make this way:
+
+$ TARGET=dingux make
+
+Calling make without specifying a target causes the Makefile to build with a
+default configuration, which results in a Gmu binary compatible with your
+build machine (typically x86 or AMD64 Linux).
+
+To build Gmu's main binary only, you can do so by using the make target 'gmu':
+
+$ TARGET=dingux make gmu
+
+To build the decoders only, you would use the 'decoders' target instead, or
+when you want to build a specific decoder only, you would tell make to build
+only that decoder, e.g. when you want to build the vorbis decoder only, you
+would use 'decoders/vorbis.so' as your target.
+
+2. Adding a new target
+
+To make Gmu compile for a new target platform, there are a few steps that need
+to be followed.
+First you need to create a .mk file for that target. Let's call it new_target.mk.
+The easiest way of creating that file is to copy the existing unknown.mk to
+new_target.mk.
+Next you need to edit that file. The paths to the compiler and the libs need to
+be adjusted to match your toolchain's configuration. Then, the line
+DEVICE=UNKNOWN_SYSTEM
+needs to be changed to
+DEVICE=NEW_TARGET
+
+You can also adjust the DECODERS_TO_BUILD line, depending on which libraries
+are available in your toolchain. For a test build remove all but
+"decoders/wavpack.so" from that line. All but this decoder need external
+libraries, that you have to have in your toolchain.
+
+Next you need to create two files hw_new_target.h and hw_new_target.c. These
+files consist of hardware specific things. AGain, the easiest way of creating
+those files is copying them. Copy hw_unknown.h to hw_new_target.h and 
+hw_unknown.c to hw_new_target.c. You can make adjustments to those files later,
+if you want/need to.
+
+Last, edit hw.h and add these three lines:
+
+#ifdef _NEW_TARGET
+#include "hw_new_target.h"
+#endif
+
+That should be it. You should now be able to build Gmu to run on your new target
+device. Of course hardware specific things, like the ability to turn of the
+display do not work in that stage. For these things, you need to modify
+the hw_new_target.c/h files. Also buttons mapping can be changed there to match
+the button layout of the device.

@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include "SDL.h" /* For audio output */
 #include "playlist.h"
 #include "pbstatus.h"
@@ -541,6 +542,12 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 	return result;
 }
 
+void sig_handler(int sig)
+{
+	printf("\ngmu: Exit requested.\n");
+	gmu_core_quit();
+}
+
 int main(int argc, char **argv)
 {
 	char        *skin_file = "";
@@ -555,6 +562,9 @@ int main(int argc, char **argv)
 
 	hw_detect_device_model();
 	printf("gmu: Detected device: %s\n", hw_get_device_model_name());
+
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, sig_handler);
 
 	if (!getcwd(base_dir, 255)) snprintf(base_dir, 255, ".");
 	sys_config_dir = base_dir;
