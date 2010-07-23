@@ -69,7 +69,7 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 	int  min = 0, sec = 0;
 	char buf[MAX_LENGTH+1];
 	int  title_scroller_chars = ((skin.title_scroller_offset_x2 > 0 ? skin.title_scroller_offset_x2 :
-	                             (gmu_widget_get_width((GmuWidget *)&skin.display, 1) + skin.title_scroller_offset_x2))
+	                             (gmu_widget_get_width((GmuWidget *)&skin.display, 0) + skin.title_scroller_offset_x2))
 	                             - skin.title_scroller_offset_x1) / (skin.font_display_char_width+1);
 
 	if (player_status != STOPPED) {

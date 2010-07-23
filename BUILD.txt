@@ -68,7 +68,7 @@ are available in your toolchain. For a test build remove all but
 libraries, that you have to have in your toolchain.
 
 Next you need to create two files hw_new_target.h and hw_new_target.c. These
-files consist of hardware specific things. AGain, the easiest way of creating
+files consist of hardware specific things. Again, the easiest way of creating
 those files is copying them. Copy hw_unknown.h to hw_new_target.h and 
 hw_unknown.c to hw_new_target.c. You can make adjustments to those files later,
 if you want/need to.
@@ -82,5 +82,7 @@ Last, edit hw.h and add these three lines:
 That should be it. You should now be able to build Gmu to run on your new target
 device. Of course hardware specific things, like the ability to turn of the
 display do not work in that stage. For these things, you need to modify
-the hw_new_target.c/h files. Also buttons mapping can be changed there to match
-the button layout of the device.
+the hw_new_target.c/h files. 
+You probably also want to adjust the button mappings to match your new device.
+This can be done through config files. You do not need to recompile Gmu for
+changing the button configuration.
