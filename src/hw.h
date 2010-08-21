@@ -26,6 +26,9 @@
 #ifdef _PANDORA
 #include "hw_pandora.h"
 #endif
+#ifdef _ZIPIT_Z2
+#include "hw_zipit-z2.h"
+#endif
 #ifdef _UNKNOWN_SYSTEM
 #include "hw_unknown.h"
 #endif
