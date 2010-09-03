@@ -815,6 +815,14 @@ void run_player(char *skin_name, char *decoders_str)
 			case SDL_QUIT:
 				gmu_core_quit();
 				break;
+			case SDL_ACTIVEEVENT: {
+				/* Stop screen update when Gmu is invisible/minimized/whatever */
+				if (SDL_GetAppState() & SDL_APPACTIVE)
+					update_display = 1;
+				else
+					update_display = 0;
+				break;
+			}
 			default:
 				break;
 		}
