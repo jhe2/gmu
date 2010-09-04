@@ -601,7 +601,7 @@ void m_draw(M *m, SDL_Surface *t)
 		}
 		if (y < s) dy = s;
 	} else {
-		if (m->so > m->st) snprintf(tmp, 63, "%c %c %c", 49, 61, 71);
+		if (m->so > m->st) snprintf(tmp, 63, "%c %c %c", 50, 61, 79);
 		else snprintf(tmp, 63, "%c%cM%c%c%cV%cR", 71, 65, 69, 32, 48, 69);
 		lcd_draw_string_with_highlight(&skin.font1, &skin.font2, tmp, 0, t,
 		                               (gmu_widget_get_width((GmuWidget *)&skin.lv, 1) - 
