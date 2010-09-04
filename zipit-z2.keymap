@@ -15,7 +15,7 @@ IncreaseVolume=0
 DecreaseVolume=9
 ToggleTime=T
 Pause=P
-Stop=(X)
+Stop=X
 ToggleView=Space
 PreviousTrack=Comma
 NextTrack=Dot
@@ -23,8 +23,8 @@ SeekForward=M
 SeekBackward=N
 Hold=Mod+Up
 Exit=ESC
-ShutdownTimer=Mod+DOWN
-Help=F1
+ShutdownTimer=Mod+Down
+Help=H
 
 # Program info mappings:
 ProgramInfo=I
@@ -33,35 +33,35 @@ ProgramInfoOkay=Enter
 #FileBrowserDirUp=LEFT
 #FileBrowserChDir=RIGHT
 
-FileBrowserPlayFile=(A)
+FileBrowserPlayFile=A
 FileBrowserAddFileToPlaylistOrChDir=Enter
-FileBrowserAddDirToPlaylist=(Y)
-FileBrowserInsertFileIntoPlaylist=Mod+(B)
-FileBrowserNewPlFromDir=Mod+(Y)
+FileBrowserAddDirToPlaylist=Y
+FileBrowserInsertFileIntoPlaylist=Mod+B
+FileBrowserNewPlFromDir=Mod+Y
 #FileBrowserDeleteFile=Mod+X
 # Playlist mappings:
 PlaylistPlayItem=Enter
 PlaylistToggleRandomMode=R
-PlaylistRemoveItem=(Y)
+PlaylistRemoveItem=Y
 PlaylistClear=Mod+C
 PlaylistSave=S
 # Playlist save dialog:
 PlaylistSaveSelect=Enter
-PlaylistSaveCancel=(A)
+PlaylistSaveCancel=C
 PlaylistSaveLoadList=L
 PlaylistSaveAppendList=Mod+Y
 #PlaylistDeleteFile=Mod+X
 PlaylistQueue=Q
 # Track info mappings:
-TrackInfoToggleCover=(A)
-TrackInfoToggleText=(B)
+TrackInfoToggleCover=A
+TrackInfoToggleText=B
 # Question dialog mappings: 
 QuestionYes=Enter
-QuestionNo=ESC
+QuestionNo=C
 # Setup mappings:
-SetupSelect=(B)
-SetupSaveAndExit=(X)
-SetupSaveAndRunGmu=(Y)
-SetupFileBrowserSelect=(B)
-SetupFileBrowserChDir=(A)
-SetupFileBrowserCancel=(X)
+SetupSelect=B
+SetupSaveAndExit=X
+SetupSaveAndRunGmu=Y
+SetupFileBrowserSelect=B
+SetupFileBrowserChDir=A
+SetupFileBrowserCancel=X
