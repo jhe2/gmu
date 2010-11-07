@@ -3,9 +3,9 @@
  *
  * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
  *
- * File: hw_unknown.h  Created: 090629
+ * File: hw_zipit-z2.h  Created: 100821
  *
- * Description: Hardware specific header file for unknown devices (such as PCs)
+ * Description: Hardware specific header file for the Zipit Z2 handheld
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

@@ -32,7 +32,7 @@
 #include "core.h"
 #include "eventqueue.h"
 #include "wejpconfig.h"
-#include "hw.h"
+#include FILE_HW_H
 #include "util.h"
 #define MAX_FILE_EXTENSIONS 255
 

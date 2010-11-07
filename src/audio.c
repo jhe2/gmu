@@ -16,7 +16,7 @@
 #include "SDL.h"
 #include "ringbuffer.h"
 #include "audio.h"
-#include "hw.h"
+#include FILE_HW_H
 #define RINGBUFFER_SIZE 131072
 
 static RingBuffer  audio_rb;

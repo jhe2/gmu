@@ -14,7 +14,7 @@
  * for details.
  */
 #include <stdio.h>
-#include "hw_dingux.h"
+#include "hw_nanonote.h"
 #include "oss_mixer.h"
 
 static int selected_mixer = -1;

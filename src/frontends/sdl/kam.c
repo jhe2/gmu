@@ -16,7 +16,7 @@
 #include <string.h>
 #include "SDL.h"
 #include "kam.h"
-#include "hw.h"
+#include FILE_HW_H
 #include "wejpconfig.h"
 #include "inputconfig.h"
 

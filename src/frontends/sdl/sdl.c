@@ -29,7 +29,7 @@
 #include "../../decloader.h"  /* for decoders list */
 #include "../../gmudecoder.h" /* for decoders list */
 
-#include "../../hw.h"
+#include FILE_HW_H
 #include "../../wejpconfig.h"
 #include "../../m3u.h"
 #include "../../pbstatus.h"

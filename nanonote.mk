@@ -17,8 +17,6 @@
 #DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
 DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/wavpack.so decoders/mikmod.so
 FRONTENDS_TO_BUILD=frontends/sdl.so frontends/log.so
-DEVICE=NANONOTE
-CONFIG=-D_$(DEVICE)
 SDL_LIB=-lSDL -lpthread -ldirectfb -ldirect -lfusion -lz -lSDL_image -lSDL_gfx
 SDL_CFLAGS=-D_GNU_SOURCE=1 -D_REENTRANT
 CXX=mipsel-openwrt-linux-g++
@@ -26,6 +24,6 @@ CC=mipsel-openwrt-linux-gcc
 STRIP=mipsel-openwrt-linux-strip
 TOOLCHAIN_ROOT_PATH=$(shell which $(CC)|sed 's/toolchain-mipsel_gcc-4.3.3+cs_uClibc-0.9.30.1\/usr\/bin\/$(CC)//')
 COPTS?=-O2 -s
-CFLAGS=-msoft-float -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include/SDL -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include -ffast-math -fomit-frame-pointer $(SDL_CFLAGS) $(CONFIG)
+CFLAGS=-msoft-float -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include/SDL -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include -ffast-math -fomit-frame-pointer $(SDL_CFLAGS) -DFILE_HW_H="\"hw_$(TARGET).h\""
 LFLAGS=-s $(SDL_LIB) -L$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/lib -L$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/root-xburst/usr/lib -lpthread -lm -ldl -lgcc -Wl,-export-dynamic
 DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.nanonote gmu.nn COPYING gmuinput.nanonote.conf

@@ -56,11 +56,8 @@ to be followed.
 First you need to create a .mk file for that target. Let's call it new_target.mk.
 The easiest way of creating that file is to copy the existing unknown.mk to
 new_target.mk.
-Next you need to edit that file. The paths to the compiler and the libs need to
-be adjusted to match your toolchain's configuration. Then, the line
-DEVICE=UNKNOWN_SYSTEM
-needs to be changed to
-DEVICE=NEW_TARGET
+Next you need to edit that file. The paths/names to the compiler and the libs 
+need to be adjusted to match your toolchain's configuration.
 
 You can also adjust the DECODERS_TO_BUILD line, depending on which libraries
 are available in your toolchain. For a test build remove all but
@@ -72,12 +69,6 @@ files consist of hardware specific things. Again, the easiest way of creating
 those files is copying them. Copy hw_unknown.h to hw_new_target.h and 
 hw_unknown.c to hw_new_target.c. You can make adjustments to those files later,
 if you want/need to.
-
-Last, edit hw.h and add these three lines:
-
-#ifdef _NEW_TARGET
-#include "hw_new_target.h"
-#endif
 
 That should be it. You should now be able to build Gmu to run on your new target
 device. Of course hardware specific things, like the ability to turn of the

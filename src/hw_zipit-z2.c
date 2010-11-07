@@ -5,7 +5,7 @@
  *
  * File: hw_zipit-z2.c  Created: 100821
  *
- * Description: Hardware specific header file for unknown devices (such as PCs)
+ * Description: Hardware specific header file for the Zipit Z2 handheld
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

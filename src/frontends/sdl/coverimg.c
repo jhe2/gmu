@@ -24,7 +24,7 @@
 #include "../../jpeg.h"
 #include "../../bmp.h"
 #include "debug.h"
-#include "../../hw.h" /* MAX_COVER_IMAGE_PIXELS */
+#include FILE_HW_H /* MAX_COVER_IMAGE_PIXELS */
 
 static int cover_image_thread(void *udata)
 {

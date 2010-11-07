@@ -18,7 +18,7 @@
 #include <string.h>
 #include "skin.h"
 #include "wejpconfig.h"
-#include "hw.h"
+#include FILE_HW_H
 #include "core.h"
 #include "gmuwidget.h"
 
