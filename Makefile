@@ -122,3 +122,7 @@ frontends/log.so: src/frontends/log.c util.o
 frontends/lirc.so: src/frontends/lirc.c
 	@echo -e "Compiling \033[1m$<\033[0m"
 	@$(CC) $(CFLAGS) -shared -fpic -o frontends/lirc.so src/frontends/lirc.c -lpthread -llirc_client
+
+frontends/gmusrv.so: src/frontends/gmusrv.c
+	@echo -e "Compiling \033[1m$<\033[0m"
+	@$(CC) $(CFLAGS) -shared -fpic -o frontends/gmusrv.so src/frontends/gmusrv.c -lpthread
