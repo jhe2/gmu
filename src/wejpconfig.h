@@ -1,9 +1,9 @@
 /*
- * Wejp's Config File Parser
+ * wejp's Config File Parser
  *
  * File: wejpconfig.h
  *
- * Copyright (c) 2003-2009 Johannes Heimansberg
+ * Copyright (c) 2003-2010 Johannes Heimansberg
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -26,6 +26,9 @@
 #define FALSE 0
 #endif
 #define MAXKEYS 128
+#define CFG_OUT_OF_MEMORY -2
+#define CFG_ERROR -1
+#define CFG_SUCCESS 0
 
 typedef struct
 {
