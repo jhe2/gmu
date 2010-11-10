@@ -356,7 +356,7 @@ static int seek(int seconds)
 
 static int get_decoder_buffer_size(void)
 {
-	return 2000;
+	return MAX_FRAME_SIZE;
 }
 
 static const char* get_file_extensions(void)
