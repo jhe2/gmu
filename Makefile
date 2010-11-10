@@ -103,6 +103,10 @@ decoders/mikmod.so: src/decoders/mikmod.c util.o
 	@echo -e "Compiling \033[1m$<\033[0m"
 	@$(CC) $(CFLAGS) $(LFLAGS) -shared -fpic -o decoders/mikmod.so src/decoders/mikmod.c util.o -lmikmod
 
+decoders/speex.so: src/decoders/speex.c
+	@echo -e "Compiling \033[1m$<\033[0m"
+	@$(CC) $(CFLAGS) $(LFLAGS) -shared -fpic -o decoders/speex.so src/decoders/speex.c src/util.c -logg -lspeex
+
 frontends/httpserv.so: src/frontends/httpserv.c util.o
 	@echo -e "Compiling \033[1m$<\033[0m"
 	@$(CC) -Wall -pedantic -shared -O2 -fpic -o frontends/httpserv.so src/frontends/httpserv.c util.o
