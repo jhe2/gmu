@@ -204,6 +204,8 @@ static int open_file(char *filename)
 	ogg_sync_init(&oy);
 	speex_bits_init(&bits);
 
+	rate = 0;
+	channels = -1;
 	bitrate = 0;
 	current_bitrate = 0;
 	eos = 0;
