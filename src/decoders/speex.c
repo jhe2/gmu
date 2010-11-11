@@ -279,11 +279,11 @@ static int decode_data(char *target, int max_size)
 						break;
 					}
 					if (ret == -2) {
-						fprintf(stderr, "speex: Decoding error: corrupted stream?\n");
+						printf("speex: Decoding error: Corrupted stream?\n");
 						break;
 					}
 					if (speex_bits_remaining(&bits) < 0) {
-						fprintf(stderr, "speex: Decoding overflow: corrupted stream?\n");
+						printf("speex: Decoding overflow: Corrupted stream?\n");
 						break;
 					}
 					if (channels == 2)
@@ -308,7 +308,7 @@ static int decode_data(char *target, int max_size)
 							   new_frame_size = 0;
 							if (new_frame_size > frame_size)
 							   new_frame_size = frame_size;
-							printf ("speex: Chopping end: %d %d %d\n", new_frame_size, packet_length, packet_no);
+							printf("speex: Chopping end: %d %d %d\n", new_frame_size, packet_length, packet_no);
 						}
 
 						if (new_frame_size > 0) {
