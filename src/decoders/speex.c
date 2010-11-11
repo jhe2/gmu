@@ -49,6 +49,7 @@ static int nb_read;
 static int packet_no;
 static int lookahead;
 static int stream_init;
+static spx_int32_t current_bitrate, bitrate;
 
 static const char *get_name(void)
 {
@@ -188,7 +189,7 @@ static int process_block_data(void)
 		} else {
 			skip_samples = 0;
 		}
-		printf("speex: page granulepos: %d %d %d\n", skip_samples, page_nb_packets, (int)page_granule);
+		/*printf("speex: page granulepos: %d %d %d\n", skip_samples, page_nb_packets, (int)page_granule);*/
 		last_granule = page_granule;
 		packet_no = 0;
 		res = 1;
@@ -203,6 +204,8 @@ static int open_file(char *filename)
 	ogg_sync_init(&oy);
 	speex_bits_init(&bits);
 
+	bitrate = 0;
+	current_bitrate = 0;
 	eos = 0;
 	packet_no = 0;
 	audio_size = 0;
@@ -227,6 +230,7 @@ static int open_file(char *filename)
 			printf("speex: Problem with Speex file.\n");
 		} else {
 			speex_decoder_ctl(st, SPEEX_GET_LOOKAHEAD, &lookahead);
+			speex_decoder_ctl(st, SPEEX_GET_BITRATE, &bitrate);
 			if (!nframes) nframes = 1;
 			printf("speex: File opened okay!\n");
 			printf("speex: Found file with %d channel(s) and %d Hz\n", channels, rate);
@@ -297,13 +301,7 @@ static int decode_data(char *target, int max_size)
 					if (channels == 2)
 						speex_decode_stereo_int(output, frame_size, &stereo);
 
-					if (0) { // print bitrate
-						spx_int32_t tmp;
-						char ch = 13;
-						speex_decoder_ctl(st, SPEEX_GET_BITRATE, &tmp);
-						fputc(ch, stderr);
-						fprintf(stderr, "speex: Bitrate is: %d bps\n", tmp);
-					}
+					speex_decoder_ctl(st, SPEEX_GET_BITRATE, &current_bitrate);
 
 					{
 						int frame_offset = 0;
@@ -366,7 +364,7 @@ static const char* get_file_extensions(void)
 
 static int get_current_bitrate(void)
 {
-	return 0; //ov_bitrate_instant(&vf);
+	return current_bitrate;
 }
 
 static int get_length(void)
@@ -386,7 +384,7 @@ static int get_channels(void)
 
 static int get_bitrate(void)
 {
-	return 0; //ov_bitrate(&vf, -1);
+	return bitrate;
 }
 
 static const char *get_meta_data(GmuMetaDataType gmdt, int for_current_file)
