@@ -56,49 +56,51 @@ static const char *get_name(void)
 	return "Speex decoder v0.1";
 }
 
-static void *process_header(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t *frame_size, int *granule_frame_size, spx_int32_t *rate, int *nframes, int *channels, SpeexStereoState *stereo, int *extra_headers, int quiet)
+static void *process_header(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t *frame_size,
+                            int *granule_frame_size, spx_int32_t *rate, int *nframes, int *channels,
+                            SpeexStereoState *stereo, int *extra_headers)
 {
 	void            *st;
 	const SpeexMode *mode;
 	SpeexHeader     *header;
-	int              modeID;
 	SpeexCallback    callback;
 
 	header = speex_packet_to_header((char*)op->packet, op->bytes);
 	if (!header) {
-		fprintf(stderr, "speex: Cannot read header\n");
+		printf("speex: Cannot read header.\n");
 		return NULL;
 	}
-	if (header->mode >= SPEEX_NB_MODES || header->mode<0) {
-		fprintf(stderr, "speex: Mode number %d does not (yet/any longer) exist in this version\n", 
-		        header->mode);
+
+	if (header->mode >= SPEEX_NB_MODES || header->mode < 0) {
+		printf("speex: Mode number %d does not (yet/any longer) exist in this version.\n", 
+		       header->mode);
 		free(header);
 		return NULL;
 	}
 
-	modeID = header->mode;
-	mode = speex_lib_get_mode(modeID);
+	mode = speex_lib_get_mode(header->mode);
 
 	if (header->speex_version_id > 1) {
-		fprintf(stderr, "speex: This file was encoded with Speex bit-stream version %d, which I don't know how to decode\n", header->speex_version_id);
+		printf("speex: This file was encoded with Speex bit-stream version %d, which I don't know how to decode.\n",
+		       header->speex_version_id);
 		free(header);
 		return NULL;
 	}
 
 	if (mode->bitstream_version < header->mode_bitstream_version) {
-		fprintf(stderr, "speex: The file was encoded with a newer version of Speex. You need to upgrade in order to play it.\n");
+		printf("speex: The file was encoded with a newer version of Speex. You need to upgrade in order to play it.\n");
 		free(header);
 		return NULL;
 	}
 	if (mode->bitstream_version > header->mode_bitstream_version) {
-		fprintf(stderr, "speex: The file was encoded with an older version of Speex. You would need to downgrade the version in order to play it.\n");
+		printf("speex: The file was encoded with an older version of Speex. You would need to downgrade the version in order to play it.\n");
 		free(header);
 		return NULL;
 	}
 
 	st = speex_decoder_init(mode);
 	if (!st) {
-		fprintf(stderr, "speex: Decoder initialization failed.\n");
+		printf("speex: Decoder initialization failed.\n");
 		free(header);
 		return NULL;
 	}
@@ -106,51 +108,35 @@ static void *process_header(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t
 	speex_decoder_ctl(st, SPEEX_GET_FRAME_SIZE, frame_size);
 	*granule_frame_size = *frame_size;
 
-   if (!*rate) *rate = header->rate;
+	if (!*rate) *rate = header->rate;
 
-   speex_decoder_ctl(st, SPEEX_SET_SAMPLING_RATE, rate);
+	speex_decoder_ctl(st, SPEEX_SET_SAMPLING_RATE, rate);
 
-   *nframes = header->frames_per_packet;
+	*nframes = header->frames_per_packet;
 
-   if (*channels == -1)
-      *channels = header->nb_channels;
+	if (*channels == -1) *channels = header->nb_channels;
 
-   if (!(*channels == 1)) {
-      *channels = 2;
-      callback.callback_id = SPEEX_INBAND_STEREO;
-      callback.func = speex_std_stereo_request_handler;
-      callback.data = stereo;
-      speex_decoder_ctl(st, SPEEX_SET_HANDLER, &callback);
-   }
-   
-   if (!quiet) {
-      fprintf(stderr, "Decoding %d Hz audio using %s mode", 
-              *rate, mode->modeName);
+	if (!(*channels == 1)) {
+		*channels = 2;
+		callback.callback_id = SPEEX_INBAND_STEREO;
+		callback.func = speex_std_stereo_request_handler;
+		callback.data = stereo;
+		speex_decoder_ctl(st, SPEEX_SET_HANDLER, &callback);
+	}
 
-      if (*channels == 1)
-         fprintf (stderr, " (mono");
-      else
-         fprintf (stderr, " (stereo");
-      
-      if (header->vbr)
-         fprintf (stderr, ", VBR)\n");
-      else
-         fprintf(stderr, ")\n");
-      /*fprintf(stderr, "Decoding %d Hz audio at %d bps using %s mode\n", 
-              *rate, mode->bitrate, mode->modeName);*/
-   }
+	/* VBR: header->vbr Mode: mode->modeName */
 
-   *extra_headers = header->extra_headers;
+	*extra_headers = header->extra_headers;
 
-   free(header);
-   return st;
+	free(header);
+	return st;
 }
 
 static int read_block(void)
 {
-	int res = 0;
+	int   res = 0;
 	char *data;
-	
+
 	/* Get the ogg buffer for writing */
 	data = ogg_sync_buffer(&oy, 200);
 	if (data) {
@@ -221,7 +207,7 @@ static int open_file(char *filename)
 		read_block();
 		process_block_data();
 		if (ogg_stream_packetout(&os, &op) == 1) { /* Process first packet as Speex header */
-			st = process_header(&op, enh_enabled, &frame_size, &granule_frame_size, &rate, &nframes, &channels, &stereo, &extra_headers, 0);
+			st = process_header(&op, enh_enabled, &frame_size, &granule_frame_size, &rate, &nframes, &channels, &stereo, &extra_headers);
 			if (op.bytes >= 5 && !memcmp(op.packet, "Speex", 5)) {
 				speex_serialno = os.serialno;
 			}
