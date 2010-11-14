@@ -15,7 +15,7 @@
 #
 
 #DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
-DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/wavpack.so decoders/mikmod.so
+DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/wavpack.so decoders/mikmod.so decoders/flac.so decoders/speex.so
 FRONTENDS_TO_BUILD=frontends/sdl.so frontends/log.so
 SDL_LIB=-lSDL -lpthread -ldirectfb -ldirect -lfusion -lz -lSDL_image -lSDL_gfx
 SDL_CFLAGS=-D_GNU_SOURCE=1 -D_REENTRANT

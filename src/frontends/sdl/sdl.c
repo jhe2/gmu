@@ -627,7 +627,7 @@ void run_player(char *skin_name, char *decoders_str)
 	int              button = -1;
 	int              modifier = 0, hold_state = 0, allow_volume_control_in_hold_state = 0;
 	int              time_remaining = 0;
-	int              update_display = 1;
+	int              update_display = 1, display_inactive = 0;
 	int              button_repeat_timer = -1, items_skip = 1, frame_skip_counter = FRAME_SKIP;
 	int              seconds_until_backlight_poweroff = 0, backlight_poweroff_timer = -1;
 	int              backlight_poweron_on_track_change = 0, auto_select_cur_item = 1;
@@ -817,10 +817,12 @@ void run_player(char *skin_name, char *decoders_str)
 				break;
 			case SDL_ACTIVEEVENT: {
 				/* Stop screen update when Gmu is invisible/minimized/whatever */
-				if (SDL_GetAppState() & SDL_APPACTIVE)
-					update_display = 1;
-				else
-					update_display = 0;
+				if (SDL_GetAppState() & SDL_APPACTIVE) {
+					display_inactive = 0;
+				} else {
+					display_inactive = 1;
+					backlight_poweroff_timer = seconds_until_backlight_poweroff * FPS;
+				}
 				break;
 			}
 			default:
@@ -1143,16 +1145,19 @@ void run_player(char *skin_name, char *decoders_str)
 			if (event.type != SDL_KEYDOWN && event.type != SDL_JOYBUTTONDOWN &&
 		        event.type != SDL_KEYUP && event.type != SDL_JOYBUTTONUP) {
 				if (button_repeat_timer > 0)      button_repeat_timer--;
-				if (backlight_poweroff_timer > 0) backlight_poweroff_timer--;
+				if (!display_inactive && backlight_poweroff_timer > 0)
+					backlight_poweroff_timer--;
 			}
 
 			if (backlight_poweroff_timer == 0) {
-				hw_display_off();
-				/* Clear the whole screen: */
-				SDL_FillRect(display, NULL, 0);
-				SDL_UpdateRect(display, 0, 0, 0, 0);
-				update_display = 0;
-				backlight_poweroff_timer = TIMER_ELAPSED;
+				if (!display_inactive) {
+					hw_display_off();
+					/* Clear the whole screen: */
+					SDL_FillRect(display, NULL, 0);
+					SDL_UpdateRect(display, 0, 0, 0, 0);
+					update_display = 0;
+					backlight_poweroff_timer = TIMER_ELAPSED;
+				}
 			}
 			if (frame_skip_counter > 0)
 				frame_skip_counter--;
@@ -1174,7 +1179,7 @@ void run_player(char *skin_name, char *decoders_str)
 			if (view == EGG) update |= UPDATE_TEXTAREA | UPDATE_HEADER;
 		}
 
-		if (update != UPDATE_NONE && update_display) {
+		if (update != UPDATE_NONE && update_display && !display_inactive) {
 			char buf[128];
 
 			if ((update & UPDATE_DISPLAY) && frame_skip_counter == 0) {

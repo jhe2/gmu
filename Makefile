@@ -59,17 +59,17 @@ dist: $(ALLFILES)
 	@-rm -rf $(projname)
 
 distbin: $(DISTFILES)
-	@echo -e "Creating \033[1m$(projname)-$(DEVICE).zip\033[0m"
-	@-rm -rf $(projname)-$(DEVICE)
-	@-rm -rf $(projname)-$(DEVICE).zip
-	@mkdir $(projname)-$(DEVICE)
-	@cp -rl --parents $(DISTFILES) $(projname)-$(DEVICE)
-	@-cp gmu.$(TARGET).conf $(projname)-$(DEVICE)/gmu.$(TARGET).conf
-	@-cp $(TARGET).keymap $(projname)-$(DEVICE)/$(TARGET).keymap
-	@$(STRIP) $(projname)-$(DEVICE)/decoders/*.so
-	@$(STRIP) $(projname)-$(DEVICE)/gmu
-	@zip -r $(projname)-$(DEVICE).zip $(projname)-$(DEVICE)
-	@-rm -rf $(projname)-$(DEVICE)
+	@echo -e "Creating \033[1m$(projname)-$(TARGET).zip\033[0m"
+	@-rm -rf $(projname)-$(TARGET)
+	@-rm -rf $(projname)-$(TARGET).zip
+	@mkdir $(projname)-$(TARGET)
+	@cp -rl --parents $(DISTFILES) $(projname)-$(TARGET)
+	@-cp gmu.$(TARGET).conf $(projname)-$(TARGET)/gmu.$(TARGET).conf
+	@-cp $(TARGET).keymap $(projname)-$(TARGET)/$(TARGET).keymap
+	@$(STRIP) $(projname)-$(TARGET)/decoders/*.so
+	@$(STRIP) $(projname)-$(TARGET)/gmu
+	@zip -r $(projname)-$(TARGET).zip $(projname)-$(TARGET)
+	@-rm -rf $(projname)-$(TARGET)
 
 clean:
 	@-rm -rf *.o $(BINARY) decoders/*.so frontends/*.so
