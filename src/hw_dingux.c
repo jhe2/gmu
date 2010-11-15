@@ -61,6 +61,9 @@ void hw_display_off(void)
 		if ((f = fopen("/sys/devices/platform/jz4740-slcd-fb/graphics/fb0/blank", "w"))) {
 			fprintf(f, "1\n");
 			fclose(f);
+		} else if ((f = fopen("/sys/class/graphics/fb0/blank", "w"))) { /* newer OpenDingux kernel */
+			fprintf(f, "1\n");
+			fclose(f);
 		}
 		display_on_value = -1;
 	}
@@ -78,6 +81,9 @@ void hw_display_on(void)
 		}
 	} else { /* new OpenDingux kernel */
 		if ((f = fopen("/sys/devices/platform/jz4740-slcd-fb/graphics/fb0/blank", "w"))) {
+			fprintf(f, "0\n");
+			fclose(f);
+		} else if ((f = fopen("/sys/class/graphics/fb0/blank", "w"))) { /* newer OpenDingux kernel */
 			fprintf(f, "0\n");
 			fclose(f);
 		}

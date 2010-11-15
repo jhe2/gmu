@@ -23,7 +23,7 @@ SeekForward=Mod+M
 SeekBackward=Mod+N
 Lock=Mod+Up
 Unlock=Mod+Up
-Exit=Mod+Enter
+Exit=Mod+Q
 ShutdownTimer=Mod+T
 Help=F1
 
