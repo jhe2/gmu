@@ -19,6 +19,7 @@ TARGET=unknown
 endif
 include $(TARGET).mk
 
+PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall
 
 OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o hw_$(TARGET).o
@@ -70,6 +71,25 @@ distbin: $(DISTFILES)
 	@$(STRIP) $(projname)-$(TARGET)/gmu
 	@zip -r $(projname)-$(TARGET).zip $(projname)-$(TARGET)
 	@-rm -rf $(projname)-$(TARGET)
+
+install: $(DISTFILES)
+	@echo -e "Installing Gmu: prefix=$(PREFIX) destdir=$(DESTDIR)"
+	@-mkdir -p $(DESTDIR)$(PREFIX)/bin
+	@-mkdir -p $(DESTDIR)$(PREFIX)/etc/gmu
+	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/decoders
+	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/frontends
+	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/themes
+	@cp gmu $(DESTDIR)$(PREFIX)/bin/gmu.bin
+	@cp README.txt $(DESTDIR)$(PREFIX)/share/gmu/README.txt
+	@cp -R frontends/* $(DESTDIR)$(PREFIX)/share/gmu/frontends
+	@cp -R decoders/* $(DESTDIR)$(PREFIX)/share/gmu/decoders
+	@cp -R themes/* $(DESTDIR)$(PREFIX)/share/gmu/themes
+	@cp *.conf $(DESTDIR)$(PREFIX)/etc/gmu
+	@cp *.keymap $(DESTDIR)$(PREFIX)/etc/gmu
+	@echo "#!/bin/sh">$(DESTDIR)$(PREFIX)/bin/gmu
+	@echo "cd $(PREFIX)/share/gmu">>$(DESTDIR)$(PREFIX)/bin/gmu
+	@echo "$(PREFIX)/bin/gmu.bin -e -d $(PREFIX)/etc/gmu">>$(DESTDIR)$(PREFIX)/bin/gmu
+	@chmod a+x $(DESTDIR)$(PREFIX)/bin/gmu
 
 clean:
 	@-rm -rf *.o $(BINARY) decoders/*.so frontends/*.so
