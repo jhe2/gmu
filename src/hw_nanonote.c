@@ -49,6 +49,9 @@ void hw_display_off(void)
 	if ((f = fopen("/sys/class/lcd/gpm940b0-lcd/lcd_power", "w"))) {
 		fprintf(f, "4\n");
 		fclose(f);
+	} else if ((f = fopen("/sys/class/lcd/ili8960-lcd/lcd_power", "w"))) { /* Path has changed in some (newer?) Kernels */
+		fprintf(f, "4\n");
+		fclose(f);
 	}
 }
 
@@ -58,6 +61,9 @@ void hw_display_on(void)
 
 	printf("hw_nanonote: Display on requested.\n");
 	if ((f = fopen("/sys/class/lcd/gpm940b0-lcd/lcd_power", "w"))) {
+		fprintf(f, "0\n");
+		fclose(f);
+	} else if ((f = fopen("/sys/class/lcd/ili8960-lcd/lcd_power", "w"))) {
 		fprintf(f, "0\n");
 		fclose(f);
 	}
