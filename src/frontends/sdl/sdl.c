@@ -82,13 +82,13 @@ int                global_param = 0;
 
 static GmuEvent    update_event = 0;
 
-static int         screen_max_depth = 0, fullscreen = 0;
+static int         fullscreen = 0;
 
 static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
 	SDL_Surface         *display;
 	const SDL_VideoInfo *video_info;
-	int                  screen_max_width = 0, screen_max_height = 0;
+	int                  screen_max_width = 0, screen_max_height = 0, screen_max_depth = 0;
 
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO | (with_joystick ? SDL_INIT_JOYSTICK : 0)) < 0) {
 		printf("sdl_frontend: ERROR: Could not initialize SDL: %s\n", SDL_GetError());
@@ -713,7 +713,7 @@ void run_player(char *skin_name, char *decoders_str)
 
 	if (quit == DONT_QUIT) {
 		SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, display->w,
-		                                        display->h, screen_max_depth, 
+		                                        display->h, display->format->BitsPerPixel,
 		                                        0, 0, 0, 0);
 		buffer = SDL_DisplayFormat(tmp);
 		SDL_FreeSurface(tmp);
@@ -808,12 +808,16 @@ void run_player(char *skin_name, char *decoders_str)
 	while (SDL_WaitEvent(&event) && quit == DONT_QUIT) {
 		switch (event.type) {
 			case SDL_VIDEORESIZE: {
-				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, event.resize.w, event.resize.h, screen_max_depth, 0, 0, 0, 0);
+				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE,
+				                                        event.resize.w, event.resize.h,
+				                                        display->format->BitsPerPixel, 0, 0, 0, 0);
 				SDL_FreeSurface(buffer);
 				buffer = SDL_DisplayFormat(tmp);
 				SDL_FreeSurface(tmp);
 				/*printf("sdl_frontend: Window resized: %d x %d\n", event.resize.w, event.resize.h);*/
-				display = SDL_SetVideoMode(event.resize.w, event.resize.h, screen_max_depth, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE);
+				display = SDL_SetVideoMode(event.resize.w, event.resize.h,
+				                           buffer->format->BitsPerPixel,
+				                           SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE);
 				if (!display) exit(-2); /* should not happen */
 				update = UPDATE_ALL;
 				break;
