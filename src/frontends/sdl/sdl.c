@@ -82,17 +82,35 @@ int                global_param = 0;
 
 static GmuEvent    update_event = 0;
 
+static int         screen_max_depth = 0, fullscreen = 0;
 
-static SDL_Surface *init_sdl(int with_joystick)
+static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
-	SDL_Surface *display;
+	SDL_Surface         *display;
+	const SDL_VideoInfo *video_info;
+	int                  screen_max_width = 0, screen_max_height = 0;
 
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO | (with_joystick ? SDL_INIT_JOYSTICK : 0)) < 0) {
 		printf("sdl_frontend: ERROR: Could not initialize SDL: %s\n", SDL_GetError());
 		exit(1);
 	}
 
-	display = SDL_SetVideoMode(HW_SCREEN_WIDTH, HW_SCREEN_HEIGHT, HW_COLOR_DEPTH, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE);
+	video_info = SDL_GetVideoInfo();
+	screen_max_width  = video_info->current_w;
+	screen_max_height = video_info->current_h;
+	screen_max_depth  = video_info->vfmt->BitsPerPixel;
+	printf("sdl_frontend: Available screen estate: %d x %d pixels @ %d bpp\n",
+	       screen_max_width, screen_max_height, screen_max_depth);
+
+	width  = width  > screen_max_width  ? screen_max_width  : width;
+	height = height > screen_max_height ? screen_max_height : height;
+	if (fullscreen) {
+		fullscreen = SDL_FULLSCREEN;
+		width = screen_max_width;
+		height = screen_max_height;
+	}
+
+	display = SDL_SetVideoMode(width, height, screen_max_depth, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE | fullscreen);
 	if (display == NULL) {
 		printf("sdl_frontend: ERROR: Could not initialize screen: %s\n", SDL_GetError());
 		exit(1);
@@ -646,7 +664,19 @@ void run_player(char *skin_name, char *decoders_str)
 		input_config_init(tmp);
 	}
 
-	display = init_sdl(input_config_has_joystick());
+	{
+		int   w = 320, h = 240;
+		char *val;
+		
+		fullscreen = 0;
+		val = cfg_get_key_value(*config, "SDL_frontend.Width");
+		if (val) w = atoi(val);
+		val = cfg_get_key_value(*config, "SDL_frontend.Height");
+		if (val) h = atoi(val);
+		val = cfg_get_key_value(*config, "SDL_frontend.Fullscreen");
+		if (val && strncmp(val, "yes", 3) == 0) fullscreen = 1;
+		display = init_sdl(input_config_has_joystick(), w, h, fullscreen);
+	}
 
 	auto_select_cur_item = strncmp(cfg_get_key_value(*config, 
 	                               "AutoSelectCurrentPlaylistItem"),
@@ -682,8 +712,9 @@ void run_player(char *skin_name, char *decoders_str)
 	if (!skin_init(&skin, skin_name)) quit = QUIT_WITH_ERROR;
 
 	if (quit == DONT_QUIT) {
-		SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, HW_SCREEN_WIDTH,
-		                                        HW_SCREEN_HEIGHT, HW_COLOR_DEPTH, 0, 0, 0, 0);
+		SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, display->w,
+		                                        display->h, screen_max_depth, 
+		                                        0, 0, 0, 0);
 		buffer = SDL_DisplayFormat(tmp);
 		SDL_FreeSurface(tmp);
 
@@ -777,12 +808,12 @@ void run_player(char *skin_name, char *decoders_str)
 	while (SDL_WaitEvent(&event) && quit == DONT_QUIT) {
 		switch (event.type) {
 			case SDL_VIDEORESIZE: {
-				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, event.resize.w, event.resize.h, HW_COLOR_DEPTH, 0, 0, 0, 0);
+				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, event.resize.w, event.resize.h, screen_max_depth, 0, 0, 0, 0);
 				SDL_FreeSurface(buffer);
 				buffer = SDL_DisplayFormat(tmp);
 				SDL_FreeSurface(tmp);
 				/*printf("sdl_frontend: Window resized: %d x %d\n", event.resize.w, event.resize.h);*/
-				display = SDL_SetVideoMode(event.resize.w, event.resize.h, HW_COLOR_DEPTH, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE);
+				display = SDL_SetVideoMode(event.resize.w, event.resize.h, screen_max_depth, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE);
 				if (!display) exit(-2); /* should not happen */
 				update = UPDATE_ALL;
 				break;
@@ -1251,8 +1282,14 @@ void run_player(char *skin_name, char *decoders_str)
 
 	if (quit != QUIT_WITH_ERROR) {
 		if (strncmp(cfg_get_key_value(*config, "RememberSettings"), "yes", 3) == 0) {
+			char val[64];
 			cfg_add_key(config, "TimeDisplay", time_remaining ? 
 			                                   "remaining" : "elapsed");
+			snprintf(val, 63, "%d", buffer->w);
+			cfg_add_key(config, "SDL_frontend.Width", val);
+			snprintf(val, 63, "%d", buffer->h);
+			cfg_add_key(config, "SDL_frontend.Height", val);
+			cfg_add_key(config, "SDL_frontend.Fullscreen", fullscreen ? "yes" : "no");
 		}
 		dir_free(&fb.dir);
 		SDL_FreeSurface(buffer);
