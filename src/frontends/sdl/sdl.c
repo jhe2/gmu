@@ -62,6 +62,7 @@
 static ConfigFile  *config = NULL;
 Skin                skin;
 static View         view, old_view;
+static PlaylistBrowser pb;
 static CoverViewer  cv;
 static Question     dlg;
 static SDL_TimerID  tid;
@@ -76,13 +77,14 @@ static char         base_dir[256];
 typedef enum Quit { DONT_QUIT, QUIT_WITH_ERROR, QUIT_WITHOUT_ERROR } Quit;
 static Quit         quit = DONT_QUIT;
 
-typedef enum GlobalCommand { NO_CMD, PLAY, PAUSE, STOP, NEXT, PREVIOUS, PLAY_ITEM } GlobalCommand;
-GlobalCommand      global_command = NO_CMD;
-int                global_param = 0;
+/*typedef enum GlobalCommand { NO_CMD, PLAY, PAUSE, STOP, NEXT, PREVIOUS, PLAY_ITEM } GlobalCommand;
+static GlobalCommand      global_command = NO_CMD;
+static int                global_param = 0;*/
 
 static GmuEvent    update_event = 0;
 
 static int         fullscreen = 0;
+static int         auto_select_cur_item = 1;
 
 static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
@@ -637,7 +639,6 @@ void run_player(char *skin_name, char *decoders_str)
 	SDL_Event        event;
 
 	FileBrowser      fb;
-	PlaylistBrowser  pb;
 	TextBrowser      tb_about, tb_help;
 	PlaylistManager  ps;
 	M                m;
@@ -648,7 +649,7 @@ void run_player(char *skin_name, char *decoders_str)
 	int              update_display = 1, display_inactive = 0;
 	int              button_repeat_timer = -1, items_skip = 1, frame_skip_counter = FRAME_SKIP;
 	int              seconds_until_backlight_poweroff = 0, backlight_poweroff_timer = -1;
-	int              backlight_poweron_on_track_change = 0, auto_select_cur_item = 1;
+	int              backlight_poweron_on_track_change = 0;
 	int              seek_step = 10;
 
 	KeyActionMapping kam[LAST_ACTION];
@@ -1125,7 +1126,7 @@ void run_player(char *skin_name, char *decoders_str)
 		if (event.type == SDL_USEREVENT) {
 			Entry *tmp_item;
 
-			switch (global_command) {
+			/*switch (global_command) {
 				case NEXT:
 					if (play_next(ti, &cv)) {
 						if (auto_select_cur_item)
@@ -1142,13 +1143,13 @@ void run_player(char *skin_name, char *decoders_str)
 				case PLAY_ITEM:
 					tmp_item = gmu_core_playlist_get_entry(global_param);
 					if (tmp_item != NULL) {
-						gmu_core_playlist_set_current(tmp_item);
+						gmu_core_playlist_set_current(tmp_item);*/
 						/*play_file(gmu_core_playlist_get_entry_filename(tmp_item), ti, &cv);*/
-					}
+					/*}
 					break;
 				default:
 					break;
-			}
+			}*/
 
 			/*if (global_command == NO_CMD &&
 			    file_player_get_item_status() == STOPPED &&
@@ -1170,7 +1171,7 @@ void run_player(char *skin_name, char *decoders_str)
 				}
 			}*/
 
-			global_command = NO_CMD;
+			/*global_command = NO_CMD;*/
 
 			if (update_event == GMU_TRACK_CHANGE) {
 				update = UPDATE_ALL;
@@ -1287,6 +1288,8 @@ void run_player(char *skin_name, char *decoders_str)
 	if (quit != QUIT_WITH_ERROR) {
 		if (strncmp(cfg_get_key_value(*config, "RememberSettings"), "yes", 3) == 0) {
 			char val[64];
+			
+			printf("sdl_frontend: Saving settings...\n");
 			cfg_add_key(config, "TimeDisplay", time_remaining ? 
 			                                   "remaining" : "elapsed");
 			snprintf(val, 63, "%d", buffer->w);
@@ -1443,6 +1446,8 @@ static int event_callback(GmuEvent event)
 											  (int *)&update);
 				update_event = event;
 				tid = SDL_AddTimer(1000 / FPS, timer_callback, NULL);
+				if (auto_select_cur_item)
+					pl_browser_set_selection(&pb, gmu_core_playlist_get_current_position());
 			}
 			break;
 		case GMU_VOLUME_CHANGE: {
