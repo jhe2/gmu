@@ -91,7 +91,7 @@ static void *thread_func(void *arg)
 
 			listen(sock, 5);
 			addrlen = sizeof(struct sockaddr_in);
-			
+
 			while (running) {
 				client_sock = accept(sock, (struct sockaddr *)&address, &addrlen);
 				if (client_sock > 0) {
@@ -106,34 +106,34 @@ static void *thread_func(void *arg)
 					if (strncmp(buffer, "_gmusrv_quit", 4) == 0) {
 						running = 0;
 					}
-					if (strncmp(buffer, "playpause", 9) == 0) {
-						str = "Starting playback.\n";
-						send(client_sock, str, strlen(str), 0);
-						gmu_core_play();
-					}
-					if (strncmp(buffer, "next", 4) == 0) {
-						str = "Jumping to next track in playlist.\n";
-						send(client_sock, str, strlen(str), 0);
-						gmu_core_next();
-					}
-					if (strncmp(buffer, "prev", 4) == 0) {
-						str = "Jumping to previous track in playlist.\n";
-						send(client_sock, str, strlen(str), 0);
-						gmu_core_previous();
-					}
-					if (strncmp(buffer, "quit", 4) == 0) {
-						str = "Terminating Gmu.\n";
-						send(client_sock, str, strlen(str), 0);
-						gmu_core_quit();
-					}
 					switch (buffer[0]) {
+						case 'p':
+							str = "Play/pause\n";
+							send(client_sock, str, strlen(str), 0);
+							gmu_core_play();
+							break;
+						case 'n':
+							str = "Jumping to next track in playlist.\n";
+							send(client_sock, str, strlen(str), 0);
+							gmu_core_next();
+							break;							
+						case 'l':
+							str = "Jumping to previous track in playlist.\n";
+							send(client_sock, str, strlen(str), 0);
+							gmu_core_previous();
+							break;
+						case 'x':
+							str = "Terminating Gmu.\n";
+							send(client_sock, str, strlen(str), 0);
+							gmu_core_quit();
+							break;
 						case 's': /* status */
 							
 							break;
 						case 't': { /* track info */
 							TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
 							char       ti_str[320];
-							
+
 							snprintf(ti_str, 319, "%s - %s", trackinfo_get_artist(ti), trackinfo_get_title(ti));
 							send(client_sock, ti_str, strlen(ti_str), 0);
 							break;

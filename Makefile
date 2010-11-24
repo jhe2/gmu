@@ -95,6 +95,10 @@ clean:
 	@-rm -rf *.o $(BINARY) decoders/*.so frontends/*.so
 	@echo -e "\033[1mAll clean.\033[0m"
 
+gmu-cli: src/tools/gmu-cli.c
+	@echo -e "Compiling \033[1m$<\033[0m"
+	@$(CC) $(CFLAGS) -o gmu-cli src/tools/gmu-cli.c
+
 decoders/musepack.so: src/decoders/musepack.c id3.o charset.o trackinfo.o
 	@echo -e "Compiling \033[1m$<\033[0m"
 	@$(CC) $(CFLAGS) $(LFLAGS) -shared -fpic -o decoders/musepack.so src/decoders/musepack.c id3.o charset.o trackinfo.o -lmpcdec 
