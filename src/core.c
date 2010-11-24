@@ -61,7 +61,6 @@ static void init_sdl(void)
 		printf("ERROR: Could not initialize SDL: %s\n", SDL_GetError());
 		exit(1);
 	}
-	atexit(SDL_Quit);
 	printf("gmu: SDL init done.\n");
 }
 
@@ -855,6 +854,9 @@ int main(int argc, char **argv)
 	    strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0)
 		hw_close_mixer();
 
+	printf("gmu: Unloading frontends...\n");
+	feloader_free();
+
 	if (strncmp(cfg_get_key_value(config, "RememberLastPlaylist"), "yes", 3) == 0) {
 		printf("gmu: Saving playlist...\n");
 		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
@@ -899,9 +901,8 @@ int main(int argc, char **argv)
 		sync();
 	}
 
-	printf("gmu: Unloading frontends and decoders...\n");
+	printf("gmu: Unloading decoders...\n");
 	decloader_free();
-	feloader_free();
 	printf("gmu: Freeing playlist...\n");
 	playlist_free(&pl);
 
@@ -919,6 +920,7 @@ int main(int argc, char **argv)
 		}
 	}
 	cfg_free_config_file_struct(&config);
+	SDL_Quit();
 	printf("gmu: Shutdown complete.\n");
 	return 0;
 }

@@ -619,7 +619,7 @@ Entry *playlist_get_entry(Playlist *pl, int item)
 
 	pthread_mutex_lock(&(pl->mutex));
 	if (entry != NULL) {
-		while (i < item) {
+		while (i < item && entry) {
 			entry = playlist_get_next(entry);
 			i++;
 		}

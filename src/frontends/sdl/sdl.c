@@ -1124,7 +1124,7 @@ void run_player(char *skin_name, char *decoders_str)
 		}
 
 		if (event.type == SDL_USEREVENT) {
-			Entry *tmp_item;
+			/*Entry *tmp_item;*/
 
 			/*switch (global_command) {
 				case NEXT:
@@ -1283,6 +1283,7 @@ void run_player(char *skin_name, char *decoders_str)
 		}
 	}
 
+	if (tid) SDL_RemoveTimer(tid);
 	input_config_free();
 
 	if (quit != QUIT_WITH_ERROR) {
@@ -1397,7 +1398,7 @@ void *start_player(void *arg)
 			run_player(skin_name, decoders_str);
 		if (decoders_str) free(decoders_str);
 	}
-	printf("sdl_frontend: start_player done.\n");
+	printf("sdl_frontend: start_player() done.\n");
 	return 0;
 }
 
@@ -1438,7 +1439,7 @@ static int event_callback(GmuEvent event)
 		case GMU_TRACK_CHANGE:
 			if (initialized) {
 				ti = gmu_core_get_current_trackinfo_ref();
-				SDL_RemoveTimer(tid);
+				if (tid) SDL_RemoveTimer(tid);
 				cover_viewer_update_data(&cv, ti);
 				if (strcmp(cfg_get_key_value(*config, "EnableCoverArtwork"), "yes") == 0)
 					cover_viewer_load_artwork(&cv, ti, trackinfo_get_file_name(ti), 
