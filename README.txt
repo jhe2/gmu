@@ -1,6 +1,6 @@
 The Gmu Music Player
 
-Version 0.7.1
+Version 0.7.2
 
 Copyright (c) 2006-2010 Johannes Heimansberg
 http://wejp.k.vu/projects/gmu/
@@ -36,7 +36,11 @@ Table of contents
 1. Installation
 ---------------
 
-Extract the .zip archive on the SD card.
+The installation process depends on the device Gmu is going to be
+installed on. Some devices come with Gmu preinstalled, for other
+devices there is a package installable by the package manager used
+on that device (e.g. ipkg or opkg). For other devices you just need
+to extract the Gmu ZIP archive on the memory card (or internal memory).
 
 ==> GP2X & Wiz release
 To run the player start gmu-gp2x.gpu or gmu-wiz.gpu depending on
@@ -56,10 +60,11 @@ becoming more popular for executables on Dingux, I've chosen to
 rename it to gmu.dge.
 
 ==> Ben NanoNote release
-In the future the Ben NanoNote should come with Gmu preinstalled.
-Until then, you cann install Gmu with opkg:
+The Ben NanoNote come with Gmu preinstalled. If you use an older 
+Firmware image or want to upgrade Gmu, you can use opkg to do that.
+To install Gmu with opkg run:
 
-opkg install gmu_0.7.0-1_xburst.ipk
+opkg install gmu_0.7.2-1_xburst.ipk
 
 Once Gmu has been installed on the NanoNote, you can run it by
 executing 'gmu'.
@@ -68,7 +73,8 @@ contain errors that might prevent Gmu from running. Use at least
 version 2006-03-26. When using that rootfs version, you also need
 to replace the broken libSDL-1.2.so.0 file located in /usr/lib with
 a working one.
-
+If you have been upgrading from an older Gmu version, you might need
+to remove the /root/.config/gmu directory before starting Gmu.
 
 2. Supported file formats
 -------------------------
@@ -77,14 +83,15 @@ Audio file formats are supported through decoder plugins, so
 file format support may vary from one platform to another. For
 the following file formats there are decoder plugins available:
 
-- Ogg Vorbis
-- MP3
-- MP2
-- Musepack (MPC)
-- FLAC
-- WavPack
+- Ogg Vorbis (.ogg)
+- MP3 (.mp3)
+- MP2 (.mp2)
+- Musepack (.mpc)
+- FLAC (.flac)
+- Speex (.spx)
+- WavPack (.wv)
 - Several module formats (MOD, IT, STM, S3M, XM, 669, ULT)
-- M3U (Gmu can load and save M3U playlists)
+- M3U (Gmu can load and save .m3u playlists)
 
 The decoder plugins use external libraries for decoding the
 specific audio files. Those libraries must be available for
@@ -202,7 +209,7 @@ Alt+M        - Seek 10 seconds forward (**)
 Alt+N        - Seek 10 seconds backward (**)
 P            - Pause/resume playback
 Alt+X        - Stop playback
-Alt+Enter    - Exit player
+Alt+Q        - Exit player
 Tab          - Toggle file browser/playlist view/track info
 Volume Up/Dn - Increase/lower volume
 Alt+A        - Program info
@@ -766,14 +773,14 @@ control: toggle_play_pause, next, prev, stop, volume_up, volume_down.
 
 See "libs/information" directory for further details.
 
-- SDL >=1.2.9
+- SDL >=1.2.14
 - SDL_image >=1.2.4
 - SDL_gfx >=2.0.13
 - tremor >=1.0.0
 - libmikmod >=3.1.11
 - libmpg123 >=1.8.1
 - libmpcdec >=1.2.6
-- libFLAC >=1.1.4
+- libFLAC >=1.2.1
 - WavPack 4.4.0
-- AdPlug >=2.1
+- speex >= 1.2_rc1
 - libjpeg and libpng (used by SDL_image)
