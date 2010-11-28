@@ -80,6 +80,7 @@ install: $(DISTFILES)
 	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/frontends
 	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/themes
 	@cp gmu $(DESTDIR)$(PREFIX)/bin/gmu.bin
+	@-cp gmu-cli $(DESTDIR)$(PREFIX)/bin/gmu-cli
 	@cp README.txt $(DESTDIR)$(PREFIX)/share/gmu/README.txt
 	@cp -R frontends/* $(DESTDIR)$(PREFIX)/share/gmu/frontends
 	@cp -R decoders/* $(DESTDIR)$(PREFIX)/share/gmu/decoders
