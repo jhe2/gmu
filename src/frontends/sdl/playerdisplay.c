@@ -161,8 +161,10 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 		                skin.frequency_offset_x, skin.frequency_offset_y);
 	}
 	if (skin.time_offset_x >= 0 && skin.time_offset_y >= 0) {
-		if (min >= 0 && sec >= 0)
-			snprintf(buf, 27, "%02d:%02d", min, sec);
+		if (min >= 0 && min <= 99 && sec >= 0)
+			snprintf(buf, 27, " %02d:%02d", min, sec);
+		else if (min > 99 && sec >= 0)
+			snprintf(buf, 27, "%03d:%02d", min, sec);
 		else
 			snprintf(buf, 27, "--:--");
 		lcd_draw_string(&skin.font_display, buf, buffer,
