@@ -65,10 +65,12 @@ distbin: $(DISTFILES)
 	@-rm -rf $(projname)-$(TARGET).zip
 	@mkdir $(projname)-$(TARGET)
 	@cp -rl --parents $(DISTFILES) $(projname)-$(TARGET)
+	@-cp gmu-cli $(projname)-$(TARGET)
 	@-cp gmu.$(TARGET).conf $(projname)-$(TARGET)/gmu.$(TARGET).conf
 	@-cp $(TARGET).keymap $(projname)-$(TARGET)/$(TARGET).keymap
 	@$(STRIP) $(projname)-$(TARGET)/decoders/*.so
 	@$(STRIP) $(projname)-$(TARGET)/gmu
+	@-$(STRIP) $(projname)-$(TARGET)/gmu-cli
 	@zip -r $(projname)-$(TARGET).zip $(projname)-$(TARGET)
 	@-rm -rf $(projname)-$(TARGET)
 
