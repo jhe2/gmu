@@ -77,10 +77,6 @@ static char         base_dir[256];
 typedef enum Quit { DONT_QUIT, QUIT_WITH_ERROR, QUIT_WITHOUT_ERROR } Quit;
 static Quit         quit = DONT_QUIT;
 
-/*typedef enum GlobalCommand { NO_CMD, PLAY, PAUSE, STOP, NEXT, PREVIOUS, PLAY_ITEM } GlobalCommand;
-static GlobalCommand      global_command = NO_CMD;
-static int                global_param = 0;*/
-
 static GmuEvent    update_event = 0;
 
 static int         fullscreen = 0;
@@ -401,16 +397,6 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 			break;
 		case PL_PLAY_ITEM:
 			gmu_core_play_pl_item(pl_browser_get_selection(pb));
-			/*entry = playlist_get_entry(pb->pl, pl_browser_get_selection(pb));
-			if (entry != NULL) {
-				if (playlist_get_play_mode(gmu_core_get_playlist()) == PM_RANDOM ||
-				    playlist_get_play_mode(gmu_core_get_playlist()) == PM_RANDOM_REPEAT)
-					playlist_reset_random(pb->pl);
-				playlist_set_current(pb->pl, entry);
-				play_file(playlist_get_entry_filename(entry), ti, cv);
-			} else {
-				player_display_set_notice_message("PLAYLIST IS EMPTY", NOTICE_DELAY);
-			}*/
 			update = UPDATE_ALL;
 			break;
 		case PL_CLEAR_PLAYLIST:
@@ -780,11 +766,6 @@ void run_player(char *skin_name, char *decoders_str)
 
 		if (gmu_core_playlist_get_length() > 0) {
 			if (view != HELP) view = PLAYLIST;
-			/*if (playlist_next(gmu_core_get_playlist())) {
-				Entry *entry = playlist_get_current(gmu_core_get_playlist());
-				if (entry != NULL)
-					play_file(playlist_get_entry_filename(entry), ti, &cv);
-			}*/
 			update = UPDATE_ALL;
 		} else {
 			if (strncmp(cfg_get_key_value(*config, "RememberLastPlaylist"), "yes", 3) == 0) {
@@ -1019,7 +1000,7 @@ void run_player(char *skin_name, char *decoders_str)
 						int          w, h;
 						SDL_Surface *tmp;
 						static int   prev_w = 320, prev_h = 240;
-						
+
 						fullscreen = !fullscreen;
 						if (fullscreen) {
 							prev_w = display->w;
@@ -1149,55 +1130,6 @@ void run_player(char *skin_name, char *decoders_str)
 		}
 
 		if (event.type == SDL_USEREVENT) {
-			/*Entry *tmp_item;*/
-
-			/*switch (global_command) {
-				case NEXT:
-					if (play_next(ti, &cv)) {
-						if (auto_select_cur_item)
-							pl_browser_set_selection(&pb, gmu_core_playlist_get_current_position());
-					} else {
-						player_display_set_notice_message("CANNOT JUMP TO NEXT TRACK", NOTICE_DELAY);
-					}
-					update = UPDATE_ALL;
-					break;
-				case PAUSE:
-					gmu_core_pause();
-					update = UPDATE_ALL;
-					break;
-				case PLAY_ITEM:
-					tmp_item = gmu_core_playlist_get_entry(global_param);
-					if (tmp_item != NULL) {
-						gmu_core_playlist_set_current(tmp_item);*/
-						/*play_file(gmu_core_playlist_get_entry_filename(tmp_item), ti, &cv);*/
-					/*}
-					break;
-				default:
-					break;
-			}*/
-
-			/*if (global_command == NO_CMD &&
-			    file_player_get_item_status() == STOPPED &&
-			    file_player_get_playback_status() != STOPPED && 
-			    playlist_get_current(gmu_core_get_playlist()) != NULL) {
-				if (!play_next(gmu_core_get_playlist(), ti, &cv)) {
-					playlist_reset_random(gmu_core_get_playlist());
-					playlist_set_current(gmu_core_get_playlist(), NULL);
-				} else {
-					if (auto_select_cur_item)
-						pl_browser_set_selection(&pb, playlist_get_current_position(gmu_core_get_playlist()));
-				}
-				update = UPDATE_ALL;
-
-				if (backlight_poweron_on_track_change && !hold_state) {
-					backlight_poweroff_timer = seconds_until_backlight_poweroff * FPS;
-					update_display = 1;
-					hw_display_on();
-				}
-			}*/
-
-			/*global_command = NO_CMD;*/
-
 			if (update_event == GMU_TRACK_CHANGE) {
 				update = UPDATE_ALL;
 				update_event = GMU_NO_EVENT;
