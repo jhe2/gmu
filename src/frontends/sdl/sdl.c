@@ -85,12 +85,12 @@ static GmuEvent    update_event = 0;
 
 static int         fullscreen = 0;
 static int         auto_select_cur_item = 1;
+static int         screen_max_width = 0, screen_max_height = 0, screen_max_depth = 0;
 
 static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
 	SDL_Surface         *display;
 	const SDL_VideoInfo *video_info;
-	int                  screen_max_width = 0, screen_max_height = 0, screen_max_depth = 0;
 
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO | (with_joystick ? SDL_INIT_JOYSTICK : 0)) < 0) {
 		printf("sdl_frontend: ERROR: Could not initialize SDL: %s\n", SDL_GetError());
@@ -815,7 +815,6 @@ void run_player(char *skin_name, char *decoders_str)
 				SDL_FreeSurface(buffer);
 				buffer = SDL_DisplayFormat(tmp);
 				SDL_FreeSurface(tmp);
-				/*printf("sdl_frontend: Window resized: %d x %d\n", event.resize.w, event.resize.h);*/
 				display = SDL_SetVideoMode(event.resize.w, event.resize.h,
 				                           buffer->format->BitsPerPixel,
 				                           SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE);
@@ -1016,6 +1015,32 @@ void run_player(char *skin_name, char *decoders_str)
 					case GLOBAL_TOGGLE_TIME:
 						time_remaining = !time_remaining;
 						break;
+					case GLOBAL_FULLSCREEN: {
+						int          w, h;
+						SDL_Surface *tmp;
+						static int   prev_w = 320, prev_h = 240;
+						
+						fullscreen = !fullscreen;
+						if (fullscreen) {
+							prev_w = display->w;
+							prev_h = display->h;
+							w = screen_max_width;
+							h = screen_max_height;
+						} else {
+							w = prev_w;
+							h = prev_h;
+						}
+						tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h,
+				                                   display->format->BitsPerPixel, 0, 0, 0, 0);
+						SDL_FreeSurface(buffer);
+						buffer = SDL_DisplayFormat(tmp);
+						SDL_FreeSurface(tmp);
+						display = SDL_SetVideoMode(w, h, buffer->format->BitsPerPixel,
+												   SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE | (fullscreen ? SDL_FULLSCREEN : 0));
+						if (!display) exit(-2); /* should not happen */
+						update = UPDATE_ALL;
+						break;
+					}
 					case GLOBAL_SET_SHUTDOWN_TIMER: {
 						char *timer_msg = NULL;
 						switch (gmu_core_get_shutdown_time_total()) {

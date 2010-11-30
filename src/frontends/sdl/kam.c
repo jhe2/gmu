@@ -97,6 +97,8 @@ void key_action_mapping_init(KeyActionMapping *kam)
 	kam[GLOBAL_HELP].description =                "Help";
 	kam[GLOBAL_EXIT].scope =                 ANY;
 	kam[GLOBAL_EXIT].description =                "Exit";
+	kam[GLOBAL_FULLSCREEN].scope =   ANY;
+	kam[GLOBAL_FULLSCREEN].description =          "Fullscreen";
 	kam[GLOBAL_LOCK].scope =                 ANY;
 	kam[GLOBAL_LOCK].description =                "Lock";
 	kam[GLOBAL_UNLOCK].scope =               ANY;
@@ -260,6 +262,10 @@ int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 			button_name = cfg_get_key_value(keymapconf, "ShutdownTimer");
 			get_button(button_name, &kam[GLOBAL_SET_SHUTDOWN_TIMER].button, &kam[GLOBAL_SET_SHUTDOWN_TIMER].modifier, &kam[GLOBAL_SET_SHUTDOWN_TIMER].method);
 			if (button_name) strncpy(kam[GLOBAL_SET_SHUTDOWN_TIMER].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
+
+			button_name = cfg_get_key_value(keymapconf, "ToggleFullscreen");
+			get_button(button_name, &kam[GLOBAL_FULLSCREEN].button, &kam[GLOBAL_FULLSCREEN].modifier, &kam[GLOBAL_FULLSCREEN].method);
+			if (button_name) strncpy(kam[GLOBAL_FULLSCREEN].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
 
 			button_name = cfg_get_key_value(keymapconf, "SetupSelect");
 			get_button(button_name, &kam[SETUP_SELECT].button, &kam[SETUP_SELECT].modifier, &kam[SETUP_SELECT].method);

@@ -26,6 +26,7 @@ Unlock=Mod+Up
 Exit=Mod+Enter
 ShutdownTimer=Mod+Down
 Help=F1
+ToggleFullscreen=F
 
 # Program info mappings:
 ProgramInfo=Mod+A
