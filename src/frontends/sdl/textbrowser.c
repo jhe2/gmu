@@ -90,10 +90,8 @@ void text_browser_draw(TextBrowser *tb, SDL_Surface *sdl_target)
 	int tlen = strlen(tb->text), indent = tb->skin->font1_char_width / 2;
 	int nol = skin_textarea_get_number_of_lines((Skin *)tb->skin);
 
-	if (tb->chars_per_line <= 0) {
-		text_browser_set_chars_per_line(tb, skin_textarea_get_characters_per_line((Skin *)tb->skin));
-		tb->pos_x = gmu_widget_get_pos_x((GmuWidget *)&tb->skin->lv, 1);
-	}
+	text_browser_set_chars_per_line(tb, skin_textarea_get_characters_per_line((Skin *)tb->skin));
+	tb->pos_x = gmu_widget_get_pos_x((GmuWidget *)&tb->skin->lv, 1);
 	tb->pos_y = gmu_widget_get_pos_y((GmuWidget *)&tb->skin->lv, 1);
 
 	skin_draw_header_text((Skin *)tb->skin, (char *)tb->title, sdl_target);
