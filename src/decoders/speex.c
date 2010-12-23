@@ -31,32 +31,32 @@ static ogg_sync_state   oy;
 static ogg_page         og;
 static ogg_packet       op;
 static ogg_stream_state os;
-static SpeexBits bits;
-static int packet_count = 0;
-static FILE *file;
-static void *st = NULL;
-static ogg_int64_t page_granule = 0, last_granule = 0;
-static int frame_size = 0, granule_frame_size = 0;
-static int skip_samples = 0, page_nb_packets;
-static int nframes = 2, eos = 0, enh_enabled;
-static int speex_serialno = -1;
-static int rate = 0, channels = -1;
+static SpeexBits        bits;
+static int              packet_count = 0;
+static FILE            *file;
+static void            *st = NULL;
+static ogg_int64_t      page_granule = 0, last_granule = 0;
+static int              frame_size = 0, granule_frame_size = 0;
+static int              skip_samples = 0, page_nb_packets;
+static int              nframes = 2, eos = 0, enh_enabled;
+static int              speex_serialno = -1;
+static int              rate = 0, channels = -1;
 static SpeexStereoState stereo = SPEEX_STEREO_STATE_INIT;
-static int extra_headers = 0;
-static int audio_size = 0;
-static short output[MAX_FRAME_SIZE];
-static int nb_read;
-static int packet_no;
-static int lookahead;
-static int stream_init;
-static spx_int32_t current_bitrate, bitrate;
+static int              extra_headers = 0;
+static int              audio_size = 0;
+static short            output[MAX_FRAME_SIZE];
+static int              nb_read;
+static int              packet_no;
+static int              lookahead;
+static int              stream_init;
+static spx_int32_t      current_bitrate, bitrate;
 
 static const char *get_name(void)
 {
 	return "Speex decoder v0.1";
 }
 
-static void *process_header(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t *frame_size,
+static void *header_process(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t *frame_size,
                             int *granule_frame_size, spx_int32_t *rate, int *nframes, int *channels,
                             SpeexStereoState *stereo, int *extra_headers)
 {
@@ -72,8 +72,7 @@ static void *process_header(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t
 	}
 
 	if (header->mode >= SPEEX_NB_MODES || header->mode < 0) {
-		printf("speex: Mode number %d does not (yet/any longer) exist in this version.\n", 
-		       header->mode);
+		printf("speex: Unknown mode number %d.\n", header->mode);
 		free(header);
 		return NULL;
 	}
@@ -81,19 +80,19 @@ static void *process_header(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t
 	mode = speex_lib_get_mode(header->mode);
 
 	if (header->speex_version_id > 1) {
-		printf("speex: This file was encoded with Speex bit-stream version %d, which I don't know how to decode.\n",
+		printf("speex: Unknown Speex bitstream version %d.\n",
 		       header->speex_version_id);
 		free(header);
 		return NULL;
 	}
 
 	if (mode->bitstream_version < header->mode_bitstream_version) {
-		printf("speex: The file was encoded with a newer version of Speex. You need to upgrade in order to play it.\n");
+		printf("speex: Speex bitstream version too new.\n");
 		free(header);
 		return NULL;
 	}
 	if (mode->bitstream_version > header->mode_bitstream_version) {
-		printf("speex: The file was encoded with an older version of Speex. You would need to downgrade the version in order to play it.\n");
+		printf("speex: Speex bitstream version too old.\n");
 		free(header);
 		return NULL;
 	}
@@ -140,7 +139,6 @@ static int read_block(void)
 	/* Get the ogg buffer for writing */
 	data = ogg_sync_buffer(&oy, 200);
 	if (data) {
-		/* Read bitstream from input file */
 		nb_read = fread(data, sizeof(char), 200, file);      
 		ogg_sync_wrote(&oy, nb_read);
 		if (nb_read > 0) res = 1;
@@ -148,7 +146,7 @@ static int read_block(void)
 	return res;
 }
 
-static int process_block_data(void)
+static int block_data_process(void)
 {
 	int res = 0;
 	/* Read one complete page */
@@ -167,15 +165,12 @@ static int process_block_data(void)
 		page_granule = ogg_page_granulepos(&og);
 		page_nb_packets = ogg_page_packets(&og);
 		if (page_granule > 0 && frame_size) {
-			skip_samples = frame_size * (page_nb_packets * granule_frame_size * nframes - (page_granule - last_granule)) / granule_frame_size;
-			if (ogg_page_eos(&og))
-				skip_samples = -skip_samples;
-			/*else if (!ogg_page_bos(&og))
-				skip_samples = 0;*/
+			skip_samples = frame_size * (page_nb_packets * granule_frame_size * nframes 
+			               - (page_granule - last_granule)) / granule_frame_size;
+			if (ogg_page_eos(&og)) skip_samples = -skip_samples;
 		} else {
 			skip_samples = 0;
 		}
-		/*printf("speex: page granulepos: %d %d %d\n", skip_samples, page_nb_packets, (int)page_granule);*/
 		last_granule = page_granule;
 		packet_no = 0;
 		res = 1;
@@ -205,9 +200,10 @@ static int open_file(char *filename)
 	} else {
 		st = 0;
 		read_block();
-		process_block_data();
+		block_data_process();
 		if (ogg_stream_packetout(&os, &op) == 1) { /* Process first packet as Speex header */
-			st = process_header(&op, enh_enabled, &frame_size, &granule_frame_size, &rate, &nframes, &channels, &stereo, &extra_headers);
+			st = header_process(&op, enh_enabled, &frame_size, &granule_frame_size, 
+			                    &rate, &nframes, &channels, &stereo, &extra_headers);
 			if (op.bytes >= 5 && !memcmp(op.packet, "Speex", 5)) {
 				speex_serialno = os.serialno;
 			}
@@ -220,8 +216,7 @@ static int open_file(char *filename)
 			speex_decoder_ctl(st, SPEEX_GET_LOOKAHEAD, &lookahead);
 			speex_decoder_ctl(st, SPEEX_GET_BITRATE, &bitrate);
 			if (!nframes) nframes = 1;
-			printf("speex: File opened okay!\n");
-			printf("speex: Found file with %d channel(s) and %d Hz\n", channels, rate);
+			printf("speex: Found file with %d channel(s) and %d Hz.\n", channels, rate);
 		}
 	}
 	return res;
@@ -240,13 +235,13 @@ static int close_file(void)
 
 static int decode_data(char *target, int max_size)
 {
-	int size = 1, ret = 1;
+	int size = 1;
 	int i, j;
 
 	if (!eos) {
 		int osp = ogg_stream_packetout(&os, &op);
 		while (osp == 0) {
-			if (!process_block_data()) {
+			if (!block_data_process()) {
 				if (!read_block()) break;
 			}
 			osp = ogg_stream_packetout(&os, &op);
@@ -294,10 +289,8 @@ static int decode_data(char *target, int max_size)
 					{
 						int frame_offset = 0;
 						int new_frame_size = frame_size;
-						/*printf ("packet %d %d\n", packet_no, skip_samples);*/
-						/*fprintf (stderr, "packet %d %d %d\n", packet_no, skip_samples, lookahead);*/
+
 						if (packet_no == 1 && j == 0 && skip_samples > 0) {
-							printf("speex: Chopping first packet.\n");
 							new_frame_size -= skip_samples + lookahead;
 							frame_offset = skip_samples + lookahead;
 						}
@@ -308,7 +301,6 @@ static int decode_data(char *target, int max_size)
 							   new_frame_size = 0;
 							if (new_frame_size > frame_size)
 							   new_frame_size = frame_size;
-							printf("speex: Chopping end: %d %d %d\n", new_frame_size, packet_length, packet_no);
 						}
 
 						if (new_frame_size > 0) {
@@ -316,9 +308,7 @@ static int decode_data(char *target, int max_size)
 							for (i = 0; i < frame_size * channels * 2 && i < max_size; i++)
 								target[i] = audio[i];
 							size = i;
-							//printf("\nnew_frame_size = %d size = %d max_size = %d\n", new_frame_size, size, max_size);
 							audio_size += sizeof(short) * new_frame_size * channels;
-							//printf("audio_size = %d\n", audio_size);
 						}
 					}
 				}
@@ -357,7 +347,7 @@ static int get_current_bitrate(void)
 
 static int get_length(void)
 {
-	return 0; //ov_time_total(&vf, -1) / 1000;
+	return 0;
 }
 
 static int get_samplerate(void)
@@ -378,9 +368,9 @@ static int get_bitrate(void)
 static const char *get_meta_data(GmuMetaDataType gmdt, int for_current_file)
 {
 	char *result = NULL;
-	char **ptr   = NULL;
+	/*char **ptr   = NULL;
 
-	/*if (for_current_file) {
+	if (for_current_file) {
 		ptr = ov_comment(&vf, -1)->user_comments;
 	} else {
 		ptr = ov_comment(&vf_metaonly, -1)->user_comments;
@@ -425,7 +415,7 @@ const char *get_file_type(void)
 
 int meta_data_load(const char *filename)
 {
-	FILE *file;
+	/*FILE *file;*/
 	int   result = 0;
 
 	/*if ((file = fopen(filename, "r"))) {
@@ -441,7 +431,6 @@ int meta_data_load(const char *filename)
 
 int meta_data_close(void)
 {
-	//ov_clear(&vf_metaonly);
 	return 1;
 }
 
