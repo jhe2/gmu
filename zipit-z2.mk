@@ -15,7 +15,7 @@
 #
 
 #DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
-DECODERS_TO_BUILD=decoders/wavpack.so decoders/vorbis.so decoders/mpg123.so decoders/flac.so
+DECODERS_TO_BUILD=decoders/wavpack.so decoders/vorbis.so decoders/mpg123.so decoders/flac.so decoders/speex.so
 FRONTENDS_TO_BUILD=frontends/sdl.so frontends/log.so
 SDL_LIB=-L/opt/crossdev/z2/lib -lSDL -lpthread -lSDL_image -lSDL_gfx
 SDL_CFLAGS=-I/home/wejp/crossdev/z2/buildroot/output/staging/usr/include/SDL -I/home/wejp/crossdev/z2/buildroot/output/staging/usr/include -D_GNU_SOURCE=1 -D_REENTRANT
