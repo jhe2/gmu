@@ -21,11 +21,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include "../gmufrontend.h"
 #include "../core.h"
 
 static pthread_t fe_thread;
+static int       running;
 
 #define BUF 1024
 #define PORT 4680
@@ -37,37 +39,8 @@ const char *get_name(void)
 
 void shut_down(void)
 {
-	/* Send quit request to Socket, so the loop can terminate... */
-	int                sock;
-	char              *buffer = malloc(BUF);
-	ssize_t            size;
-	struct sockaddr_in address;
-	const int          y = 1;
-
 	printf("gmusrv: Shutting down.\n");
-
-	if (buffer && (sock = socket(AF_INET, SOCK_STREAM, 0)) > 0) {
-		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int));
-		address.sin_family = AF_INET;
-		inet_aton("127.0.0.1", &address.sin_addr);
-		address.sin_port = htons(PORT);
-		
-		if (connect(sock, (struct sockaddr *)&address, sizeof(address)) == 0) {
-			char *str = "GmuSrv1\n";
-			printf("Connected to server (%s).\n", inet_ntoa(address.sin_addr));
-			/* Verify server identification string... */
-			size = recv(sock, buffer, BUF-1, 0);
-			if (size > 0 && strncmp(buffer, str, strlen(str)) == 0) { /* okay */
-				str = "_gmusrv_quit";
-				if (size > 0) buffer[size] = '\0';
-				/* Send _quit command to server... */
-				send(sock, str, strlen(str), 0);
-			}
-		}
-		close(sock);
-	}
-	if (buffer) free(buffer);
-
+	running = 0;
 	pthread_join(fe_thread, NULL);
 }
 
@@ -83,63 +56,82 @@ static void *thread_func(void *arg)
 	if (buffer && (sock = socket(AF_INET, SOCK_STREAM, 0)) > 0) {
 		printf("gmusrv: Socket created.\n");
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int));
+		fcntl(sock, F_SETFL, O_NONBLOCK);
 		address.sin_family = AF_INET;
 		address.sin_addr.s_addr = INADDR_ANY;
 		address.sin_port = htons(PORT);
 		if (bind(sock, (struct sockaddr *)&address, sizeof(address)) == 0) {
-			int running = 1;
-
 			listen(sock, 5);
 			addrlen = sizeof(struct sockaddr_in);
 
+			running = 1;
 			while (running) {
+				usleep(10000);
 				client_sock = accept(sock, (struct sockaddr *)&address, &addrlen);
 				if (client_sock > 0) {
+					int   auth_okay = 0;
 					char *str = "GmuSrv1\n";
 					printf("gmusrv: Client connected (%s).\n", inet_ntoa(address.sin_addr));
 					/* Send server identification string... */
 					send(client_sock, str, strlen(str), 0);
-					/* Receive command from client... */
+					/* Receive password from client... */
 					size = recv(client_sock, buffer, BUF-1, 0);
-					if (size > 0) buffer[size] = '\0';
-					printf("gmusrv: Command received: \"%s\"\n", buffer);
-					if (strncmp(buffer, "_gmusrv_quit", 4) == 0) {
-						running = 0;
+					if (size > 0) {
+						char tmp[4];
+						buffer[size] = '\0';
+						printf("password:%s\n", buffer);
+						if (strncmp(buffer, "password", size) == 0)
+							auth_okay = 1;
+						else
+							auth_okay = 0;
+						snprintf(tmp, 3, "%d", auth_okay);
+						send(client_sock, tmp, strlen(tmp), 0);
 					}
-					switch (buffer[0]) {
-						case 'p':
-							str = "Play/pause\n";
-							send(client_sock, str, strlen(str), 0);
-							gmu_core_play();
-							break;
-						case 'n':
-							str = "Jumping to next track in playlist.\n";
-							send(client_sock, str, strlen(str), 0);
-							gmu_core_next();
-							break;							
-						case 'l':
-							str = "Jumping to previous track in playlist.\n";
-							send(client_sock, str, strlen(str), 0);
-							gmu_core_previous();
-							break;
-						case 'x':
-							str = "Terminating Gmu.\n";
-							send(client_sock, str, strlen(str), 0);
-							gmu_core_quit();
-							break;
-						case 's': /* status */
-							
-							break;
-						case 't': { /* track info */
-							TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
-							char       ti_str[320];
-
-							snprintf(ti_str, 319, "%s - %s", trackinfo_get_artist(ti), trackinfo_get_title(ti));
-							send(client_sock, ti_str, strlen(ti_str), 0);
-							break;
+					if (auth_okay) {
+						/* Receive command from client... */
+						size = recv(client_sock, buffer, BUF-1, 0);
+						if (size > 0) buffer[size] = '\0';
+						printf("gmusrv: Command received: \"%s\"\n", buffer);
+						if (strncmp(buffer, "_gmusrv_quit", 4) == 0) {
+							running = 0;
 						}
-						default:
-							break;
+						switch (buffer[0]) {
+							case 'p':
+								str = "Play/pause\n";
+								send(client_sock, str, strlen(str), 0);
+								gmu_core_play();
+								break;
+							case 'n':
+								str = "Jumping to next track in playlist.\n";
+								send(client_sock, str, strlen(str), 0);
+								gmu_core_next();
+								break;							
+							case 'l':
+								str = "Jumping to previous track in playlist.\n";
+								send(client_sock, str, strlen(str), 0);
+								gmu_core_previous();
+								break;
+							case 'x':
+								str = "Terminating Gmu.\n";
+								send(client_sock, str, strlen(str), 0);
+								gmu_core_quit();
+								break;
+							case 's': /* status */
+								
+								break;
+							case 't': { /* track info */
+								TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
+								char       ti_str[320];
+
+								snprintf(ti_str, 319, "%s - %s", trackinfo_get_artist(ti), trackinfo_get_title(ti));
+								send(client_sock, ti_str, strlen(ti_str), 0);
+								break;
+							}
+							default:
+								break;
+						}
+					} else {
+						printf("gmusrv: Client authentication failed.\n");
 					}
 				}
 				close(client_sock);

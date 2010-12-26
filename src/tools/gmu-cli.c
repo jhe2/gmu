@@ -41,17 +41,26 @@ int main(int argc, char **argv)
 			address.sin_port = htons(PORT);
 			
 			if (connect(sock, (struct sockaddr *)&address, sizeof(address)) == 0) {
-				char *str = "GmuSrv1\n";
+				char *str = "GmuSrv1\n", *password = "password";
 				/*printf("Connected to server (%s).\n", inet_ntoa(address.sin_addr));*/
 				/* Verify server identification string... */
 				size = recv(sock, buffer, BUF-1, 0);
 				if (size > 0 && strncmp(buffer, str, strlen(str)) == 0) { /* okay */
 					if (size > 0) buffer[size] = '\0';
-					/* Send command to server... */
-					send(sock, argv[1], strlen(argv[1]), 0);
+					/* Send password to server... */
+					send(sock, password, strlen(password), 0);
 					/* Receive response... */
 					size = recv(sock, buffer, BUF-1, 0);
-					if (size > 0) printf("%s", buffer);
+					if (size > 0 && buffer[0] == '1') {
+						printf("Password okay.\n");
+						/* Send command to server... */
+						send(sock, argv[1], strlen(argv[1]), 0);
+						/* Receive response... */
+						size = recv(sock, buffer, BUF-1, 0);
+						if (size > 0) printf("%s", buffer);
+					} else {
+						printf("Invalid password.\n");
+					}
 				}
 			}
 			close(sock);
