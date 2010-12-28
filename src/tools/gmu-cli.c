@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	ConfigFile         config;
 
 	if (argc >= 2) {
-		char *password = "password", *host = "127.0.0.1";
+		char *password, *host;
 		char  config_file_path[256], *homedir;
 
 		cfg_init_config_file_struct(&config);
