@@ -84,14 +84,10 @@ int main(int argc, char **argv)
 				size = recv(sock, buffer, BUF-1, 0);
 				if (size > 0 && strncmp(buffer, str, strlen(str)) == 0) { /* okay */
 					if (size > 0) buffer[size] = '\0';
-					/* Send password to server... */
 					send(sock, password, strlen(password), 0);
-					/* Receive response... */
 					size = recv(sock, buffer, BUF-1, 0);
 					if (size > 0 && buffer[0] == '1') {
-						/* Send command to server... */
 						send(sock, argv[1], strlen(argv[1]), 0);
-						/* Receive response... */
 						size = recv(sock, buffer, BUF-1, 0);
 						if (size > 0) printf("%s", buffer);
 					} else {
