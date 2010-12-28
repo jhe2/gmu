@@ -98,9 +98,9 @@ clean:
 	@-rm -rf *.o $(BINARY) decoders/*.so frontends/*.so
 	@echo -e "\033[1mAll clean.\033[0m"
 
-gmu-cli: src/tools/gmu-cli.c
+gmu-cli: src/tools/gmu-cli.c wejpconfig.o
 	@echo -e "Compiling \033[1m$<\033[0m"
-	@$(CC) $(CFLAGS) -o gmu-cli src/tools/gmu-cli.c
+	@$(CC) $(CFLAGS) -o gmu-cli src/tools/gmu-cli.c wejpconfig.o
 
 decoders/musepack.so: src/decoders/musepack.c id3.o charset.o trackinfo.o
 	@echo -e "Compiling \033[1m$<\033[0m"

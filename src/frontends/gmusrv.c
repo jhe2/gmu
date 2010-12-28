@@ -52,6 +52,8 @@ static void *thread_func(void *arg)
 	ssize_t            size;
 	struct sockaddr_in address;
 	const int          y = 1;
+	ConfigFile        *config = gmu_core_get_config();
+	char              *password = cfg_get_key_value(*config, "gmusrv.Password");
 
 	if (buffer && (sock = socket(AF_INET, SOCK_STREAM, 0)) > 0) {
 		printf("gmusrv: Socket created.\n");
@@ -79,8 +81,8 @@ static void *thread_func(void *arg)
 					if (size > 0) {
 						char tmp[4];
 						buffer[size] = '\0';
-						printf("password:%s\n", buffer);
-						if (strncmp(buffer, "password", size) == 0)
+						printf("got password:%s expected password:%s\n", buffer, password);
+						if (password && strncmp(buffer, password, size) == 0)
 							auth_okay = 1;
 						else
 							auth_okay = 0;
@@ -97,22 +99,22 @@ static void *thread_func(void *arg)
 						}
 						switch (buffer[0]) {
 							case 'p':
-								str = "Play/pause\n";
+								str = "GmuSrv: Play/pause\n";
 								send(client_sock, str, strlen(str), 0);
 								gmu_core_play();
 								break;
 							case 'n':
-								str = "Jumping to next track in playlist.\n";
+								str = "GmuSrv: Jumping to next track in playlist.\n";
 								send(client_sock, str, strlen(str), 0);
 								gmu_core_next();
 								break;							
 							case 'l':
-								str = "Jumping to previous track in playlist.\n";
+								str = "GmuSrv: Jumping to previous track in playlist.\n";
 								send(client_sock, str, strlen(str), 0);
 								gmu_core_previous();
 								break;
 							case 'x':
-								str = "Terminating Gmu.\n";
+								str = "GmuSrv: Terminating Gmu.\n";
 								send(client_sock, str, strlen(str), 0);
 								gmu_core_quit();
 								break;
@@ -127,7 +129,18 @@ static void *thread_func(void *arg)
 								send(client_sock, ti_str, strlen(ti_str), 0);
 								break;
 							}
+							case 'h':
+								str = "GmuSrv help\nAvailable commands:\n"
+								      "p : Play/Pause\n"
+								      "n : Jump to next track in playlist\n"
+								      "l : Jump to previous track in playlist\n"
+								      "x : Terminate Gmu\n"
+								      "t : Track info\n";
+								send(client_sock, str, strlen(str), 0);
+								break;
 							default:
+								str = "GmuSrv: Unknown command\n";
+								send(client_sock, str, strlen(str), 0);
 								break;
 						}
 					} else {
