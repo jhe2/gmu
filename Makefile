@@ -26,7 +26,7 @@ OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o
 ALLFILES=src/ Makefile *.mk gmu.png themes README.txt BUILD.txt COPYING gmu.conf.example *.keymap *.gpu *.dge *.nn gmuinput.*.conf gmu.*.conf
 BINARY=gmu
 
-all: $(BINARY) decoders frontends
+all: $(BINARY) decoders frontends gmu-cli
 	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
 
 decoders: $(DECODERS_TO_BUILD)
