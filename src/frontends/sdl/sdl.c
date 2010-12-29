@@ -102,6 +102,9 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 
 	width  = width  > screen_max_width  ? screen_max_width  : width;
 	height = height > screen_max_height ? screen_max_height : height;
+	width  = width <= 0 ? 320 : width;
+	height  = height <= 0 ? 240 : height;
+
 	if (fullscreen) {
 		fullscreen = SDL_FULLSCREEN;
 		width = screen_max_width;
