@@ -29,6 +29,7 @@ Table of contents
 4.  Command line arguments
 5.  Config file
 5.1 Log bot
+5.2 Gmu CLI
 6.  IR remote control plugin (LIRC)
 7.  Libraries used by Gmu
 
@@ -744,6 +745,30 @@ track's length was only 0:50, the track would need to be played for
 at least 30 seconds, even though 50 percent of 50 seconds would be
 equal to 25 seconds.
 	- Example: Log.MinimumPlaytimePercent = 50
+
+
+5.2 Gmu CLI
+-----------
+
+Gmu now comes with a (still very basic) command line interface program.
+It allows you to control some basic functions of Gmu through the command
+line. It works locally as well as over a TCP network.
+The binary of the cli program is called gmu-cli it uses its own 
+configuration file located in ~/.config/gmu/gmu-cli.conf
+There you can define the host on which the Gmu main program is running as
+well as the password to be used for authentication. This obviously must
+match the password configured in Gmu's configuration file (gmusrv.Password).
+Gmu listens on TCP port 4680. If you do not want to use gmu-cli at all, 
+you can remove Gmu plugin in frontends/gmusrv.so.
+
+gmu-cli is controlled by one letter commands. To get a list of available
+commands use the h (help) command:
+
+$ ./gmu-cli h
+
+For this to work gmu-cli needs to be able to contact Gmu, so make sure it
+has been configured correctly.
+
 
 6. IR remote control plugin (LIRC)
 ----------------------------------
