@@ -19,6 +19,7 @@
 #include FILE_HW_H
 #include "wejpconfig.h"
 #include "inputconfig.h"
+#include "debug.h"
 
 void key_action_mapping_init(KeyActionMapping *kam)
 {
@@ -152,7 +153,7 @@ int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 
 	cfg_init_config_file_struct(&keymapconf);
 	if (cfg_read_config_file(&keymapconf, keymap_file) != 0) {
-		printf("keymap: Could not read \"%s\". You need to resolve this issue. No buttons have been mapped.\n", keymap_file);
+		wdprintf(V_ERROR, "keymap", "Could not read \"%s\". You need to resolve this issue. No buttons have been mapped.\n", keymap_file);
 		result = 1;
 	} else {
 		/* Check if all required key mappings are defined */
@@ -166,7 +167,7 @@ int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 		    !cfg_is_key_available(keymapconf, "PlaylistClear") ||
 		    !cfg_is_key_available(keymapconf, "FileBrowserAddFileToPlaylistOrChDir")) {
 		    	result = 0;
-		    	printf("keymap: At least one required key definition is missing!\n");
+		    	wdprintf(V_ERROR, "keymap", "At least one required key definition is missing!\n");
 		} else { /* all required keys available */
 			char           *button_name;
 
@@ -392,7 +393,7 @@ int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 			if (button_name) strncpy(kam[QUESTION_NO].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
 
 			result = 1;
-			printf("keymap: Key map \"%s\" loaded successfully.\n", keymap_file);
+			wdprintf(V_INFO, "keymap", "Key map \"%s\" loaded successfully.\n", keymap_file);
 		}		
 	}
 	cfg_free_config_file_struct(&keymapconf);

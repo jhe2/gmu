@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "m3u.h"
+#include "debug.h"
 
 int m3u_open_file(M3u *m3u, char *filename)
 {
@@ -41,27 +42,27 @@ int m3u_open_file(M3u *m3u, char *filename)
 			m3u->m3u_path[len] = '/';
 			m3u->m3u_path[len+1] = '\0';
 		} else {
-			printf("m3u: WARNING: Unable to get current directory.\n");
+			wdprintf(V_WARNING, "m3u", "WARNING: Unable to get current directory.\n");
 			m3u->m3u_path[0] = '.';
 			m3u->m3u_path[1] = '\0';
 		}
 	}
-	printf("m3u: Path = %s\n", m3u->m3u_path); 
+	wdprintf(V_DEBUG, "m3u", "Path = %s\n", m3u->m3u_path); 
 
 	if ((m3u->pl_file = fopen(filename, "r")) != NULL) {
 		char buf[MAX_PATH] = "";
 		if (fgets(buf, MAX_PATH - 1, m3u->pl_file)) {
 			if (strncmp(buf, "#EXTM3U", 7) == 0) {
 				m3u->extended = 1;
-				printf("m3u: Extended playlist found.\n");
+				wdprintf(V_INFO, "m3u", "Extended playlist found.\n");
 			} else {
 				m3u->extended = 0;
 				rewind(m3u->pl_file);
-				printf("m3u: Simple playlist found.\n");
+				wdprintf(V_INFO, "m3u", "Simple playlist found.\n");
 			}
 		} else {
 			m3u->extended = 0;
-			printf("m3u: Invalid playlist file. Empty file?\n");
+			wdprintf(V_ERROR, "m3u", "Invalid playlist file. Empty file?\n");
 		}
 		result = 1;
 	}

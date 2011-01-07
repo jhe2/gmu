@@ -28,6 +28,7 @@
 #include "../../trackinfo.h"
 #include "../../decloader.h"  /* for decoders list */
 #include "../../gmudecoder.h" /* for decoders list */
+#include "../../debug.h"
 
 #include FILE_HW_H
 #include "../../wejpconfig.h"
@@ -89,7 +90,7 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 	const SDL_VideoInfo *video_info;
 
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO | (with_joystick ? SDL_INIT_JOYSTICK : 0)) < 0) {
-		printf("sdl_frontend: ERROR: Could not initialize SDL: %s\n", SDL_GetError());
+		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize SDL: %s\n", SDL_GetError());
 		exit(1);
 	}
 
@@ -97,8 +98,8 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 	screen_max_width  = video_info->current_w;
 	screen_max_height = video_info->current_h;
 	screen_max_depth  = video_info->vfmt->BitsPerPixel;
-	printf("sdl_frontend: Available screen estate: %d x %d pixels @ %d bpp\n",
-	       screen_max_width, screen_max_height, screen_max_depth);
+	wdprintf(V_INFO, "sdl_frontend", "Available screen estate: %d x %d pixels @ %d bpp\n",
+	         screen_max_width, screen_max_height, screen_max_depth);
 
 	width  = width  > screen_max_width  ? screen_max_width  : width;
 	height = height > screen_max_height ? screen_max_height : height;
@@ -113,19 +114,19 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 
 	display = SDL_SetVideoMode(width, height, screen_max_depth, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE | fullscreen);
 	if (display == NULL) {
-		printf("sdl_frontend: ERROR: Could not initialize screen: %s\n", SDL_GetError());
+		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize screen: %s\n", SDL_GetError());
 		exit(1);
 	}
 #ifndef SHOW_MOUSE_CURSOR
 	SDL_ShowCursor(0);
 #endif
 	if (with_joystick) {
-		printf("sdl_frontend: Opening joystick device.\n");
+		wdprintf(V_DEBUG, "sdl_frontend", "Opening joystick device.\n");
 		SDL_JoystickOpen(0);
 	}
 	SDL_WM_SetCaption("Gmu", NULL);
 	SDL_EnableUNICODE(1);
-	printf("sdl_frontend: SDL-Video init done.\n");
+	wdprintf(V_INFO, "sdl_frontend", "SDL-Video init done.\n");
 	return display;
 }
 
@@ -183,7 +184,7 @@ static void fb_delete_func(void *arg)
 {
 	struct _fb_delete_params *p = (struct _fb_delete_params *)arg;
 	if (p->file != NULL) {
-		printf("sdl_frontend: Delete file %s\n", p->file);
+		wdprintf(V_DEBUG, "sdl_frontend", "Delete file %s\n", p->file);
 		if (remove(p->file) == 0) {
 			player_display_set_notice_message("FILE DELETED!", NOTICE_DELAY);
 			file_browser_change_dir(p->fb, ".");
@@ -257,7 +258,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 				if (tmp != NULL)
 					strtoupper(filetype, tmp, 15);
 				if (strcmp(filetype, "M3U") == 0) {
-					printf("sdl_frontend: M3U detected.\n");
+					wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
 					add_m3u_contents_to_playlist(file_browser_get_selected_file(fb));
 					player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
 				} else {
@@ -268,7 +269,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 							Entry *sel_entry = gmu_core_playlist_get_first();
 							int    i;
 
-							printf("sdl_frontend: Inserting entry after %d...\n", pl_browser_get_selection(pb));
+							wdprintf(V_DEBUG, "sdl_frontend", "Inserting entry after %d...\n", pl_browser_get_selection(pb));
 							for (i = 0;
 							     i < gmu_core_playlist_get_length() && i != pl_browser_get_selection(pb);
 							     i++) {
@@ -356,7 +357,7 @@ static void pb_delete_func(void *arg)
 			}
 		}
 		f = gmu_core_playlist_get_entry_filename(entry);
-		printf("sdl_frontend: Delete file %s.\n", f);
+		wdprintf(V_DEBUG, "sdl_frontend", "Delete file %s.\n", f);
 		if (remove(f) == 0)
 			player_display_set_notice_message("FILE DELETED!", NOTICE_DELAY);
 		else
@@ -491,7 +492,7 @@ static int cover_viewer_process_action(CoverViewer *cv, int user_key_action)
 			update = UPDATE_TEXTAREA | UPDATE_HEADER;
 			break;
 		case TRACKINFO_DELETE_FILE:
-			printf("sdl_frontend: Cannot delete file from here.\n");
+			wdprintf(V_INFO, "sdl_frontend", "Cannot delete file from here.\n");
 			break;
 		case MOVE_CURSOR_DOWN:
 			cover_viewer_scroll_down(cv);
@@ -728,8 +729,8 @@ void run_player(char *skin_name, char *decoders_str)
 														  "yes", 3) == 0 ? 1 : 0;
 			file_browser_set_directories_first(&fb, directories_first);
 			if (!chdir(cfg_get_key_value(*config, "DefaultFileBrowserPath"))) {
-				printf("sdl_frontend: WARNING: Could not open DefaultFileBrowserPath for reading!\n");
-				printf("sdl_frontend: The current directory will be used instead.\n");
+				wdprintf(V_WARNING, "sdl_frontend", "WARNING: Could not open DefaultFileBrowserPath for reading!\n");
+				wdprintf(V_WARNING, "sdl_frontend", "The current directory will be used instead.\n");
 			}
 			dir_read(&fb.dir, ".", directories_first);
 		}
@@ -826,10 +827,10 @@ void run_player(char *skin_name, char *decoders_str)
 				button_repeat_timer = 5;
 				break;
 			case SDL_JOYAXISMOTION:
-				/*printf("sdl_frontend: Joy axis motion: %d (axis %d)\n", event.jaxis.value, event.jaxis.axis);*/
+				/*wdprintf(V_DEBUG, "sdl_frontend", "Joy axis motion: %d (axis %d)\n", event.jaxis.value, event.jaxis.axis);*/
 				break;
 			case SDL_JOYHATMOTION:
-				printf("sdl_frontend: Joy Hat motion\n");
+				wdprintf(V_DEBUG, "sdl_frontend", "Joy Hat motion\n");
 				break;
 			case SDL_QUIT:
 				gmu_core_quit();
@@ -1090,7 +1091,7 @@ void run_player(char *skin_name, char *decoders_str)
 							case PLMANAGER_SAVE_LIST:
 								plmanager_reset_flag(&ps);
 								snprintf(temp, 255, "%s/%s", base_dir, plmanager_get_selection(&ps));
-								printf("sdl_frontend: Playlist file: %s\n", temp);
+								wdprintf(V_INFO, "sdl_frontend", "Playlist file: %s\n", temp);
 								strtoupper(buf42, plmanager_get_selection(&ps), 63);
 								if (gmu_core_export_playlist(temp)) {
 									snprintf(buf23, 63, "SAVED AS %s\n", buf42);
@@ -1250,7 +1251,7 @@ void run_player(char *skin_name, char *decoders_str)
 		if (strncmp(cfg_get_key_value(*config, "RememberSettings"), "yes", 3) == 0) {
 			char val[64];
 			
-			printf("sdl_frontend: Saving settings...\n");
+			wdprintf(V_INFO, "sdl_frontend", "Saving settings...\n");
 			cfg_add_key(config, "TimeDisplay", time_remaining ? 
 			                                   "remaining" : "elapsed");
 			snprintf(val, 63, "%d", buffer->w);
@@ -1358,7 +1359,7 @@ void *start_player(void *arg)
 			run_player(skin_name, decoders_str);
 		if (decoders_str) free(decoders_str);
 	}
-	printf("sdl_frontend: start_player() done.\n");
+	wdprintf(V_DEBUG, "sdl_frontend", "start_player() done.\n");
 	return 0;
 }
 
@@ -1371,15 +1372,15 @@ void init(void)
 
 void shut_down(void)
 {
-	printf("sdl_frontend: Shutting down now!\n");
+	wdprintf(V_DEBUG, "sdl_frontend", "Shutting down now!\n");
 	quit = QUIT_WITHOUT_ERROR;
 	if (pthread_join(fe_thread, NULL) == 0)
-		printf("sdl_frontend: Thread stopped.\n");
+		wdprintf(V_DEBUG, "sdl_frontend", "Thread stopped.\n");
 	else
-		printf("sdl_frontend: ERROR stopping thread.\n");
-	printf("sdl_frontend: Closing SDL video subsystem...\n");
+		wdprintf(V_ERROR, "sdl_frontend", "ERROR stopping thread.\n");
+	wdprintf(V_DEBUG, "sdl_frontend", "Closing SDL video subsystem...\n");
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
-	printf("sdl_frontend: All done.\n");
+	wdprintf(V_INFO, "sdl_frontend", "All done.\n");
 }
 
 const char *get_name(void)

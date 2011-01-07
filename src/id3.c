@@ -19,6 +19,7 @@
 #include <math.h>
 #include "trackinfo.h"
 #include "charset.h"
+#include "debug.h"
 #define ID3V2_MAX_SIZE 262144
 
 int id3_read_id3v1(FILE *file, TrackInfo *ti, const char *file_type)
@@ -45,7 +46,7 @@ int id3_read_id3v1(FILE *file, TrackInfo *ti, const char *file_type)
 				album[30] = '\0';
 				year[4] = '\0';
 				comment[30] = '\0';
-				printf("id3: ID3v1.%d detected!\n", (comment[28] == '\0' ? 1 : 0));
+				wdprintf(V_INFO, "id3", "ID3v1.%d detected!\n", (comment[28] == '\0' ? 1 : 0));
 				if (comment[28] == '\0') {
 					snprintf(ti->file_type, SIZE_FILE_TYPE-1, "%s (ID3v1.1)", file_type);
 					tracknr = comment[29];
@@ -207,9 +208,9 @@ static void set_cover_art(TrackInfo *ti, char *data, int data_size, Charset char
 	for (; data[m] != '\0' && m < data_size - 1; m++);
 	m++;
 	if (charset == UTF_16 || charset == UTF_16_BOM) m++;
-	/*printf("id3: APIC: mime type: %s pic type: %d description: %s\n",
-	        mime_type, pic_type, descr);
-	printf("id3: APIC: size = %d (header: %d)\n", data_size-m, m);*/
+	/*wdprintf(V_DEBUG, "id3", "APIC: mime type: %s pic type: %d description: %s\n",
+	           mime_type, pic_type, descr);
+	wdprintf(V_DEBUG, "id3", "APIC: size = %d (header: %d)\n", data_size-m, m);*/
 	trackinfo_set_image(ti, data+m, data_size-m, mime_type);
 }
 
@@ -246,7 +247,7 @@ static void set_lyrics(TrackInfo *ti, char *str, int str_size, Charset charset)
 			for (i = 0; !(str[i] == '\0') && i < str_size; i++);
 		if (charset == UTF_16 || charset == UTF_16_BOM) i++;
 		i++;
-		/*printf("i=%d str_size=%d str=%s\n", i, str_size, str);*/
+		/*wdprintf(V_DEBUG, "id3", "i=%d str_size=%d str=%s\n", i, str_size, str);*/
 		switch (charset) {
 			case ISO_8859_1:
 				strncpy(ti->lyrics, str+i, SIZE_LYRICS-1);
@@ -298,32 +299,32 @@ int id3_read_id3v2(FILE *file, TrackInfo *ti, const char *file_type)
 		ver_minor = fgetc(file);
 		flags     = fgetc(file);
 		if (fread(size, 4, 1, file)) {
-			printf("id3: ID3v2.%d.%d detected!\n", ver_major, ver_minor);
+			wdprintf(V_INFO, "id3", "ID3v2.%d.%d detected!\n", ver_major, ver_minor);
 			snprintf(ti->file_type, SIZE_FILE_TYPE, "%s (ID3v2.%d.%d)",
 					 file_type, ver_major, ver_minor);
 			if (ver_major > 4 || ver_major < 3) {
-				printf("id3: Unsupported ID3 version.\n");
+				wdprintf(V_WARNING, "id3", "Unsupported ID3 version.\n");
 			} else if ((flags & (1+2+4+8)) > 0) {
-				printf("id3: Tag error!\n");
+				wdprintf(V_WARNING, "id3", "Tag error!\n");
 			} else {
 				int           i, error = 0, global_unsync = 0, real_size = 0;
 				unsigned char frame_size[5];
 
 				if ((flags & 16) > 0) /* bit 4 */
-					printf("ID3v2: Footer present.\n");
+					wdprintf(V_DEBUG, "id3", "ID3v2: Footer present.\n");
 				if ((flags & 32) > 0) /* bit 5 */
-					printf("ID3v2: Experimental indicator is set.\n");
+					wdprintf(V_DEBUG, "id3", "ID3v2: Experimental indicator is set.\n");
 				if ((flags & 64) > 0) /* bit 6 */
-					printf("ID3v2: Extended header bit is set.\n");
+					wdprintf(V_DEBUG, "id3", "ID3v2: Extended header bit is set.\n");
 				if ((flags & 128) > 0) { /* bit 7 */
-					printf("ID3v2: Unsynchronisation bit is set.\n");
+					wdprintf(V_DEBUG, "id3", "ID3v2: Unsynchronisation bit is set.\n");
 					global_unsync = 1;
 				}
 				real_size = calc_size_unsync(size);
-				printf("id3: Tag size: %d bytes\n", real_size);
+				wdprintf(V_DEBUG, "id3", "Tag size: %d bytes\n", real_size);
 				for (i = 0; i < 4; i++)
 					if (size[i] > 127) {
-						printf("id3: Error in ID3 tag.\n");
+						wdprintf(V_WARNING, "id3", "Error in ID3 tag.\n");
 						error = 1;
 						break;
 					}
@@ -340,51 +341,51 @@ int id3_read_id3v2(FILE *file, TrackInfo *ti, const char *file_type)
 						    fread(frame_flags, 2, 1, file)) {
 							byte_counter += 10;
 							fsize = calc_size(frame_size);
-							/*printf("id3: Frame ID: %s - Frame size: %d bytes\n", frame_id, fsize);*/
+							/*wdprintf(V_DEBUG, "id3", "Frame ID: %s - Frame size: %d bytes\n", frame_id, fsize);*/
 
 							if (ver_major == 4)
 								frame_unsync = (frame_flags[1] & 2) ? 1 : 0;
-							/*printf("id3: bytecounter=%d fsize=%d realsize=%d r-b=%d\n",
-									byte_counter, fsize, real_size, real_size - byte_counter);*/
+							/*wdprintf(V_DEBUG, "id3", "bytecounter=%d fsize=%d realsize=%d r-b=%d\n",
+									   byte_counter, fsize, real_size, real_size - byte_counter);*/
 							if (fsize > 0 && fsize <= real_size - byte_counter) {
 								char    *frame_data = malloc(fsize+1);
 								Charset  charset    = ISO_8859_1;
+								char    *tmp_charset;
 
 								if ((global_unsync && ver_major == 3 ) || frame_unsync) {
 									fread_unsync(frame_data, fsize, file);
-									/*printf("id3: Decoded unsync scheme.\n");*/
+									/*wdprintf(V_DEBUG, "id3", "Decoded unsync scheme.\n");*/
 								} else {
 									if (!fread(frame_data, fsize, 1, file)) {
-										printf("id3: ERROR: Incomplete data.\n");
+										wdprintf(V_ERROR, "id3", "ERROR: Incomplete data.\n");
 										break;
 									}
 								}
 								byte_counter += fsize;
 								frame_data[fsize] = '\0';
-								printf("id3: %s charset: ", frame_id);
 								switch(frame_data[0]) {
 									case 0:
 										charset = ISO_8859_1;
-										printf("ISO-8859-1");							
+										tmp_charset = "ISO-8859-1";
 										break;
 									case 1:
 										charset = UTF_16_BOM;
-										printf("UTF-16 (with BOM)");
+										tmp_charset = "UTF-16 (with BOM)";
 										break;
 									case 2:
 										charset = UTF_16;
-										printf("UTF-16 (without BOM)");
+										tmp_charset = "UTF-16 (without BOM)";
 										break;
 									case 3:
 										charset = UTF_8;
-										printf("UTF-8");
+										tmp_charset = "UTF-8";
 										break;
 									default:
-										printf("unknown (%d)", frame_data[0]);
+										tmp_charset = "unknown";
 										break;
 								}
-								printf("\n");
-								/*printf("ID3: Frame data: %s\n", frame_data+1);*/
+								wdprintf(V_INFO, "id3", "%s charset: %s\n", frame_id, tmp_charset);
+								/*wdprintf(V_DEBUG, "id3", "Frame data: %s\n", frame_data+1);*/
 
 								if (strncmp(frame_id, "TIT2", 4) == 0) {
 									set_title(ti, frame_data+1, fsize-1, charset);

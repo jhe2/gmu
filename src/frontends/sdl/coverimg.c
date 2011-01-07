@@ -32,7 +32,7 @@ static int cover_image_thread(void *udata)
 	ImageSize    is;
 	int          width = 0, height = 0;
 
-	DEBUG_PRINT("coverimg", "Loader thread.");
+	wdprintf(V_DEBUG, "coverimg", "Loader thread.\n");
 	ci->thread_running = 1;
 	while (ci->thread_running) {
 		if (ci->loading) {
@@ -40,9 +40,9 @@ static int cover_image_thread(void *udata)
 
 			while (SDL_mutexP(ci->mutex1) == -1) SDL_Delay(50);
 			if (ci->filename[0] != '\0')
-				printf("coverimg: Loading \"%s\"\n", ci->filename);
+				wdprintf(V_INFO, "coverimg", "Loading \"%s\"\n", ci->filename);
 			else
-				DEBUG_PRINT("coverimg", "Loading image from memory...");
+				wdprintf(V_INFO, "coverimg", "Loading image from memory...\n");
 			while (SDL_mutexP(ci->mutex2) == -1) SDL_Delay(50);
 			if (ci->filename[0] != '\0') {
 				char fn[256];
@@ -54,12 +54,12 @@ static int cover_image_thread(void *udata)
 				if (!png_get_dimensions_from_file(&is, fn, &width, &height))
 					if (!jpeg_get_dimensions_from_file(&is, fn, &width, &height))
 						bmp_get_dimensions_from_file(&is, fn, &width, &height);
-				printf("coverimg: image size = %d x %d\n", width, height);
+				wdprintf(V_DEBUG, "coverimg", "image size = %d x %d\n", width, height);
 				if (width * height < MAX_COVER_IMAGE_PIXELS && width > 0 && height > 0) {
 					cover_fullsize = IMG_Load(fn);
-					printf("coverimg: Cover image \"%s\" loaded. Now resizing...\n", fn);
+					wdprintf(V_DEBUG, "coverimg", "Cover image \"%s\" loaded. Now resizing...\n", fn);
 				} else {
-					DEBUG_PRINT("coverimg", "Cover image too large or bad image data.");
+					wdprintf(V_WARNING, "coverimg", "Cover image too large or bad image data.\n");
 				}
 			} else if (ci->image_data != NULL) {
 				/* Try to load image from memory... */
@@ -76,17 +76,17 @@ static int cover_image_thread(void *udata)
 					default:
 						break;
 				}
-				printf("coverimg: image dimensions: %d x %d\n", width, height);
+				wdprintf(V_DEBUG, "coverimg", "image dimensions: %d x %d\n", width, height);
 				if (width * height < MAX_COVER_IMAGE_PIXELS && width > 0 && height > 0)
 					cover_fullsize = IMG_Load_RW(SDL_RWFromConstMem(ci->image_data, ci->image_data_size), 1);
 				else
-					DEBUG_PRINT("coverimg", "Cover image too large or bad image data.");
+					wdprintf(V_WARNING, "coverimg", "Cover image too large or bad image data.\n");
 				if (!cover_fullsize)
-					DEBUG_PRINT("coverimg", "Failed. Probably bad image data in tag.");
+					wdprintf(V_WARNING, "coverimg", "Failed. Probably bad image data in tag.\n");
 				SDL_mutexV(ci->mutex2);
 			} else {
 				SDL_mutexV(ci->mutex2);
-				DEBUG_PRINT("coverimg", "No image available to load.");
+				wdprintf(V_INFO, "coverimg", "No image available to load.\n");
 			}
 
 			if (cover_fullsize) {
@@ -110,7 +110,7 @@ static int cover_image_thread(void *udata)
 				if (tmp) {
 					ci->image = SDL_DisplayFormat(tmp); 
 					SDL_FreeSurface(tmp);
-					DEBUG_PRINT("coverimg", "Loaded and resized cover image successfully.");
+					wdprintf(V_INFO, "coverimg", "Loaded and resized cover image successfully.\n");
 				}
 			} else {
 				if (ci->image) {
@@ -148,7 +148,7 @@ void cover_image_stop_thread(CoverImage *ci)
 	ci->thread_running = 0;
 	if (ci->thread)
 		SDL_WaitThread(ci->thread, NULL);
-	printf("coverimg: Thread stopped.\n");
+	wdprintf(V_DEBUG, "coverimg", "Thread stopped.\n");
 	ci->thread = NULL;
 }
 
@@ -198,8 +198,8 @@ void cover_image_load_image_from_memory(CoverImage *ci, char *image_data, int im
 
 	if (ci->mime_type == COVER_MIME_JPEG || 
 	    ci->mime_type == COVER_MIME_PNG || ci->mime_type == COVER_MIME_BMP) {
-		printf("coverimg: Loading cover image of type %s from song meta data (tag)...\n",
-		       image_mime_type);
+		wdprintf(V_INFO, "coverimg", "Loading cover image of type %s from song meta data (tag)...\n",
+		         image_mime_type);
 		while (SDL_mutexP(ci->mutex2) == -1);
 		if (ci->image_data) free(ci->image_data);
 		ci->image_data = malloc(image_data_size);

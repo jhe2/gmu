@@ -22,6 +22,7 @@
 #include <lirc/lirc_client.h>
 #include "../gmufrontend.h"
 #include "../core.h"
+#include "../debug.h"
 
 static pthread_t fe_thread;
 
@@ -34,10 +35,10 @@ static int run = 1;
 
 void shut_down(void)
 {
-	printf("lirc_frontend: Shutting down.\n");
+	wdprintf(V_DEBUG, "lirc_frontend", "Shutting down.\n");
 	run = 0;
 	pthread_join(fe_thread, NULL);
-	printf("lirc_frontend: All done.\n");
+	wdprintf(V_INFO, "lirc_frontend", "All done.\n");
 }
 
 static void *thread_func(void *arg)
@@ -56,7 +57,7 @@ static void *thread_func(void *arg)
 			while (run && lirc_nextcode(&code) == 0) {
 				if (code != NULL) {
 					if ((ret = lirc_code2char(config, code, &c)) == 0 && c != NULL) {
-						printf("lirc_frontend: Got button press.\n");
+						wdprintf(V_DEBUG, "lirc_frontend", "Got button press.\n");
 						if (strcmp(c, "play") == 0)
 							gmu_core_play();					
 						else if (strcmp(c, "pause") == 0)
@@ -76,7 +77,7 @@ static void *thread_func(void *arg)
 						else if (strcmp(c, "volume_down") == 0)
 							gmu_core_set_volume(gmu_core_get_volume()-1);
 						else
-							printf("lirc_frontend: Unknown command: %s\n", c);
+							wdprintf(V_WARNING, "lirc_frontend", "Unknown command: %s\n", c);
 						c = NULL;
 					}
 				}
@@ -84,7 +85,7 @@ static void *thread_func(void *arg)
 				free(code);
 				if (ret == -1) break;
 			}
-			printf("lirc_frontend: Exitting.\n");
+			wdprintf(V_INFO, "lirc_frontend", "Exitting.\n");
 			lirc_freeconfig(config);
 		}
 		lirc_deinit();

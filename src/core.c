@@ -34,6 +34,7 @@
 #include "wejpconfig.h"
 #include FILE_HW_H
 #include "util.h"
+#include "debug.h"
 #define MAX_FILE_EXTENSIONS 255
 
 typedef enum GlobalCommand { NO_CMD, PLAY, PAUSE, STOP, NEXT, 
@@ -58,10 +59,10 @@ static char          base_dir[256], *config_dir;
 static void init_sdl(void)
 {
 	if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER) < 0) {
-		printf("ERROR: Could not initialize SDL: %s\n", SDL_GetError());
+		wdprintf(V_ERROR, "gmu", "ERROR: Could not initialize SDL: %s\n", SDL_GetError());
 		exit(1);
 	}
-	printf("gmu: SDL init done.\n");
+	wdprintf(V_DEBUG, "gmu", "SDL init done.\n");
 }
 
 static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
@@ -369,7 +370,7 @@ int gmu_core_get_length_current_track(void)
 
 void gmu_core_quit(void)
 {
-	printf("gmu: Shutting down...\n");
+	wdprintf(V_INFO, "gmu", "Shutting down...\n");
 	event_queue_push(&event_queue, GMU_QUIT);
 	gmu_running = 0;
 }
@@ -475,6 +476,7 @@ static void print_cmd_help(char *prog_name)
 	printf("-e : Store user configuration in user's home directory (~/.config/gmu/)\n");
 	printf("-c configfile.conf: Use the specified config file instead of gmu.conf\n");
 	printf("-s theme_name: Use theme \"theme_name\"\n");
+	printf("-q : Reduce verbosity on stdout. Can be applied multiple times.\n");
 	printf("If you append files to the command line\n");
 	printf("they will be added to the playlist\n");
 	printf("and playback is started automatically.\n");
@@ -494,7 +496,7 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 		snprintf(user_config_dir, 255, "%s/.config", home);
 		mkdir(user_config_dir, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 		snprintf(user_config_dir, 255, "%s/.config/gmu", home);
-		printf("gmu: User config directory: %s\n", user_config_dir);
+		wdprintf(V_DEBUG, "gmu", "User config directory: %s\n", user_config_dir);
 		mkdir(user_config_dir, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 
 		/* Copy all missing config files from system config dirto home config dir */
@@ -506,7 +508,7 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 		}
 		snprintf(target, 383, "%s/%s", user_config_dir, filename);
 		if (!file_exists(target)) {
-			printf("gmu: Copying file: %s\n", filename);
+			wdprintf(V_INFO, "gmu", "Copying file: %s\n", filename);
 			snprintf(source, 383, "%s/%s", sys_config_dir, filename);
 			file_copy(target, source);
 		}
@@ -516,7 +518,7 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 			if (file) {
 				snprintf(target, 383, "%s/%s", user_config_dir, file);
 				if (!file_exists(target)) {
-					printf("gmu: Copying file: %s\n", file);
+					wdprintf(V_INFO, "gmu", "Copying file: %s\n", file);
 					snprintf(source, 383, "%s/%s", sys_config_dir, file);
 					if (file_copy(target, source)) result = 1;
 				} else {
@@ -528,7 +530,7 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 				if (!file) file = "gmuinput.conf";
 				snprintf(target, 383, "%s/%s", user_config_dir, file);
 				if (!file_exists(target)) {
-					printf("gmu: Copying file: %s\n", file);
+					wdprintf(V_INFO, "gmu", "Copying file: %s\n", file);
 					snprintf(source, 383, "%s/%s", sys_config_dir, file);
 					if (!file_copy(target, source)) result = 0;
 				}
@@ -536,14 +538,14 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 		}
 		cfg_free_config_file_struct(&cf);
 	} else {
-		printf("gmu: Unable to find user's home directory.\n");
+		wdprintf(V_ERROR, "gmu", "Unable to find user's home directory.\n");
 	}
 	return result;
 }
 
 void sig_handler(int sig)
 {
-	printf("\ngmu: Exit requested.\n");
+	wdprintf(V_DEBUG, "gmu", "Exit requested.\n");
 	gmu_core_quit();
 }
 
@@ -558,9 +560,9 @@ int main(int argc, char **argv)
 	unsigned int statu = STOPPED;
 	int          auto_shutdown = 0;
 	time_t       start, end;
+	Verbosity    v = V_DEBUG;
 
 	hw_detect_device_model();
-	printf("gmu: Detected device: %s\n", hw_get_device_model_name());
 
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
@@ -577,12 +579,16 @@ int main(int argc, char **argv)
 					print_cmd_help(argv[0]);
 					exit(0);
 					break;
+				case 'q':
+					if (v > V_SILENT) v--;
+					wdprintf_set_verbosity(v);
+					break;
 				case 's':
 					if (argc >= i+2) {
 						skin_file = argv[i+1];
 						i++;
 					} else {
-						printf("gmu: Invalid usage of -s: Theme name required.\n");
+						wdprintf(V_ERROR, "gmu", "Invalid usage of -s: Theme name required.\n");
 						exit(0);
 					}
 					break;
@@ -591,7 +597,7 @@ int main(int argc, char **argv)
 						config_file = argv[i+1];
 						i++;
 					} else {
-						printf("gmu: Invalid usage of -c: Config file required.\n");
+						wdprintf(V_ERROR, "gmu", "Invalid usage of -c: Config file required.\n");
 						exit(0);
 					}
 					break;
@@ -600,11 +606,11 @@ int main(int argc, char **argv)
 						if (argv[i+1][0] == '/') {
 							sys_config_dir = argv[i+1];
 						} else {
-							printf("gmu: Config directory: Invalid usage of -d. Absolute path required. Ignoring.\n");
+							wdprintf(V_INFO, "gmu", "Config directory: Invalid usage of -d. Absolute path required. Ignoring.\n");
 						}
 						i++;
 					} else {
-						printf("gmu: Invalid usage of -d: Directory required.\n");
+						wdprintf(V_ERROR, "gmu", "Invalid usage of -d: Directory required.\n");
 						exit(0);
 					}
 					break;
@@ -612,7 +618,7 @@ int main(int argc, char **argv)
 					user_config_dir[0] = '1';
 					break;
 				default:
-					printf("gmu: Unknown parameter (-%c). Try -h for help.\n", argv[i][1]);
+					wdprintf(V_ERROR, "gmu", "Unknown parameter (-%c). Try -h for help.\n", argv[i][1]);
 					exit(0);
 					break;
 			}
@@ -636,6 +642,8 @@ int main(int argc, char **argv)
 		}*/
 	}
 
+	wdprintf(V_INFO, "gmu", "Detected device: %s\n", hw_get_device_model_name());
+
 	if (user_config_dir[0] == '1') {
 		if (init_user_config_dir(user_config_dir, sys_config_dir, config_file)) {
 			/* Set config_dir to the user config directory */
@@ -650,18 +658,18 @@ int main(int argc, char **argv)
 		config_file_path = config_file;
 	}
 
-	printf("gmu: Base directory: %s\n", base_dir);
-	printf("gmu: System config directory: %s\n", sys_config_dir);
+	wdprintf(V_INFO, "gmu", "Base directory: %s\n", base_dir);
+	wdprintf(V_INFO, "gmu", "System config directory: %s\n", sys_config_dir);
 
 	event_queue_init(&event_queue);
-	printf("gmu: Loading configuration %s...\n", config_file_path);
+	wdprintf(V_INFO, "gmu", "Loading configuration %s...\n", config_file_path);
 	cfg_init_config_file_struct(&config);
 	add_default_cfg_settings(&config);
 	if (cfg_read_config_file(&config, config_file_path) != 0) {
-		printf("gmu: Could not read %s. Assuming defaults.\n", config_file_path);
+		wdprintf(V_ERROR, "gmu", "Could not read %s. Assuming defaults.\n", config_file_path);
 		/* In case of a missing default config file create a new one: */
 		if (strncmp(config_file, config_file_path, 8) == 0) {
-			printf("gmu: Creating config file.\n");
+			wdprintf(V_INFO, "gmu", "Creating config file.\n");
 			cfg_write_config_file(&config, config_file_path);
 		}
 	}
@@ -683,7 +691,7 @@ int main(int argc, char **argv)
 		volume_max = GMU_CORE_HW_VOLUME_MAX;
 
 	snprintf(temp, 511, "%s/decoders", base_dir);
-	printf("gmu: Searching for decoders in %s.\n", temp);
+	wdprintf(V_DEBUG, "gmu", "Searching for decoders in %s.\n", temp);
 	decloader_load_all(temp);
 
 	/* Put available file extensions in an array */
@@ -714,13 +722,13 @@ int main(int argc, char **argv)
 	/* Load playlist from playlist.m3u */
 	snprintf(temp, 255, "%s/playlist.m3u", config_dir);
 	add_m3u_contents_to_playlist(&pl, temp);
-	printf("gmu: Playlist length: %d items\n", playlist_get_length(&pl));
+	wdprintf(V_INFO, "gmu", "Playlist length: %d items\n", playlist_get_length(&pl));
 
 	init_sdl(); /* Initialize SDL audio */
 
 	/* Load frontends */
 	snprintf(temp, 511, "%s/frontends", base_dir);
-	printf("gmu: Searching for frontends in %s.\n", temp);
+	wdprintf(V_DEBUG, "gmu", "Searching for frontends in %s.\n", temp);
 	feloader_load_all(temp);
 
 	set_default_play_mode(&config, &pl);
@@ -751,7 +759,7 @@ int main(int argc, char **argv)
 		usleep(250);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item = playlist_get_entry(&pl, global_param);
-			printf("gmu: Playing item %d from current playlist!\n", global_param);
+			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);
 			if (tmp_item != NULL) {
 				playlist_set_current(&pl, tmp_item);
 				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), &current_track_ti);
@@ -759,7 +767,7 @@ int main(int argc, char **argv)
 			global_command = NO_CMD;
 			global_param = 0;
 		} else if (global_command == PLAY_FILE && global_filename[0] != '\0') {
-			printf("gmu: Direct file playback: %s\n", global_filename);
+			wdprintf(V_DEBUG, "gmu", "Direct file playback: %s\n", global_filename);
 			playlist_set_current(&pl, NULL);
 			file_player_play_file(global_filename, &current_track_ti);
 			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
@@ -781,17 +789,17 @@ int main(int argc, char **argv)
 			global_param = 0;
 		}
 		if (trackinfo_is_updated(&current_track_ti)) {
-			printf("gmu: Track info:\n\tArtist: %s\n\tTitle : %s\n\tAlbum : %s\n",
-			       trackinfo_get_artist(&current_track_ti),
-				   trackinfo_get_title(&current_track_ti),
-				   trackinfo_get_album(&current_track_ti));
+			wdprintf(V_INFO, "gmu", "Track info:\n\tArtist: %s\n\tTitle : %s\n\tAlbum : %s\n",
+			         trackinfo_get_artist(&current_track_ti),
+				     trackinfo_get_title(&current_track_ti),
+				     trackinfo_get_album(&current_track_ti));
 			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 		}
 		if (statu != file_player_get_item_status()) {
 			statu = file_player_get_item_status();
-			printf("Item status: %s\n", statu == PLAYING  ? "PLAYING"  : 
-			                            statu == FINISHED ? "FINISHED" : 
-			                            statu == STOPPED  ? "STOPPED"  : "PAUSED");
+			wdprintf(V_DEBUG, "gmu", "Item status: %s\n", statu == PLAYING  ? "PLAYING"  : 
+			                                              statu == FINISHED ? "FINISHED" : 
+			                                              statu == STOPPED  ? "STOPPED"  : "PAUSED");
 			event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 		}
 
@@ -829,10 +837,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	printf("gmu: Playback state: %s playlist pos: %d time: %d\n",
-	       file_player_get_item_status() == PLAYING ? "playing" : "stopped", 
-	       gmu_core_playlist_get_current_position(),
-	       file_player_playback_get_time());
+	wdprintf(V_DEBUG, "gmu", "Playback state: %s playlist pos: %d time: %d\n",
+	         file_player_get_item_status() == PLAYING ? "playing" : "stopped", 
+	         gmu_core_playlist_get_current_position(),
+	         file_player_playback_get_time());
 
 	if (file_player_get_item_status() == PLAYING) {
 		snprintf(temp, 10, "%d", gmu_core_playlist_get_current_position()+1);
@@ -854,13 +862,13 @@ int main(int argc, char **argv)
 	    strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0)
 		hw_close_mixer();
 
-	printf("gmu: Unloading frontends...\n");
+	wdprintf(V_INFO, "gmu", "Unloading frontends...\n");
 	feloader_free();
 
 	if (strncmp(cfg_get_key_value(config, "RememberLastPlaylist"), "yes", 3) == 0) {
-		printf("gmu: Saving playlist...\n");
+		wdprintf(V_INFO, "gmu", "Saving playlist...\n");
 		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
-		printf("gmu: Playlist file: %s\n", temp);
+		wdprintf(V_INFO, "gmu", "Playlist file: %s\n", temp);
 		gmu_core_export_playlist(temp);
 		disksync = 1;
 	}
@@ -868,7 +876,7 @@ int main(int argc, char **argv)
 		char *playmode = NULL;
 		char  volume_str[20];
 
-		printf("gmu: Saving settings...\n");
+		wdprintf(V_INFO, "gmu", "Saving settings...\n");
 
 		switch (playlist_get_play_mode(&pl)) {
 			case PM_CONTINUE:
@@ -897,30 +905,30 @@ int main(int argc, char **argv)
 		disksync = 1;
 	}
 	if (disksync) {
-		printf("gmu: Syncing disc...\n");
+		wdprintf(V_DEBUG, "gmu", "Syncing disc...\n");
 		sync();
 	}
 
-	printf("gmu: Unloading decoders...\n");
+	wdprintf(V_INFO, "gmu", "Unloading decoders...\n");
 	decloader_free();
-	printf("gmu: Freeing playlist...\n");
+	wdprintf(V_DEBUG, "gmu", "Freeing playlist...\n");
 	playlist_free(&pl);
 
-	printf("gmu: Freeing file extensions...\n");
+	wdprintf(V_DEBUG, "gmu", "Freeing file extensions...\n");
 	/* Free file extensions */
 	for (i = 0; file_extensions[i]; i++)
 		free(file_extensions[i]);
-	printf("gmu: File extensions freed.\n");
+	wdprintf(V_DEBUG, "gmu", "File extensions freed.\n");
 
 	if (auto_shutdown) {
 		char *tmp = cfg_get_key_value(config, "ShutdownCommand");
 		if (tmp) {
-			printf("gmu: Executing shutdown command: \'%s\'\n", tmp);
-			printf("gmu: Shutdown command completed with return code %d.\n", system(tmp));
+			wdprintf(V_INFO, "gmu", "Executing shutdown command: \'%s\'\n", tmp);
+			wdprintf(V_INFO, "gmu", "Shutdown command completed with return code %d.\n", system(tmp));
 		}
 	}
 	cfg_free_config_file_struct(&config);
 	SDL_Quit();
-	printf("gmu: Shutdown complete.\n");
+	wdprintf(V_INFO, "gmu", "Shutdown complete.\n");
 	return 0;
 }

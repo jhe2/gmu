@@ -21,6 +21,7 @@
 #include "../gmufrontend.h"
 #include "../core.h"
 #include "../fileplayer.h"
+#include "../debug.h"
 
 static int       logging_enabled = 0;
 static TrackInfo previous;
@@ -35,7 +36,7 @@ const char *get_name(void)
 void shut_down(void)
 {
 	if (lf) {
-		printf("logbot: Closing file.\n");
+		wdprintf(V_DEBUG, "logbot", "Closing file.\n");
 		fclose(lf);
 		sync();
 	}
@@ -48,7 +49,7 @@ void init(void)
 	char       *logfile = NULL;
 
 	if (tmp && strncmp(tmp, "yes", 3) == 0) {
-		printf("\nlogbot: Initializing logger.\n");
+		wdprintf(V_INFO, "logbot", "Initializing logger.\n");
 		logging_enabled = 1;
 		tmp = cfg_get_key_value(*cf, "Log.File");
 		if (tmp)
@@ -68,7 +69,7 @@ void init(void)
 		else
 			minimum_playtime_percent = 50;
 	} else {
-		printf("\nlogbot: Logging has been disabled.\n");
+		wdprintf(V_INFO, "logbot", "Logging has been disabled.\n");
 	}
 	trackinfo_clear(&previous);
 }

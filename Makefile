@@ -22,7 +22,7 @@ include $(TARGET).mk
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall
 
-OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o hw_$(TARGET).o
+OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o hw_$(TARGET).o
 ALLFILES=src/ Makefile *.mk gmu.png themes README.txt BUILD.txt COPYING gmu.conf.example *.keymap *.gpu *.dge *.nn gmuinput.*.conf gmu.*.conf
 BINARY=gmu
 

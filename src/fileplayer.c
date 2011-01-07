@@ -26,6 +26,7 @@
 #include "gmudecoder.h"
 #include "decloader.h"
 #include "charset.h"
+#include "debug.h"
 
 #define BUF_SIZE 65536
 
@@ -90,7 +91,7 @@ void file_player_stop_playback(void)
 {
 	playback_status = STOPPED;
 	item_status = STOPPED;
-	printf("fileplayer: Stop playback!\n");
+	wdprintf(V_INFO, "fileplayer", "Stop playback!\n");
 }
 
 static int strncpy_charset_conv(char *target, const char* source, int target_size,
@@ -114,7 +115,7 @@ static int strncpy_charset_conv(char *target, const char* source, int target_siz
 			charset_utf16_to_iso8859_1(target, target_size, source, source_size, LE);
 			break;
 		case M_CHARSET_AUTODETECT:
-			printf("fileplayer: Charset autodetect!\n");
+			wdprintf(V_DEBUG, "fileplayer", "Charset autodetect!\n");
 			if (!charset_utf8_to_iso8859_1(target, source, target_size))
 				if (!charset_utf16_to_iso8859_1(target, target_size, source, source_size, BOM))
 					strncpy(target, source, target_size);
@@ -136,10 +137,10 @@ static void *decode_audio_thread(void *udata)
 		if (*gd->meta_data_get_charset) charset = (*gd->meta_data_get_charset)();
 
 		if (thread_running) {
-			printf("fileplayer: Waiting for other thread to finish...\n");
+			wdprintf(V_DEBUG, "fileplayer", "Waiting for other thread to finish...\n");
 			item_status = STOPPED;
 			while (thread_running) SDL_Delay(50); /* if thread_running never gets false this threads deadlocks here, should not happen though! */
-			printf("fileplayer: Okay!\n");
+			wdprintf(V_DEBUG, "fileplayer", "Okay!\n");
 		}
 		thread_running = 1;
 		playback_status = item_status = PLAYING;
@@ -166,26 +167,26 @@ static void *decode_audio_thread(void *udata)
 									 SIZE_FILE_TYPE-1, 0, charset);
 
 			if (ti->channels > 0) {
-				printf("fileplayer: Found %s stream w/ %d channel(s), %d Hz, %ld bps, %d seconds\n",
-					   ti->file_type, ti->channels, ti->samplerate, ti->bitrate, ti->length);
+				wdprintf(V_INFO, "fileplayer", "Found %s stream w/ %d channel(s), %d Hz, %ld bps, %d seconds\n",
+					     ti->file_type, ti->channels, ti->samplerate, ti->bitrate, ti->length);
 
 				if (!trackinfo_has_lyrics(ti)) {
 					char *lyrics_file = get_file_matching_given_pattern_alloc(file, lyrics_file_pattern);
 					if (lyrics_file) {
-						printf("fileplayer: Trying to load lyrics from file %s...", lyrics_file);
+						wdprintf(V_DEBUG, "fileplayer", "Trying to load lyrics from file %s...\n", lyrics_file);
 						if (trackinfo_load_lyrics_from_file(ti, lyrics_file))
-							printf("success\n");
+							wdprintf(V_DEBUG, "fileplayer", "Loading lyrics was successful.\n");
 						else
-							printf("failed.\n");
+							wdprintf(V_WARNING, "fileplayer", "Loading lyrics from file failed.\n");
 						free(lyrics_file);
 					}
-					/*printf("LYRICS:%s\n",ti->lyrics);*/
+					/*wdprintf(V_DEBUG, "fileplayer", "LYRICS:%s\n",ti->lyrics);*/
 				}
 
 				if (audio_device_open(ti->samplerate, ti->channels) < 0) {
-					printf("fileplayer: Couldn't open audio: %s\n", SDL_GetError());
+					wdprintf(V_ERROR, "fileplayer", "Couldn't open audio: %s\n", SDL_GetError());
 				} else {
-					printf("fileplayer: Audio device ready!\n");
+					wdprintf(V_DEBUG, "fileplayer", "Audio device ready!\n");
 				}
 				charset_utf8_to_iso8859_1(ti->file_name, file, SIZE_FILE_NAME-1);
 
@@ -230,7 +231,7 @@ static void *decode_audio_thread(void *udata)
 						item_status = FINISHED;
 						break;
 					} else if (ret < 0) {
-						printf("fileplayer: Error. Code: %d\n", ret);
+						wdprintf(V_ERROR, "fileplayer", "Error. Code: %d\n", ret);
 						audio_set_pause(1);
 						item_status = FINISHED;
 					} else {
@@ -243,7 +244,7 @@ static void *decode_audio_thread(void *udata)
 						if (SDL_GetAudioStatus() != SDL_AUDIO_PLAYING &&
 							!audio_get_pause() && playback_status == PLAYING &&
 							audio_buffer_get_fill() > audio_buffer_get_size() / 2) {
-							printf("fileplayer: UNPAUSE AUDIO!\n");
+							wdprintf(V_DEBUG, "fileplayer", "UNPAUSE AUDIO!\n");
 							SDL_PauseAudio(0);
 						}
 					}
@@ -255,17 +256,17 @@ static void *decode_audio_thread(void *udata)
 						seek_second = 0;
 					}
 				}
-				printf("fileplayer: Playback stopped.\n");
+				wdprintf(V_INFO, "fileplayer", "Playback stopped.\n");
 				audio_set_pause(1);
 			} else {
-				printf("fileplayer: Broken audio stream.\n");
+				wdprintf(V_WARNING, "fileplayer", "Broken audio stream.\n");
 			}
 			(*gd->close_file)();
 		}
 		if (item_status == STOPPED)
 			audio_buffer_clear();
 		if (item_status != STOPPED) item_status = FINISHED;
-		printf("fileplayer: Decoder thread finished.\n");
+		wdprintf(V_DEBUG, "fileplayer", "Decoder thread finished.\n");
 	}
 	thread_running = 0;
 	return NULL;
@@ -284,11 +285,11 @@ int file_player_play_file(char *file, TrackInfo *ti)
 	item_status = STOPPED;
 	playback_status = PLAYING;
 
-	printf("fileplayer: Trying to play %s...\n", filename);
+	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
 	dap.gd = decloader_get_decoder_for_extension(tmp);
 	if (dap.gd && dap.gd->identifier) {
 		if (!file_player_shut_down) {
-			printf("fileplayer: Selected decoder: %s\n", dap.gd->identifier);
+			wdprintf(V_INFO, "fileplayer", "Selected decoder: %s\n", dap.gd->identifier);
 			dap.file = filename;
 			dap.ti = ti;
 			pthread_create(&thread, NULL, decode_audio_thread, &dap);
@@ -299,10 +300,10 @@ int file_player_play_file(char *file, TrackInfo *ti)
 			printf(stderr, "fileplayer: Prebuffering done.\n");
 			if (item_status != STOPPED) audio_set_pause(0);*/
 		} else {
-			printf("fileplayer: Shutdown in progress.\n");
+			wdprintf(V_DEBUG, "fileplayer", "Shutdown in progress.\n");
 		}
 	} else {
-		printf("fileplayer: No suitable decoder available for %s.\n", tmp);
+		wdprintf(V_WARNING, "fileplayer", "No suitable decoder available for %s.\n", tmp);
 	}
 	return playback_status;
 }

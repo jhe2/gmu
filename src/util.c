@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include "charset.h"
+#include "debug.h"
 
 void strtoupper(char *target, const char *src, int len)
 {
@@ -55,7 +56,7 @@ int file_copy(char *destination_file, char *source_file)
 	int result = 1;
 	FILE *inf, *ouf;
 
-	printf("util: Copying %s to %s.\n", source_file, destination_file);
+	wdprintf(V_INFO, "util", "Copying %s to %s.\n", source_file, destination_file);
 	inf = fopen(source_file, "rb");
 	if (inf) {
 		ouf = fopen(destination_file, "wb");
@@ -140,7 +141,7 @@ static int check_pattern(char *target,       int target_length,  char *path,
 			for (k = pattern_offset; k < pattern_length + pattern_offset; k++)
 				pattern[k-pattern_offset] = pattern_list[k];
 			pattern[k-pattern_offset] = '\0';
-			/*printf("Pattern: %s\n", pattern);*/
+			/*wdprintf(V_DEBUG, "util", "Pattern: %s\n", pattern);*/
 			res = get_first_matching_file(target, target_length, path, pattern);
 			free(pattern);
 		}
@@ -215,7 +216,7 @@ char *get_file_matching_given_pattern_alloc(char *original_file,
 		pattern = file_pattern;
 	}
 
-	printf("util: path = %s\n", path);
+	wdprintf(V_DEBUG, "util", "path = %s\n", path);
 	if (get_first_matching_file_pattern_list(new_file, 256, path, pattern)) {
 		res_str = malloc(256);
 		snprintf(res_str, 255, "%s/%s", path, new_file);

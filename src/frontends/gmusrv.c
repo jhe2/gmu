@@ -25,6 +25,7 @@
 #include <pthread.h>
 #include "../gmufrontend.h"
 #include "../core.h"
+#include "../debug.h"
 
 static pthread_t fe_thread;
 static int       running;
@@ -39,7 +40,7 @@ const char *get_name(void)
 
 void shut_down(void)
 {
-	printf("gmusrv: Shutting down.\n");
+	wdprintf(V_INFO, "gmusrv", "Shutting down.\n");
 	running = 0;
 	pthread_join(fe_thread, NULL);
 }
@@ -56,7 +57,7 @@ static void *thread_func(void *arg)
 	char              *password = cfg_get_key_value(*config, "gmusrv.Password");
 
 	if (buffer && (sock = socket(AF_INET, SOCK_STREAM, 0)) > 0) {
-		printf("gmusrv: Socket created.\n");
+		wdprintf(V_INFO, "gmusrv", "Socket created.\n");
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int));
 		fcntl(sock, F_SETFL, O_NONBLOCK);
 		address.sin_family = AF_INET;
@@ -73,7 +74,7 @@ static void *thread_func(void *arg)
 				if (client_sock > 0) {
 					int   auth_okay = 0;
 					char *str = "GmuSrv1\n";
-					printf("gmusrv: Client connected (%s).\n", inet_ntoa(address.sin_addr));
+					wdprintf(V_INFO, "gmusrv", "Client connected (%s).\n", inet_ntoa(address.sin_addr));
 					/* Send server identification string... */
 					send(client_sock, str, strlen(str), 0);
 					/* Receive password from client... */
@@ -81,7 +82,7 @@ static void *thread_func(void *arg)
 					if (size > 0) {
 						char tmp[4];
 						buffer[size] = '\0';
-						printf("got password:%s expected password:%s\n", buffer, password);
+						/*printf("got password:%s expected password:%s\n", buffer, password);*/
 						if (password && strncmp(buffer, password, size) == 0)
 							auth_okay = 1;
 						else
@@ -93,7 +94,7 @@ static void *thread_func(void *arg)
 						/* Receive command from client... */
 						size = recv(client_sock, buffer, BUF-1, 0);
 						if (size > 0) buffer[size] = '\0';
-						printf("gmusrv: Command received: \"%s\"\n", buffer);
+						wdprintf(V_DEBUG, "gmusrv", "Command received: \"%s\"\n", buffer);
 						if (strncmp(buffer, "_gmusrv_quit", 4) == 0) {
 							running = 0;
 						}
@@ -144,7 +145,7 @@ static void *thread_func(void *arg)
 								break;
 						}
 					} else {
-						printf("gmusrv: Client authentication failed.\n");
+						wdprintf(V_WARNING, "gmusrv", "Client authentication failed.\n");
 					}
 				}
 				close(client_sock);
@@ -152,7 +153,7 @@ static void *thread_func(void *arg)
 			close(sock);
 			res = EXIT_SUCCESS;
 		} else {
-			printf("gmusrv: ERROR: Port %d unavailable.\n", PORT);
+			wdprintf(V_ERROR, "gmusrv", "ERROR: Port %d unavailable.\n", PORT);
 		}
 	}
 	if (buffer) free(buffer);

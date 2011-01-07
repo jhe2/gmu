@@ -16,6 +16,7 @@
 #include "SDL.h"
 #include "ringbuffer.h"
 #include "audio.h"
+#include "debug.h"
 #include FILE_HW_H
 #define RINGBUFFER_SIZE 131072
 
@@ -41,8 +42,8 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 {
 	while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(50);
 	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL) {
-		printf("audio: Buffer (almost) empty! Buffer fill: %d bytes\n", 
-		       RINGBUFFER_SIZE - ringbuffer_get_free(&audio_rb));
+		wdprintf(V_WARNING, "audio", "Buffer (almost) empty! Buffer fill: %d bytes\n", 
+		         RINGBUFFER_SIZE - ringbuffer_get_free(&audio_rb));
 		SDL_PauseAudio(1);
 		while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(50);
 		while (ringbuffer_get_free(&audio_rb) > 65536) SDL_Delay(60);
@@ -62,13 +63,13 @@ int audio_device_open(int samplerate, int channels)
 
 	buf_read_counter = 0;
 	/* Keep audio device open unless sampling rate or number of channels change */
-	printf("audio: Device already open: %s\n", device_open ? "yes" : "no");
+	wdprintf(V_DEBUG, "audio", "Device already open: %s\n", device_open ? "yes" : "no");
 	if (device_open)
-		printf("audio: Samplerate: have=%d want=%d Channels: have=%d want=%d\n",
-		       have_samplerate, samplerate, have_channels, channels);
+		wdprintf(V_DEBUG, "audio", "Samplerate: have=%d want=%d Channels: have=%d want=%d\n",
+		         have_samplerate, samplerate, have_channels, channels);
 	if (!device_open || samplerate != have_samplerate || channels != have_channels) {
 		if (device_open) audio_device_close();
-		printf("audio: Opening audio device...\n");
+		wdprintf(V_INFO, "audio", "Opening audio device...\n");
 		wanted.freq     = samplerate;
 		wanted.format   = AUDIO_S16;
 		wanted.channels = channels; /* 1 = mono, 2 = stereo */
@@ -76,18 +77,18 @@ int audio_device_open(int samplerate, int channels)
 		wanted.callback = fill_audio;
 		wanted.userdata = NULL;
 		if (SDL_OpenAudio(&wanted, &obtained) < 0) {
-			printf("audio: Could not open audio: %s\n", SDL_GetError());
+			wdprintf(V_ERROR, "audio", "Could not open audio: %s\n", SDL_GetError());
 			result = -3;
 		} else {
 			result = 0;
 			device_open = 1;
 			have_samplerate = samplerate;
 			have_channels   = channels;
-			printf("audio: Device opened with %d Hz, %d channels and sample buffer w/ %d samples.\n",
-			        obtained.freq, obtained.channels, obtained.samples);
+			wdprintf(V_INFO, "audio", "Device opened with %d Hz, %d channels and sample buffer w/ %d samples.\n",
+			         obtained.freq, obtained.channels, obtained.samples);
 		}
 	} else {
-		printf("audio: Using already opened audio device with the same settings...\n");
+		wdprintf(V_INFO, "audio", "Using already opened audio device with the same settings...\n");
 		result = 0;
 	}
 	ringbuffer_clear(&audio_rb);
@@ -99,13 +100,13 @@ int audio_device_open(int samplerate, int channels)
 int audio_set_pause(int pause_state)
 {
 	if (device_open) {
-		printf("audio: %s\n", pause_state ? "Pause!" : "Play!");
+		wdprintf(V_DEBUG, "audio", "%s\n", pause_state ? "Pause!" : "Play!");
 		if (paused != pause_state) {
 			paused = pause_state;
 			SDL_PauseAudio(paused);
 		}
 	} else {
-		printf("audio: Device not opened. Cannot set pause state!\n");
+		wdprintf(V_WARNING, "audio", "Device not opened. Cannot set pause state!\n");
 	}
 	return paused;
 }
@@ -157,11 +158,11 @@ void audio_buffer_free(void)
 void audio_device_close(void)
 {
 	if (device_open) {
-		printf("audio: Closing device.\n");
+		wdprintf(V_DEBUG, "audio", "Closing device.\n");
 		audio_set_pause(1);
 		device_open = 0;
 		SDL_CloseAudio();
-		printf("audio: Device closed.\n");
+		wdprintf(V_INFO, "audio", "Device closed.\n");
 	}
 }
 
@@ -172,7 +173,7 @@ void audio_set_volume(int vol) /* 0..AUDIO_MAX_SW_VOLUME */
 	volume_internal = (vol < AUDIO_MAX_SW_VOLUME ? vol : AUDIO_MAX_SW_VOLUME-1);
 	volume_internal = (volume_internal > 0 ? volume_internal : 0);
 	volume = volume_array[volume_internal]; /*(SDL_MIX_MAXVOLUME / AUDIO_MAX_SW_VOLUME) * volume_internal;*/
-	printf("audio: volume=%d (%d/%d)\n", volume, SDL_MIX_MAXVOLUME, AUDIO_MAX_SW_VOLUME);
+	wdprintf(V_DEBUG, "audio", "volume=%d (%d/%d)\n", volume, SDL_MIX_MAXVOLUME, AUDIO_MAX_SW_VOLUME);
 }
 
 int audio_get_volume(void)

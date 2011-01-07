@@ -19,6 +19,7 @@
 #include <string.h>
 #include "../../wejpconfig.h"
 #include "inputconfig.h"
+#include "../../debug.h"
 
 static char          *hw_button_name[MAX_BUTTONS];
 static int            hw_button_val[MAX_BUTTONS];
@@ -40,7 +41,7 @@ int input_config_init(char *inputconf_file)
 		hw_button_val[w]  = 0;
 	}
 
-	printf("inputconf: Initializing. Loading %s\n", inputconf_file);
+	wdprintf(V_INFO, "inputconfig", "Initializing. Loading %s\n", inputconf_file);
 	cfg_init_config_file_struct(&inputconf);
 	if (cfg_read_config_file(&inputconf, inputconf_file) == 0) {
 		char key[128];
@@ -78,7 +79,7 @@ int input_config_init(char *inputconf_file)
 					hw_button_val[e] = val_int;
 					/*printf("%03d: '%s' = %d (a-method = %d)\n", e, hw_button_name[e], hw_button_val[e], hw_button_method[e]);*/
 				} else { /* out of memory */
-					printf("inputconfig: ERROR: Out of memory!\n");
+					wdprintf(V_ERROR, "inputconfig", "ERROR: Out of memory!\n");
 					break;
 				}
 			}
@@ -110,15 +111,15 @@ int input_config_init(char *inputconf_file)
 					hw_button_val[j] = val_int;
 					/*printf("%03d: '%s' = %d\n", j, hw_button_name[j], hw_button_val[j]);*/
 				} else { /* out of memory */
-					printf("inputconfig: ERROR: Out of memory!\n");
+					wdprintf(V_ERROR, "inputconfig", "ERROR: Out of memory!\n");
 					break;
 				}
 			}
 		}
-		printf("inputconf: Init done.\n");
+		wdprintf(V_INFO, "inputconfig", "Init done.\n");
 		result = 1;
 	} else {
-		printf("inputconf: Failed loading input configuration file: %s.\n", inputconf_file);
+		wdprintf(V_ERROR, "inputconfig", "Failed loading input configuration file: %s.\n", inputconf_file);
 		result = 0;
 	}
 	cfg_free_config_file_struct(&inputconf);
@@ -133,7 +134,7 @@ int input_config_get_val(char *button_name, ActivateMethod *am)
 	for (w = 0; w < number_of_buttons; w++) {
 		if (strlen(hw_button_name[w]) == bnl) {
 			if (strncmp(hw_button_name[w], button_name, strlen(hw_button_name[w])) == 0) {
-				/*printf("Found match: %s = %s (%d)\n", hw_button_name[w], button_name, hw_button_val[w]);*/
+				/*wdprintf(V_DEBUG, "inputconfig", "Found match: %s = %s (%d)\n", hw_button_name[w], button_name, hw_button_val[w]);*/
 				result = hw_button_val[w];
 				if (am) *am = hw_button_method[w];
 				break;

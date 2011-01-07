@@ -21,6 +21,7 @@
 #include "decloader.h"
 #include "gmudecoder.h"
 #include "util.h"
+#include "debug.h"
 
 union {
 	void *ptr;
@@ -51,7 +52,7 @@ static void dc_free(DecoderChain *dc)
 		tmp = tmp->next;
 		if (dc) {
 			if (dc->gd && dc->gd->handle) {
-				printf("decloader: Unloading decoder: %s\n", dc->gd->identifier);
+				wdprintf(V_DEBUG, "decloader", "Unloading decoder: %s\n", dc->gd->identifier);
 				if (dc->gd->close_decoder) (*dc->gd->close_decoder)();
 				dlclose(dc->gd->handle);
 			}
@@ -73,7 +74,7 @@ GmuDecoder *decloader_load_decoder(char *so_file)
 
 	handle = dlopen(so_file, RTLD_LAZY);
 	if (!handle) {
-		printf("decloader: %s\n", dlerror());
+		wdprintf(V_ERROR, "decloader", "%s\n", dlerror());
 		result = 0;
 	} else {
 		char *error;
@@ -81,7 +82,7 @@ GmuDecoder *decloader_load_decoder(char *so_file)
 		dec_load_func  = dlsymunion.fptr;
 		error = dlerror();
 		if (error) {
-			printf("decloader: %s\n", error);
+			wdprintf(V_ERROR, "decloader", "%s\n", error);
 		} else {
 			result = (*dec_load_func)();
 			result->handle = handle;
@@ -106,19 +107,18 @@ int decloader_load_all(char *directory)
 	if (dir_read(&dir, directory, 0)) {
 		int i;
 
-		printf("decloader: %d decoders found.\n", dir_get_number_of_files(&dir));
+		wdprintf(V_INFO, "decloader", "%d decoders found.\n", dir_get_number_of_files(&dir));
 		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
 			GmuDecoder *gd;
 			char        fpath[256];
 
-			printf("decloader: Loading %s was ", dir_get_filename(&dir, i));
 			snprintf(fpath, 255, "%s/%s", dir_get_path(&dir), dir_get_filename(&dir, i));
 			if ((gd = decloader_load_decoder(fpath))) {
-				printf("successful.\n");
-				printf("decloader: %s: Name: %s\n", gd->identifier, (*gd->get_name)());
+				wdprintf(V_INFO, "decloader", "Loading %s was successful.\n", dir_get_filename(&dir, i));
+				wdprintf(V_INFO, "decloader", "%s: Name: %s\n", gd->identifier, (*gd->get_name)());
 				if (gd->get_file_extensions) {
 					int len = strlen(extensions);
-					printf("decloader: %s: File extensions: %s\n", gd->identifier, (*gd->get_file_extensions)());
+					wdprintf(V_INFO, "decloader", "%s: File extensions: %s\n", gd->identifier, (*gd->get_file_extensions)());
 					snprintf(extensions+len, 1023-len, "%s;", (*gd->get_file_extensions)());
 				}
 				dc->gd = gd;
@@ -126,7 +126,7 @@ int decloader_load_all(char *directory)
 				dc = dc->next;
 				res++;
 			} else {
-				printf("unsuccessful.\n");
+				wdprintf(V_WARNING, "decloader", "Loading %s was unsuccessful.\n", dir_get_filename(&dir, i));
 			}
 		}
 		dir_free(&dir);
@@ -146,8 +146,8 @@ GmuDecoder *decloader_get_decoder_for_extension(char *file_extension)
 				strtoupper(ext, (*dc->gd->get_file_extensions)(), 511);
 				strtoupper(ext2, file_extension, 511);
 				if (strstr(ext, ext2) != NULL) {
-					printf("decloader: Matching decoder for %s: %s\n",
-						   file_extension, dc->gd->identifier);
+					wdprintf(V_INFO, "decloader", "Matching decoder for %s: %s\n",
+						     file_extension, dc->gd->identifier);
 					break;
 				}
 			}
@@ -155,7 +155,7 @@ GmuDecoder *decloader_get_decoder_for_extension(char *file_extension)
 		}
 		gd = dc->gd;
 	}
-	if (dc->gd == NULL) printf("decloader: No matching decoder found for %s.\n", file_extension);
+	if (dc->gd == NULL) wdprintf(V_INFO, "decloader", "No matching decoder found for %s.\n", file_extension);
 	return gd;
 }
 

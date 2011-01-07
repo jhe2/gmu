@@ -23,6 +23,7 @@
 #include "coverviewer.h"
 #include "coverimg.h"
 #include "util.h"
+#include "debug.h"
 
 void cover_viewer_init(CoverViewer *cv, const Skin *skin, int large, CoverAlign align, int embedded_cover)
 {
@@ -67,13 +68,13 @@ void cover_viewer_load_artwork(CoverViewer *cv, TrackInfo *ti, char *audio_file,
 		if (fn) {
 			ti->has_cover_artwork = 1;
 			if (strncmp(fn, last_cover_path, 255) != 0) {
-				printf("coverviewer: Loading %s\n", fn);
+				wdprintf(V_INFO, "coverviewer", "Loading %s\n", fn);
 				cover_image_load_image_from_file(&cv->ci, fn, ready_flag);
-				printf("coverviewer: Ok. Loading in progress...\n");
+				wdprintf(V_DEBUG, "coverviewer", "Ok. Loading in progress...\n");
 				strncpy(last_cover_path, fn, 255);
 				last_cover_path[255] = '\0';
 			} else {
-				printf("coverviewer: Cover file already loaded. No need to reload the file.\n");
+				wdprintf(V_INFO, "coverviewer", "Cover file already loaded. No need to reload the file.\n");
 			}
 			free(fn);
 		} else {

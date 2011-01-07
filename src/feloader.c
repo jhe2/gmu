@@ -21,6 +21,7 @@
 #include "feloader.h"
 #include "gmufrontend.h"
 #include "util.h"
+#include "debug.h"
 
 union {
 	void *ptr;
@@ -71,7 +72,7 @@ GmuFrontend *feloader_load_frontend(char *so_file)
 
 	handle = dlopen(so_file, RTLD_LAZY);
 	if (!handle) {
-		printf("feloader: %s\n", dlerror());
+		wdprintf(V_ERROR, "feloader", "%s\n", dlerror());
 		result = 0;
 	} else {
 		char *error;
@@ -79,7 +80,7 @@ GmuFrontend *feloader_load_frontend(char *so_file)
 		fe_load_func   = dlsymunion.fptr;
 		error = dlerror();
 		if (error) {
-			printf("feloader: %s\n", error);
+			wdprintf(V_ERROR, "feloader", "%s\n", error);
 		} else {
 			result = (*fe_load_func)();
 			(*result->frontend_init)(); /* Run frontend init function */
@@ -105,22 +106,21 @@ int feloader_load_all(char *directory)
 	if (dir_read(&dir, directory, 0)) {
 		int i;
 
-		printf("feloader: %d frontends found.\n", dir_get_number_of_files(&dir));
+		wdprintf(V_INFO, "feloader", "%d frontends found.\n", dir_get_number_of_files(&dir));
 		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
 			GmuFrontend *gf;
 			char         fpath[256];
 
-			printf("feloader: Loading %s was ", dir_get_filename(&dir, i));
 			snprintf(fpath, 255, "%s/%s", dir_get_path(&dir), dir_get_filename(&dir, i));
 			if ((gf = feloader_load_frontend(fpath))) {
-				printf("successful.\n");
-				printf("feloader: %s: Name: %s\n", gf->identifier, (*gf->get_name)());
+				wdprintf(V_INFO, "feloader", "feloader: Loading %s was successful.\n", dir_get_filename(&dir, i));
+				wdprintf(V_INFO, "feloader", "%s: Name: %s\n", gf->identifier, (*gf->get_name)());
 				fec->gf = gf;
 				fec->next = fec_init_element();
 				fec = fec->next;
 				res++;
 			} else {
-				printf("unsuccessful.\n");
+				wdprintf(V_WARNING, "feloader", "feloader: Loading %s was successful.\n", dir_get_filename(&dir, i));
 			}
 		}
 		dir_free(&dir);

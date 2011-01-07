@@ -21,6 +21,7 @@
 #include FILE_HW_H
 #include "core.h"
 #include "gmuwidget.h"
+#include "debug.h"
 
 static int skin_init_widget(char *skin_name, ConfigFile *skinconf, char *prefix, GmuWidget *w)
 {
@@ -98,7 +99,7 @@ static int skin_config_load(Skin *skin, char *skin_name)
 	snprintf(skin_file, 255, "%s/themes/%s/theme.conf", gmu_core_get_base_dir(), skin_name);
 	cfg_init_config_file_struct(&skinconf);
 	if (cfg_read_config_file(&skinconf, skin_file) != 0) {
-		printf("skin: Could not read skin config \"%s\".\n", skin_file);
+		wdprintf(V_ERROR, "skin", "Could not read skin config \"%s\".\n", skin_file);
 		result = 0;
 	} else {
 		char *val;
@@ -110,7 +111,7 @@ static int skin_config_load(Skin *skin, char *skin_name)
 
 		switch (skin->version) {
 			case 2: /* New theme format with support for a resizable window */
-				printf("skin: Modern theme file format found.\n");
+				wdprintf(V_INFO, "skin", "Modern theme file format found.\n");
 
 				skin_init_widget(skin_name, &skinconf, "Display",  &(skin->display));
 				skin_init_widget(skin_name, &skinconf, "ListView", &(skin->lv));
@@ -208,27 +209,27 @@ static int skin_config_load(Skin *skin, char *skin_name)
 					int  a, b, c;
 					char tmp[256];
 					
-					printf("skin: Loading fonts...\n");
+					wdprintf(V_DEBUG, "skin", "Loading fonts...\n");
 					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font_display_name);
-					printf("skin: Loading %s\n", tmp);
+					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
 					a = lcd_init(&skin->font_display, tmp, 
 								 skin->font_display_char_width, skin->font_display_char_height);
 					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font1_name);
-					printf("skin: Loading %s\n", tmp);
+					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
 					b = lcd_init(&skin->font1, tmp, 
 								 skin->font1_char_width, skin->font1_char_height);
 					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font2_name);
-					printf("skin: Loading %s\n", tmp);
+					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
 					c = lcd_init(&skin->font2, tmp,
 								 skin->font2_char_width, skin->font2_char_height);
 					if (a && b && c)
-						printf("skin: Skin data loaded successfully.\n");
+						wdprintf(V_INFO, "skin", "skin: Skin data loaded successfully.\n");
 					else
 						result = 0;
 				}
 				break;
 			default:
-				printf("skin: Invalid file format version: %d.\n", skin->version);
+				wdprintf(V_ERROR, "skin", "Invalid file format version: %d.\n", skin->version);
 				skin->version = 0;
 				break;
 		}
@@ -241,7 +242,7 @@ int skin_init(Skin *skin, char *skin_name)
 {
 	int res = skin_config_load(skin, skin_name);
 	if (!res && strncmp(skin_name, "default", 7) != 0) {
-		printf("skin: Trying to load default skin...\n");
+		wdprintf(V_INFO, "skin", "Trying to load default skin...\n");
 		if (res) skin_free(skin);
 		res = skin_init(skin, "default");
 	}
