@@ -1,9 +1,9 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
- * File: debug.h  Created: 070610
+ * File: debug.h  Created: 110107
  *
  * Description: Debug output
  *
@@ -15,12 +15,10 @@
  */
 #ifndef _DEBUG_H
 #define _DEBUG_H
-#define DEBUG_PRINT(module, msg) (printf("%s: %s\n", module, msg))
-
 typedef enum Verbosity {
 	V_SILENT = 0, V_FATAL = 1, V_ERROR = 2, V_WARNING = 3, V_INFO = 4, V_DEBUG = 5
 } Verbosity;
 
 void wdprintf_set_verbosity(Verbosity v);
-int wdprintf(Verbosity v, char *module, char *fmt, ...);
+int  wdprintf(Verbosity v, char *module, char *fmt, ...);
 #endif

@@ -1,7 +1,7 @@
 /* 
  * Gmu GP2X Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: id3.c  Created: 061030
  *
