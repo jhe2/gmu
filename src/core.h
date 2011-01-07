@@ -21,7 +21,7 @@
 #include "wejpconfig.h"
 #include "audio.h"
 
-#define VERSION_NUMBER "0.7.2"
+#define VERSION_NUMBER "0.7.3-wip"
 
 #define GMU_CORE_HW_VOLUME_MAX 100
 #define GMU_CORE_SW_VOLUME_MAX AUDIO_MAX_SW_VOLUME
