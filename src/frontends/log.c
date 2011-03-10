@@ -56,7 +56,7 @@ void init(void)
 			logfile = tmp;
 		else
 			logfile = "gmu.log";
-		lf = fopen(logfile, "a");
+		if (!(lf = fopen(logfile, "a"))) logging_enabled = 0;
 
 		tmp = cfg_get_key_value(*cf, "Log.MinimumPlaytimeSec");
 		if (tmp)
@@ -88,12 +88,13 @@ static void save_previous_trackinfo()
 	time_str[i-1] = '\0'; /* Strip the '\n' at the end of the string */
 
 	/* Save trackinfo of previous track to logfile... */
-	if (trackinfo_get_channels(&previous))
+	if (trackinfo_get_channels(&previous) && lf) {
 		fprintf(lf, "%s;\"%s\";\"%s\";\"%s\";%d:%02d\n", time_str,
 		        trackinfo_get_artist(&previous), trackinfo_get_title(&previous),
 		        trackinfo_get_album(&previous), trackinfo_get_length_minutes(&previous),
 		        trackinfo_get_length_seconds(&previous));
-	fflush(lf);
+		fflush(lf);
+	}
 }
 
 static void update_trackinfo(TrackInfo *ti)
