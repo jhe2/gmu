@@ -15,11 +15,11 @@
 #
 
 #DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
-DECODERS_TO_BUILD=decoders/vorbis.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so decoders/speex.so
-FRONTENDS_TO_BUILD=frontends/sdl.so frontends/log.so frontends/gmusrv.so
-CC=gcc
-CXX=g++
-STRIP=strip
+DECODERS_TO_BUILD?=decoders/vorbis.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so decoders/speex.so
+FRONTENDS_TO_BUILD?=frontends/sdl.so frontends/log.so frontends/gmusrv.so
+CC?=gcc
+CXX?=g++
+STRIP?=strip
 
 SDL_LIB=$(shell sdl-config --libs)
 SDL_CFLAGS=$(shell sdl-config --cflags)

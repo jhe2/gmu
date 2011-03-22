@@ -644,6 +644,7 @@ int main(int argc, char **argv)
 
 	wdprintf(V_INFO, "gmu", "Detected device: %s\n", hw_get_device_model_name());
 
+	config_dir = sys_config_dir;
 	if (user_config_dir[0] == '1') {
 		if (init_user_config_dir(user_config_dir, sys_config_dir, config_file)) {
 			/* Set config_dir to the user config directory */
