@@ -91,7 +91,7 @@ install: $(DISTFILES)
 	@cp *.keymap $(DESTDIR)$(PREFIX)/etc/gmu
 	@echo "#!/bin/sh">$(DESTDIR)$(PREFIX)/bin/gmu
 	@echo "cd $(PREFIX)/share/gmu">>$(DESTDIR)$(PREFIX)/bin/gmu
-	@echo "$(PREFIX)/bin/gmu.bin -e -d $(PREFIX)/etc/gmu">>$(DESTDIR)$(PREFIX)/bin/gmu
+	@echo "$(PREFIX)/bin/gmu.bin -e -d $(PREFIX)/etc/gmu -c gmu.$(TARGET).conf ">>$(DESTDIR)$(PREFIX)/bin/gmu
 	@chmod a+x $(DESTDIR)$(PREFIX)/bin/gmu
 
 clean:

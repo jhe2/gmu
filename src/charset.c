@@ -97,6 +97,24 @@ int charset_utf16_to_iso8859_1(char       *target, int target_size,
 	return valid;
 }
 
+int charset_iso8859_1_to_utf8(char *target, const char *source, int target_size)
+{
+	int            i, j, len = strlen(source), valid = 1;
+	unsigned char *src = (unsigned char *)source;
+	len = (len < target_size ? len : target_size);
+	for (i = 0, j = 0; i < len && j < target_size; i++, j++) {
+		if (src[i] < 128) { /* ASCII char */
+			target[j] = src[i];
+		} else { /* Latin-1 chracter => 2 byte UTF-8 char */
+			target[j]   = 192 + (src[i] >> 6);
+			target[j+1] = 128 + (src[i] & 63);
+			j++;
+		}
+	}
+	target[j] = '\0';
+	return valid;
+}
+
 static Charset filename_charset;
 
 void charset_filename_set(Charset charset)

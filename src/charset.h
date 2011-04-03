@@ -1,7 +1,7 @@
 /* 
- * Gmu GP2X Music Player
+ * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: charset.h  Created: 061115
  *
@@ -22,6 +22,7 @@ int   charset_utf8_to_iso8859_1(char *target, const char *source, int target_siz
 int   charset_utf16_to_iso8859_1(char       *target, int target_size,
                                  const char *source, int source_size,
                                  ByteOrder   byte_order);
+int   charset_iso8859_1_to_utf8(char *target, const char *source, int target_size);
 void  charset_filename_set(Charset charset);
 char *charset_filename_convert_alloc(const char *filename);
 int   charset_convert_string(const char *source, Charset source_charset,
