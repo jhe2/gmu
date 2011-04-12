@@ -15,6 +15,7 @@
  */
 #ifndef _GMUDECODER_H
 #define _GMUDECODER_H
+#include "reader.h"
 
 typedef enum GmuMetaDataType {
 	GMU_META_TITLE, GMU_META_ARTIST, GMU_META_ALBUM,
@@ -48,7 +49,8 @@ typedef struct _GmuDecoder {
 	/* Should return a list of supported mime-types, comma-separated. Optional. */
 	const char * (*get_mime_types)(void);
 	/* Open function, parameter is the filename (with absolute path) of 
-	 * the file to be decoded. Must return TRUE on success, FALSE otherwise. */
+	 * the file to be decoded. Must return TRUE on success, FALSE otherwise. 
+	 * This function will not be called if set_reader_handle() has been defined. */
 	int          (*open_file)(char *filename);
 	/* Function to close the previously opened file, free memory etc. */
 	int          (*close_file)(void);
@@ -92,6 +94,14 @@ typedef struct _GmuDecoder {
 	 * M_CHARSET_UTF_16_BE, M_CHARSET_UTF_16_LE and M_CHARSET_AUTODETECT.
 	 * With M_CHARSET_AUTODETECT Gmu tries to detect the used charset itself. */
 	GmuCharset   (*meta_data_get_charset)(void);
+	/* Checks wether the supplied data contains data compatible with the decoder.
+	 * This function is optional, but is required for streaming audio. Returns 1
+	 * on success and 0 otherwise. */
+	int          (*data_check_mime_type)(const char *data, int size);
+	/* Supplies a Reader handle for reading file/stream data. This function is
+	 * optional, but required for http streaming audio. If this function is not NULL
+	 * the decoder has to close the supplied handle, when finished. */
+	void         (*set_reader_handle)(Reader *r);
 	/* internal handle, do not use */
 	void         *handle;
 } GmuDecoder;

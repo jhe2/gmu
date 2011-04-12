@@ -1254,14 +1254,16 @@ void run_player(char *skin_name, char *decoders_str)
 			wdprintf(V_INFO, "sdl_frontend", "Saving settings...\n");
 			cfg_add_key(config, "TimeDisplay", time_remaining ? 
 			                                   "remaining" : "elapsed");
-			snprintf(val, 63, "%d", buffer->w);
-			cfg_add_key(config, "SDL_frontend.Width", val);
-			snprintf(val, 63, "%d", buffer->h);
-			cfg_add_key(config, "SDL_frontend.Height", val);
+			if (buffer) {
+				snprintf(val, 63, "%d", buffer->w);
+				cfg_add_key(config, "SDL_frontend.Width", val);
+				snprintf(val, 63, "%d", buffer->h);
+				cfg_add_key(config, "SDL_frontend.Height", val);
+				SDL_FreeSurface(buffer);
+			}
 			cfg_add_key(config, "SDL_frontend.Fullscreen", fullscreen ? "yes" : "no");
 		}
 		dir_free(&fb.dir);
-		SDL_FreeSurface(buffer);
 		cover_viewer_free(&cv);
 		skin_free(&skin);
 	}

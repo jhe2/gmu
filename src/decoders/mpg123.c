@@ -21,16 +21,18 @@
 #include "../trackinfo.h"
 #include "../util.h"
 #include "../id3.h"
+#include "../reader.h"
 
 static mpg123_handle *player;
 static int            init = 0;
 static long           seek_to_sample_offset;
 static int            sample_rate, channels = 0, bitrate = 0;
 static TrackInfo      ti, ti_metaonly;
+static Reader        *r;
 
 static const char *get_name(void)
 {
-	return "mpg123 MPEG decoder v0.9";
+	return "mpg123 MPEG decoder v1.0";
 }
 
 static int decode_data(char *target, int max_size)
@@ -39,6 +41,12 @@ static int decode_data(char *target, int max_size)
 	struct mpg123_frameinfo mi;
 	size_t                  decsize = 1;
 
+	if (r) {
+		if (reader_read_bytes(r, 2048)) {
+			int size = reader_get_number_of_bytes_in_buffer(r);
+			if (size > 0) mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+		}
+	}
 	mpg123_info(player, &mi);
 	bitrate = 1000 * (mi.abr_rate ? mi.abr_rate : mi.bitrate);
 	ret = mpg123_read(player, (unsigned char*)target, max_size, &decsize);
@@ -77,18 +85,40 @@ static int mpg123_play_file(char *mpeg_file)
 		long rate = 0;
 
 		printf("mpg123: Opening %s...\n", mpeg_file);
+		trackinfo_clear(&ti);
 		id3_read_tag(mpeg_file, &ti, "MP3");
 		/*strncpy(ti->file_name, mpeg_file, SIZE_FILE_NAME-1);*/
 
-		if (mpg123_open(player, mpeg_file) != MPG123_OK || 
-		    mpg123_getformat(player, &rate, &channels, &encoding) != MPG123_OK) {
+		if (!r && (mpg123_open(player, mpeg_file) != MPG123_OK || 
+		    mpg123_getformat(player, &rate, &channels, &encoding) != MPG123_OK)) { /* Use normal file read stuff */
 			printf("mpg123: Error opening file.\n");
-			mpg123_delete(player);
-			mpg123_exit();
-			player = NULL;
-			init = 0;
-			result = 0;
-		} else if (channels > 0) {
+			channels = 0;
+		} else if (r) { /* Use stream reader */
+			printf("mpg123: Opening stream...\n");
+			if (mpg123_open_feed(player) == MPG123_OK) {
+				int status;
+				int size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
+				do {
+					if (size > 0) mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+					status = mpg123_getformat(player, &rate, &channels, &encoding);
+					if (status == MPG123_NEED_MORE) {
+						reader_read_bytes(r, 2048);
+						size = reader_get_number_of_bytes_in_buffer(r);
+					}
+				} while (status == MPG123_NEED_MORE && size > 0);
+				if (status != MPG123_OK) {
+					printf("mpg123: Error opening stream.\n");
+					channels = 0;
+				}
+			} else {
+				printf("mpg123: Failed opening feed.\n");
+				channels = 0;
+			}
+		} else {
+			printf("mpg123: ERROR: Could not open stream/file.\n");
+			channels = 0;
+		}
+		if (channels > 0) {
 			size_t        dummy;
 			unsigned char dumbuf[1024];
 			
@@ -110,6 +140,12 @@ static int mpg123_play_file(char *mpeg_file)
 				printf("mpg123: No new format.\n");
 			}
 		} else {
+			printf("mpg123: Problem with stream.\n");
+			mpg123_delete(player);
+			mpg123_exit();
+			player = NULL;
+			init = 0;
+			result = 0;
 			result = 0;
 		}
 	}
@@ -124,6 +160,7 @@ static int mpg123_seek_to(int offset_seconds)
 
 static int close_file(void)
 {
+	printf("mpg123: Closing file.\n");
 	mpg123_close(player);
 	mpg123_delete(player);
 	mpg123_exit();
@@ -237,10 +274,10 @@ static const char *get_meta_data(GmuMetaDataType gmdt, int for_current_file)
 				result = trackinfo_get_date(&ti_metaonly);
 				break;
 			case GMU_META_IMAGE_DATA:
-				result = trackinfo_get_image_data(&ti);
+				result = trackinfo_get_image_data(&ti_metaonly);
 				break;
 			case GMU_META_IMAGE_MIME_TYPE:
-				result = trackinfo_get_image_mime_type(&ti);
+				result = trackinfo_get_image_mime_type(&ti_metaonly);
 				break;
 			default:
 				break;
@@ -270,6 +307,16 @@ static GmuCharset meta_data_get_charset(void)
 	return M_CHARSET_ISO_8859_1;
 }
 
+static int data_check_mime_type(const char *data, int size)
+{
+	return 1; /* For the moment, we claim that we support every stream/file type */
+}
+
+static void set_reader_handle(Reader *reader)
+{
+	r = reader;
+}
+
 static GmuDecoder gd = {
 	"mpg123_decoder",
 	NULL,
@@ -293,7 +340,9 @@ static GmuDecoder gd = {
 	get_decoder_buffer_size,
 	meta_data_load,
 	meta_data_close,
-	meta_data_get_charset
+	meta_data_get_charset,
+	data_check_mime_type,
+	set_reader_handle
 };
 
 GmuDecoder *gmu_register_decoder(void)

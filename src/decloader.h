@@ -27,6 +27,7 @@ struct _DecoderChain {
 GmuDecoder *decloader_load_decoder(char *so_file);
 int         decloader_load_all(char *directory);
 GmuDecoder *decloader_get_decoder_for_extension(char *file_extension);
+GmuDecoder *decloader_get_decoder_for_data_chunk(char *data, int size);
 char       *decloader_get_all_extensions(void);
 GmuDecoder *decloader_decoder_list_get_next_decoder(int getfirst);
 void        decloader_free(void);

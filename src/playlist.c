@@ -90,7 +90,7 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 		}
 		entry->played = 0;
 		entry->next = NULL;
-		if (file[0] != '/') {
+		if (file[0] != '/' && strncmp(file, "http://", 7) != 0) {
 			char path[256];
 			if (getcwd(path, 253)) {
 				snprintf(entry->filename, 255, "%s/%s", path, file);

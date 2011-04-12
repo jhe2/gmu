@@ -27,6 +27,7 @@
 #include "decloader.h"
 #include "charset.h"
 #include "debug.h"
+#include "reader.h"
 
 #define BUF_SIZE 65536
 
@@ -53,6 +54,7 @@ typedef struct decode_audio_params
 	GmuDecoder *gd;
 	char       *file;
 	TrackInfo  *ti;
+	Reader     *r;
 } decode_audio_params; 
 
 void file_player_set_lyrics_file_pattern(char *pattern)
@@ -129,6 +131,7 @@ static void *decode_audio_thread(void *udata)
 	char       *file = ((decode_audio_params *)udata)->file;
 	TrackInfo  *ti   = ((decode_audio_params *)udata)->ti;
 	GmuDecoder *gd   = ((decode_audio_params *)udata)->gd;
+	Reader     *r    = ((decode_audio_params *)udata)->r;
 	long        ret  = 1;
 	static char pcmout[BUF_SIZE];
 	GmuCharset  charset = M_CHARSET_AUTODETECT;
@@ -144,6 +147,8 @@ static void *decode_audio_thread(void *udata)
 		}
 		thread_running = 1;
 		playback_status = item_status = PLAYING;
+
+		if (gd->set_reader_handle) (*gd->set_reader_handle)(r);
 
 		if (!file_player_shut_down && (*gd->open_file)(file)) {
 			trackinfo_clear(ti);
@@ -262,11 +267,17 @@ static void *decode_audio_thread(void *udata)
 				wdprintf(V_WARNING, "fileplayer", "Broken audio stream.\n");
 			}
 			(*gd->close_file)();
+		} else {
+			wdprintf(V_DEBUG, "fileplayer", "Unable to open file.\n");
 		}
 		if (item_status == STOPPED)
 			audio_buffer_clear();
 		if (item_status != STOPPED) item_status = FINISHED;
 		wdprintf(V_DEBUG, "fileplayer", "Decoder thread finished.\n");
+	}
+	if (gd->set_reader_handle) {
+		if (r) reader_close(r);
+		(*gd->set_reader_handle)(NULL);
 	}
 	thread_running = 0;
 	return NULL;
@@ -278,6 +289,7 @@ int file_player_play_file(char *file, TrackInfo *ti)
 	static char filename[256];
 	pthread_t   thread;
 	static decode_audio_params dap;
+	Reader     *r = NULL;
 
 	strncpy(filename, file, 255);
 	filename[255] = '\0';
@@ -287,23 +299,47 @@ int file_player_play_file(char *file, TrackInfo *ti)
 
 	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
 	dap.gd = decloader_get_decoder_for_extension(tmp);
+	if (!(dap.gd && dap.gd->identifier)) { /* No decoder found by extension, try mime-type check by data chunk */
+		wdprintf(V_WARNING, "fileplayer", "No suitable decoder available for extension %s. Trying mime type check.\n", tmp);
+		r = reader_open(filename);
+		if (r && reader_read_bytes(r, 4096)) {
+			dap.gd = decloader_get_decoder_for_data_chunk(reader_get_buffer(r), reader_get_number_of_bytes_in_buffer(r));
+		}
+	}
 	if (dap.gd && dap.gd->identifier) {
 		if (!file_player_shut_down) {
 			wdprintf(V_INFO, "fileplayer", "Selected decoder: %s\n", dap.gd->identifier);
 			dap.file = filename;
 			dap.ti = ti;
+			if (dap.gd->set_reader_handle) {
+				if (!r) {
+					r = reader_open(filename);
+					if (r) reader_read_bytes(r, 4096);
+				} else {
+					wdprintf(V_WARNING, "fileplayer", "Could not open %s.\n", filename);
+				}
+			} else {
+				reader_close(r);
+				r = NULL;
+			}
+			dap.r = r;
 			pthread_create(&thread, NULL, decode_audio_thread, &dap);
 			pthread_detach(thread);
-			/*printf(stderr, "fileplayer: Prebuffering...\n");
+			/*wdprintf(V_INFO, "fileplayer", "Prebuffering...\n");
 			while (audio_buffer_get_fill() < MIN_BUFFER_FILL * 2 && item_status != STOPPED)
 				SDL_Delay(10);
-			printf(stderr, "fileplayer: Prebuffering done.\n");
+			wdprintf(V_INFO, "fileplayer", "Prebuffering done.\n");
 			if (item_status != STOPPED) audio_set_pause(0);*/
 		} else {
 			wdprintf(V_DEBUG, "fileplayer", "Shutdown in progress.\n");
+			if (r) reader_close(r);
 		}
 	} else {
-		wdprintf(V_WARNING, "fileplayer", "No suitable decoder available for %s.\n", tmp);
+		wdprintf(V_WARNING, "fileplayer", "No suitable decoder available.\n");
+		if (r) {
+			reader_close(r);
+			r = NULL;
+		}
 	}
 	return playback_status;
 }

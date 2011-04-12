@@ -17,13 +17,14 @@
 #include "ringbuffer.h"
 #include <stdio.h>
 
-void ringbuffer_init(RingBuffer *rb, int size)
+int ringbuffer_init(RingBuffer *rb, int size)
 {
 	rb->buffer      = (char *)malloc(size);
 	rb->size        = size;
 	rb->read_ptr    = 0;
 	rb->write_ptr   = 0;
 	rb->buffer_fill = 0;
+	return rb->buffer ? 1 : 0;
 }
 
 void ringbuffer_free(RingBuffer *rb)

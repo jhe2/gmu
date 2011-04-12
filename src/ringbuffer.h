@@ -13,6 +13,8 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
+#ifndef _RINGBUFFER_H
+#define _RINGBUFFER_H
 struct _RingBuffer {
 	int   size;
 	char *buffer;
@@ -21,7 +23,7 @@ struct _RingBuffer {
 
 typedef struct _RingBuffer RingBuffer;
 
-void ringbuffer_init(RingBuffer *rb, int size);
+int  ringbuffer_init(RingBuffer *rb, int size);
 void ringbuffer_free(RingBuffer *rb);
 int  ringbuffer_write(RingBuffer *rb, char *data, int size);
 int  ringbuffer_read(RingBuffer *rb, char *target, int size);
@@ -29,3 +31,4 @@ int  ringbuffer_get_fill(RingBuffer *rb);
 int  ringbuffer_get_free(RingBuffer *rb);
 void ringbuffer_clear(RingBuffer *rb);
 int  ringbuffer_get_size(RingBuffer *rb);
+#endif
