@@ -147,8 +147,8 @@ static void *thread_func(void *arg)
 					} else {
 						wdprintf(V_WARNING, "gmusrv", "Client authentication failed.\n");
 					}
+					close(client_sock);
 				}
-				close(client_sock);
 			}
 			close(sock);
 			res = EXIT_SUCCESS;
