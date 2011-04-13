@@ -78,15 +78,15 @@ static void *http_reader_thread(void *arg)
 		numbytes = recv(r->sockfd, buf, 4096, 0);
 		if (numbytes > 0) { /* write to ringbuffer */
 			int write_okay = 0;
-			while (!write_okay) {
+			while (!write_okay && !r->eof) {
 				pthread_mutex_lock(&(r->mutex));
 				write_okay = ringbuffer_write(&(r->rb_http), buf, numbytes);
 				pthread_mutex_unlock(&(r->mutex));
 				usleep(150);
 			}
 		}
-		printf("reader thread: ring buffer fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
-		fflush(stdout);
+		//printf("reader thread: ring buffer fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
+		//fflush(stdout);
 	}
 	printf("reader thread done.\n");
 	r->eof = 1;
@@ -152,23 +152,35 @@ Reader *reader_open(char *url)
 					} else {
 						inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
 						fprintf(stderr, "reader: Connecting to %s:%d.\n", s, port);
+						/* Send HTTP GET request */
+						{
+							char http_request[512];
+							snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData:0\r\n\r\n", path, hostname);
+							fprintf(stderr, "reader: Sending request: %s\n", http_request);
+							send(r->sockfd, http_request, strlen(http_request), 0);
+						}
+						/* Start reader thread... */
+						if (ringbuffer_init(&(r->rb_http), HTTP_CACHE_SIZE)) {
+							pthread_mutex_init(&(r->mutex), NULL);
+							pthread_create(&(r->thread), NULL, http_reader_thread, r);
+						} else {
+							fprintf(stderr, "reader: Out of memory.\n");
+						}
+						/* Skip http response header */
+						{
+							int header_end_found = 0, cnt = 0;
+							/* Search for http header end sequence "\r\n\r\n"; I assume http headers to be no longer than 32 kB. */
+							while (!header_end_found && !reader_is_eof(r) && cnt < 32768) {
+								while (reader_read_byte(r) != '\r' && !reader_is_eof(r)) cnt++;
+								if (reader_read_byte(r) == '\n' && reader_read_byte(r) == '\r' && reader_read_byte(r) == '\n') {
+									header_end_found = 1;
+									cnt+=3;
+								}
+							}
+							printf("reader: HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
+						}
 					}
 					freeaddrinfo(servinfo); /* All done with this structure */
-
-					/* Send HTTP GET request */
-					{
-						char http_request[512];
-						snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData:0\r\n\r\n", path, hostname);
-						fprintf(stderr, "reader: Sending request: %s\n", http_request);
-						send(r->sockfd, http_request, strlen(http_request), 0);
-					}
-					/* Start reader thread... */
-					if (ringbuffer_init(&(r->rb_http), HTTP_CACHE_SIZE)) {
-						pthread_mutex_init(&(r->mutex), NULL);
-						pthread_create(&(r->thread), NULL, http_reader_thread, r);
-					} else {
-						fprintf(stderr, "reader: Out of memory.\n");
-					}
 				}
 			}
 			if (hostname) free(hostname);
@@ -193,6 +205,7 @@ int reader_close(Reader *r)
 			close(r->sockfd);
 			r->eof = 1;
 			pthread_join(r->thread, NULL);
+			printf("reader: Reader thread joined.\n");
 		}
 		if (r->buf) free(r->buf);
 		if (r->intbuf) free(r->intbuf);
@@ -204,7 +217,7 @@ int reader_close(Reader *r)
 int reader_is_eof(Reader *r)
 {
 	//printf("eof check: eof = %d r->intbuf_data_size = %d\n", r->eof, r->intbuf_data_size);
-	return r->intbuf_data_size > 0 ? 0 : r->eof;
+	return r->file ? r->eof : ringbuffer_get_fill(&(r->rb_http)) > 0 ? 0 : r->eof;
 }
 
 char reader_read_byte(Reader *r)
@@ -215,14 +228,17 @@ char reader_read_byte(Reader *r)
 		if (ch == EOF) r->eof = 1;
 	} else {
 		int read_okay = 0;
-		while (!read_okay) {
+		while (!read_okay && !reader_is_eof(r)) {
 			char buf[1];
 			pthread_mutex_lock(&(r->mutex));
 			read_okay = ringbuffer_read(&(r->rb_http), buf, 1);
 			pthread_mutex_unlock(&(r->mutex));
 			if (!read_okay && r->eof) break;
 			if (!read_okay) usleep(150);
+			ch = buf[0];
+			//printf("crap.\n");
 		}
+		//printf("out here.\n");
 	}
 	return (char)ch;
 }

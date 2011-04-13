@@ -146,7 +146,6 @@ static int mpg123_play_file(char *mpeg_file)
 			player = NULL;
 			init = 0;
 			result = 0;
-			result = 0;
 		}
 	}
 	return result;
@@ -309,7 +308,21 @@ static GmuCharset meta_data_get_charset(void)
 
 static int data_check_mime_type(const char *data, int size)
 {
-	return 1; /* For the moment, we claim that we support every stream/file type */
+	int i, id3 = 0, sync = 0;
+	if (size >= 3) {
+		if (data[0] == 'I' && data[1] == 'D' && data[2] == '3') {
+			id3 = 1;
+		} else {
+			for (i = 0; i < size-1; i++) { /* Search for mpeg sync bits */
+				if (((unsigned char)data[i]) == 0xff && (((unsigned char)data[i+1]) & 0xf0) == 0xf0) {
+					sync = 1;
+					break;
+				}
+			}
+		}
+	}
+	printf("\nid3:%d sync:%d\n", id3, sync);
+	return id3 || sync;
 }
 
 static void set_reader_handle(Reader *reader)

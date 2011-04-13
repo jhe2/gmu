@@ -143,7 +143,7 @@ static void *decode_audio_thread(void *udata)
 			wdprintf(V_DEBUG, "fileplayer", "Waiting for other thread to finish...\n");
 			item_status = STOPPED;
 			while (thread_running) SDL_Delay(50); /* if thread_running never gets false this threads deadlocks here, should not happen though! */
-			wdprintf(V_DEBUG, "fileplayer", "Okay!\n");
+			wdprintf(V_DEBUG, "fileplayer", "Other thread finished. Continuing with new thread!\n");
 		}
 		thread_running = 1;
 		playback_status = item_status = PLAYING;
@@ -270,15 +270,15 @@ static void *decode_audio_thread(void *udata)
 		} else {
 			wdprintf(V_DEBUG, "fileplayer", "Unable to open file.\n");
 		}
-		if (item_status == STOPPED)
-			audio_buffer_clear();
+		if (item_status == STOPPED) audio_buffer_clear();
 		if (item_status != STOPPED) item_status = FINISHED;
-		wdprintf(V_DEBUG, "fileplayer", "Decoder thread finished.\n");
+		wdprintf(V_DEBUG, "fileplayer", "Decoder thread: Playback done.\n");
 	}
 	if (gd->set_reader_handle) {
 		if (r) reader_close(r);
 		(*gd->set_reader_handle)(NULL);
 	}
+	wdprintf(V_DEBUG, "fileplayer", "Decoder thread finished.\n");
 	thread_running = 0;
 	return NULL;
 }
@@ -315,12 +315,12 @@ int file_player_play_file(char *file, TrackInfo *ti)
 				if (!r) {
 					r = reader_open(filename);
 					if (r) reader_read_bytes(r, 4096);
-				} else {
-					wdprintf(V_WARNING, "fileplayer", "Could not open %s.\n", filename);
 				}
 			} else {
-				reader_close(r);
-				r = NULL;
+				if (r) {
+					reader_close(r);
+					r = NULL;
+				}
 			}
 			dap.r = r;
 			pthread_create(&thread, NULL, decode_audio_thread, &dap);
