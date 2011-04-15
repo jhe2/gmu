@@ -113,9 +113,8 @@ static int mpg123_play_file(char *mpeg_file)
 					char *name        = cfg_get_key_value(r->streaminfo, "icy-name");
 					char *description = cfg_get_key_value(r->streaminfo, "icy-description");
 					
-					if (!name) name = "Unknown";
 					if (!description) description = "";
-					trackinfo_set(&ti, name, description, "", "", 0, rate, channels);
+					if (name) trackinfo_set(&ti, name, description, "", "", 0, rate, channels);
 				}
 
 				if (status != MPG123_OK) {
