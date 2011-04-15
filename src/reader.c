@@ -207,8 +207,7 @@ Reader *reader_open(char *url)
 								}
 							}
 							printf("reader: HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
-							cfg_write_config_file(&(r->streaminfo), "foobar.txt"); // ::::::: just testing :::::::
-							/* TODO: Do something with the streaminfo struct --> supply to selected decoder */
+							/* cfg_write_config_file(&(r->streaminfo), "foobar.txt"); */ /* ::::::: just testing ::::::: */
 						}
 					}
 					freeaddrinfo(servinfo); /* All done with this structure */
