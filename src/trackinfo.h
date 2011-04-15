@@ -16,8 +16,8 @@
 #ifndef _TRACKINFO_H
 #define _TRACKINFO_H
 
-#define SIZE_ARTIST    64
-#define SIZE_TITLE     64
+#define SIZE_ARTIST    128
+#define SIZE_TITLE     128
 #define SIZE_ALBUM     64
 #define SIZE_COMMENT   64
 #define SIZE_DATE      32

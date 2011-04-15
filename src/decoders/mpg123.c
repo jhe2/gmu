@@ -22,6 +22,7 @@
 #include "../util.h"
 #include "../id3.h"
 #include "../reader.h"
+#include "../wejpconfig.h"
 
 static mpg123_handle *player;
 static int            init = 0;
@@ -106,6 +107,17 @@ static int mpg123_play_file(char *mpeg_file)
 						size = reader_get_number_of_bytes_in_buffer(r);
 					}
 				} while (status == MPG123_NEED_MORE && size > 0);
+				
+				/* Set meta data */
+				{
+					char *name        = cfg_get_key_value(r->streaminfo, "icy-name");
+					char *description = cfg_get_key_value(r->streaminfo, "icy-description");
+					
+					if (!name) name = "Unknown";
+					if (!description) description = "";
+					trackinfo_set(&ti, name, description, "", "", 0, rate, channels);
+				}
+
 				if (status != MPG123_OK) {
 					printf("mpg123: Error opening stream.\n");
 					channels = 0;

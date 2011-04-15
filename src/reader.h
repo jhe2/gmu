@@ -18,6 +18,7 @@
 #define MINIMUM_HTTP_READ 1024
 #include <pthread.h>
 #include "ringbuffer.h"
+#include "wejpconfig.h"
 
 #define HTTP_CACHE_SIZE 524288
 
@@ -33,13 +34,8 @@ typedef struct
 	int   buf_size;
 	int   buf_data_size;
 
-	char *intbuf;
-	int   intbuf_size;
-	int   intbuf_data_size;
-	int   intbuf_pos;
-	int   in_first_buffer; /* This will be set to 1 for the first buffer fill and to 0 later on. 
-	                          Jumping back to the beginning of the stream is possible only within first buffer */
-	char *http_payload_start;
+	ConfigFile streaminfo;
+
 	RingBuffer rb_http;
 	pthread_mutex_t mutex;
 	pthread_t       thread;

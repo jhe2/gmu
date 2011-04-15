@@ -73,7 +73,6 @@ static void *http_reader_thread(void *arg)
 	int numbytes = 1;
 	char buf[4096];
 
-	r->intbuf_data_size = 0;
 	while (numbytes != -1 && numbytes > 0 && !r->eof) {
 		numbytes = recv(r->sockfd, buf, 4096, 0);
 		if (numbytes > 0) { /* write to ringbuffer */
@@ -98,12 +97,6 @@ Reader *reader_open(char *url)
 {
 	Reader *r = malloc(sizeof(Reader));
 	if (r) {
-		r->intbuf = NULL;
-		r->intbuf_size = 0;
-		r->intbuf_data_size = 0;
-		r->intbuf_pos = 0;
-		r->in_first_buffer = 1;
-		r->http_payload_start = NULL;
 		r->eof = 0;
 		r->file = NULL;
 		r->sockfd = 0;
@@ -111,6 +104,9 @@ Reader *reader_open(char *url)
 		r->buf = NULL;
 		r->buf_size = 0;
 		r->buf_data_size = 0;
+
+		cfg_init_config_file_struct(&(r->streaminfo));
+
 		if (strncmp(url, "http://", 7) == 0) { /* Got a HTTP URL */
 			char *hostname = NULL, *path = NULL;
 			int   port = 80;
@@ -155,7 +151,7 @@ Reader *reader_open(char *url)
 						/* Send HTTP GET request */
 						{
 							char http_request[512];
-							snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData:0\r\n\r\n", path, hostname);
+							snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData: 0\r\n\r\n", path, hostname);
 							fprintf(stderr, "reader: Sending request: %s\n", http_request);
 							send(r->sockfd, http_request, strlen(http_request), 0);
 						}
@@ -168,16 +164,51 @@ Reader *reader_open(char *url)
 						}
 						/* Skip http response header */
 						{
-							int header_end_found = 0, cnt = 0;
-							/* Search for http header end sequence "\r\n\r\n"; I assume http headers to be no longer than 32 kB. */
+							int  header_end_found = 0, cnt = 0, i = 0;
+							char ch, key[256], value[512];
+							
+							key[0] = '\0'; value[0] = '\0';
+							/* Search for http header end sequence "\r\n\r\n" (or "\n\n"); I assume http headers to be no longer than 32 kB. */
 							while (!header_end_found && !reader_is_eof(r) && cnt < 32768) {
-								while (reader_read_byte(r) != '\r' && !reader_is_eof(r)) cnt++;
-								if (reader_read_byte(r) == '\n' && reader_read_byte(r) == '\r' && reader_read_byte(r) == '\n') {
-									header_end_found = 1;
+								/* extract key */
+								ch = 0;
+								while (ch != '\r' && ch != '\n' && ch != ':' && !reader_is_eof(r)) {
+									ch = reader_read_byte(r);
+									if (i < 255 && ch != ':' && ch != '=' && ch != '\r' && ch != '\n') key[i++] = ch;
+									cnt++;
+								}
+								key[i] = '\0';
+								printf("key=[%s]\n", key);
+
+								/* extract value */
+								i = 0;
+								while ((ch = reader_read_byte(r)) == ' ' && !reader_is_eof(r)) cnt++; /* skip spaces after ":" */
+								if (ch != '\r' && ch != '\n') value[i++] = ch;
+								while (ch != '\r' && ch != '\n' && !reader_is_eof(r)) {
+									ch = reader_read_byte(r);
+									if (i < 511 && ch != '\r' && ch != '\n') value[i++] = ch;
+									cnt++;
+								}
+								value[i] = '\0';
+								printf("value=[%s]\n", value);
+								if (key[0] && value[0])
+									cfg_add_key(&(r->streaminfo), key, value);
+
+								i = 0;
+								if (ch == '\n' || (ch = reader_read_byte(r)) == '\n') {
+									ch = reader_read_byte(r);
+									if ((ch == '\r' && (ch = reader_read_byte(r)) == '\n') || ch == '\n')
+										header_end_found = 1;
+									else
+										key[i++] = ch;
 									cnt+=3;
+								} else {
+									key[i++] = ch;
 								}
 							}
 							printf("reader: HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
+							cfg_write_config_file(&(r->streaminfo), "foobar.txt"); // ::::::: just testing :::::::
+							/* TODO: Do something with the streaminfo struct --> supply to selected decoder */
 						}
 					}
 					freeaddrinfo(servinfo); /* All done with this structure */
@@ -200,15 +231,16 @@ int reader_close(Reader *r)
 	if (r) {
 		if (r->file) { /* local file */
 			fclose(r->file);
-		} else { /* http stream */
+		} else if (r->sockfd > 0) { /* http stream */
 			/* close http stream */
 			close(r->sockfd);
 			r->eof = 1;
 			pthread_join(r->thread, NULL);
 			printf("reader: Reader thread joined.\n");
+			ringbuffer_free(&(r->rb_http));
 		}
 		if (r->buf) free(r->buf);
-		if (r->intbuf) free(r->intbuf);
+		cfg_free_config_file_struct(&(r->streaminfo));
 		free(r);
 	}
 	return 0;
@@ -216,7 +248,6 @@ int reader_close(Reader *r)
 
 int reader_is_eof(Reader *r)
 {
-	//printf("eof check: eof = %d r->intbuf_data_size = %d\n", r->eof, r->intbuf_data_size);
 	return r->file ? r->eof : ringbuffer_get_fill(&(r->rb_http)) > 0 ? 0 : r->eof;
 }
 
@@ -236,9 +267,7 @@ char reader_read_byte(Reader *r)
 			if (!read_okay && r->eof) break;
 			if (!read_okay) usleep(150);
 			ch = buf[0];
-			//printf("crap.\n");
 		}
-		//printf("out here.\n");
 	}
 	return (char)ch;
 }
@@ -288,17 +317,9 @@ char *reader_get_buffer(Reader *r)
 int reader_reset_stream(Reader *r)
 {
 	int res = 0;
-	if (r->file) {
+	if (r->file) { /* Only possible for local files */
 		rewind(r->file);
 		res = 1;
-	} else {
-		/* check if stream is still in buffered part. In that case do a reset to payload start, otherwise return 0 */
-		if (r->in_first_buffer) {
-			/* do stream reset */
-			if (r->http_payload_start)
-				r->intbuf_pos = (r->http_payload_start - r->intbuf);
-			res = 1;
-		}
 	}
 	return res;
 }
@@ -315,23 +336,3 @@ int reader_seek(Reader *r, int byte_offset)
 	}
 	return res;
 }
-
-/*int main(int argc, char **argv)
-{
-	Reader *r;
-
-	if (argc == 2) {
-		r = reader_open(argv[1]);
-		if (r) {
-			while (!reader_is_eof(r)) {
-				char *data = reader_read_bytes(r, 350);
-				if (data) printf("DATA CHUNK(%d): %s\n", strlen(data), data); else printf("NO DATA\n");
-				//reader_reset_stream(r);
-			}
-			reader_close(r);
-		}
-	} else {
-		printf("Usage %s file/URL\n", argv[0]);
-	}
-	return 0;
-}*/

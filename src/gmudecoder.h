@@ -16,6 +16,7 @@
 #ifndef _GMUDECODER_H
 #define _GMUDECODER_H
 #include "reader.h"
+#include "wejpconfig.h"
 
 typedef enum GmuMetaDataType {
 	GMU_META_TITLE, GMU_META_ARTIST, GMU_META_ALBUM,
@@ -50,7 +51,8 @@ typedef struct _GmuDecoder {
 	const char * (*get_mime_types)(void);
 	/* Open function, parameter is the filename (with absolute path) of 
 	 * the file to be decoded. Must return TRUE on success, FALSE otherwise. 
-	 * This function will not be called if set_reader_handle() has been defined. */
+	 * If set_reader_handle() has been defined, the supplied Reader handle should
+	 * be used for file/stream access, instead of doing file access with fopen() etc. */
 	int          (*open_file)(char *filename);
 	/* Function to close the previously opened file, free memory etc. */
 	int          (*close_file)(void);
