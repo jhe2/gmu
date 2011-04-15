@@ -226,7 +226,7 @@ static void *decode_audio_thread(void *udata)
 					int size = 0, ret = 1, br = 0;
 
 					while (ret > 0 && size < BUF_SIZE / 2 && item_status == PLAYING) {
-						ret = (*gd->decode_data)(pcmout+size, BUF_SIZE);
+						ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
 						size += ret;
 					}
 					if (gd->get_current_bitrate) br = (*gd->get_current_bitrate)();
