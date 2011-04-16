@@ -84,8 +84,8 @@ static void *http_reader_thread(void *arg)
 				usleep(150);
 			}
 		}
-		//printf("reader thread: ring buffer fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
-		//fflush(stdout);
+		printf("reader: buf fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
+		fflush(stdout);
 	}
 	printf("reader thread done.\n");
 	r->eof = 1;
@@ -151,7 +151,7 @@ Reader *reader_open(char *url)
 						/* Send HTTP GET request */
 						{
 							char http_request[512];
-							snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData: 0\r\n\r\n", path, hostname);
+							snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData: 1\r\n\r\n", path, hostname);
 							fprintf(stderr, "reader: Sending request: %s\n", http_request);
 							send(r->sockfd, http_request, strlen(http_request), 0);
 						}

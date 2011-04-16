@@ -30,6 +30,7 @@ static long           seek_to_sample_offset;
 static int            sample_rate, channels = 0, bitrate = 0;
 static TrackInfo      ti, ti_metaonly;
 static Reader        *r;
+static int            metaint = -1, metacount = 0;
 
 static const char *get_name(void)
 {
@@ -43,9 +44,40 @@ static int decode_data(char *target, int max_size)
 	size_t                  decsize = 1;
 
 	if (r) {
-		if (reader_read_bytes(r, 2048)) {
+		if (metaint > 0 && metacount == 0) {
+			int metasize = reader_read_byte(r) * 16;
+			if (metasize > 0) {
+				char *metastr;
+				
+				printf("metadata size = %d bytes\n", metasize);
+				reader_read_bytes(r, metasize);
+				int s = reader_get_number_of_bytes_in_buffer(r);
+				printf("got %d bytes\n", s);
+				if (s > 0) {
+					metastr = malloc(s+1);
+					if (metastr) {
+						memcpy(metastr, reader_get_buffer(r), s);
+						metastr[s] = '\0';
+						printf("metadata: [%s]\n", metastr);
+						free(metastr);
+					}
+				}
+			}
+			metacount = metaint;
+		}
+
+		int readsize = 1024;
+		if (metacount < readsize) readsize = metacount;
+		//printf("metacount = \"%d\", readsize = \"%d\"             \n", metacount, readsize);
+		metacount -= readsize;
+
+		if (reader_read_bytes(r, readsize)) {
 			int size = reader_get_number_of_bytes_in_buffer(r);
-			if (size > 0) mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+			if (size > 0) {
+				mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+			}
+		} else {
+			printf("mpg123: Got not data from reader :(\n");
 		}
 	}
 	mpg123_info(player, &mi);
@@ -97,22 +129,23 @@ static int mpg123_play_file(char *mpeg_file)
 		} else if (r) { /* Use stream reader */
 			printf("mpg123: Opening stream...\n");
 			if (mpg123_open_feed(player) == MPG123_OK) {
-				int status;
-				int size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
-				do {
-					if (size > 0) mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
-					status = mpg123_getformat(player, &rate, &channels, &encoding);
-					if (status == MPG123_NEED_MORE) {
-						reader_read_bytes(r, 2048);
-						size = reader_get_number_of_bytes_in_buffer(r);
-					}
-				} while (status == MPG123_NEED_MORE && size > 0);
-				
+				int   status;
+				int   size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
+				char *metaint_str = cfg_get_key_value(r->streaminfo, "icy-metaint");
+
+				if (metaint_str) metaint = atoi(metaint_str);
+				printf("mpg123: metadata every %d bytes.\n", metaint);
+				metacount = metaint - size;
+				mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+
+				status = mpg123_getformat(player, &rate, &channels, &encoding);
+
+				printf("mpg123: Next metadata in %d bytes.\n", metacount);
+
 				/* Set meta data */
 				{
 					char *name        = cfg_get_key_value(r->streaminfo, "icy-name");
 					char *description = cfg_get_key_value(r->streaminfo, "icy-description");
-					
 					if (!description) description = "";
 					if (name) trackinfo_set(&ti, name, description, "", "", 0, rate, channels);
 				}
