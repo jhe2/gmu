@@ -67,9 +67,12 @@ static int decode_data(char *target, int max_size)
 		}
 
 		int readsize = 1024;
-		if (metacount < readsize) readsize = metacount;
-		//printf("metacount = \"%d\", readsize = \"%d\"             \n", metacount, readsize);
-		metacount -= readsize;
+		
+		if (metacount > 0) {
+			if (metacount < readsize) readsize = metacount;
+			//printf("metacount = \"%d\", readsize = \"%d\"             \n", metacount, readsize);
+			metacount -= readsize;
+		}
 
 		if (reader_read_bytes(r, readsize)) {
 			int size = reader_get_number_of_bytes_in_buffer(r);
@@ -133,9 +136,9 @@ static int mpg123_play_file(char *mpeg_file)
 				int   size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
 				char *metaint_str = cfg_get_key_value(r->streaminfo, "icy-metaint");
 
-				if (metaint_str) metaint = atoi(metaint_str);
+				if (metaint_str) metaint = atoi(metaint_str); else metaint = -1;
 				printf("mpg123: metadata every %d bytes.\n", metaint);
-				metacount = metaint - size;
+				if (metaint > 0) metacount = metaint - size; else metacount = 0;
 				mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
 
 				status = mpg123_getformat(player, &rate, &channels, &encoding);
