@@ -23,6 +23,7 @@
 #include "../id3.h"
 #include "../reader.h"
 #include "../wejpconfig.h"
+#include "../debug.h"
 
 static mpg123_handle *player;
 static int            init = 0;
@@ -49,16 +50,16 @@ static int decode_data(char *target, int max_size)
 			if (metasize > 0) {
 				char *metastr;
 				
-				printf("metadata size = %d bytes\n", metasize);
+				wdprintf(V_DEBUG, "mpg123", "metadata size = %d bytes\n", metasize);
 				reader_read_bytes(r, metasize);
 				int s = reader_get_number_of_bytes_in_buffer(r);
-				printf("got %d bytes\n", s);
+				wdprintf(V_DEBUG, "mpg123", "got %d bytes\n", s);
 				if (s > 0) {
 					metastr = malloc(s+1);
 					if (metastr) {
 						memcpy(metastr, reader_get_buffer(r), s);
 						metastr[s] = '\0';
-						printf("metadata: [%s]\n", metastr);
+						wdprintf(V_DEBUG, "mpg123", "metadata: [%s]\n", metastr);
 						free(metastr);
 					}
 				}
@@ -80,7 +81,7 @@ static int decode_data(char *target, int max_size)
 				mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
 			}
 		} else {
-			printf("mpg123: Got not data from reader :(\n");
+			wdprintf(V_WARNING, "mpg123", "Got not data from reader :(\n");
 		}
 	}
 	mpg123_info(player, &mi);
@@ -108,10 +109,10 @@ static int mpg123_play_file(char *mpeg_file)
 	seek_to_sample_offset = 0;
 
 	if (!init) {
-		printf("mpg123: Initializing.\n");
+		wdprintf(V_DEBUG, "mpg123", "Initializing.\n");
 		if (mpg123_init() != MPG123_OK)
-			printf("mpg123: Init failed.\n");
-		printf("mpg123: Creating decoder.\n");	
+			wdprintf(V_ERROR, "mpg123", "Init failed.\n");
+		wdprintf(V_DEBUG, "mpg123", "Creating decoder.\n");	
 		player = mpg123_new(NULL, NULL);
 		init = 1;
 	}
@@ -120,30 +121,30 @@ static int mpg123_play_file(char *mpeg_file)
 		int  encoding = 0;
 		long rate = 0;
 
-		printf("mpg123: Opening %s...\n", mpeg_file);
+		wdprintf(V_INFO, "mpg123", "Opening %s...\n", mpeg_file);
 		trackinfo_clear(&ti);
 		id3_read_tag(mpeg_file, &ti, "MP3");
 		/*strncpy(ti->file_name, mpeg_file, SIZE_FILE_NAME-1);*/
 
 		if (!r && (mpg123_open(player, mpeg_file) != MPG123_OK || 
 		    mpg123_getformat(player, &rate, &channels, &encoding) != MPG123_OK)) { /* Use normal file read stuff */
-			printf("mpg123: Error opening file.\n");
+			wdprintf(V_ERROR, "mpg123", "Error opening file.\n");
 			channels = 0;
 		} else if (r) { /* Use stream reader */
-			printf("mpg123: Opening stream...\n");
+			wdprintf(V_INFO, "mpg123", "Opening stream...\n");
 			if (mpg123_open_feed(player) == MPG123_OK) {
 				int   status;
 				int   size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
 				char *metaint_str = cfg_get_key_value(r->streaminfo, "icy-metaint");
 
 				if (metaint_str) metaint = atoi(metaint_str); else metaint = -1;
-				printf("mpg123: metadata every %d bytes.\n", metaint);
+				wdprintf(V_DEBUG, "mpg123", "Metadata every %d bytes.\n", metaint);
 				if (metaint > 0) metacount = metaint - size; else metacount = 0;
 				mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
 
 				status = mpg123_getformat(player, &rate, &channels, &encoding);
 
-				printf("mpg123: Next metadata in %d bytes.\n", metacount);
+				wdprintf(V_DEBUG, "mpg123", "Next metadata in %d bytes.\n", metacount);
 
 				/* Set meta data */
 				{
@@ -154,22 +155,22 @@ static int mpg123_play_file(char *mpeg_file)
 				}
 
 				if (status != MPG123_OK) {
-					printf("mpg123: Error opening stream.\n");
+					wdprintf(V_ERROR, "mpg123", "Error opening stream.\n");
 					channels = 0;
 				}
 			} else {
-				printf("mpg123: Failed opening feed.\n");
+				wdprintf(V_ERROR, "mpg123", "Failed opening feed.\n");
 				channels = 0;
 			}
 		} else {
-			printf("mpg123: ERROR: Could not open stream/file.\n");
+			wdprintf(V_ERROR, "mpg123", "ERROR: Could not open stream/file.\n");
 			channels = 0;
 		}
 		if (channels > 0) {
 			size_t        dummy;
 			unsigned char dumbuf[1024];
 			
-			printf("mpg123: Found stream with %d channels and %ld bps.\n", channels, rate);
+			wdprintf(V_INFO, "mpg123", "Found stream with %d channels and %ld bps.\n", channels, rate);
 			mpg123_format_none(player);
 			mpg123_format(player, rate, channels, encoding);
 			mpg123_info(player, &mi);
@@ -184,10 +185,10 @@ static int mpg123_play_file(char *mpeg_file)
 			       ti->bitrate / 1000, ti->channels, ti->samplerate);*/
 
 			if (mpg123_read(player, dumbuf, 1024, &dummy) != MPG123_NEW_FORMAT) {
-				printf("mpg123: No new format.\n");
+				wdprintf(V_DEBUG, "mpg123", "No new format.\n");
 			}
 		} else {
-			printf("mpg123: Problem with stream.\n");
+			wdprintf(V_ERROR, "mpg123", "Problem with stream.\n");
 			mpg123_delete(player);
 			mpg123_exit();
 			player = NULL;
@@ -206,7 +207,7 @@ static int mpg123_seek_to(int offset_seconds)
 
 static int close_file(void)
 {
-	printf("mpg123: Closing file.\n");
+	wdprintf(V_DEBUG, "mpg123", "Closing file.\n");
 	mpg123_close(player);
 	mpg123_delete(player);
 	mpg123_exit();
@@ -368,7 +369,7 @@ static int data_check_mime_type(const char *data, int size)
 			}
 		}
 	}
-	printf("\nid3:%d sync:%d\n", id3, sync);
+	wdprintf(V_DEBUG, "mpg123", "id3:%d sync:%d\n", id3, sync);
 	return id3 || sync;
 }
 
