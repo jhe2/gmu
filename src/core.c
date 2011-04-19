@@ -699,7 +699,8 @@ int main(int argc, char **argv)
 	{
 		const char *exts = decloader_get_all_extensions();
 		int start, item;
-		for (i = 0, start = 0, item = 0; exts[i] != '\0' && item < MAX_FILE_EXTENSIONS; i++) {
+		file_extensions[0] = ".m3u";
+		for (i = 0, start = 0, item = 1; exts[i] != '\0' && item < MAX_FILE_EXTENSIONS; i++) {
 			if (exts[i] == ';') {
 				file_extensions[item] = malloc(i-start+1);
 				strncpy(file_extensions[item], exts+start, i-start);
