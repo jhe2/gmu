@@ -24,6 +24,7 @@
 #include <arpa/inet.h>
 #include "reader.h"
 #include "ringbuffer.h"
+#include "debug.h"
 
 /* get sockaddr, IPv4 or IPv6 */
 static void *get_in_addr(struct sockaddr *sa)
@@ -84,10 +85,10 @@ static void *http_reader_thread(void *arg)
 				usleep(150);
 			}
 		}
-		printf("reader: buf fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
+		wdprintf(V_DEBUG, "reader", "buf fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
 		fflush(stdout);
 	}
-	printf("reader: thread done.\n");
+	wdprintf(V_DEBUG, "reader", "thread done.\n");
 	r->eof = 1;
 	return NULL;
 }
@@ -114,7 +115,7 @@ Reader *reader_open(char *url)
 			/* 1) Split URL into host, port and path */
 			http_url_split_alloc(url, &hostname, &port, &path);
 			/* 2) open connection to host on port */
-			printf("reader: Opening connection to host %s on port %d. Reading from %s.\n", hostname, port, path);
+			wdprintf(V_INFO, "reader", "Opening connection to host %s on port %d. Reading from %s.\n", hostname, port, path);
 			if (hostname && path && port > 0) {
 				struct addrinfo hints, *servinfo, *p;
 				int    rv;
@@ -127,7 +128,7 @@ Reader *reader_open(char *url)
 				hints.ai_socktype = SOCK_STREAM;
 
 				if ((rv = getaddrinfo(hostname, port_str, &hints, &servinfo)) != 0) {
-					fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+					wdprintf(V_ERROR, "reader",  "getaddrinfo: %s\n", gai_strerror(rv));
 				} else {
 					/* loop through all the results and connect to the first we can */
 					for (p = servinfo; p != NULL; p = p->ai_next) {
@@ -144,15 +145,15 @@ Reader *reader_open(char *url)
 					}
 
 					if (p == NULL) {
-						fprintf(stderr, "reader: Failed to connect.\n");
+						wdprintf(V_ERROR, "reader", "Failed to connect.\n");
 					} else {
 						inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-						fprintf(stderr, "reader: Connecting to %s:%d.\n", s, port);
+						wdprintf(V_INFO, "reader", "Connecting to %s:%d.\n", s, port);
 						/* Send HTTP GET request */
 						{
 							char http_request[512];
 							snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData: 1\r\n\r\n", path, hostname);
-							fprintf(stderr, "reader: Sending request: %s\n", http_request);
+							wdprintf(V_DEBUG, "reader", "Sending request: %s\n", http_request);
 							send(r->sockfd, http_request, strlen(http_request), 0);
 						}
 
@@ -162,7 +163,7 @@ Reader *reader_open(char *url)
 							tv.tv_sec = 2;
 							tv.tv_usec = 0;
 							if (setsockopt(r->sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof tv)) {
-								perror("setsockopt");
+								perror("reader: setsockopt");
 							}
 						}
 						
@@ -171,8 +172,9 @@ Reader *reader_open(char *url)
 							pthread_mutex_init(&(r->mutex), NULL);
 							pthread_create(&(r->thread), NULL, http_reader_thread, r);
 						} else {
-							fprintf(stderr, "reader: Out of memory.\n");
+							wdprintf(V_ERROR, "reader", "Out of memory.\n");
 						}
+						
 						/* Skip http response header */
 						{
 							int  header_end_found = 0, cnt = 0, i = 0;
@@ -189,7 +191,7 @@ Reader *reader_open(char *url)
 									cnt++;
 								}
 								key[i] = '\0';
-								printf("key=[%s]\n", key);
+								wdprintf(V_DEBUG, "reader", "key=[%s]\n", key);
 
 								/* extract value */
 								i = 0;
@@ -201,7 +203,7 @@ Reader *reader_open(char *url)
 									cnt++;
 								}
 								value[i] = '\0';
-								printf("value=[%s]\n", value);
+								wdprintf(V_DEBUG, "reader", "value=[%s]\n", value);
 								if (key[0] && value[0])
 									cfg_add_key(&(r->streaminfo), key, value);
 
@@ -217,7 +219,7 @@ Reader *reader_open(char *url)
 									key[i++] = ch;
 								}
 							}
-							printf("reader: HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
+							wdprintf(V_DEBUG, "reader", "HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
 							/* cfg_write_config_file(&(r->streaminfo), "foobar.txt"); */ /* ::::::: just testing ::::::: */
 						}
 					}
@@ -227,7 +229,7 @@ Reader *reader_open(char *url)
 			if (hostname) free(hostname);
 			if (path)     free(path);
 		} else { /* Treat everything else as a local file (for now) */
-			printf("reader: Opening file %s.\n", url);
+			wdprintf(V_INFO, "reader", "Opening file %s.\n", url);
 			r->file = fopen(url, "r");
 			r->seekable = 1;
 		}
@@ -245,9 +247,9 @@ int reader_close(Reader *r)
 			/* close http stream */
 			close(r->sockfd);
 			r->eof = 1;
-			printf("reader: Waiting for reader thread to finish.\n");
+			wdprintf(V_DEBUG, "reader", "Waiting for reader thread to finish.\n");
 			pthread_join(r->thread, NULL);
-			printf("reader: Reader thread joined.\n");
+			wdprintf(V_DEBUG, "reader", "Reader thread joined.\n");
 			ringbuffer_free(&(r->rb_http));
 		}
 		if (r->buf) free(r->buf);
