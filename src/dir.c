@@ -23,6 +23,7 @@
 #include <dirent.h>
 #include "dir.h"
 #include "util.h"
+#include "debug.h"
 
 static const char **dir_extensions = NULL;
 static int          show_directories;
@@ -116,7 +117,7 @@ int dir_read(Dir *dir, char *path, int directories_first)
 			}
 		}
 		if (chdir(prev_wd))
-			printf("dir: ERROR: Unable to change directory to parent dir.\n");
+			wdprintf(V_WARNING, "dir", "WARNING: Unable to change directory to parent dir.\n");
 	}
 	return result;
 }
