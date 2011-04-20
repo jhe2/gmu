@@ -79,6 +79,11 @@ static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 	}
 }
 
+void gmu_core_add_m3u_contents_to_playlist(char *filename)
+{
+	add_m3u_contents_to_playlist(&pl, filename);
+}
+
 static int play_next(Playlist *pl, TrackInfo *ti)
 {
 	int result = 0;

@@ -163,18 +163,6 @@ static int play_previous(TrackInfo *ti, CoverViewer *cv)
 	return gmu_core_previous();
 }
 
-static void add_m3u_contents_to_playlist(char *filename)
-{
-	M3u m3u;
-	if (m3u_open_file(&m3u, filename)) {
-		while (m3u_read_next_item(&m3u)) {
-		   gmu_core_playlist_add_item(m3u_current_item_get_full_path(&m3u),
-		                              m3u_current_item_get_title(&m3u));
-		}
-		m3u_close_file(&m3u);
-	}
-}
-
 struct _fb_delete_params {
 	char        *file;
 	FileBrowser *fb;
@@ -259,7 +247,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 					strtoupper(filetype, tmp, 15);
 				if (strcmp(filetype, "M3U") == 0) {
 					wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
-					add_m3u_contents_to_playlist(file_browser_get_selected_file(fb));
+					gmu_core_add_m3u_contents_to_playlist(file_browser_get_selected_file(fb));
 					player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
 				} else {
 					if (getcwd(cwd, 255) != NULL) {
@@ -775,7 +763,7 @@ void run_player(char *skin_name, char *decoders_str)
 			if (strncmp(cfg_get_key_value(*config, "RememberLastPlaylist"), "yes", 3) == 0) {
 				char temp[256];
 				snprintf(temp, 255, "%s/playlist.m3u", base_dir);
-				add_m3u_contents_to_playlist(temp);
+				gmu_core_add_m3u_contents_to_playlist(temp);
 				if (gmu_core_playlist_get_length() > 0) {
 					view = PLAYLIST;
 					if (strncmp(cfg_get_key_value(*config, "AutoPlayOnProgramStart"), "yes", 3) == 0) {
@@ -1105,7 +1093,7 @@ void run_player(char *skin_name, char *decoders_str)
 							case PLMANAGER_APPEND_LIST:
 								plmanager_reset_flag(&ps);
 								snprintf(temp, 255, "%s/%s", base_dir, plmanager_get_selection(&ps));
-								add_m3u_contents_to_playlist(temp);
+								gmu_core_add_m3u_contents_to_playlist(temp);
 								player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
 								break;
 							default:
@@ -1316,7 +1304,7 @@ void *start_player(void *arg)
 			if (tmp != NULL)
 				strtoupper(filetype, tmp, 15);
 			if (strcmp(filetype, "M3U") == 0) {
-				add_m3u_contents_to_playlist(gmu_core_get_playlist(), argv[i]);
+				gmu_core_add_m3u_contents_to_playlist(argv[i]);
 			} else {
 				playlist_add_item(gmu_core_get_playlist(), argv[i], filename);
 			}

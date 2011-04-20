@@ -69,6 +69,7 @@ int              gmu_core_playlist_entry_delete(Entry *entry);
 Entry           *gmu_core_playlist_get_current(void);
 char            *gmu_core_playlist_get_entry_name(Entry *entry);
 Entry           *gmu_core_playlist_get_last(void);
+void             gmu_core_add_m3u_contents_to_playlist(char *filename);
 char            *gmu_core_get_base_dir(void);
 char            *gmu_core_get_config_dir(void);
 #endif
