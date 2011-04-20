@@ -87,7 +87,7 @@ static void *http_reader_thread(void *arg)
 		printf("reader: buf fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
 		fflush(stdout);
 	}
-	printf("reader thread done.\n");
+	printf("reader: thread done.\n");
 	r->eof = 1;
 	return NULL;
 }
@@ -155,6 +155,17 @@ Reader *reader_open(char *url)
 							fprintf(stderr, "reader: Sending request: %s\n", http_request);
 							send(r->sockfd, http_request, strlen(http_request), 0);
 						}
+
+						/* Set socket timeout to 2 seconds */
+						{
+							struct timeval tv;
+							tv.tv_sec = 2;
+							tv.tv_usec = 0;
+							if (setsockopt(r->sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof tv)) {
+								perror("setsockopt");
+							}
+						}
+						
 						/* Start reader thread... */
 						if (ringbuffer_init(&(r->rb_http), HTTP_CACHE_SIZE)) {
 							pthread_mutex_init(&(r->mutex), NULL);
@@ -234,6 +245,7 @@ int reader_close(Reader *r)
 			/* close http stream */
 			close(r->sockfd);
 			r->eof = 1;
+			printf("reader: Waiting for reader thread to finish.\n");
 			pthread_join(r->thread, NULL);
 			printf("reader: Reader thread joined.\n");
 			ringbuffer_free(&(r->rb_http));
