@@ -923,7 +923,7 @@ int main(int argc, char **argv)
 
 	wdprintf(V_DEBUG, "gmu", "Freeing file extensions...\n");
 	/* Free file extensions */
-	for (i = 0; file_extensions[i]; i++)
+	for (i = 1; file_extensions[i]; i++)
 		free(file_extensions[i]);
 	wdprintf(V_DEBUG, "gmu", "File extensions freed.\n");
 
