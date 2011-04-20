@@ -28,6 +28,7 @@
 #include "feloader.h"
 #include "audio.h"
 #include "m3u.h"
+#include "pls.h"
 #include "trackinfo.h"
 #include "core.h"
 #include "eventqueue.h"
@@ -82,6 +83,25 @@ static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 void gmu_core_add_m3u_contents_to_playlist(char *filename)
 {
 	add_m3u_contents_to_playlist(&pl, filename);
+}
+
+static void add_pls_contents_to_playlist(Playlist *pl, char *filename)
+{
+	PLS pls;
+	if (pls_open_file(&pls, filename)) {
+		while (pls_read_next_item(&pls)) {
+		   playlist_add_item(pl,
+		                     pls_current_item_get_full_path(&pls),
+		                     pls_current_item_get_title(&pls));
+		}
+		pls_close_file(&pls);
+		event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	}
+}
+
+void gmu_core_add_pls_contents_to_playlist(char *filename)
+{
+	add_pls_contents_to_playlist(&pl, filename);
 }
 
 static int play_next(Playlist *pl, TrackInfo *ti)
@@ -559,7 +579,8 @@ static void file_extensions_load(void)
 	const char *exts = decloader_get_all_extensions();
 	int start, item, i;
 	file_extensions[0] = ".m3u";
-	for (i = 0, start = 0, item = 1; exts[i] != '\0' && item < MAX_FILE_EXTENSIONS; i++) {
+	file_extensions[1] = ".pls";
+	for (i = 0, start = 0, item = 2; exts[i] != '\0' && item < MAX_FILE_EXTENSIONS; i++) {
 		if (exts[i] == ';') {
 			file_extensions[item] = malloc(i-start+1);
 			strncpy(file_extensions[item], exts+start, i-start);
@@ -574,7 +595,7 @@ static void file_extensions_load(void)
 static void file_extensions_free(void)
 {
 	int i;
-	for (i = 1; file_extensions[i]; i++)
+	for (i = 2; file_extensions[i]; i++)
 		free(file_extensions[i]);
 }
 

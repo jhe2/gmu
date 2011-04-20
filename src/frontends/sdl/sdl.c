@@ -249,6 +249,10 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 					wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
 					gmu_core_add_m3u_contents_to_playlist(file_browser_get_selected_file(fb));
 					player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
+				} else if (strcmp(filetype, "PLS") == 0) {
+					wdprintf(V_INFO, "sdl_frontend", "PLS detected.\n");
+					gmu_core_add_pls_contents_to_playlist(file_browser_get_selected_file(fb));
+					player_display_set_notice_message("PLS ADDED TO PLAYLIST", NOTICE_DELAY);
 				} else {
 					if (getcwd(cwd, 255) != NULL) {
 						snprintf(path, 255, "%s/%s", cwd,
