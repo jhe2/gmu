@@ -554,6 +554,30 @@ void sig_handler(int sig)
 	gmu_core_quit();
 }
 
+static void file_extensions_load(void)
+{
+	const char *exts = decloader_get_all_extensions();
+	int start, item, i;
+	file_extensions[0] = ".m3u";
+	for (i = 0, start = 0, item = 1; exts[i] != '\0' && item < MAX_FILE_EXTENSIONS; i++) {
+		if (exts[i] == ';') {
+			file_extensions[item] = malloc(i-start+1);
+			strncpy(file_extensions[item], exts+start, i-start);
+			file_extensions[item][i-start] = '\0';
+			item++;
+			start = i+1;
+		}
+	}
+	file_extensions[item] = NULL;
+}
+
+static void file_extensions_free(void)
+{
+	int i;
+	for (i = 1; file_extensions[i]; i++)
+		free(file_extensions[i]);
+}
+
 int main(int argc, char **argv)
 {
 	char        *skin_file = "";
@@ -701,21 +725,7 @@ int main(int argc, char **argv)
 	decloader_load_all(temp);
 
 	/* Put available file extensions in an array */
-	{
-		const char *exts = decloader_get_all_extensions();
-		int start, item;
-		file_extensions[0] = ".m3u";
-		for (i = 0, start = 0, item = 1; exts[i] != '\0' && item < MAX_FILE_EXTENSIONS; i++) {
-			if (exts[i] == ';') {
-				file_extensions[item] = malloc(i-start+1);
-				strncpy(file_extensions[item], exts+start, i-start);
-				file_extensions[item][i-start] = '\0';
-				item++;
-				start = i+1;
-			}
-		}
-		file_extensions[item] = NULL;
-	}
+	file_extensions_load();
 
 	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0 ||
 	    strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0) {
@@ -920,11 +930,8 @@ int main(int argc, char **argv)
 	decloader_free();
 	wdprintf(V_DEBUG, "gmu", "Freeing playlist...\n");
 	playlist_free(&pl);
-
 	wdprintf(V_DEBUG, "gmu", "Freeing file extensions...\n");
-	/* Free file extensions */
-	for (i = 1; file_extensions[i]; i++)
-		free(file_extensions[i]);
+	file_extensions_free();
 	wdprintf(V_DEBUG, "gmu", "File extensions freed.\n");
 
 	if (auto_shutdown) {
