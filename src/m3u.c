@@ -80,8 +80,12 @@ int m3u_read_next_item(M3u *m3u)
 	int result = 0;
 	if (m3u->extended) { /* Extended M3U */
 		char buf[256] = " ";
+		int  entry_found = 0;
 
-		if (fgets(buf, 255, m3u->pl_file) != NULL && strncmp(buf, "#EXTINF", 7) == 0) {
+		while (!feof(m3u->pl_file) && fgets(buf, 255, m3u->pl_file) != NULL && 
+		       !(entry_found = (strncmp(buf, "#EXTINF", 7) == 0)));
+		
+		if (entry_found) {
 			char mini_buffer[64] = "";
 			int  i;
 			for (i = 8; i < 255 && buf[i] != ','; i++);
