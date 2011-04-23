@@ -118,7 +118,7 @@ int m3u_read_next_item(M3u *m3u)
 		}
 	}
 
-	if (m3u->current_item_filename[0] != '/' && strncmp(m3u->current_item_filename, "http://", 7) != 0) {
+	if (m3u->current_item_filename[0] != '/' && strncasecmp(m3u->current_item_filename, "http://", 7) != 0) {
 		snprintf(m3u->current_item_path, MAX_PATH - 1, "%s%s", 
 		         m3u->m3u_path, m3u->current_item_filename);
 	} else {

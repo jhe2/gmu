@@ -22,6 +22,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "reader.h"
 #include "ringbuffer.h"
 #include "debug.h"
@@ -105,10 +107,13 @@ Reader *reader_open(char *url)
 		r->buf = NULL;
 		r->buf_size = 0;
 		r->buf_data_size = 0;
+		wdprintf(V_DEBUG, "reader", "mutex init.\n");
+		pthread_mutex_init(&(r->mutex), NULL);
+		wdprintf(V_DEBUG, "reader", "mutex init done.\n");
 
 		cfg_init_config_file_struct(&(r->streaminfo));
 
-		if (strncmp(url, "http://", 7) == 0) { /* Got a HTTP URL */
+		if (strncasecmp(url, "http://", 7) == 0) { /* Got a HTTP URL */
 			char *hostname = NULL, *path = NULL;
 			int   port = 80;
 			/* open http stream... */
@@ -129,26 +134,83 @@ Reader *reader_open(char *url)
 
 				if ((rv = getaddrinfo(hostname, port_str, &hints, &servinfo)) != 0) {
 					wdprintf(V_ERROR, "reader",  "getaddrinfo: %s\n", gai_strerror(rv));
+					free(r);
+					r = NULL;
 				} else {
+					int flags = 0;
 					/* loop through all the results and connect to the first we can */
 					for (p = servinfo; p != NULL; p = p->ai_next) {
 						if ((r->sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
 							perror("reader: socket");
 							continue;
+						} else { /* Set socket timeout to 2 seconds */
+							struct timeval tv;
+							tv.tv_sec = 2;
+							tv.tv_usec = 0;
+							if (setsockopt(r->sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof tv)) {
+								perror("reader: setsockopt");
+							}
 						}
+
+						flags = fcntl(r->sockfd, F_GETFL, 0);
+						fcntl(r->sockfd, F_SETFL, flags | O_NONBLOCK);
 						if (connect(r->sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-							close(r->sockfd);
+							//close(r->sockfd);
 							perror("reader: connect");
+							if (errno == EINPROGRESS) break;
 							continue;
 						}
 						break;
 					}
+					wdprintf(V_DEBUG, "reader", "errno = %d\n", errno);
+					if (errno == EINPROGRESS) {
+						fd_set myset;
+						struct timeval tv; 
+
+						wdprintf(V_DEBUG, "reader", "connection in progress. select()ing...\n");
+						do {
+							int       res, valopt; 
+							socklen_t lon;
+
+							tv.tv_sec = 5; 
+							tv.tv_usec = 0; 
+							FD_ZERO(&myset); 
+							FD_SET(r->sockfd, &myset); 
+							res = select((r->sockfd)+1, NULL, &myset, NULL, &tv); 
+							if (res < 0 && errno != EINTR) {
+								fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+								break;
+							} else if (res > 0) {
+								/* Socket selected for write */
+								lon = sizeof(int);
+								if (getsockopt(r->sockfd, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
+									fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+									p = NULL;
+									break;
+								}
+								if (valopt) {
+									fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt));
+									p = NULL;
+									break;
+								}
+								break;
+							} else {
+								fprintf(stderr, "Timeout in select() - Cancelling!\n");
+								p = NULL;
+								break;
+							}
+						} while (1);
+					}
+					flags = fcntl(r->sockfd, F_GETFL, 0);
+					fcntl(r->sockfd, F_SETFL, flags & (~O_NONBLOCK));
 
 					if (p == NULL) {
 						wdprintf(V_ERROR, "reader", "Failed to connect.\n");
+						free(r);
+						r = NULL;
 					} else {
 						inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-						wdprintf(V_INFO, "reader", "Connecting to %s:%d.\n", s, port);
+						wdprintf(V_INFO, "reader", "Connected to %s:%d.\n", s, port);
 						/* Send HTTP GET request */
 						{
 							char http_request[512];
@@ -157,19 +219,8 @@ Reader *reader_open(char *url)
 							send(r->sockfd, http_request, strlen(http_request), 0);
 						}
 
-						/* Set socket timeout to 2 seconds */
-						{
-							struct timeval tv;
-							tv.tv_sec = 2;
-							tv.tv_usec = 0;
-							if (setsockopt(r->sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof tv)) {
-								perror("reader: setsockopt");
-							}
-						}
-						
 						/* Start reader thread... */
 						if (ringbuffer_init(&(r->rb_http), HTTP_CACHE_SIZE)) {
-							pthread_mutex_init(&(r->mutex), NULL);
 							pthread_create(&(r->thread), NULL, http_reader_thread, r);
 						} else {
 							wdprintf(V_ERROR, "reader", "Out of memory.\n");
@@ -252,6 +303,7 @@ int reader_close(Reader *r)
 			wdprintf(V_DEBUG, "reader", "Reader thread joined.\n");
 			ringbuffer_free(&(r->rb_http));
 		}
+		pthread_mutex_destroy(&(r->mutex));
 		if (r->buf) free(r->buf);
 		cfg_free_config_file_struct(&(r->streaminfo));
 		free(r);

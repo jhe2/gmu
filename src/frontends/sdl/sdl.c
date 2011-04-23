@@ -1337,14 +1337,18 @@ void *start_player(void *arg)
 		gd = decloader_decoder_list_get_next_decoder(1);
 		while (gd) {
 			const char *tmp = (*gd->get_name)();
-			int         len = 0;
+			int         len = 0, len_tmp = 0;
 
-			if (decoders_str != NULL) len = strlen(decoders_str);
-			if (decoders_str == NULL)
-				decoders_str = malloc(strlen(tmp) + 4);
-			else
-				decoders_str = realloc(decoders_str, strlen(decoders_str) + strlen(tmp) + 4);
-			snprintf(decoders_str+len, strlen(tmp) + 4, "- %s\n", tmp);
+			if (tmp) len_tmp = strlen(tmp);
+			if (!decoders_str) {
+				decoders_str = malloc(len_tmp + 4);
+			} else {
+				len = strlen(decoders_str);
+				decoders_str = realloc(decoders_str, strlen(decoders_str) + len_tmp + 4);
+			}
+
+			snprintf(decoders_str+len, len_tmp + 4, "- %s\n", tmp);
+			decoders_str[len+len_tmp+3] = '\0';
 			gd = decloader_decoder_list_get_next_decoder(0);
 		}
 		if (decoders_str == NULL)

@@ -43,6 +43,7 @@ static int decode_data(char *target, int max_size)
 	int                     ret = 1;
 	struct mpg123_frameinfo mi;
 	size_t                  decsize = 1;
+	int                     readsize;
 
 	if (r) {
 		if (metaint > 0 && metacount == 0) {
@@ -67,14 +68,12 @@ static int decode_data(char *target, int max_size)
 			metacount = metaint;
 		}
 
-		int readsize = 1024;
-		
+		readsize = 2048;
 		if (metacount > 0) {
 			if (metacount < readsize) readsize = metacount;
 			//printf("metacount = \"%d\", readsize = \"%d\"             \n", metacount, readsize);
 			metacount -= readsize;
 		}
-
 		if (reader_read_bytes(r, readsize)) {
 			int size = reader_get_number_of_bytes_in_buffer(r);
 			if (size > 0) {
@@ -86,12 +85,27 @@ static int decode_data(char *target, int max_size)
 	}
 	mpg123_info(player, &mi);
 	bitrate = 1000 * (mi.abr_rate ? mi.abr_rate : mi.bitrate);
-	ret = mpg123_read(player, (unsigned char*)target, max_size, &decsize);
+	do {
+		ret = mpg123_read(player, (unsigned char*)target, max_size, &decsize);
+		if (ret == MPG123_NEED_MORE && decsize == 0) {
+			readsize = 2048;
+			if (metacount < readsize) readsize = metacount;
+			metacount -= readsize;
+			if (readsize > 0) {
+				wdprintf(V_DEBUG, "mpg123", "Reading more data: %d bytes\n", readsize);
+				if (reader_read_bytes(r, readsize)) {
+					int size = reader_get_number_of_bytes_in_buffer(r);
+					if (size > 0) {
+						mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+					}
+				}
+			} else {
+				wdprintf(V_DEBUG, "mpg123", "Need more data, but can't read. readsize = %d\n", readsize);
+				break;
+			}
+		}
+	} while (ret == MPG123_NEED_MORE && decsize == 0);
 	if (ret == MPG123_DONE) decsize = 0;
-	/*while (!r && item_status != STOPPED && ret != MPG123_DONE && decsize > 0) {
-		r = audio_fill_buffer((char *)membuf, decsize);
-		SDL_Delay(10);
-	}*/
 	if (seek_to_sample_offset) {
 		if (mpg123_tell(player) + seek_to_sample_offset >= 0) {
 			mpg123_seek(player, seek_to_sample_offset, SEEK_SET);
@@ -140,10 +154,17 @@ static int mpg123_play_file(char *mpeg_file)
 				if (metaint_str) metaint = atoi(metaint_str); else metaint = -1;
 				wdprintf(V_DEBUG, "mpg123", "Metadata every %d bytes.\n", metaint);
 				if (metaint > 0) metacount = metaint - size; else metacount = 0;
-				mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+				do {
+					mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
 
-				status = mpg123_getformat(player, &rate, &channels, &encoding);
-
+					status = mpg123_getformat(player, &rate, &channels, &encoding);
+					if (status == MPG123_NEED_MORE) {
+						wdprintf(V_DEBUG, "mpg123", "Need more data to determine format.\n");
+						reader_read_bytes(r, 1024);
+						size = reader_get_number_of_bytes_in_buffer(r);
+						metacount -= size;
+					}
+				} while (status == MPG123_NEED_MORE);
 				wdprintf(V_DEBUG, "mpg123", "Next metadata in %d bytes.\n", metacount);
 
 				/* Set meta data */
