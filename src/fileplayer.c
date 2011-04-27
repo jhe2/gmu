@@ -126,6 +126,31 @@ static int strncpy_charset_conv(char *target, const char* source, int target_siz
 	return 0;
 }
 
+static void update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset  charset)
+{
+	if (*gd->get_meta_data) {
+		if ((*gd->get_meta_data)(GMU_META_ARTIST, 1))
+			strncpy_charset_conv(ti->artist,  (*gd->get_meta_data)(GMU_META_ARTIST, 1), SIZE_ARTIST-1, 0, charset);
+		if ((*gd->get_meta_data)(GMU_META_TITLE, 1))
+			strncpy_charset_conv(ti->title,   (*gd->get_meta_data)(GMU_META_TITLE, 1), SIZE_TITLE-1, 0, charset);
+		if ((*gd->get_meta_data)(GMU_META_ALBUM, 1))
+			strncpy_charset_conv(ti->album,   (*gd->get_meta_data)(GMU_META_ALBUM, 1), SIZE_ALBUM-1, 0, charset);
+		if ((*gd->get_meta_data)(GMU_META_TRACKNR, 1))
+			strncpy_charset_conv(ti->tracknr, (*gd->get_meta_data)(GMU_META_TRACKNR, 1), SIZE_TRACKNR-1, 0, charset);
+		if ((*gd->get_meta_data)(GMU_META_DATE, 1))
+			strncpy_charset_conv(ti->date,    (*gd->get_meta_data)(GMU_META_DATE, 1), SIZE_DATE-1, 0, charset);
+		if (*gd->get_meta_data_int) {
+			if ((*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1) &&
+			   ((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)) &&
+			   (*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1))
+				trackinfo_set_image(ti, (char *)((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)),
+									(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
+									(char *)((*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1)));
+		}
+		trackinfo_set_updated(ti);
+	}
+}
+
 static void *decode_audio_thread(void *udata)
 {
 	char       *file = ((decode_audio_params *)udata)->file;
@@ -196,27 +221,7 @@ static void *decode_audio_thread(void *udata)
 				charset_utf8_to_iso8859_1(ti->file_name, file, SIZE_FILE_NAME-1);
 
 				/* read meta data */
-				if (*gd->get_meta_data) {
-					if ((*gd->get_meta_data)(GMU_META_ARTIST, 1))
-						strncpy_charset_conv(ti->artist,  (*gd->get_meta_data)(GMU_META_ARTIST, 1), SIZE_ARTIST-1, 0, charset);
-					if ((*gd->get_meta_data)(GMU_META_TITLE, 1))
-						strncpy_charset_conv(ti->title,   (*gd->get_meta_data)(GMU_META_TITLE, 1), SIZE_TITLE-1, 0, charset);
-					if ((*gd->get_meta_data)(GMU_META_ALBUM, 1))
-						strncpy_charset_conv(ti->album,   (*gd->get_meta_data)(GMU_META_ALBUM, 1), SIZE_ALBUM-1, 0, charset);
-					if ((*gd->get_meta_data)(GMU_META_TRACKNR, 1))
-						strncpy_charset_conv(ti->tracknr, (*gd->get_meta_data)(GMU_META_TRACKNR, 1), SIZE_TRACKNR-1, 0, charset);
-					if ((*gd->get_meta_data)(GMU_META_DATE, 1))
-						strncpy_charset_conv(ti->date,    (*gd->get_meta_data)(GMU_META_DATE, 1), SIZE_DATE-1, 0, charset);
-					if (*gd->get_meta_data_int) {
-						if ((*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1) &&
-						   ((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)) &&
-						   (*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1))
-							trackinfo_set_image(ti, (char *)((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)),
-												(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
-												(char *)((*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1)));
-					}
-					trackinfo_set_updated(ti);
-				}
+				update_metadata(gd, ti, charset);
 				meta_data_loaded = 1;
 
 				audio_set_pause(0);
@@ -259,6 +264,11 @@ static void *decode_audio_thread(void *udata)
 							if ((*gd->seek)(seek_second))
 								audio_set_sample_counter(seek_second * ti->samplerate);
 						seek_second = 0;
+					}
+					if (*gd->get_meta_data_int) {
+						if ((*gd->get_meta_data_int)(GMU_META_IS_UPDATED, 1)) {
+							update_metadata(gd, ti, charset);
+						}
 					}
 				}
 				wdprintf(V_INFO, "fileplayer", "Playback stopped.\n");

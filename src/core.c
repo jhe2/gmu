@@ -393,6 +393,11 @@ int gmu_core_get_length_current_track(void)
 	return current_track_ti.length;
 }
 
+EventQueue *gmu_core_get_event_queue(void)
+{
+	return &event_queue;
+}
+
 void gmu_core_quit(void)
 {
 	wdprintf(V_INFO, "gmu", "Shutting down...\n");

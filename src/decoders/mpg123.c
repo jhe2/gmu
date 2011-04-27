@@ -24,6 +24,8 @@
 #include "../reader.h"
 #include "../wejpconfig.h"
 #include "../debug.h"
+#include "../core.h"
+#include "../eventqueue.h"
 
 static mpg123_handle *player;
 static int            init = 0;
@@ -58,10 +60,23 @@ static int decode_data(char *target, int max_size)
 				if (s > 0) {
 					metastr = malloc(s+1);
 					if (metastr) {
+						char *stream_title;
+
 						memcpy(metastr, reader_get_buffer(r), s);
 						metastr[s] = '\0';
 						wdprintf(V_DEBUG, "mpg123", "metadata: [%s]\n", metastr);
+						stream_title = strstr(metastr, "StreamTitle='");
+						if (stream_title && strlen(stream_title) > 13) {
+							char *tmp;
+							stream_title += 13;
+							tmp = strstr(stream_title, "';");
+							if (tmp) tmp[0]  = '\0';
+							wdprintf(V_DEBUG, "mpg123", "stream_title=[%s]\n", stream_title);
+							trackinfo_set_title(&ti, stream_title);
+							trackinfo_set_updated(&ti);
+						}
 						free(metastr);
+						event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
 					}
 				}
 			}
@@ -170,9 +185,9 @@ static int mpg123_play_file(char *mpeg_file)
 				/* Set meta data */
 				{
 					char *name        = cfg_get_key_value(r->streaminfo, "icy-name");
-					char *description = cfg_get_key_value(r->streaminfo, "icy-description");
-					if (!description) description = "";
-					if (name) trackinfo_set(&ti, name, description, "", "", 0, rate, channels);
+					/*char *description = cfg_get_key_value(r->streaminfo, "icy-description");
+					if (!description) description = "";*/
+					if (name) trackinfo_set(&ti, "", name, name, "", 0, rate, channels);
 				}
 
 				if (status != MPG123_OK) {
@@ -279,6 +294,9 @@ static int get_meta_data_int(GmuMetaDataType gmdt, int for_current_file)
 			case GMU_META_IMAGE_DATA_SIZE:
 				result = trackinfo_get_image_data_size(&ti);
 				break;
+			case GMU_META_IS_UPDATED:
+				result = trackinfo_is_updated(&ti);
+				break;
 			default:
 				break;
 		}
@@ -286,6 +304,9 @@ static int get_meta_data_int(GmuMetaDataType gmdt, int for_current_file)
 		switch (gmdt) {
 			case GMU_META_IMAGE_DATA_SIZE:
 				result = trackinfo_get_image_data_size(&ti);
+				break;
+			case GMU_META_IS_UPDATED:
+				result = trackinfo_is_updated(&ti);
 				break;
 			default:
 				break;

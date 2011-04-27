@@ -16,6 +16,8 @@
 #include <pthread.h>
 #include "gmufrontend.h"
 
+#ifndef _EVENTQUEUE_H
+#define _EVENTQUEUE_H
 typedef struct _EventQueueEntry EventQueueEntry;
 
 struct _EventQueueEntry
@@ -37,3 +39,4 @@ int      event_queue_push(EventQueue *eq, GmuEvent ev);
 GmuEvent event_queue_pop(EventQueue *eq);
 void     event_queue_clear(EventQueue *eq);
 int      event_queue_is_event_waiting(EventQueue *eq);
+#endif

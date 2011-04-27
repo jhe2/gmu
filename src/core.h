@@ -20,6 +20,7 @@
 #include "trackinfo.h"
 #include "wejpconfig.h"
 #include "audio.h"
+#include "eventqueue.h"
 
 #define VERSION_NUMBER "0.7.3WIP"
 
@@ -49,6 +50,7 @@ int              gmu_core_get_status(void);
 void             gmu_core_set_shutdown_time(int value);
 int              gmu_core_get_shutdown_time_total(void);
 int              gmu_core_get_shutdown_time_remaining(void);
+EventQueue      *gmu_core_get_event_queue(void);
 /* Playlist wrapper functions: */
 int              gmu_core_playlist_set_current(Entry *entry);
 int              gmu_core_playlist_add_item(char *file, char *name);

@@ -16,12 +16,7 @@
 
 #ifndef _GMUFRONTEND_H
 #define _GMUFRONTEND_H
-typedef enum GmuEvent {
-	GMU_NO_EVENT,
-	GMU_PLAYLIST_CHANGE, GMU_PLAYLIST_CLEAR,
-	GMU_TRACK_CHANGE, GMU_PLAYBACK_STATE_CHANGE,
-	GMU_PLAYMODE_CHANGE, GMU_QUIT, GMU_VOLUME_CHANGE
-} GmuEvent;
+#include "gmuevent.h"
 
 typedef struct _GmuFrontend {
 	/* Short identifier such as "sdl_frontend" */

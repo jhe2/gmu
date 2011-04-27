@@ -33,6 +33,21 @@ void trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
 	ti->updated = 1;
 }
 
+void trackinfo_set_artist(TrackInfo *ti, char *artist)
+{
+	strncpy(ti->artist, artist, SIZE_ARTIST-1);
+}
+
+void trackinfo_set_title(TrackInfo *ti, char *title)
+{
+	strncpy(ti->title, title, SIZE_TITLE-1);
+}
+
+void trackinfo_set_album(TrackInfo *ti, char *album)
+{
+	strncpy(ti->album, album, SIZE_ALBUM-1);
+}
+
 void trackinfo_init(TrackInfo *ti)
 {
 	ti->artist[0] = '\0';
