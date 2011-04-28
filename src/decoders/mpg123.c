@@ -24,8 +24,6 @@
 #include "../reader.h"
 #include "../wejpconfig.h"
 #include "../debug.h"
-#include "../core.h"
-#include "../eventqueue.h"
 
 static mpg123_handle *player;
 static int            init = 0;
@@ -76,7 +74,6 @@ static int decode_data(char *target, int max_size)
 							trackinfo_set_updated(&ti);
 						}
 						free(metastr);
-						event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
 					}
 				}
 			}

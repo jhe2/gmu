@@ -28,6 +28,8 @@
 #include "charset.h"
 #include "debug.h"
 #include "reader.h"
+#include "core.h"
+#include "eventqueue.h"
 
 #define BUF_SIZE 65536
 
@@ -126,29 +128,46 @@ static int strncpy_charset_conv(char *target, const char* source, int target_siz
 	return 0;
 }
 
-static void update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset  charset)
+/* Return 1 when new meta data differs from previous data, 0 otherwise */
+static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 {
+	TrackInfo ti_tmp;
+	int       differ = 0;
+
 	if (*gd->get_meta_data) {
+		memcpy(&ti_tmp, ti, sizeof(TrackInfo));
 		if ((*gd->get_meta_data)(GMU_META_ARTIST, 1))
-			strncpy_charset_conv(ti->artist,  (*gd->get_meta_data)(GMU_META_ARTIST, 1), SIZE_ARTIST-1, 0, charset);
+			strncpy_charset_conv(ti_tmp.artist,  (*gd->get_meta_data)(GMU_META_ARTIST, 1), SIZE_ARTIST-1, 0, charset);
 		if ((*gd->get_meta_data)(GMU_META_TITLE, 1))
-			strncpy_charset_conv(ti->title,   (*gd->get_meta_data)(GMU_META_TITLE, 1), SIZE_TITLE-1, 0, charset);
+			strncpy_charset_conv(ti_tmp.title,   (*gd->get_meta_data)(GMU_META_TITLE, 1), SIZE_TITLE-1, 0, charset);
 		if ((*gd->get_meta_data)(GMU_META_ALBUM, 1))
-			strncpy_charset_conv(ti->album,   (*gd->get_meta_data)(GMU_META_ALBUM, 1), SIZE_ALBUM-1, 0, charset);
+			strncpy_charset_conv(ti_tmp.album,   (*gd->get_meta_data)(GMU_META_ALBUM, 1), SIZE_ALBUM-1, 0, charset);
 		if ((*gd->get_meta_data)(GMU_META_TRACKNR, 1))
-			strncpy_charset_conv(ti->tracknr, (*gd->get_meta_data)(GMU_META_TRACKNR, 1), SIZE_TRACKNR-1, 0, charset);
+			strncpy_charset_conv(ti_tmp.tracknr, (*gd->get_meta_data)(GMU_META_TRACKNR, 1), SIZE_TRACKNR-1, 0, charset);
 		if ((*gd->get_meta_data)(GMU_META_DATE, 1))
-			strncpy_charset_conv(ti->date,    (*gd->get_meta_data)(GMU_META_DATE, 1), SIZE_DATE-1, 0, charset);
-		if (*gd->get_meta_data_int) {
-			if ((*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1) &&
-			   ((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)) &&
-			   (*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1))
-				trackinfo_set_image(ti, (char *)((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)),
-									(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
-									(char *)((*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1)));
+			strncpy_charset_conv(ti_tmp.date,    (*gd->get_meta_data)(GMU_META_DATE, 1), SIZE_DATE-1, 0, charset);
+		/* Check if new dataset differs from old dataset: */
+		if (strncmp(ti_tmp.title, ti->title, SIZE_TITLE) != 0)
+			differ = 1;
+		else if (strncmp(ti_tmp.artist, ti->artist, SIZE_ARTIST) != 0)
+			differ = 1;
+		else if (strncmp(ti_tmp.album, ti->album, SIZE_ALBUM) != 0)
+			differ = 1;
+
+		if (differ) {
+			memcpy(ti, &ti_tmp, sizeof(TrackInfo));
+			if (*gd->get_meta_data_int) {
+				if ((*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1) &&
+				   ((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)) &&
+				   (*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1))
+					trackinfo_set_image(ti, (char *)((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)),
+										(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
+										(char *)((*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1)));
+			}
+			trackinfo_set_updated(ti);
 		}
-		trackinfo_set_updated(ti);
 	}
+	return differ;
 }
 
 static void *decode_audio_thread(void *udata)
@@ -221,7 +240,8 @@ static void *decode_audio_thread(void *udata)
 				charset_utf8_to_iso8859_1(ti->file_name, file, SIZE_FILE_NAME-1);
 
 				/* read meta data */
-				update_metadata(gd, ti, charset);
+				if (update_metadata(gd, ti, charset))
+					event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
 				meta_data_loaded = 1;
 
 				audio_set_pause(0);
@@ -267,7 +287,10 @@ static void *decode_audio_thread(void *udata)
 					}
 					if (*gd->get_meta_data_int) {
 						if ((*gd->get_meta_data_int)(GMU_META_IS_UPDATED, 1)) {
-							update_metadata(gd, ti, charset);
+							if (update_metadata(gd, ti, charset)) {
+								event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
+								wdprintf(V_DEBUG, "fileplayer", "Meta data change detected!\n");
+							}
 						}
 					}
 				}

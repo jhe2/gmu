@@ -58,6 +58,8 @@ void init(void)
 			logfile = "gmu.log";
 		if (!(lf = fopen(logfile, "a"))) logging_enabled = 0;
 
+		if (logging_enabled) wdprintf(V_INFO, "logbot", "Logging to %s\n", logfile);
+
 		tmp = cfg_get_key_value(*cf, "Log.MinimumPlaytimeSec");
 		if (tmp)
 			minimum_playtime_seconds = atoi(tmp);
@@ -107,10 +109,11 @@ static int event_callback(GmuEvent event)
 	if (logging_enabled) {
 		static int pt = 0, mtp = 0;
 
+		wdprintf(V_DEBUG, "logbot", "Received event %d.\n", event);
 		switch (event) {
 			case GMU_QUIT:
 				break;
-			case GMU_TRACK_CHANGE:
+			case GMU_TRACKINFO_CHANGE:
 				/* Check if there is track info data in the buffer that needs to
 				 * be written to the log (minimum playtime requirement check)... */
 				if (pt >= mtp &&
