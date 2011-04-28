@@ -17,7 +17,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include "SDL.h" /* For audio output */
@@ -799,7 +798,7 @@ int main(int argc, char **argv)
 	while (gmu_running || event_queue_is_event_waiting(&event_queue)) {
 		GmuFrontend *fe = NULL;
 
-		usleep(250);
+		usleep(100000);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item = playlist_get_entry(&pl, global_param);
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);

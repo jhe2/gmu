@@ -40,20 +40,20 @@ int audio_fill_buffer(char *data, int size)
 
 static void fill_audio(void *udata, Uint8 *stream, int len)
 {
-	while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(50);
+	while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(100);
 	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL) {
 		wdprintf(V_WARNING, "audio", "Buffer (almost) empty! Buffer fill: %d bytes\n", 
 		         RINGBUFFER_SIZE - ringbuffer_get_free(&audio_rb));
 		SDL_PauseAudio(1);
-		while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(50);
-		while (ringbuffer_get_free(&audio_rb) > 65536) SDL_Delay(60);
-		while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(50);
+		while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(100);
+		while (ringbuffer_get_free(&audio_rb) > 65536) SDL_Delay(100);
+		while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(100);
 		if (!paused) SDL_PauseAudio(0);
 	}
 	buf_read_counter += len;
 	ringbuffer_read(&audio_rb, buf, len);
 	SDL_MixAudio(stream, (unsigned char *)buf, len, volume);
-	while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(50);
+	while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(100);
 }
 
 int audio_device_open(int samplerate, int channels)

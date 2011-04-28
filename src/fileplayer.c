@@ -264,6 +264,7 @@ static void *decode_audio_thread(void *udata)
 						wdprintf(V_ERROR, "fileplayer", "Error. Code: %d\n", ret);
 						audio_set_pause(1);
 						item_status = FINISHED;
+						break;
 					} else {
 						int r = 0;
 						while (!r && item_status == PLAYING) {
