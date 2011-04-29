@@ -77,16 +77,22 @@ static void *http_reader_thread(void *arg)
 	char buf[4096];
 
 	while (numbytes != -1 && numbytes > 0 && !r->eof) {
-		numbytes = recv(r->sockfd, buf, 4096, 0);
-		if (numbytes > 0) { /* write to ringbuffer */
-			int write_okay = 0;
-			while (!write_okay && !r->eof) {
-				pthread_mutex_lock(&(r->mutex));
-				write_okay = ringbuffer_write(&(r->rb_http), buf, numbytes);
-				pthread_mutex_unlock(&(r->mutex));
-				usleep(150);
+		do {
+			numbytes = recv(r->sockfd, buf, 4096, 0);
+			if (numbytes > 0) { /* write to ringbuffer */
+				int write_okay = 0;
+				while (!write_okay && !r->eof) {
+					pthread_mutex_lock(&(r->mutex));
+					write_okay = ringbuffer_write(&(r->rb_http), buf, numbytes);
+					pthread_mutex_unlock(&(r->mutex));
+					usleep(150);
+				}
 			}
-		}
+			if (numbytes <= 0) {
+				usleep(1000);
+				wdprintf(V_DEBUG, "reader", "Read timeout. Retrying...\n");
+			}
+		} while (numbytes <= 0 && !r->eof && ringbuffer_get_fill(&(r->rb_http)) > 4000);
 		wdprintf(V_DEBUG, "reader", "buf fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
 		fflush(stdout);
 	}
@@ -155,9 +161,11 @@ Reader *reader_open(char *url)
 						flags = fcntl(r->sockfd, F_GETFL, 0);
 						fcntl(r->sockfd, F_SETFL, flags | O_NONBLOCK);
 						if (connect(r->sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-							//close(r->sockfd);
 							perror("reader: connect");
-							if (errno == EINPROGRESS) break;
+							if (errno == EINPROGRESS)
+								break;
+							else
+								close(r->sockfd);
 							continue;
 						}
 						break;
@@ -167,7 +175,7 @@ Reader *reader_open(char *url)
 						fd_set myset;
 						struct timeval tv; 
 
-						wdprintf(V_DEBUG, "reader", "connection in progress. select()ing...\n");
+						wdprintf(V_DEBUG, "reader", "Connection in progress. select()ing...\n");
 						do {
 							int       res, valopt; 
 							socklen_t lon;
@@ -200,9 +208,9 @@ Reader *reader_open(char *url)
 								break;
 							}
 						} while (1);
+						flags = fcntl(r->sockfd, F_GETFL, 0);
+						fcntl(r->sockfd, F_SETFL, flags & (~O_NONBLOCK));
 					}
-					flags = fcntl(r->sockfd, F_GETFL, 0);
-					fcntl(r->sockfd, F_SETFL, flags & (~O_NONBLOCK));
 
 					if (p == NULL) {
 						wdprintf(V_ERROR, "reader", "Failed to connect.\n");
@@ -271,7 +279,6 @@ Reader *reader_open(char *url)
 								}
 							}
 							wdprintf(V_DEBUG, "reader", "HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
-							/* cfg_write_config_file(&(r->streaminfo), "foobar.txt"); */ /* ::::::: just testing ::::::: */
 						}
 					}
 					freeaddrinfo(servinfo); /* All done with this structure */
