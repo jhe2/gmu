@@ -147,21 +147,21 @@ Reader *reader_open(char *url)
 					/* loop through all the results and connect to the first we can */
 					for (p = servinfo; p != NULL; p = p->ai_next) {
 						if ((r->sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-							perror("reader: socket");
+							wdprintf(V_INFO, "reader", "socket: %s\n", strerror(errno));
 							continue;
 						} else { /* Set socket timeout to 2 seconds */
 							struct timeval tv;
 							tv.tv_sec = 2;
 							tv.tv_usec = 0;
 							if (setsockopt(r->sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof tv)) {
-								perror("reader: setsockopt");
+								wdprintf(V_INFO, "reader", "setsockopt: %s\n", strerror(errno));
 							}
 						}
 
 						flags = fcntl(r->sockfd, F_GETFL, 0);
 						fcntl(r->sockfd, F_SETFL, flags | O_NONBLOCK);
 						if (connect(r->sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-							perror("reader: connect");
+							wdprintf(V_INFO, "reader", "connect: %s\n", strerror(errno));
 							if (errno == EINPROGRESS)
 								break;
 							else
