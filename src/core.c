@@ -497,7 +497,7 @@ char *gmu_core_get_config_dir(void)
 static void print_cmd_help(char *prog_name)
 {
 	printf("Gmu Music Player "VERSION_NUMBER"\n");
-	printf("Copyright (c) 2006-2010 Johannes Heimansberg\n");
+	printf("Copyright (c) 2006-2011 Johannes Heimansberg\n");
 	printf("http://wejp.k.vu/projects/gmu/\n");
 	printf("\nUsage:\n%s [-h] [-r] [-m] [-c file.conf] [-s theme_name] [music_file.ext] [...]\n", prog_name);
 	printf("-h : Print this help\n");
