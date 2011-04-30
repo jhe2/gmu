@@ -82,8 +82,12 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 			skin_draw_display_symbol((Skin *)&skin, buffer, SYMBOL_STEREO);
 
 		if (ptime_remaining) {
-			min = (ti->length - ptime_msec / 1000) / 60;
-			sec = (ti->length - ptime_msec / 1000) - min * 60;
+			if (ptime_msec >= 0) {
+				min = (ti->length - ptime_msec / 1000) / 60;
+				sec = (ti->length - ptime_msec / 1000) - min * 60;
+			} else {
+				min = -1;
+			}
 		} else {
 			min = (ptime_msec / 1000) / 60;
 			sec = (ptime_msec / 1000) - min * 60;

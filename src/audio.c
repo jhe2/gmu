@@ -20,14 +20,14 @@
 #include FILE_HW_H
 #define RINGBUFFER_SIZE 131072
 
-static RingBuffer  audio_rb;
-static SDL_mutex  *audio_mutex;
-static long        buf_read_counter;
-static int         have_samplerate, have_channels;
-static int         device_open;
-static int         paused;
-static char        buf[65536];
-static int         volume, volume_internal;
+static RingBuffer    audio_rb;
+static SDL_mutex    *audio_mutex;
+static unsigned long buf_read_counter;
+static int           have_samplerate, have_channels;
+static int           device_open;
+static int           paused;
+static char          buf[65536];
+static int           volume, volume_internal;
 
 int audio_fill_buffer(char *data, int size)
 {
