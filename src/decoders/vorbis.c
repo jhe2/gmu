@@ -21,6 +21,7 @@
 #include "../util.h"
 #include "tremor/ivorbiscodec.h"
 #include "tremor/ivorbisfile.h"
+#include "../debug.h"
 
 static OggVorbis_File  vf, vf_metaonly;
 static vorbis_info    *vi;
@@ -36,9 +37,9 @@ static int open_file(char *filename)
 	int   res = 0;
 
 	if (!(file = fopen(filename, "r"))) {
-		printf("vorbis: Could not open file.\n");
+		wdprintf(V_WARNING, "vorbis", "Could not open file.\n");
 	} else if (ov_open(file, &vf, NULL, 0) < 0) {
-		printf("vorbis: Input does not appear to be an Ogg bitstream.\n");
+		wdprintf(V_WARNING, "vorbis", "Input does not appear to be an Ogg bitstream.\n");
 	} else {
 		vi  = ov_info(&vf, -1);
 		res = 1;
@@ -62,7 +63,7 @@ static int decode_data(char *target, int max_size)
 		ret = ov_read(&vf, target+size, 256, &current_section);
 		size += ret;
 	} else {
-		printf("vorbis: Target buffer too small: %d < 256\n", max_size);
+		wdprintf(V_ERROR, "vorbis", "Target buffer too small: %d < 256\n", max_size);
 	}
 	return size;
 }
@@ -167,7 +168,7 @@ int meta_data_load(const char *filename)
 
 	if ((file = fopen(filename, "r"))) {
 		if (ov_open(file, &vf_metaonly, NULL, 0) < 0) {
-			printf("vorbis: Input does not appear to be an Ogg bitstream.\n");
+			wdprintf(V_WARNING, "vorbis", "Input does not appear to be an Ogg bitstream.\n");
 			result = 0;
 		}
 	} else {

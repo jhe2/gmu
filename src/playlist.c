@@ -25,6 +25,7 @@
 #include "util.h"
 #include "charset.h"
 #include "fileplayer.h" /* file_player_read_tags() */
+#include "debug.h"
 
 #define PLAYLIST_MAX_LENGTH 9999
 
@@ -127,7 +128,7 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 	filetype[0] = '\0';
 	if (tmp != NULL)
 		strtoupper(filetype, tmp, 15);
-	/*printf("playlist: [%4d] %s\n", i, dir_get_filename(&dir, i));*/
+	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 	if (strncmp(filetype, "M3U", 3) != 0) {
 		if (file_player_read_tags(filename_with_path, filetype, &ti)) {
 			char temp[80];
@@ -157,7 +158,7 @@ static int internal_playlist_add_dir(Playlist *pl, char *directory)
 	prev_cwd = malloc(256);
 
 	if (cwd && prev_cwd && getcwd(prev_cwd, 255) != NULL) {
-		printf("playlist: Adding %s...\n", directory);
+		wdprintf(V_INFO, "playlist", "Adding %s...\n", directory);
 		if (chdir(directory) == 0) {
 			dir_read(&dir, ".", 1);
 
@@ -174,18 +175,18 @@ static int internal_playlist_add_dir(Playlist *pl, char *directory)
 							strtoupper(filetype, tmp, 15);
 						snprintf(path, 255, "%s/%s", cwd, dir_get_filename(&dir, i));
 						playlist_add_file(pl, path);
-						/*printf("playlist: [%4d] %s\n", i, dir_get_filename(&dir, i));*/
+						/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 					}
 				}
 			}
 			dir_free(&dir);
 			if (chdir(prev_cwd) == -1)
-				printf("playlist: ERROR: Failed changing directory to previous directory.\n");
+				wdprintf(V_ERROR, "playlist", "ERROR: Failed changing directory to previous directory.\n");
 		} else {
-			printf("playlist: ERROR: Failed changing directory.\n");
+			wdprintf(V_ERROR, "playlist", "ERROR: Failed changing directory.\n");
 			result = 0;
 		}
-		printf("playlist: Done adding %s.\n", directory);
+		wdprintf(V_INFO, "playlist", "Done adding %s.\n", directory);
 		free(cwd);
 		free(prev_cwd);
 	}
@@ -201,9 +202,9 @@ static void *thread_add_dir(void *udata)
 {
 	struct _thread_params *tp = (struct _thread_params *)udata;
 
-	printf("playlist: Recursive directory add thread created.\n");
+	wdprintf(V_INFO, "playlist", "Recursive directory add thread created.\n");
 	internal_playlist_add_dir(tp->pl, tp->directory);
-	printf("playlist: Recursive directory add thread finished.\n");
+	wdprintf(V_INFO, "playlist", "Recursive directory add thread finished.\n");
 	recursive_directory_add_in_progress = 0;
 	return NULL;
 }
@@ -268,7 +269,7 @@ int playlist_insert_file_after(Playlist *pl, Entry *entry, char *filename_with_p
 	filetype[0] = '\0';
 	if (tmp != NULL)
 		strtoupper(filetype, tmp, 15);
-	/*printf("playlist: [%4d] %s\n", i, dir_get_filename(&dir, i));*/
+	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 	if (strncmp(filetype, "M3U", 3) != 0) {
 		if (file_player_read_tags(filename_with_path, filetype, &ti)) {
 			char temp[80];

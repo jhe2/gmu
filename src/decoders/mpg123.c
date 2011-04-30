@@ -83,7 +83,6 @@ static int decode_data(char *target, int max_size)
 		readsize = 2048;
 		if (metacount > 0) {
 			if (metacount < readsize) readsize = metacount;
-			//printf("metacount = \"%d\", readsize = \"%d\"             \n", metacount, readsize);
 			metacount -= readsize;
 		}
 		if (reader_read_bytes(r, readsize)) {
@@ -214,7 +213,7 @@ static int mpg123_play_file(char *mpeg_file)
 			ti->bitrate    = 1000 * (mi.abr_rate ? mi.abr_rate : mi.bitrate);
 			ti->length     = mpg123_length(player) / ti->samplerate;
 			ti->vbr        = mi.vbr == MPG123_CBR ? 0 : 1;
-			printf("mpg123: Bitstream is %ld kbps, %d channel(s), %d Hz\n", 
+			wdprintf(V_DEBUG, "mpg123", "Bitstream is %ld kbps, %d channel(s), %d Hz\n", 
 			       ti->bitrate / 1000, ti->channels, ti->samplerate);*/
 
 			if (mpg123_read(player, dumbuf, 1024, &dummy) != MPG123_NEW_FORMAT) {

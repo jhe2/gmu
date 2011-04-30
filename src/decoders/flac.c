@@ -21,6 +21,7 @@
 #include "../util.h"
 #include "../charset.h"
 #include "FLAC/stream_decoder.h"
+#include "../debug.h"
 #define BUF_SIZE 65536
 
 static FLAC__StreamDecoder *fsd;
@@ -64,7 +65,7 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 		memcpy(buf, (char *)packed, length);
 		size = length;
 	} else {
-		printf("length=%d\n", length);
+		wdprintf(V_DEBUG, "flac", "length=%d\n", length);
 	}
 	return 0;
 }
@@ -89,16 +90,16 @@ static void metadata_callback(const FLAC__StreamDecoder  *decoder,
 			ti->recent_bitrate = ti->bitrate;
 			ti->length         = metadata->data.stream_info.total_samples / ti->samplerate;
 			ti->vbr            = 1;
-			printf("flac: Bitstream is %d channel, %ld kbps, %d Hz\n",
-			       ti->channels, ti->bitrate / 1000, ti->samplerate);
+			wdprintf(V_DEBUG, "flac", "Bitstream is %d channel, %ld kbps, %d Hz\n",
+			         ti->channels, ti->bitrate / 1000, ti->samplerate);
 			break;
 		case FLAC__METADATA_TYPE_VORBIS_COMMENT:
-			printf("flac: Vorbis comment detected.\n");
+			wdprintf(V_DEBUG, "flac", "Vorbis comment detected.\n");
 			for (i = 0; i < metadata->data.vorbis_comment.num_comments; i++) {
-				/*printf("%d. %s\n", i, metadata->data.vorbis_comment.comments[i].entry);*/
+				/*wdprintf(V_DEBUG, "flac", "%d. %s\n", i, metadata->data.vorbis_comment.comments[i].entry);*/
 				char buf[80], *ptr = (char *)metadata->data.vorbis_comment.comments[i].entry;
 				strtoupper(buf, ptr, 79);
-				/*printf("flac: %s\n", ptr);*/
+				/*wdprintf(V_DEBUG, "flac", "%s\n", ptr);*/
 				if (strstr(buf, "ARTIST=") == buf)
 					strncpy(ti->artist, ptr+7, SIZE_ARTIST-1);
 				if (strstr(buf, "TITLE=") == buf)
@@ -137,7 +138,7 @@ static int open_file(char *filename)
 
 	trackinfo_clear(&ti);
 
-	printf("flac: Opening %s...\n", filename);
+	wdprintf(V_INFO, "flac", "Opening %s...\n", filename);
 	file = fopen(filename, "rb");
 	if (file) {
 		if (fseek(file, 0L, SEEK_END) == 0) {
@@ -146,12 +147,12 @@ static int open_file(char *filename)
 		}
 	}
 	if (!file) {
-		printf("flac: Could not open file.\n");
+		wdprintf(V_WARNING, "flac", "Could not open file.\n");
 		result = 0;
 	} else if (FLAC__stream_decoder_init_FILE(fsd, file, &write_callback,
 	                                          &metadata_callback, &error_callback, &ti)
 	                                          != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
-		printf("flac: Could not initialize decoder.\n");
+		wdprintf(V_ERROR, "flac", "Could not initialize decoder.\n");
 		result = 0;
 	} else {
 		/*strncpy(ti->file_name, filename, SIZE_FILE_NAME-1);*/
@@ -168,7 +169,7 @@ static int open_file(char *filename)
 		strncpy(ti->file_type, "FLAC", SIZE_FILE_TYPE-1);*/
 
 		if (FLAC__stream_decoder_process_until_end_of_metadata(fsd) == false) {
-			printf("flac: Stream error.\n");
+			wdprintf(V_ERROR, "flac", "Stream error.\n");
 			result = 0;
 		}
 	}
@@ -198,7 +199,7 @@ static int decode_data(char *target, int max_size)
 		/*total_samples++;
 		size += ret;*/
 	} else {
-		printf("flac: FATAL: Target buffer too small: %d < %d\n", max_size, size);
+		wdprintf(V_ERROR, "flac", "FATAL: Target buffer too small: %d < %d\n", max_size, size);
 		size = max_size;
 	}
 	return size;
@@ -304,11 +305,11 @@ int meta_data_load(const char *filename)
 		fseek(file, SEEK_SET, 0);
 	}
 	if (!file) {
-		printf("flac: Could not open file.\n");
+		wdprintf(V_WARNING, "flac", "Could not open file.\n");
 	} else if (FLAC__stream_decoder_init_FILE(decoder, file, &dummy_write_callback,
 	                                          &metadata_callback, &error_callback, &ti_metaonly)
 	                                         != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
-		printf("flac: Could not initialize decoder.\n");
+		wdprintf(V_ERROR, "flac", "Could not initialize decoder.\n");
 	} else {
 		strncpy(ti_metaonly.file_name, filename, SIZE_FILE_NAME-1);
 		filename_without_path = strrchr(filename, '/');
@@ -324,7 +325,7 @@ int meta_data_load(const char *filename)
 		strncpy(ti_metaonly.file_type, "FLAC", SIZE_FILE_TYPE-1);
 
 		if (FLAC__stream_decoder_process_until_end_of_metadata(decoder) == false) {
-			printf("flac: Stream error.\n");
+			wdprintf(V_ERROR, "flac", "Stream error.\n");
 		} else {
 			result = 1;
 		}

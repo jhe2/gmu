@@ -20,6 +20,7 @@
 #include "../trackinfo.h"
 #include "../util.h"
 #include "wavpack/wavpack.h"
+#include "../debug.h"
 
 static int32_t         temp_buffer[256];
 static WavpackContext *wpc;
@@ -75,12 +76,12 @@ static const char *get_name(void)
 static int open_file(char *filename)
 {
 	char  error[80];
-	printf("wavpack: Opening %s ...", filename);
+	wdprintf(V_INFO, "wavpack", "Opening %s ...", filename);
 	wpc = 0;
 	if ((file = fopen(filename, "r"))) {
 		wpc = WavpackOpenFileInput(read_bytes, error);
 		total_unpacked_samples = 0;
-		if (wpc) printf("ok\n"); else printf("error!\n");
+		wdprintf(V_DEBUG, "wavpack", "Status: %s", wpc ? "OK" : "Error");
 		/*if (wpc) {
 			total_samples = WavpackGetNumSamples (wpc);
 			bps = WavpackGetBytesPerSample (wpc);
@@ -109,7 +110,7 @@ static int decode_data(char *target, int max_size)
 		if (samples_unpacked)
             format_samples(bps, (uchar *)target, temp_buffer, samples_unpacked * channels);
 	} else {
-		printf("vorbis: Target buffer too small: %d < 1024\n", max_size);
+		wdprintf(V_ERROR, "wavpack", "Target buffer too small: %d < 1024\n", max_size);
 	}
 	return samples_unpacked * (WavpackGetBitsPerSample(wpc) / 4);
 }

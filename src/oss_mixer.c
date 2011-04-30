@@ -22,6 +22,7 @@
 #include <sys/ioctl.h>
 #include <sys/soundcard.h>
 #include "oss_mixer.h"
+#include "debug.h"
 
 static int mixer_device = 0;
 static int initial_volume_pcm = 0, initial_volume_master = 0;
@@ -33,32 +34,31 @@ int oss_mixer_open(void)
 
   	if ((mixer_device = open("/dev/mixer", O_RDWR)) < 0) {
   		result = 0;
-		printf("oss_mixer: Failed to open mixer.\n");
+		wdprintf(V_ERROR, "oss_mixer", "Failed to open mixer.\n");
 	} else {
 		int mask;
 
 		if (ioctl(mixer_device, SOUND_MIXER_READ_DEVMASK, &mask) == -1) {
-			printf("oss_mixer: No mixers available.\n");
+			wdprintf(V_WARNING, "oss_mixer", "No mixers available.\n");
 		} else {
 			int   i, p = 0;
 			char *dn[] = SOUND_DEVICE_NAMES;
 
-			printf("oss_mixer: Available controls: ");
+			wdprintf(V_INFO, "oss_mixer", "Available controls: ");
 			for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 				if (mask & (1 << i)) {
 					if (p) printf(", ");
-					printf("%s (%d)", dn[i], i);
+					wdprintf(V_INFO, "oss_mixer", "%s (%d)\n", dn[i], i);
 					p = 1;
 					available_mixers[i] = 1;
 				} else {
 					available_mixers[i] = 0;
 				}
-			if (!p) printf("None");
-			printf(".\n");
+			if (!p) wdprintf(V_INFO, "oss_mixer", "None\n");
 		}
 		ioctl(mixer_device, SOUND_MIXER_READ_PCM, &initial_volume_pcm);
 		ioctl(mixer_device, SOUND_MIXER_READ_VOLUME, &initial_volume_master);
-		printf("oss_mixer: Volume settings: master=%d pcm=%d\n",
+		wdprintf(V_DEBUG, "oss_mixer", "Volume settings: master=%d pcm=%d\n",
 		       initial_volume_master, initial_volume_pcm);
 	}
 	return result;
@@ -78,9 +78,9 @@ void oss_mixer_set_volume(int mixer, int volume)
 	l <<= 8; l |= r;
 	if (1 || available_mixers[mixer]) { /* Ignore non-existance of mixers (Dingoo workaround) */
 		ioctl(mixer_device, MIXER_WRITE(mixer), &l);
-		printf("oss_mixer: mixer %d volume=%d\n", mixer, volume);
+		wdprintf(V_DEBUG, "oss_mixer", "mixer %d volume=%d\n", mixer, volume);
 	} else {
-		printf("oss_mixer: No such mixer: %d\n", mixer);
+		wdprintf(V_WARNING, "oss_mixer", "No such mixer: %d\n", mixer);
 	}
 }
 

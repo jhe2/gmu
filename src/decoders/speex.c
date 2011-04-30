@@ -24,6 +24,7 @@
 #include <speex/speex_header.h>
 #include <speex/speex_stereo.h>
 #include <speex/speex_callbacks.h>
+#include "../debug.h"
 
 #define MAX_FRAME_SIZE 2000
 
@@ -67,12 +68,12 @@ static void *header_process(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t
 
 	header = speex_packet_to_header((char*)op->packet, op->bytes);
 	if (!header) {
-		printf("speex: Cannot read header.\n");
+		wdprintf(V_WARNING, "speex", "Cannot read header.\n");
 		return NULL;
 	}
 
 	if (header->mode >= SPEEX_NB_MODES || header->mode < 0) {
-		printf("speex: Unknown mode number %d.\n", header->mode);
+		wdprintf(V_WARNING, "speex", "Unknown mode number %d.\n", header->mode);
 		free(header);
 		return NULL;
 	}
@@ -80,26 +81,26 @@ static void *header_process(ogg_packet *op, spx_int32_t enh_enabled, spx_int32_t
 	mode = speex_lib_get_mode(header->mode);
 
 	if (header->speex_version_id > 1) {
-		printf("speex: Unknown Speex bitstream version %d.\n",
-		       header->speex_version_id);
+		wdprintf(V_WARNING, "speex", "Unknown Speex bitstream version %d.\n",
+		         header->speex_version_id);
 		free(header);
 		return NULL;
 	}
 
 	if (mode->bitstream_version < header->mode_bitstream_version) {
-		printf("speex: Speex bitstream version too new.\n");
+		wdprintf(V_WARNING, "speex", "Speex bitstream version too new.\n");
 		free(header);
 		return NULL;
 	}
 	if (mode->bitstream_version > header->mode_bitstream_version) {
-		printf("speex: Speex bitstream version too old.\n");
+		wdprintf(V_WARNING, "speex", "Speex bitstream version too old.\n");
 		free(header);
 		return NULL;
 	}
 
 	st = speex_decoder_init(mode);
 	if (!st) {
-		printf("speex: Decoder initialization failed.\n");
+		wdprintf(V_ERROR, "speex", "Decoder initialization failed.\n");
 		free(header);
 		return NULL;
 	}
@@ -152,7 +153,7 @@ static int block_data_process(void)
 	/* Read one complete page */
 	if (ogg_sync_pageout(&oy, &og) == 1) {
 		if (stream_init == 0) {
-			printf("speex: Initializing Ogg stream.\n");
+			wdprintf(V_DEBUG, "speex", "Initializing Ogg stream.\n");
 			ogg_stream_init(&os, ogg_page_serialno(&og));
 			stream_init = 1;
 		}
@@ -193,9 +194,9 @@ static int open_file(char *filename)
 	packet_no = 0;
 	audio_size = 0;
 	stream_init = 0;
-	printf("speex: Opening %s...\n", filename);
+	wdprintf(V_INFO, "speex", "Opening %s...\n", filename);
 	if (!(file = fopen(filename, "rb"))) {
-		printf("speex: Could not open file.\n");
+		wdprintf(V_WARNING, "speex", "Could not open file.\n");
 		res = 0;
 	} else {
 		st = 0;
@@ -211,12 +212,12 @@ static int open_file(char *filename)
 		if (!st) {
 			res = 0;
 			fclose(file);
-			printf("speex: Problem with Speex file.\n");
+			wdprintf(V_WARNING, "speex", "Problem with Speex file.\n");
 		} else {
 			speex_decoder_ctl(st, SPEEX_GET_LOOKAHEAD, &lookahead);
 			speex_decoder_ctl(st, SPEEX_GET_BITRATE, &bitrate);
 			if (!nframes) nframes = 1;
-			printf("speex: Found file with %d channel(s) and %d Hz.\n", channels, rate);
+			wdprintf(V_INFO, "speex", "Found file with %d channel(s) and %d Hz.\n", channels, rate);
 		}
 	}
 	return res;
@@ -229,7 +230,7 @@ static int close_file(void)
 	if (stream_init) ogg_stream_clear(&os);
 	ogg_sync_clear(&oy);
 	if (file) fclose(file);
-	printf("speex: File closed.\n");
+	wdprintf(V_DEBUG, "speex", "File closed.\n");
 	return 0;
 }
 
@@ -274,11 +275,11 @@ static int decode_data(char *target, int max_size)
 						break;
 					}
 					if (ret == -2) {
-						printf("speex: Decoding error: Corrupted stream?\n");
+						wdprintf(V_WARNING, "speex", "Decoding error: Corrupted stream?\n");
 						break;
 					}
 					if (speex_bits_remaining(&bits) < 0) {
-						printf("speex: Decoding overflow: Corrupted stream?\n");
+						wdprintf(V_WARNING, "speex", "Decoding overflow: Corrupted stream?\n");
 						break;
 					}
 					if (channels == 2)
@@ -420,7 +421,7 @@ int meta_data_load(const char *filename)
 
 	/*if ((file = fopen(filename, "r"))) {
 		if (ov_open(file, &vf_metaonly, NULL, 0) < 0) {
-			printf("vorbis: Input does not appear to be an Ogg bitstream.\n");
+			wdprintf(V_WARNING, "speex", "Input does not appear to be an Ogg bitstream.\n");
 			result = 0;
 		}
 	} else {

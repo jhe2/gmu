@@ -15,6 +15,7 @@
  */
 #include "question.h"
 #include "skin.h"
+#include "debug.h"
 
 void question_init(Question *dlg, Skin *skin)
 {
@@ -26,13 +27,13 @@ int question_process_action(Question *dlg, int user_key_action)
 	int result = 0;
 	switch (user_key_action) {
 		case QUESTION_YES:
-			printf("question: Answer: YES\n");
+			wdprintf(V_DEBUG, "sdl_question", "Answer: YES\n");
 			dlg->positive_result_func(dlg->arg);
 			result = 1;
 			*(dlg->view) = dlg->return_view;
 			break;
 		case QUESTION_NO:
-			printf("question: Answer: NO\n");
+			wdprintf(V_DEBUG, "sdl_question", "Answer: NO\n");
 			*(dlg->view) = dlg->return_view;
 			break;
 	}

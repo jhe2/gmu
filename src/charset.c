@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "charset.h"
+#include "debug.h"
 
 int charset_utf8_to_iso8859_1(char *target, const char *source, int target_size)
 {
@@ -42,7 +43,7 @@ int charset_utf8_to_iso8859_1(char *target, const char *source, int target_size)
 			valid = 0;
 		}
 		if (valid == 0) {
-			/*printf("utf-8: Invalid UTF-8 string!\n");*/
+			/*wdprintf(V_DEBUG, "charset", "utf-8: Invalid UTF-8 string!\n");*/
 			break;
 		}
 		j++;
@@ -66,8 +67,8 @@ int charset_utf16_to_iso8859_1(char       *target, int target_size,
 		else
 			valid = 0; 
 	}
-	printf("utf-16: byte order: %s endian\n", byte_order == BE ? "big" : "little");
-	printf("utf-16: valid utf-16 till here: %s\n", valid ? "yes" : "no");
+	wdprintf(V_DEBUG, "charset", "utf-16: byte order: %s endian\n", byte_order == BE ? "big" : "little");
+	wdprintf(V_DEBUG, "charset", "utf-16: valid utf-16 till here: %s\n", valid ? "yes" : "no");
 	while (valid && i < source_size - 1 && !(source[i] == 0 && source[i+1] == 0)) {
 		unsigned char b1, b2;
 		int      code_point;
@@ -87,7 +88,7 @@ int charset_utf16_to_iso8859_1(char       *target, int target_size,
 			target[j] = b2;
 			if (j < target_size - 1) j++;
 		} else {
-			/*printf("utf-16: code_point = %d\n", code_point);*/
+			/*wdprintf(V_DEBUG, "charset", "utf-16: code_point = %d\n", code_point);*/
 			target[j] = '?';
 			if (j < target_size - 1) j++;
 		}
@@ -166,11 +167,11 @@ int charset_convert_string(const char *source, Charset source_charset,
 				break;
 			case UNKNOWN_CHARSET:
 			default:
-				printf("charset: Source charset not supported.\n");
+				wdprintf(V_WARNING, "charset", "Source charset not supported.\n");
 				break;
 		}
 	} else {
-		printf("charset: Target charset not supported.\n");
+		wdprintf(V_WARNING, "charset", "Target charset not supported.\n");
 	}
 	return result;
 }

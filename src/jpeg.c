@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include "jpeg.h"
 #include "imgsize.h"
+#include "debug.h"
 
 #define M_SOF0  0xC0		/* Start Of Frame N */
 #define M_SOF1  0xC1		/* N indicates which compression process */
@@ -89,7 +90,7 @@ static int next_marker(ImageSize *is)
 		} while (c == 0xFF);
 
 		if (discarded_bytes != 0)
-			printf("jpg: Warning: Garbage data found in JPEG file.\n");
+			wdprintf(V_WARNING, "jpeg", "Warning: Garbage data found in JPEG file.\n");
 	} else {
 		c = -1;
 	}
@@ -104,7 +105,7 @@ static int first_marker(ImageSize *is)
 	c2 = read_1_byte(is);
 	if (c1 != 0xFF || c2 != M_SOI)
 		c2 = -1; /* Not a JPEG file */
-	if (c2 == -1) printf("jpg: Error: Not a jpeg image...\n");
+	if (c2 == -1) wdprintf(V_WARNING, "jpeg", "WARNING: Not a jpeg image...\n");
 	return c2;
 }
 

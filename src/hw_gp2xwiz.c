@@ -24,6 +24,7 @@
 #include <sys/soundcard.h>
 #include "hw_gp2xwiz.h"
 #include "oss_mixer.h"
+#include "debug.h"
 #define SYS_CLK_FREQ 7372800
 
 static int memfd;
@@ -56,7 +57,7 @@ unsigned char gp2x_init_phys(void)
 {
 	memfd = open("/dev/mem", O_RDWR);
 	if (memfd == -1) {
-		printf("hw_gp2xwiz: Open failed for /dev/mem\n");
+		wdprintf(V_WARNING, "hw_gp2xwiz", "Open failed for /dev/mem\n");
 		return 0;
 	}
 
@@ -65,19 +66,19 @@ unsigned char gp2x_init_phys(void)
 
 	if (memregs32 == (unsigned long *)0xFFFFFFFF) return 0;
 	memregs16 = (unsigned short *)memregs32;
-	printf("hw_gp2xwiz: init phys.\n");
+	wdprintf(V_DEBUG, "hw_gp2xwiz", "init phys.\n");
 	return 1;
 }
 
 void gp2x_close_phys(void)
 {
 	close(memfd);
-	printf("hw_gp2xwiz: close phys.\n");
+	wdprintf(V_DEBUG, "hw_gp2xwiz", "close phys.\n");
 }
 
 void gp2x_set_cpu_clock(unsigned int MHz)
 {
-	printf("hw_gp2xwiz: CPU Clock = %d MHz\n", MHz);
+	wdprintf(V_INFO, "hw_gp2xwiz", "CPU Clock = %d MHz\n", MHz);
 	if (!gp2x_init_phys()) return;
 	set_cpu_clock(MHz);
 	gp2x_close_phys();
@@ -104,7 +105,7 @@ void hw_display_off(void)
 			break;
 	}
 	gp2x_close_phys();
-	printf("hw_gp2xwiz: Display off.\n");
+	wdprintf(V_DEBUG, "hw_gp2xwiz", "Display off.\n");
 }
 
 void hw_display_on(void)
@@ -128,14 +129,14 @@ void hw_display_on(void)
 			break;
 	}
 	gp2x_close_phys();
-	printf("hw_gp2xwiz: Display on.\n");
+	wdprintf(V_DEBUG, "hw_gp2xwiz", "Display on.\n");
 }
 
 int hw_open_mixer(int mixer_channel)
 {
 	int res = oss_mixer_open();
 	selected_mixer = mixer_channel;
-	printf("hw_gp2xwiz: Selected mixer: %d\n", selected_mixer);
+	wdprintf(V_INFO, "hw_gp2xwiz", "Selected mixer: %d\n", selected_mixer);
 	return res;
 }
 
@@ -149,7 +150,7 @@ void hw_set_volume(int volume)
 	if (selected_mixer >= 0) {
 		if (volume >= 0) oss_mixer_set_volume(selected_mixer, volume);
 	} else {
-		printf("hw_gp2xwiz: No suitable mixer available.\n");
+		wdprintf(V_INFO, "hw_gp2xwiz", "No suitable mixer available.\n");
 	}
 }
 

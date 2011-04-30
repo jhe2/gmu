@@ -21,6 +21,7 @@
 #include "../id3.h"
 #include "../util.h"
 #include "mpcdec/mpcdec.h"
+#include "../debug.h"
 
 typedef struct reader_data_t {
     FILE      *file;
@@ -95,9 +96,9 @@ static int open_file(char *filename)
 
 	seek_to_sample_offset = 0;
 
-	printf("musepack: Opening %s...\n", filename);
+	wdprintf(V_INFO, "musepack", "Opening %s...\n", filename);
 	if (!(file = fopen(filename, "r"))) {
-		printf("musepack: Could not open file.\n");
+		wdprintf(V_WARNING, "musepack", "Could not open file.\n");
 		result = 0;
 	} else {
 		mpc_streaminfo info;
@@ -135,7 +136,7 @@ static int open_file(char *filename)
 		/* read file's streaminfo data */
 		mpc_streaminfo_init(&info);
     	if (mpc_streaminfo_read(&info, &reader) != ERROR_CODE_OK) {
-			printf("musepack: Not a valid musepack file: \"%s\"\n", filename);
+			wdprintf(V_WARNING, "musepack", "Not a valid musepack file: \"%s\"\n", filename);
 			result = 0;
 		} else {
 			sample_rate = info.sample_freq;
@@ -146,7 +147,7 @@ static int open_file(char *filename)
 			/* instantiate a decoder with our file reader */
 			mpc_decoder_setup(&decoder, &reader);
 			if (!mpc_decoder_initialize(&decoder, &info)) {
-				printf("musepack: Error initializing decoder.\n");
+				wdprintf(V_ERROR, "musepack", "Error initializing decoder.\n");
 				result = 0;
 			}
 		}
@@ -175,7 +176,7 @@ static int decode_data(char *target, int max_size)
 	status = mpc_decoder_decode(&decoder, sample_buffer, 0, 0);
 	if (status == (unsigned)(-1)) {
 		size = 0;
-		printf("musepack: Error decoding file.\n");
+		wdprintf(V_ERROR, "musepack", "Error decoding file.\n");
 	} else if (status == 0) { /* EOF */
 		successful = TRUE;
 		size = 0;
@@ -204,7 +205,7 @@ static int decode_data(char *target, int max_size)
 		if (max_size > MPC_DECODER_BUFFER_LENGTH) {
 			memcpy(target, pcmbuf, MPC_DECODER_BUFFER_LENGTH);
 		} else {
-			printf("musepack: Target buffer too small: %d < %d\n", max_size, MPC_DECODER_BUFFER_LENGTH);
+			wdprintf(V_ERROR, "musepack", "Target buffer too small: %d < %d\n", max_size, MPC_DECODER_BUFFER_LENGTH);
 			size = 0;
 		}
 

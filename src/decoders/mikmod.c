@@ -20,6 +20,7 @@
 #include "../gmudecoder.h"
 #include "../trackinfo.h"
 #include "../util.h"
+#include "../debug.h"
 #define BUF_SIZE 32768
 
 static MODULE *module;
@@ -45,7 +46,7 @@ static int open_file(char *filename)
 	md_reverb = 0; 
 	md_mode |= DMODE_SOFT_MUSIC|DMODE_SURROUND;
 
-	printf("mikmod: Init.\n");
+	wdprintf(V_DEBUG, "mikmod", "Init.\n");
 
 	list = MikMod_InfoDriver();
 	if (list)
@@ -68,9 +69,9 @@ static int open_file(char *filename)
 
 	res = MikMod_Init(NULL);
 	if (res) {
-  		printf("mikmod: Init failed: %s\n", MikMod_strerror(MikMod_errno));
+  		wdprintf(V_ERROR, "mikmod", "Init failed: %s\n", MikMod_strerror(MikMod_errno));
 	}
-	printf("mikmod: Loading %s...\n", filename);
+	wdprintf(V_INFO, "mikmod", "Loading %s...\n", filename);
 	module = Player_Load(filename, 64, 0);
 	if (module) {
 		/*char *filename_without_path = NULL;*/
@@ -95,14 +96,14 @@ static int open_file(char *filename)
 
 static int close_file(void)
 {
-	printf("mikmod: Stop!\n");
+	wdprintf(V_DEBUG, "mikmod", "Stop!\n");
 	if (module) {
 		Player_Stop();
 		Player_Free(module);
 		MikMod_Exit();
-		printf("mikmod: Done.\n");
+		wdprintf(V_DEBUG, "mikmod", "Done.\n");
 	} else {
-		printf("mikmod: Am I playing?\n");
+		wdprintf(V_WARNING, "mikmod", "Am I playing?\n");
 	}
 	return 0;
 }

@@ -20,6 +20,7 @@
 #include "core.h"
 #include "plbrowser.h"
 #include "skin.h"
+#include "debug.h"
 
 void pl_browser_init(PlaylistBrowser *pb, const Skin *skin, Charset filenames_charset)
 {
@@ -80,7 +81,7 @@ int pl_browser_playlist_remove_selection(PlaylistBrowser *pb)
 			entry = playlist_get_next(entry);
 			i++;
 		}
-		printf("Removing entry %s...\n", gmu_core_playlist_get_entry_name(entry));
+		wdprintf(V_INFO, "sdl_plbrowser:", "Removing entry %s...\n", gmu_core_playlist_get_entry_name(entry));
 		if (pb->first_visible_entry == entry)
 			pb->first_visible_entry = (entry->next ? entry->next : entry->prev);
 		result = gmu_core_playlist_entry_delete(entry);
