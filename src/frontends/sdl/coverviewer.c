@@ -24,6 +24,7 @@
 #include "coverimg.h"
 #include "util.h"
 #include "debug.h"
+#include "audio.h"
 
 void cover_viewer_init(CoverViewer *cv, const Skin *skin, int large, CoverAlign align, int embedded_cover)
 {
@@ -33,6 +34,7 @@ void cover_viewer_init(CoverViewer *cv, const Skin *skin, int large, CoverAlign 
 	cv->y_offset    = 0;
 	cv->hide_cover  = 0;
 	cv->hide_text   = 0;
+	cv->spectrum_analyzer = 0;
 	cv->try_to_load_embedded_cover = embedded_cover;
 	text_browser_init(&cv->tb, skin);
 	text_browser_set_text(&cv->tb, "", "Track info");
@@ -114,6 +116,23 @@ void cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti)
 	if (lyrics[0] != '\0') free(lyrics);
 }
 
+int cover_viewer_is_spectrum_analyzer_enabled(CoverViewer *cv)
+{
+	return cv->spectrum_analyzer;
+}
+
+void cover_viewer_enable_spectrum_analyzer(CoverViewer *cv)
+{
+	audio_spectrum_register_for_access();
+	cv->spectrum_analyzer = 1;
+}
+
+void cover_viewer_disable_spectrum_analyzer(CoverViewer *cv)
+{
+	cv->spectrum_analyzer = 0;
+	audio_spectrum_unregister();
+}
+
 void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 {
 	SDL_Rect     srect, drect;
@@ -174,8 +193,37 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 		text_browser_set_chars_per_line(&cv->tb, chars_per_line);
 		if (!cv->hide_text) text_browser_draw(&cv->tb, target);
 	}
+	
+	/* Draw spectrum analyzer */
+	if (cv->spectrum_analyzer) {
+		Uint32   color = SDL_MapRGB(target->format, 0, 70, 255);
+		int      i;
+		int16_t *amplitudes;
+		static int16_t amplitudes_smoothed[8];
+		SDL_Rect dstrect;
+
+		dstrect.w = 14;
+		dstrect.h = 20;
+		dstrect.x = ax + 10;
+		if (audio_spectrum_read_lock()) {
+			amplitudes = audio_spectrum_get_current_amplitudes();
+			for (i = 0; i < 8; i++) {
+				int16_t a = amplitudes[i] / 327 + 2;
+				dstrect.x += 16;
+				if (amplitudes_smoothed[i] < a) amplitudes_smoothed[i] = a;
+				amplitudes_smoothed[i] = amplitudes_smoothed[i] > 50 ? 50 : amplitudes_smoothed[i];
+				dstrect.h = amplitudes_smoothed[i];
+				dstrect.y = ay + ah - 2 - amplitudes_smoothed[i];
+				SDL_FillRect(target, &dstrect, color);
+				amplitudes_smoothed[i] -= (15-i);
+				if (amplitudes_smoothed[i] < 2) amplitudes_smoothed[i] = 2;
+			}
+			audio_spectrum_read_unlock();
+		}
+	}
+
 	if (cv->hide_text && !cv->hide_cover)
-			skin_draw_header_text((Skin *)cv->skin, "Track info (Cover only)", target);
+		skin_draw_header_text((Skin *)cv->skin, "Track info (Cover only)", target);
 	else if (cv->hide_cover && !cv->hide_text)
 		skin_draw_header_text((Skin *)cv->skin, "Track info (Text only)", target);
 	else if (cv->hide_text && cv->hide_cover)

@@ -39,6 +39,7 @@ typedef struct CoverViewer {
 	int          hide_cover, hide_text;
 	char         track_info_text[SIZE_TRACKINFO_TEXT];
 	CoverImage   ci;
+	int          spectrum_analyzer;
 } CoverViewer;
 
 void cover_viewer_init(CoverViewer *cv, const Skin *skin, int large, 
@@ -54,4 +55,7 @@ void cover_viewer_scroll_left(CoverViewer *cv);
 void cover_viewer_scroll_right(CoverViewer *cv);
 int  cover_viewer_toggle_cover_visible(CoverViewer *cv);
 int  cover_viewer_toggle_text_visible(CoverViewer *cv);
+int  cover_viewer_is_spectrum_analyzer_enabled(CoverViewer *cv);
+void cover_viewer_enable_spectrum_analyzer(CoverViewer *cv);
+void cover_viewer_disable_spectrum_analyzer(CoverViewer *cv);
 #endif

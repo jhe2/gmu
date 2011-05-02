@@ -934,10 +934,13 @@ void run_player(char *skin_name, char *decoders_str)
 					case GLOBAL_TOGGLE_VIEW:
 						if (view == TRACK_INFO) {
 							view = FILE_BROWSER;
+							cover_viewer_disable_spectrum_analyzer(&cv);
 						} else if (view == PLAYLIST) {
 							view = TRACK_INFO;
+							cover_viewer_enable_spectrum_analyzer(&cv);
 						} else {
 							view = PLAYLIST;
+							cover_viewer_disable_spectrum_analyzer(&cv);
 						}
 						update = UPDATE_ALL;
 						break;
@@ -1153,10 +1156,11 @@ void run_player(char *skin_name, char *decoders_str)
 			else
 				update |= UPDATE_DISPLAY;
 
-			/* When in trackinfo view, update view every few seconds */
+			/* When in trackinfo view, update view every few seconds 
+			 * or more often when spectrum analyzer has been enabled */
 			if (view == TRACK_INFO && !(update & UPDATE_TEXTAREA)) {
 				static int cnt = 0;
-				if (cnt == 30) {
+				if (cnt == 30 || cover_viewer_is_spectrum_analyzer_enabled(&cv)) {
 					update |= UPDATE_TEXTAREA;
 					cnt = 0;
 				}

@@ -13,6 +13,7 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
+#include <math.h>
 #include "SDL.h"
 #include "ringbuffer.h"
 #include "audio.h"
@@ -21,13 +22,14 @@
 #define RINGBUFFER_SIZE 131072
 
 static RingBuffer    audio_rb;
-static SDL_mutex    *audio_mutex;
+static SDL_mutex    *audio_mutex, *spectrum_mutex;
 static unsigned long buf_read_counter;
 static int           have_samplerate, have_channels;
 static int           device_open;
 static int           paused;
 static char          buf[65536];
 static int           volume, volume_internal;
+static int           spectrum_reg = 0;
 
 int audio_fill_buffer(char *data, int size)
 {
@@ -36,6 +38,49 @@ int audio_fill_buffer(char *data, int size)
 	result = ringbuffer_write(&audio_rb, data, size);
 	while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(50);
 	return result;
+}
+
+static void calculate_dft(int16_t *input_signal, int input_signal_size, int *rex, int *imx)
+{
+	int res_size = input_signal_size / 2 + 1;
+
+	if (rex && imx) {
+		int i, j, rs = res_size * sizeof(int);
+		memset(rex, 0, rs);
+		memset(imx, 0, rs);
+		for (j = 0; j < res_size; j++)
+			for (i = 0; i < input_signal_size; i++) {
+				if (rex) rex[j] = rex[j] + input_signal[i] * cos(2*M_PI*j*i/input_signal_size);
+				if (imx) imx[j] = imx[j] + input_signal[i] * sin(2*M_PI*j*i/input_signal_size);
+			}
+	}
+}
+
+static int16_t amplitudes[16];
+
+int16_t *audio_spectrum_get_current_amplitudes(void)
+{
+	return amplitudes;
+}
+
+void audio_spectrum_register_for_access(void)
+{
+	spectrum_reg++;
+}
+
+void audio_spectrum_unregister(void)
+{
+	if (spectrum_reg > 0) spectrum_reg--;
+}
+
+int audio_spectrum_read_lock(void)
+{
+	return !SDL_mutexP(spectrum_mutex);
+}
+
+void audio_spectrum_read_unlock(void)
+{
+	SDL_mutexV(spectrum_mutex);
 }
 
 static void fill_audio(void *udata, Uint8 *stream, int len)
@@ -52,6 +97,20 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 	}
 	buf_read_counter += len;
 	ringbuffer_read(&audio_rb, buf, len);
+
+	/* When requested, run DFT on a few samples of each block of data for visualization purposes */
+	if (spectrum_reg > 0) {
+		int rex[9], imx[9];
+		int i, j; 
+		int16_t samples_l[16], *samples = (int16_t *)buf;
+
+		for (i = 0, j = 0; i < 32; i+=2, j++) samples_l[j] = samples[i];
+		calculate_dft(samples_l, 16, rex, imx);
+		SDL_mutexP(spectrum_mutex);
+		for (i = 1; i < 9; i++) amplitudes[i-1] = (imx[i] < 0 ? -imx[i] : imx[i]);
+		SDL_mutexV(spectrum_mutex);
+	}
+
 	SDL_MixAudio(stream, (unsigned char *)buf, len, volume);
 	while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(100);
 }
@@ -103,6 +162,7 @@ int audio_set_pause(int pause_state)
 		wdprintf(V_DEBUG, "audio", "%s\n", pause_state ? "Pause!" : "Play!");
 		if (paused != pause_state) {
 			paused = pause_state;
+			if (paused) memset(amplitudes, 0, sizeof(int16_t) * 16);
 			SDL_PauseAudio(paused);
 		}
 	} else {
@@ -141,6 +201,7 @@ void audio_buffer_init(void)
 	have_channels = 1;
 	ringbuffer_init(&audio_rb, RINGBUFFER_SIZE);
 	audio_mutex = SDL_CreateMutex();
+	spectrum_mutex = SDL_CreateMutex();
 }
 
 void audio_buffer_clear(void)
@@ -153,6 +214,7 @@ void audio_buffer_free(void)
 {
 	ringbuffer_free(&audio_rb);
 	SDL_DestroyMutex(audio_mutex);
+	SDL_DestroyMutex(spectrum_mutex);
 }
 
 void audio_device_close(void)
