@@ -161,7 +161,9 @@ static int mpg123_play_file(char *mpeg_file)
 				int   status;
 				int   size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
 				char *metaint_str = cfg_get_key_value(r->streaminfo, "icy-metaint");
-
+				long  file_size = reader_get_file_size(r);
+				
+				if (file_size > 0) mpg123_set_filesize(player, file_size);
 				if (metaint_str) metaint = atoi(metaint_str); else metaint = -1;
 				wdprintf(V_DEBUG, "mpg123", "Metadata every %d bytes.\n", metaint);
 				if (metaint > 0) metacount = metaint - size; else metacount = 0;
