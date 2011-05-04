@@ -46,7 +46,7 @@ static int decode_data(char *target, int max_size)
 	int                     readsize;
 
 	if (r) {
-		if (metaint > 0 && metacount == 0) {
+		if (metaint > 0 && metacount == 0) { /* Shoutcast stream meta data handling */
 			int metasize = reader_read_byte(r) * 16;
 			if (metasize > 0) {
 				char *metastr;
@@ -160,11 +160,7 @@ static int mpg123_play_file(char *mpeg_file)
 		id3_read_tag(mpeg_file, &ti, "MP3");
 		/*strncpy(ti->file_name, mpeg_file, SIZE_FILE_NAME-1);*/
 
-		if (!r && (mpg123_open(player, mpeg_file) != MPG123_OK || 
-		    mpg123_getformat(player, &rate, &channels, &encoding) != MPG123_OK)) { /* Use normal file read stuff */
-			wdprintf(V_ERROR, "mpg123", "Error opening file.\n");
-			channels = 0;
-		} else if (r) { /* Use stream reader */
+		if (r) { /* Always use stream reader */
 			wdprintf(V_INFO, "mpg123", "Opening stream...\n");
 			if (mpg123_open_feed(player) == MPG123_OK) {
 				int   status;
