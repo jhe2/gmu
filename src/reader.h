@@ -27,6 +27,7 @@ typedef struct
 	FILE *file;
 	int   eof;
 	int   seekable;
+	long  file_size;
 
 	int   sockfd;
 

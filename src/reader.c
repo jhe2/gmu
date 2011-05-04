@@ -24,6 +24,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/stat.h>
 #include "reader.h"
 #include "ringbuffer.h"
 #include "debug.h"
@@ -113,6 +114,7 @@ Reader *reader_open(char *url)
 		r->buf = NULL;
 		r->buf_size = 0;
 		r->buf_data_size = 0;
+		r->file_size = 0;
 		wdprintf(V_DEBUG, "reader", "mutex init.\n");
 		pthread_mutex_init(&(r->mutex), NULL);
 		wdprintf(V_DEBUG, "reader", "mutex init done.\n");
@@ -289,7 +291,14 @@ Reader *reader_open(char *url)
 		} else { /* Treat everything else as a local file (for now) */
 			wdprintf(V_INFO, "reader", "Opening file %s.\n", url);
 			r->file = fopen(url, "r");
-			r->seekable = 1;
+			if (r->file) {
+				struct stat st;
+				r->seekable = 1;
+				if (stat(url, &st) == 0) {
+					r->file_size = st.st_size;
+					wdprintf(V_DEBUG, "reader", "File size = %d bytes.\n", r->file_size);
+				}
+			}
 		}
 	}
 	return r;
@@ -383,6 +392,11 @@ int reader_read_bytes(Reader *r, int size)
 char *reader_get_buffer(Reader *r)
 {
 	return r->buf;
+}
+
+long reader_get_file_size(Reader *r)
+{
+	return r->file_size;
 }
 
 /* Resets the stream to the beginning (if possible), returns 1 on success, 0 otherwise */
