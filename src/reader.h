@@ -53,4 +53,5 @@ int     reader_get_number_of_bytes_in_buffer(Reader *r);
 /* Resets the stream to the beginning (if possible), returns 1 on success, 0 otherwise */
 int     reader_reset_stream(Reader *r);
 int     reader_seek(Reader *r, int byte_offset);
+long    reader_get_file_size(Reader *r);
 #endif
