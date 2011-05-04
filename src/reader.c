@@ -410,12 +410,21 @@ int reader_reset_stream(Reader *r)
 	return res;
 }
 
+int reader_is_seekable(Reader *r)
+{
+	return r->seekable;
+}
+
 int reader_seek(Reader *r, int byte_offset)
 {
 	int res = 0;
 	if (r->file) {
-		fseek(r->file, byte_offset, SEEK_SET);
-		res = 1;
+		if (fseek(r->file, byte_offset, SEEK_SET) == 0) {
+			r->buf_data_size = 0;
+			res = 1;
+		} else {
+			wdprintf(V_INFO, "reader", "Seeking failed. :(\n");
+		}
 	} else {
 		/* Seeking not possible in HTTP streams */
 		res = 0;

@@ -279,7 +279,7 @@ static void *decode_audio_thread(void *udata)
 							SDL_PauseAudio(0);
 						}
 					}
-					if (seek_second && item_status == PLAYING) {
+					if (seek_second && item_status == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
 						if (seek_second < 0) seek_second = 0;
 						if (*gd->seek)
 							if ((*gd->seek)(seek_second))
@@ -330,6 +330,7 @@ int file_player_play_file(char *file, TrackInfo *ti)
 
 	item_status = STOPPED;
 	playback_status = PLAYING;
+	seek_second = 0;
 
 	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
 	dap.gd = decloader_get_decoder_for_extension(tmp);

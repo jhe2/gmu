@@ -80,6 +80,19 @@ static int decode_data(char *target, int max_size)
 			metacount = metaint;
 		}
 
+		if (seek_to_sample_offset && reader_is_seekable(r)) {
+			wdprintf(V_DEBUG, "mpg123", "Seeking requested to sample %d.\n", seek_to_sample_offset);
+			if (mpg123_tell(player) + seek_to_sample_offset >= 0) {
+				off_t offset;
+
+				if (mpg123_feedseek(player, seek_to_sample_offset, SEEK_SET, &offset) > 0) {
+					wdprintf(V_DEBUG, "mpg123", "Seeking stream to file offset at %d bytes.\n", offset);
+					reader_seek(r, offset);
+				}
+			}
+			seek_to_sample_offset = 0;
+		}
+
 		readsize = 2048;
 		if (metacount > 0) {
 			if (metacount < readsize) readsize = metacount;
@@ -100,8 +113,10 @@ static int decode_data(char *target, int max_size)
 		ret = mpg123_read(player, (unsigned char*)target, max_size, &decsize);
 		if (ret == MPG123_NEED_MORE && decsize == 0) {
 			readsize = 2048;
-			if (metacount < readsize) readsize = metacount;
-			metacount -= readsize;
+			if (metaint > 0) { /* Do this only if there is Shoutcast meta data in the stream */
+				if (metacount < readsize) readsize = metacount;
+				metacount -= readsize;
+			}
 			if (readsize > 0) {
 				wdprintf(V_DEBUG, "mpg123", "Reading more data: %d bytes\n", readsize);
 				if (reader_read_bytes(r, readsize)) {
@@ -115,14 +130,8 @@ static int decode_data(char *target, int max_size)
 				break;
 			}
 		}
-	} while (ret == MPG123_NEED_MORE && decsize == 0);
+	} while (ret == MPG123_NEED_MORE && decsize == 0 && !reader_is_eof(r));
 	if (ret == MPG123_DONE) decsize = 0;
-	if (seek_to_sample_offset) {
-		if (mpg123_tell(player) + seek_to_sample_offset >= 0) {
-			mpg123_seek(player, seek_to_sample_offset, SEEK_SET);
-		}
-		seek_to_sample_offset = 0;
-	}
 	return decsize;
 }
 
