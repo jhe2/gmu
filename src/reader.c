@@ -233,7 +233,7 @@ Reader *reader_open(char *url)
 						} else {
 							wdprintf(V_ERROR, "reader", "Out of memory.\n");
 						}
-						
+
 						/* Skip http response header */
 						{
 							int  header_end_found = 0, cnt = 0, i = 0;
@@ -281,7 +281,7 @@ Reader *reader_open(char *url)
 							wdprintf(V_DEBUG, "reader", "HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
 						}
 					}
-					freeaddrinfo(servinfo); /* All done with this structure */
+					freeaddrinfo(servinfo);
 				}
 			}
 			if (hostname) free(hostname);
@@ -304,7 +304,6 @@ Reader *reader_open(char *url)
 
 int reader_close(Reader *r)
 {
-	/* close file handle/stream... */
 	if (r) {
 		if (r->file) { /* local file */
 			fclose(r->file);
