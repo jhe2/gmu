@@ -282,6 +282,14 @@ Reader *reader_open(char *url)
 						}
 					}
 					freeaddrinfo(servinfo);
+					/* Try to figure out stream length */
+					{
+						char *val = cfg_get_key_value(r->streaminfo, "Content-Length");
+						if (val) {
+							r->file_size = atol(val);
+							wdprintf(V_DEBUG, "reader", "Stream size = %d bytes.\n", r->file_size);
+						}
+					}
 				}
 			}
 			if (hostname) free(hostname);
