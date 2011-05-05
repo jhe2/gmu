@@ -82,7 +82,6 @@ static void *thread_func(void *arg)
 					if (size > 0) {
 						char tmp[4];
 						buffer[size] = '\0';
-						/*printf("got password:%s expected password:%s\n", buffer, password);*/
 						if (password && strncmp(buffer, password, size) == 0)
 							auth_okay = 1;
 						else
