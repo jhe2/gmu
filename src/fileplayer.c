@@ -375,6 +375,7 @@ int file_player_play_file(char *file, TrackInfo *ti)
 			reader_close(r);
 			r = NULL;
 		}
+		item_status = FINISHED;
 	}
 	return playback_status;
 }
