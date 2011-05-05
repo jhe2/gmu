@@ -172,8 +172,12 @@ static int mpg123_play_file(char *mpeg_file)
 				
 				if (file_size > 0) mpg123_set_filesize(player, file_size);
 				if (metaint_str) metaint = atoi(metaint_str); else metaint = -1;
-				wdprintf(V_DEBUG, "mpg123", "Metadata every %d bytes.\n", metaint);
-				if (metaint > 0) metacount = metaint - size; else metacount = 0;
+				if (metaint > 0) {
+					metacount = metaint - size;
+					wdprintf(V_DEBUG, "mpg123", "Metadata every %d bytes.\n", metaint);
+				} else {
+					metacount = 0;
+				}
 				do {
 					mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
 
@@ -189,7 +193,7 @@ static int mpg123_play_file(char *mpeg_file)
 
 				/* Set meta data */
 				{
-					char *name        = cfg_get_key_value(r->streaminfo, "icy-name");
+					char *name = cfg_get_key_value(r->streaminfo, "icy-name");
 					/*char *description = cfg_get_key_value(r->streaminfo, "icy-description");
 					if (!description) description = "";*/
 					if (name) trackinfo_set(&ti, "", name, name, "", 0, rate, channels);
@@ -210,7 +214,7 @@ static int mpg123_play_file(char *mpeg_file)
 		if (channels > 0) {
 			size_t        dummy;
 			unsigned char dumbuf[1024];
-			
+
 			wdprintf(V_INFO, "mpg123", "Found stream with %d channels and %ld bps.\n", channels, rate);
 			mpg123_format_none(player);
 			mpg123_format(player, rate, channels, encoding);
