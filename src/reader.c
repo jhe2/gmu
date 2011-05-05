@@ -172,7 +172,7 @@ Reader *reader_open(char *url)
 						}
 						break;
 					}
-					wdprintf(V_DEBUG, "reader", "errno = %d\n", errno);
+
 					if (errno == EINPROGRESS) {
 						fd_set myset;
 						struct timeval tv; 
@@ -188,24 +188,22 @@ Reader *reader_open(char *url)
 							FD_SET(r->sockfd, &myset); 
 							res = select((r->sockfd)+1, NULL, &myset, NULL, &tv); 
 							if (res < 0 && errno != EINTR) {
-								fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+								wdprintf(V_DEBUG, "reader", "Error while connecting: %d - %s\n", errno, strerror(errno));
 								break;
 							} else if (res > 0) {
-								/* Socket selected for write */
 								lon = sizeof(int);
 								if (getsockopt(r->sockfd, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
-									fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+									wdprintf(V_DEBUG, "reader", "Error in getsockopt(): %d - %s\n", errno, strerror(errno));
 									p = NULL;
 									break;
 								}
 								if (valopt) {
-									fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt));
+									wdprintf(V_DEBUG, "reader", "Error in delayed connection(): %d - %s\n", valopt, strerror(valopt));
 									p = NULL;
-									break;
 								}
 								break;
 							} else {
-								fprintf(stderr, "Timeout in select() - Cancelling!\n");
+								wdprintf(V_DEBUG, "reader", "Timeout in select() - Cancelling!\n");
 								p = NULL;
 								break;
 							}
