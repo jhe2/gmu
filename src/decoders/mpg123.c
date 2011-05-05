@@ -124,6 +124,8 @@ static int decode_data(char *target, int max_size)
 					if (size > 0) {
 						mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
 					}
+				} else { /* Must have reached EOF */
+					break;
 				}
 			} else {
 				wdprintf(V_DEBUG, "mpg123", "Need more data, but can't read. readsize = %d\n", readsize);

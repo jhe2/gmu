@@ -74,24 +74,29 @@ static int http_url_split_alloc(char *url, char **hostname, int *port, char **pa
 static void *http_reader_thread(void *arg)
 {
 	Reader *r = (Reader *)arg;
-	int numbytes = 1;
+	int numbytes = 1, err = 0;
 	char buf[4096];
 
 	while (numbytes != -1 && numbytes > 0 && !r->eof) {
 		do {
 			numbytes = recv(r->sockfd, buf, 4096, 0);
+			err = errno;
 			if (numbytes > 0) { /* write to ringbuffer */
 				int write_okay = 0;
 				while (!write_okay && !r->eof) {
 					pthread_mutex_lock(&(r->mutex));
 					write_okay = ringbuffer_write(&(r->rb_http), buf, numbytes);
 					pthread_mutex_unlock(&(r->mutex));
-					usleep(150);
+					usleep(1500);
 				}
-			}
-			if (numbytes <= 0) {
-				usleep(1000);
-				wdprintf(V_DEBUG, "reader", "Read timeout. Retrying...\n");
+			} else {
+				usleep(10000);
+				if (err == 0) {
+					if (numbytes == 0) r->eof = 1;
+				} else {
+					wdprintf(V_DEBUG, "reader", "Network problem: %s (%d)\n", strerror(err), err);
+					wdprintf(V_DEBUG, "reader", "Retrying...\n");
+				}
 			}
 		} while (numbytes <= 0 && !r->eof && ringbuffer_get_fill(&(r->rb_http)) > 4000);
 		wdprintf(V_DEBUG, "reader", "buf fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
