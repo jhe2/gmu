@@ -787,8 +787,8 @@ int main(int argc, char **argv)
 		int   seekpos = (seekposstr ? atoi(seekposstr) : 0);
 		if (item > 0) {
 			global_command = NO_CMD;
-			gmu_core_play_pl_item(item-1);
 			file_player_seek(seekpos);
+			gmu_core_play_pl_item(item-1);
 		}
 	}
 

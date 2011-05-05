@@ -250,6 +250,15 @@ static void *decode_audio_thread(void *udata)
 				while (ret && item_status == PLAYING && !file_player_shut_down) {
 					int size = 0, ret = 1, br = 0;
 
+					if (seek_second) {
+						if (item_status == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
+							if (seek_second < 0) seek_second = 0;
+							if (*gd->seek)
+								if ((*gd->seek)(seek_second))
+									audio_set_sample_counter(seek_second * ti->samplerate);
+						}
+						seek_second = 0;
+					}
 					while (ret > 0 && size < BUF_SIZE / 2 && item_status == PLAYING) {
 						ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
 						size += ret;
@@ -278,13 +287,6 @@ static void *decode_audio_thread(void *udata)
 							wdprintf(V_DEBUG, "fileplayer", "UNPAUSE AUDIO!\n");
 							SDL_PauseAudio(0);
 						}
-					}
-					if (seek_second && item_status == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
-						if (seek_second < 0) seek_second = 0;
-						if (*gd->seek)
-							if ((*gd->seek)(seek_second))
-								audio_set_sample_counter(seek_second * ti->samplerate);
-						seek_second = 0;
 					}
 					if (*gd->get_meta_data_int) {
 						if ((*gd->get_meta_data_int)(GMU_META_IS_UPDATED, 1)) {
@@ -330,7 +332,6 @@ int file_player_play_file(char *file, TrackInfo *ti)
 
 	item_status = STOPPED;
 	playback_status = PLAYING;
-	seek_second = 0;
 
 	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
 	dap.gd = decloader_get_decoder_for_extension(tmp);
