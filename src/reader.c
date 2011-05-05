@@ -284,17 +284,17 @@ Reader *reader_open(char *url)
 								}
 							}
 							wdprintf(V_DEBUG, "reader", "HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
+							/* Try to figure out stream length */
+							if (header_end_found) {
+								char *val = cfg_get_key_value(r->streaminfo, "Content-Length");
+								if (val) {
+									r->file_size = atol(val);
+									wdprintf(V_DEBUG, "reader", "Stream size = %d bytes.\n", r->file_size);
+								}
+							}
 						}
 					}
 					freeaddrinfo(servinfo);
-					/* Try to figure out stream length */
-					{
-						char *val = cfg_get_key_value(r->streaminfo, "Content-Length");
-						if (val) {
-							r->file_size = atol(val);
-							wdprintf(V_DEBUG, "reader", "Stream size = %d bytes.\n", r->file_size);
-						}
-					}
 				}
 			}
 			if (hostname) free(hostname);
