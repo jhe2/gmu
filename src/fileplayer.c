@@ -299,6 +299,7 @@ static void *decode_audio_thread(void *udata)
 				}
 				wdprintf(V_INFO, "fileplayer", "Playback stopped.\n");
 				audio_set_pause(1);
+				seek_second = 0;
 			} else {
 				wdprintf(V_WARNING, "fileplayer", "Broken audio stream.\n");
 			}
