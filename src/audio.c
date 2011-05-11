@@ -17,6 +17,7 @@
 #include "SDL.h"
 #include "ringbuffer.h"
 #include "audio.h"
+#include "fmath.h"
 #include "debug.h"
 #include FILE_HW_H
 #define RINGBUFFER_SIZE 131072
@@ -48,11 +49,18 @@ static void calculate_dft(int16_t *input_signal, int input_signal_size, int *rex
 		int i, j, rs = res_size * sizeof(int);
 		memset(rex, 0, rs);
 		memset(imx, 0, rs);
-		for (j = 0; j < res_size; j++)
+		for (j = 0; j < res_size; j++) {
 			for (i = 0; i < input_signal_size; i++) {
-				if (rex) rex[j] = rex[j] + input_signal[i] * cos(2*M_PI*j*i/input_signal_size);
-				if (imx) imx[j] = imx[j] + input_signal[i] * sin(2*M_PI*j*i/input_signal_size);
+				/*if (rex) rex[j] = rex[j] + input_signal[i] * cos(2*M_PI*j*i/input_signal_size);
+				if (imx) imx[j] = imx[j] + input_signal[i] * sin(2*M_PI*j*i/input_signal_size);*/
+				if (rex) rex[j] = rex[j] + input_signal[i] * fcos(F_PI2*j*i/input_signal_size);
+				if (imx) imx[j] = imx[j] + input_signal[i] * fsin(F_PI2*j*i/input_signal_size);
 			}
+		}
+		for (j = 0; j < res_size; j++) {
+			if (rex) rex[j] /= 10000;
+			if (imx) imx[j] /= 10000;
+		}
 	}
 }
 
