@@ -188,7 +188,7 @@ static int mpg123_play_file(char *mpeg_file)
 						size = reader_get_number_of_bytes_in_buffer(r);
 						metacount -= size;
 					}
-				} while (status == MPG123_NEED_MORE);
+				} while (status == MPG123_NEED_MORE && !reader_is_eof(r));
 				wdprintf(V_DEBUG, "mpg123", "Next metadata in %d bytes.\n", metacount);
 
 				/* Set meta data */
