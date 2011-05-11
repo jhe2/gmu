@@ -309,6 +309,10 @@ Reader *reader_open(char *url)
 					r->file_size = st.st_size;
 					wdprintf(V_DEBUG, "reader", "File size = %d bytes.\n", r->file_size);
 				}
+			} else {
+				wdprintf(V_ERROR, "reader", "Unable to open file '%s'.\n", url);
+				free(r);
+				r = NULL;
 			}
 		}
 	}
