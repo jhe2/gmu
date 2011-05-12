@@ -90,7 +90,7 @@ static void *http_reader_thread(void *arg)
 					usleep(1500);
 				}
 			} else {
-				usleep(10000);
+				usleep(300000);
 				if (err == 0) {
 					if (numbytes == 0) r->eof = 1;
 				} else {
