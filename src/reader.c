@@ -108,7 +108,7 @@ static void *http_reader_thread(void *arg)
 }
 
 /* Opens a local file or HTTP URL for reading */
-Reader *reader_open(char *url)
+Reader *_reader_open(char *url, int max_redirects)
 {
 	Reader *r = malloc(sizeof(Reader));
 	if (r) {
@@ -299,6 +299,29 @@ Reader *reader_open(char *url)
 			}
 			if (hostname) free(hostname);
 			if (path)     free(path);
+			/* Check for 302 redirect (Location) */
+			{
+				char *v = cfg_get_key_value(r->streaminfo, "Location");
+				if (!v) v = cfg_get_key_value(r->streaminfo, "location");
+				if (v) {
+					int   len = strlen(v);
+					char *vc = NULL;
+					
+					if (len > 0) {
+						vc = malloc(len+1);
+						strncpy(vc, v, len);
+						vc[len] = '\0';
+					}
+					wdprintf(V_INFO, "reader", "302 Redirect found: %s\n", vc);
+					reader_close(r);
+					if (max_redirects > 0) {
+						r = _reader_open(vc, max_redirects-1);
+					} else {
+						wdprintf(V_WARNING, "reader", "Too many HTTP redirects.\n");
+					}
+					if (vc) free(vc);
+				}
+			}
 		} else { /* Treat everything else as a local file (for now) */
 			wdprintf(V_INFO, "reader", "Opening file %s.\n", url);
 			r->file = fopen(url, "r");
@@ -317,6 +340,11 @@ Reader *reader_open(char *url)
 		}
 	}
 	return r;
+}
+
+Reader *reader_open(char *url)
+{
+	return _reader_open(url, 3);
 }
 
 int reader_close(Reader *r)
