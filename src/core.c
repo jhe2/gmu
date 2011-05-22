@@ -505,7 +505,7 @@ static void print_cmd_help(char *prog_name)
 	printf("-e : Store user configuration in user's home directory (~/.config/gmu/)\n");
 	printf("-c configfile.conf: Use the specified config file instead of gmu.conf\n");
 	printf("-s theme_name: Use theme \"theme_name\"\n");
-	printf("-q : Reduce verbosity on stdout. Can be applied multiple times.\n");
+	printf("-v V : Set verbosity level to V, where V is an integer between 0 (silent) and 5 (debug).\n");
 	printf("If you append files to the command line\n");
 	printf("they will be added to the playlist\n");
 	printf("and playback is started automatically.\n");
@@ -633,8 +633,17 @@ int main(int argc, char **argv)
 					print_cmd_help(argv[0]);
 					exit(0);
 					break;
-				case 'q':
-					if (v > V_SILENT) v--;
+				case 'v':
+					if (argc >= i+2) {
+						v = atoi(argv[i+1]);
+						if (v < V_SILENT)
+							v = V_SILENT;
+						else if (v > V_DEBUG)
+							v = V_DEBUG;
+					} else {
+						wdprintf(V_ERROR, "gmu", "Invalid usage of -d: Verbosity level (0..5) required.\n");
+						exit(0);
+					}
 					wdprintf_set_verbosity(v);
 					break;
 				case 's':
