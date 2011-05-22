@@ -42,7 +42,9 @@ static const char *text_help =
 "and there are screen dependent functions.\n\n"
 "**Important global functions**\n\n"
 "Play/Skip forward.......: **%s **\n"
-"Skip backwards..........: **%s **\n"
+"Skip backward...........: **%s **\n"
+"Seek forward............: **%s **\n"
+"Seek backward...........: **%s **\n"
 "Pause...................: **%s **\n"
 "Stop....................: **%s **\n"
 "Volume up...............: **%s **\n"
@@ -97,6 +99,8 @@ void help_init(TextBrowser *tb_help, Skin *skin, KeyActionMapping *kam)
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_TOGGLE_VIEW),
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_NEXT),
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_PREV),
+	                    key_action_mapping_get_full_button_name(kam, GLOBAL_SEEK_FWD),
+	                    key_action_mapping_get_full_button_name(kam, GLOBAL_SEEK_BWD),
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_PAUSE),
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_STOP),
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_INC_VOLUME),
