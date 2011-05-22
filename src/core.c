@@ -614,7 +614,7 @@ int main(int argc, char **argv)
 	unsigned int statu = STOPPED;
 	int          auto_shutdown = 0;
 	time_t       start, end;
-	Verbosity    v = V_DEBUG;
+	Verbosity    v = V_INFO;
 
 	hw_detect_device_model();
 
