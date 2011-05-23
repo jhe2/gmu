@@ -48,7 +48,7 @@ typedef struct _GmuDecoder {
 	/* Must return a semicolon-separated list of file extensions which the
 	 * decoder is capable of decoding, e.g. ".mp3;.mp2" */
 	const char * (*get_file_extensions)(void);
-	/* Should return a list of supported mime-types, comma-separated. Optional. */
+	/* Should return a list of supported mime-types, semicolon-separated. Optional. */
 	const char * (*get_mime_types)(void);
 	/* Open function, parameter is the filename (with absolute path) of 
 	 * the file to be decoded. Must return TRUE on success, FALSE otherwise. 
@@ -100,7 +100,7 @@ typedef struct _GmuDecoder {
 	/* Checks wether the supplied data contains data compatible with the decoder.
 	 * This function is optional, but is required for streaming audio. Returns 1
 	 * on success and 0 otherwise. */
-	int          (*data_check_mime_type)(const char *data, int size);
+	int          (*data_check_magic_bytes)(const char *data, int size);
 	/* Supplies a Reader handle for reading file/stream data. This function is
 	 * optional, but required for http streaming audio. If this function is not NULL
 	 * the decoder has to close the supplied handle, when finished. */

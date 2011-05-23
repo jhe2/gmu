@@ -166,14 +166,14 @@ GmuDecoder *decloader_get_decoder_for_data_chunk(char *data, int size)
 
 	if (data && size > 0) {
 		while (dc->next) {
-			if (dc->gd->data_check_mime_type) {
-				if ((*dc->gd->data_check_mime_type)(data, size)) { /* match found */
+			if (dc->gd->data_check_magic_bytes) {
+				if ((*dc->gd->data_check_magic_bytes)(data, size)) { /* match found */
 					wdprintf(V_INFO, "decloader", "Matching decoder found: %s\n",
 					         dc->gd->identifier);
 					break;
 				}
 			} else {
-				wdprintf(V_INFO, "decloader", "%s does not support mime type check.\n",
+				wdprintf(V_INFO, "decloader", "%s does not support magic bytes check.\n",
 				         dc->gd->identifier);
 			}
 			dc = dc->next;
