@@ -25,4 +25,4 @@ STRIP=/opt/mipsel-linux-uclibc/usr/bin/mipsel-linux-strip
 COPTS?=-O3 -ffast-math
 CFLAGS=-fomit-frame-pointer $(SDL_CFLAGS) -I/opt/mipsel-linux-uclibc/usr/include/ -DFILE_HW_H="\"hw_$(TARGET).h\""
 LFLAGS=-s -L/opt/mipsel-linux-uclibc/usr/lib/ -lSDL_image -lSDL_gfx $(SDL_LIB) -lpng -ljpeg -lpthread -lm -ldl -lz -lgcc -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.dingoo gmu.dge COPYING gmuinput.dingux.conf
+DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.dingoo gmu.dge COPYING gmuinput.dingux.conf gmu.bmp

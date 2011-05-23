@@ -27,4 +27,4 @@ STRIP=/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/bin/arm-open2x-linux-st
 COPTS?=-O3 -mtune=arm920t -ffast-math 
 CFLAGS=-fno-strict-aliasing -fomit-frame-pointer $(SDL_CFLAGS) -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/include -DFILE_HW_H="\"hw_$(TARGET).h\""
 LFLAGS=-L/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/lib -lSDL_image -lSDL_gfx $(SDL_LIB) -lpng -ljpeg -lpthread -lm -ldl -lz -lgcc -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.wiz wiz.keymap gp2x.keymap gmu.wiz.conf gmu.gp2x.conf gmu-wiz.gpu gmu-gp2x.gpu COPYING gmuinput.gp2x.conf gmuinput.wiz.conf
+DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.wiz wiz.keymap gp2x.keymap gmu.wiz.conf gmu.gp2x.conf gmu-wiz.gpu gmu-gp2x.gpu COPYING gmuinput.gp2x.conf gmuinput.wiz.conf gmu.bmp

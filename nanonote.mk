@@ -26,4 +26,4 @@ TOOLCHAIN_ROOT_PATH=$(shell which $(CC)|sed 's/toolchain-mipsel_gcc-4.3.3+cs_uCl
 COPTS?=-O2 -s
 CFLAGS=-msoft-float -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include/SDL -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include -ffast-math -fomit-frame-pointer $(SDL_CFLAGS) -DFILE_HW_H="\"hw_$(TARGET).h\""
 LFLAGS=-s $(SDL_LIB) -L$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/lib -L$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/root-xburst/usr/lib -lpthread -lm -ldl -lgcc -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.nanonote gmu.nn COPYING gmuinput.nanonote.conf
+DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.nanonote gmu.nn COPYING gmuinput.nanonote.conf gmu.bmp

@@ -31,4 +31,4 @@ CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -D_$(DEVICE) -DFI
 #-fprofile-arcs -ftest-coverage
 LFLAGS=-I/usr/local/include -L/usr/local/lib $(SDL_LIB) -lSDL_image -lSDL_gfx -ldl -Wl,-export-dynamic
 #-lgcov
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt COPYING gmuinput.unknown.conf
+DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt COPYING gmuinput.unknown.conf gmu.bmp
