@@ -112,6 +112,21 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 		height = screen_max_height;
 	}
 
+	/* Window icon */
+	{
+		Uint32       colorkey;
+		SDL_Surface *image;
+
+		image = SDL_LoadBMP("gmu.bmp");
+		if (image) {
+			colorkey = SDL_MapRGB(image->format, 255, 0, 255);
+			SDL_SetColorKey(image, SDL_SRCCOLORKEY, colorkey);              
+			SDL_WM_SetIcon(image, NULL);
+		} else {
+			wdprintf(V_WARNING, "sdl_frontend", "Window icon (gmu.bmp) not found or broken.\n");
+		}
+	}
+
 	display = SDL_SetVideoMode(width, height, screen_max_depth, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE | fullscreen);
 	if (display == NULL) {
 		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize screen: %s\n", SDL_GetError());
