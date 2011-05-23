@@ -230,6 +230,19 @@ char *cfg_get_key_value(ConfigFile cf, char *key)
 	return result;
 }
 
+char *cfg_get_key_value_ignore_case(ConfigFile cf, char *key)
+{
+	char *result = NULL;
+	int   i;
+	
+	for (i = 0; i < cf.lastkey; i++)
+		if (strncasecmp(key, cf.key[i], MAX_LINE_LENGTH-1) == 0) {
+			result = cf.value[i];
+			break;
+		}
+	return result;
+}
+
 int cfg_is_key_available(ConfigFile cf, char *key)
 {
 	int result = FALSE;

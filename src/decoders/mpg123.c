@@ -389,6 +389,11 @@ static const char *get_file_type(void)
 	return "MPEG Audio";
 }
 
+static const char *get_mime_types(void)
+{
+	return "audio/mpeg";
+}
+
 static int meta_data_load(const char *filename)
 {
 	return id3_read_tag(filename, &ti_metaonly, "MP3");
@@ -436,7 +441,7 @@ static GmuDecoder gd = {
 	get_name,
 	NULL,
 	get_file_extensions,
-	NULL,
+	get_mime_types,
 	mpg123_play_file,
 	close_file,
 	decode_data,

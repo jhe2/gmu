@@ -340,7 +340,11 @@ int file_player_play_file(char *file, TrackInfo *ti)
 		wdprintf(V_WARNING, "fileplayer", "No suitable decoder available for extension %s. Trying mime type check.\n", tmp);
 		r = reader_open(filename);
 		if (r && reader_read_bytes(r, 4096)) {
-			dap.gd = decloader_get_decoder_for_data_chunk(reader_get_buffer(r), reader_get_number_of_bytes_in_buffer(r));
+			char *mime_type = cfg_get_key_value_ignore_case(r->streaminfo, "content-type");
+			if (mime_type)
+				dap.gd = decloader_get_decoder_for_mime_type(mime_type);
+			else
+				dap.gd = decloader_get_decoder_for_data_chunk(reader_get_buffer(r), reader_get_number_of_bytes_in_buffer(r));
 		}
 	}
 	if (dap.gd && dap.gd->identifier) {

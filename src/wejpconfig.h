@@ -44,6 +44,7 @@ void  cfg_free_config_file_struct(ConfigFile *cf);
 int   cfg_read_config_file(ConfigFile *cf, char *filename);
 int   cfg_write_config_file(ConfigFile *cf, char *filename);
 char *cfg_get_key_value(ConfigFile cf, char *key);
+char *cfg_get_key_value_ignore_case(ConfigFile cf, char *key);
 int   cfg_check_config_file(char *filename);
 char *cfg_get_path_to_config_file(char *filename);
 int   cfg_is_key_available(ConfigFile cf, char *key);

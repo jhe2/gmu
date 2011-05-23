@@ -159,6 +159,30 @@ GmuDecoder *decloader_get_decoder_for_extension(char *file_extension)
 	return gd;
 }
 
+GmuDecoder *decloader_get_decoder_for_mime_type(char *mime_type)
+{
+	DecoderChain *dc = dc_root;
+	GmuDecoder   *gd = NULL;
+
+	if (mime_type) {
+		while (dc->next) {
+			if (dc->gd->get_mime_types) {
+				const char *mt = (*dc->gd->get_mime_types)();
+				if (strstr(mt, mime_type) != NULL) {
+					wdprintf(V_INFO, "decloader", "Matching decoder for %s: %s\n",
+						     mime_type, dc->gd->identifier);
+					break;
+				}
+			}
+			dc = dc->next;
+		}
+		gd = dc->gd;
+	}
+	if (dc->gd == NULL) wdprintf(V_INFO, "decloader", "No matching decoder found for %s.\n", mime_type);
+	return gd;
+}
+
+
 GmuDecoder *decloader_get_decoder_for_data_chunk(char *data, int size)
 {
 	DecoderChain *dc = dc_root;
