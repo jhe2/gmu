@@ -286,7 +286,7 @@ Reader *_reader_open(char *url, int max_redirects)
 							wdprintf(V_DEBUG, "reader", "HTTP header skipped: %s (%d bytes)\n", header_end_found ? "yes" : "no", cnt);
 							/* Try to figure out stream length */
 							if (header_end_found) {
-								char *val = cfg_get_key_value(r->streaminfo, "Content-Length");
+								char *val = cfg_get_key_value_ignore_case(r->streaminfo, "Content-Length");
 								if (val) {
 									r->file_size = atol(val);
 									wdprintf(V_DEBUG, "reader", "Stream size = %d bytes.\n", r->file_size);
@@ -301,8 +301,7 @@ Reader *_reader_open(char *url, int max_redirects)
 			if (path)     free(path);
 			/* Check for 302 redirect (Location) */
 			{
-				char *v = cfg_get_key_value(r->streaminfo, "Location");
-				if (!v) v = cfg_get_key_value(r->streaminfo, "location");
+				char *v = cfg_get_key_value_ignore_case(r->streaminfo, "Location");
 				if (v) {
 					int   len = strlen(v);
 					char *vc = NULL;
