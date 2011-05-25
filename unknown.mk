@@ -1,7 +1,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
 #
 # File: unknown.mk  Created: 060904
 #
@@ -28,7 +28,5 @@ MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
 
 COPTS?=-O2 -funroll-all-loops -finline-functions -ffast-math -fno-short-enums -g
 CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -D_$(DEVICE) -DFILE_HW_H="\"hw_$(TARGET).h\""
-#-fprofile-arcs -ftest-coverage
-LFLAGS=-I/usr/local/include -L/usr/local/lib $(SDL_LIB) -lSDL_image -lSDL_gfx -ldl -Wl,-export-dynamic
-#-lgcov
+LFLAGS=-I/usr/local/include -L/usr/local/lib -Wl,-export-dynamic
 DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt COPYING gmuinput.unknown.conf gmu.bmp

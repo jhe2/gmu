@@ -22,6 +22,9 @@ include $(TARGET).mk
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall
 
+LFLAGS_CORE=$(SDL_LIB) -ldl
+LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image -lSDL_gfx
+
 OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o
 ALLFILES=src/ Makefile *.mk gmu.png themes README.txt BUILD.txt COPYING gmu.conf.example *.keymap *.gpu *.dge *.nn gmuinput.*.conf gmu.*.conf gmu.bmp
 BINARY=gmu
@@ -37,7 +40,7 @@ frontends: $(FRONTENDS_TO_BUILD)
 
 $(BINARY): $(OBJECTFILES)
 	@echo -e "Linking \033[1m$(BINARY)\033[0m"
-	@$(CC) $(OBJECTFILES) $(LFLAGS) -o $(BINARY)
+	@$(CC) $(OBJECTFILES) $(LFLAGS) $(LFLAGS_CORE) -o $(BINARY)
 
 projname=gmu-$(shell awk '/define VERSION_NUMBER/ { print $$3 }' src/core.h )
 
@@ -140,7 +143,7 @@ frontends/httpserv.so: src/frontends/httpserv.c util.o
 
 frontends/sdl.so: src/frontends/sdl/sdl.c util.o kam.o skin.o textrenderer.o question.o filebrowser.o plbrowser.o about.o textbrowser.o coverimg.o coverviewer.o plmanager.o playerdisplay.o gmuwidget.o png.o jpeg.o bmp.o inputconfig.o help.o
 	@echo -e "Compiling \033[1m$<\033[0m"
-	@$(CC) $(CFLAGS) $(LFLAGS) -Isrc/ -shared -fpic -o frontends/sdl.so src/frontends/sdl/sdl.c kam.o skin.o textrenderer.o question.o filebrowser.o plbrowser.o about.o textbrowser.o coverimg.o coverviewer.o plmanager.o playerdisplay.o gmuwidget.o png.o jpeg.o bmp.o inputconfig.o help.o
+	@$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ -shared -fpic -o frontends/sdl.so src/frontends/sdl/sdl.c kam.o skin.o textrenderer.o question.o filebrowser.o plbrowser.o about.o textbrowser.o coverimg.o coverviewer.o plmanager.o playerdisplay.o gmuwidget.o png.o jpeg.o bmp.o inputconfig.o help.o
 
 frontends/fltkfe.so: src/frontends/fltk/fltkfe.cxx
 	@echo -e "Compiling \033[1m$<\033[0m"
