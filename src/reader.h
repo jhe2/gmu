@@ -20,7 +20,8 @@
 #include "ringbuffer.h"
 #include "wejpconfig.h"
 
-#define HTTP_CACHE_SIZE 524288
+#define HTTP_CACHE_SIZE_MIN_KB 256
+#define HTTP_CACHE_SIZE_MAX_KB 4096
 
 typedef struct
 {
@@ -43,6 +44,7 @@ typedef struct
 } Reader;
 
 /* Opens a local file or HTTP URL for reading */
+int     reader_set_cache_size_kb(int size);
 Reader *reader_open(char *url);
 int     reader_close(Reader *r);
 int     reader_is_eof(Reader *r);

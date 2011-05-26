@@ -34,6 +34,7 @@
 #include "wejpconfig.h"
 #include FILE_HW_H
 #include "util.h"
+#include "reader.h" /* for reader_set_cache_size_kb() */
 #include "debug.h"
 #define MAX_FILE_EXTENSIONS 255
 
@@ -161,6 +162,7 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "SmallCoverArtworkAlignment", "right");
 	cfg_add_key(config, "FirstRun", "yes");
 	cfg_add_key(config, "ResumePlayback", "yes");
+	cfg_add_key(config, "ReaderCache", "512");
 }
 
 int gmu_core_export_playlist(char *file)
@@ -745,6 +747,12 @@ int main(int argc, char **argv)
 		char *tmp = cfg_get_key_value(config, "Shutdown");
 		if (tmp) shutdown_timer = atoi(tmp);
 		remaining_time = shutdown_timer > 0 ? shutdown_timer : 1;
+	}
+
+	/* Reader cache size */
+	{
+		char *tmp = cfg_get_key_value(config, "ReaderCache");
+		if (tmp) reader_set_cache_size_kb(atoi(tmp));
 	}
 
 	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0)

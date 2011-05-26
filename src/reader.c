@@ -30,6 +30,17 @@
 #include "debug.h"
 #include "core.h" /* for VERSION_NUMBER */
 
+static int http_cache_size = 512 * 1024;
+
+int reader_set_cache_size_kb(int size)
+{
+	size = size < HTTP_CACHE_SIZE_MIN_KB ? HTTP_CACHE_SIZE_MIN_KB : size;
+	size = size > HTTP_CACHE_SIZE_MAX_KB ? HTTP_CACHE_SIZE_MAX_KB : size;
+	http_cache_size = size * 1024;
+	wdprintf(V_INFO, "reader", "Cache size: %d kB\n", size);
+	return size;
+}
+
 /* get sockaddr, IPv4 or IPv6 */
 static void *get_in_addr(struct sockaddr *sa)
 {
@@ -236,7 +247,7 @@ Reader *_reader_open(char *url, int max_redirects)
 						}
 
 						/* Start reader thread... */
-						if (ringbuffer_init(&(r->rb_http), HTTP_CACHE_SIZE)) {
+						if (ringbuffer_init(&(r->rb_http), http_cache_size)) {
 							pthread_create(&(r->thread), NULL, http_reader_thread, r);
 						} else {
 							wdprintf(V_ERROR, "reader", "Out of memory.\n");
