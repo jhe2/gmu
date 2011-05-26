@@ -300,7 +300,7 @@ Reader *_reader_open(char *url, int max_redirects)
 			if (hostname) free(hostname);
 			if (path)     free(path);
 			/* Check for 302 redirect (Location) */
-			{
+			if (r) {
 				char *v = cfg_get_key_value_ignore_case(r->streaminfo, "Location");
 				if (v) {
 					int   len = strlen(v);
