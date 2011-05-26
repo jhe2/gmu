@@ -53,7 +53,7 @@ void cover_viewer_scroll_down(CoverViewer *cv);
 void cover_viewer_scroll_up(CoverViewer *cv);
 void cover_viewer_scroll_left(CoverViewer *cv);
 void cover_viewer_scroll_right(CoverViewer *cv);
-int  cover_viewer_toggle_cover_visible(CoverViewer *cv);
+int  cover_viewer_cycle_cover_and_spectrum_visibility(CoverViewer *cv);
 int  cover_viewer_toggle_text_visible(CoverViewer *cv);
 int  cover_viewer_is_spectrum_analyzer_enabled(CoverViewer *cv);
 void cover_viewer_enable_spectrum_analyzer(CoverViewer *cv);

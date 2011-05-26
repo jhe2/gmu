@@ -83,7 +83,7 @@ void key_action_mapping_init(KeyActionMapping *kam)
 	kam[SETUP_FB_CANCEL].scope =             SETUP_FILE_BROWSER;
 	kam[SETUP_FB_CANCEL].description =            "Cancel";
 	kam[TRACKINFO_TOGGLE_COVER].scope =      TRACK_INFO;
-	kam[TRACKINFO_TOGGLE_COVER].description =     "Toggle cover";
+	kam[TRACKINFO_TOGGLE_COVER].description =     "Cover/Analyzer";
 	kam[TRACKINFO_TOGGLE_TEXT].scope =       TRACK_INFO;
 	kam[TRACKINFO_TOGGLE_TEXT].description =      "Toggle text";
 	kam[TRACKINFO_DELETE_FILE].scope =       TRACK_INFO;

@@ -491,7 +491,7 @@ static int cover_viewer_process_action(CoverViewer *cv, int user_key_action)
 	Update update = UPDATE_NONE;
 	switch (user_key_action) {
 		case TRACKINFO_TOGGLE_COVER:
-			cover_viewer_toggle_cover_visible(cv);
+			cover_viewer_cycle_cover_and_spectrum_visibility(cv);
 			update = UPDATE_TEXTAREA | UPDATE_HEADER;
 			break;
 		case TRACKINFO_TOGGLE_TEXT:

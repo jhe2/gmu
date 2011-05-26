@@ -204,7 +204,7 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 
 		dstrect.w = barwidth;
 		dstrect.h = 20;
-		dstrect.x = ax + aw / 2;
+		dstrect.x = cv->hide_text ? ax + aw / 2 - aw / 4 : ax + aw / 2;
 		if (audio_spectrum_read_lock()) {
 			amplitudes = audio_spectrum_get_current_amplitudes();
 			for (i = 0; i < 8; i++) {
@@ -230,6 +230,12 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 		skin_draw_header_text((Skin *)cv->skin, "Track info (Spectrum analyzer only)", target);
 	else if (cv->hide_text && cv->hide_cover && !cv->spectrum_analyzer)
 		skin_draw_header_text((Skin *)cv->skin, "Track info (showing nothing)", target);
+	else if (cv->hide_text && !cv->hide_cover && cv->spectrum_analyzer)
+		skin_draw_header_text((Skin *)cv->skin, "Track info (Cover + Spectrum analyzer)", target);
+	else if (!cv->hide_text && cv->hide_cover && cv->spectrum_analyzer)
+		skin_draw_header_text((Skin *)cv->skin, "Track info (Text + Spectrum analyzer)", target);
+	else if (!cv->hide_text && !cv->hide_cover && !cv->spectrum_analyzer)
+		skin_draw_header_text((Skin *)cv->skin, "Track info (Text + Cover)", target);
 }
 
 void cover_viewer_scroll_down(CoverViewer *cv)
@@ -265,9 +271,17 @@ void cover_viewer_scroll_right(CoverViewer *cv)
 		text_browser_scroll_right(&cv->tb);
 }
 
-int cover_viewer_toggle_cover_visible(CoverViewer *cv)
+int cover_viewer_cycle_cover_and_spectrum_visibility(CoverViewer *cv)
 {
-	return cv->hide_cover = !cv->hide_cover;
+	if (cv->spectrum_analyzer && cv->hide_cover)
+		cv->hide_cover = 0;
+	else if (cv->spectrum_analyzer && !cv->hide_cover)
+		cover_viewer_disable_spectrum_analyzer(cv);
+	else if (!cv->spectrum_analyzer && !cv->hide_cover)
+		cv->hide_cover = 1;
+	else
+		cover_viewer_enable_spectrum_analyzer(cv);
+	return 0;
 }
 
 int cover_viewer_toggle_text_visible(CoverViewer *cv)
