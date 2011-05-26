@@ -28,6 +28,7 @@
 #include "reader.h"
 #include "ringbuffer.h"
 #include "debug.h"
+#include "core.h" /* for VERSION_NUMBER */
 
 /* get sockaddr, IPv4 or IPv6 */
 static void *get_in_addr(struct sockaddr *sa)
@@ -227,7 +228,9 @@ Reader *_reader_open(char *url, int max_redirects)
 						/* Send HTTP GET request */
 						{
 							char http_request[512];
-							snprintf(http_request, 511, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nIcy-MetaData: 1\r\n\r\n", path, hostname);
+							snprintf(http_request, 511,
+							         "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: Gmu/%s\r\nIcy-MetaData: 1\r\n\r\n",
+							         path, hostname, VERSION_NUMBER);
 							wdprintf(V_DEBUG, "reader", "Sending request: %s\n", http_request);
 							send(r->sockfd, http_request, strlen(http_request), 0);
 						}
