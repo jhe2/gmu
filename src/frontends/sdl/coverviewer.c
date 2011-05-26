@@ -197,23 +197,23 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 	/* Draw spectrum analyzer */
 	if (cv->spectrum_analyzer) {
 		Uint32   color = SDL_MapRGB(target->format, 0, 70, 255);
-		int      i;
+		int      i, barwidth = aw / 20;
 		int16_t *amplitudes;
 		static int16_t amplitudes_smoothed[8];
 		SDL_Rect dstrect;
 
-		dstrect.w = 14;
+		dstrect.w = barwidth;
 		dstrect.h = 20;
-		dstrect.x = ax + 10;
+		dstrect.x = ax + aw / 2;
 		if (audio_spectrum_read_lock()) {
 			amplitudes = audio_spectrum_get_current_amplitudes();
 			for (i = 0; i < 8; i++) {
 				int16_t a = amplitudes[i] / 327 + 2;
-				dstrect.x += 16;
+				dstrect.x += barwidth+1;
 				if (amplitudes_smoothed[i] < a) amplitudes_smoothed[i] = a;
 				amplitudes_smoothed[i] = amplitudes_smoothed[i] > 50 ? 50 : amplitudes_smoothed[i];
 				dstrect.h = amplitudes_smoothed[i];
-				dstrect.y = ay + ah - 2 - amplitudes_smoothed[i];
+				dstrect.y = ay + ah / 2 + 25 - amplitudes_smoothed[i];
 				SDL_FillRect(target, &dstrect, color);
 				amplitudes_smoothed[i] -= (15-i);
 				if (amplitudes_smoothed[i] < 2) amplitudes_smoothed[i] = 2;
@@ -222,11 +222,13 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 		}
 	}
 
-	if (cv->hide_text && !cv->hide_cover)
+	if (cv->hide_text && !cv->hide_cover &&  !cv->spectrum_analyzer)
 		skin_draw_header_text((Skin *)cv->skin, "Track info (Cover only)", target);
-	else if (cv->hide_cover && !cv->hide_text)
+	else if (cv->hide_cover && !cv->hide_text && !cv->spectrum_analyzer)
 		skin_draw_header_text((Skin *)cv->skin, "Track info (Text only)", target);
-	else if (cv->hide_text && cv->hide_cover)
+	else if (cv->hide_cover && cv->hide_text && cv->spectrum_analyzer)
+		skin_draw_header_text((Skin *)cv->skin, "Track info (Spectrum analyzer only)", target);
+	else if (cv->hide_text && cv->hide_cover && !cv->spectrum_analyzer)
 		skin_draw_header_text((Skin *)cv->skin, "Track info (showing nothing)", target);
 }
 
