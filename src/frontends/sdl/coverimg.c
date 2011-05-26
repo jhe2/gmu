@@ -18,7 +18,9 @@
 #include "SDL.h"
 #include "SDL_thread.h"
 #include "SDL_image.h"
+#ifndef WITHOUT_SDL_GFX
 #include "SDL_rotozoom.h"
+#endif
 #include "coverimg.h"
 #include "../../png.h"
 #include "../../jpeg.h"
@@ -28,6 +30,7 @@
 
 static int cover_image_thread(void *udata)
 {
+#ifndef WITHOUT_SDL_GFX
 	CoverImage  *ci = (CoverImage *)udata;
 	ImageSize    is;
 	int          width = 0, height = 0;
@@ -124,6 +127,9 @@ static int cover_image_thread(void *udata)
 		}
 		SDL_Delay(333);
 	}
+#else
+	wdprintf(V_INFO, "coverimg", "Cover image support has been disabled at compile time.\n");
+#endif
 	return 1;
 }
 

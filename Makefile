@@ -23,7 +23,12 @@ PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall
 
 LFLAGS_CORE=$(SDL_LIB) -ldl
-LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image -lSDL_gfx
+LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image
+ifneq ($(WITHOUT_SDL_GFX),1)
+LFLAGS_SDLFE+=-lSDL_gfx
+else
+CFLAGS+=-DWITHOUT_SDL_GFX=1
+endif
 
 OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o
 ALLFILES=src/ Makefile *.mk gmu.png themes README.txt BUILD.txt COPYING gmu.conf.example *.keymap *.gpu *.dge *.nn gmuinput.*.conf gmu.*.conf gmu.bmp

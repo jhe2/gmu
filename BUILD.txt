@@ -1,5 +1,5 @@
 Gmu Music Player
-Copyright (c) 2006-2010 Johannes Heimansberg
+Copyright (c) 2006-2011 Johannes Heimansberg
 http://wejp.k.vu/
 
 1. Build Instructions
@@ -19,8 +19,8 @@ Gmu core:
 
 Gmu SDL frontend
 	- libSDL
-	- libSDL_gfx
 	- libSDL_image
+	- libSDL_gfx (optional but highly recommended)
 
 Additional libraries are required for the decoder plugins, e.g. the
 Tremor library is required by the Ogg Vorbis decoder plugin and
@@ -62,7 +62,9 @@ need to be adjusted to match your toolchain's configuration.
 You can also adjust the DECODERS_TO_BUILD line, depending on which libraries
 are available in your toolchain. For a test build remove all but
 "decoders/wavpack.so" from that line. All but this decoder need external
-libraries, that you have to have in your toolchain.
+libraries, that you have to have in your toolchain. To remove the dependency
+on libSDL_gfx you can set WITHOUT_SDL_GFX=1. This will disable cover image
+support.
 
 Next you need to create two files hw_new_target.h and hw_new_target.c. These
 files consist of hardware specific things. Again, the easiest way of creating
