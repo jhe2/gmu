@@ -41,12 +41,16 @@ typedef struct
 	RingBuffer rb_http;
 	pthread_mutex_t mutex;
 	pthread_t       thread;
+	
+	int   is_ready;
 } Reader;
 
 /* Opens a local file or HTTP URL for reading */
-int     reader_set_cache_size_kb(int size);
+int     reader_set_cache_size_kb(int size, int prebuffer_size);
+int     reader_get_cache_fill(Reader *r);
 Reader *reader_open(char *url);
 int     reader_close(Reader *r);
+int     reader_is_ready(Reader *r);
 int     reader_is_eof(Reader *r);
 char    reader_read_byte(Reader *r);
 int     reader_read_bytes(Reader *r, int size);

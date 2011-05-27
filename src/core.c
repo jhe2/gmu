@@ -163,6 +163,7 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "FirstRun", "yes");
 	cfg_add_key(config, "ResumePlayback", "yes");
 	cfg_add_key(config, "ReaderCache", "512");
+	cfg_add_key(config, "ReaderCachePrebufferSize", "256");
 }
 
 int gmu_core_export_playlist(char *file)
@@ -752,7 +753,12 @@ int main(int argc, char **argv)
 	/* Reader cache size */
 	{
 		char *tmp = cfg_get_key_value(config, "ReaderCache");
-		if (tmp) reader_set_cache_size_kb(atoi(tmp));
+		if (tmp) {
+			int size = atoi(tmp), prebuffer_size = size / 2;
+			tmp = cfg_get_key_value(config, "ReaderCachePrebufferSize");
+			if (tmp) prebuffer_size = atoi(tmp);
+			reader_set_cache_size_kb(size, prebuffer_size);
+		}
 	}
 
 	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0)

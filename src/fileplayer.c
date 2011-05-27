@@ -247,6 +247,30 @@ static void *decode_audio_thread(void *udata)
 				audio_set_pause(0);
 				SDL_PauseAudio(1);
 
+				if (r && !reader_is_ready(r)) {
+					int check_count = 20, prev_buf_fill = 0;
+					/* Wait for the reader to pre-buffer the requested amount of data (if necessary) */
+					wdprintf(V_DEBUG, "fileplayer", "Prebuffering...\n");
+					event_queue_push(gmu_core_get_event_queue(), GMU_BUFFERING);
+					while (r && !reader_is_ready(r) && !reader_is_eof(r) && item_status == PLAYING && check_count > 0) {
+						int buf_fill = reader_get_cache_fill(r);
+						if (prev_buf_fill != buf_fill) {
+							prev_buf_fill = buf_fill;
+							check_count = 20;
+						} else {
+							check_count--;
+						}
+						SDL_Delay(200);
+					}
+					if (check_count <= 0) {
+						item_status = STOPPED;
+						wdprintf(V_DEBUG, "fileplayer", "Prebuffering failed.\n");
+						event_queue_push(gmu_core_get_event_queue(), GMU_BUFFERING_FAILED);
+					} else {
+						event_queue_push(gmu_core_get_event_queue(), GMU_BUFFERING_DONE);
+					}
+				}
+
 				while (ret && item_status == PLAYING && !file_player_shut_down) {
 					int size = 0, ret = 1, br = 0;
 
@@ -275,9 +299,9 @@ static void *decode_audio_thread(void *udata)
 						item_status = FINISHED;
 						break;
 					} else {
-						int r = 0;
-						while (!r && item_status == PLAYING) {
-							r = audio_fill_buffer(pcmout, size);
+						int ret = 0;
+						while (!ret && item_status == PLAYING) {
+							ret = audio_fill_buffer(pcmout, size);
 							SDL_Delay(10);
 							/*usleep(5);*/
 						}

@@ -22,16 +22,23 @@
 #include "pbstatus.h"
 #include "util.h"
 #define MAX_LENGTH 512
+#define BLINK_DELAY 4
 
 extern const Skin skin;
 
 static char  notice_message[MAX_LENGTH+1];
 static int   notice_time_left;
 static int   scrolling = SCROLL_AUTO;
+static int   playback_symbol_blinking = 0;
 
 void player_display_set_scrolling(int s)
 {
 	scrolling = s;
+}
+
+void player_display_set_playback_symbol_blinking(int blink)
+{
+	playback_symbol_blinking = blink;
 }
 
 static void player_display_show_volume(LCD *lcd, SDL_Surface *target, int volume)
@@ -71,15 +78,21 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 	int  title_scroller_chars = ((skin.title_scroller_offset_x2 > 0 ? skin.title_scroller_offset_x2 :
 	                             (gmu_widget_get_width((GmuWidget *)&skin.display, 0) + skin.title_scroller_offset_x2))
 	                             - skin.title_scroller_offset_x1) / (skin.font_display_char_width+1);
+	static int blink_state = BLINK_DELAY;
 
 	if (player_status != STOPPED) {
 		SkinDisplaySymbol symbol = (player_status == PLAYING ? SYMBOL_PLAY  : 
 		                            player_status == PAUSED  ? SYMBOL_PAUSE : SYMBOL_NONE);
-		if (symbol != SYMBOL_NONE)
-			skin_draw_display_symbol((Skin *)&skin, buffer, symbol);
+		if (symbol != SYMBOL_NONE) {
+			if ((playback_symbol_blinking && blink_state < BLINK_DELAY / 2) || !playback_symbol_blinking)
+				skin_draw_display_symbol((Skin *)&skin, buffer, symbol);
+		}
 
 		if (trackinfo_get_channels(ti) > 1)
 			skin_draw_display_symbol((Skin *)&skin, buffer, SYMBOL_STEREO);
+
+		blink_state--;
+		if (blink_state < 0) blink_state = BLINK_DELAY;
 
 		if (ptime_remaining) {
 			if (ptime_msec >= 0) {

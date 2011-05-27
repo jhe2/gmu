@@ -31,14 +31,24 @@
 #include "core.h" /* for VERSION_NUMBER */
 
 static int http_cache_size = 512 * 1024;
+static int http_cache_prebuffer_size = 256 * 1024;
 
-int reader_set_cache_size_kb(int size)
+int reader_set_cache_size_kb(int size, int prebuffer_size)
 {
 	size = size < HTTP_CACHE_SIZE_MIN_KB ? HTTP_CACHE_SIZE_MIN_KB : size;
 	size = size > HTTP_CACHE_SIZE_MAX_KB ? HTTP_CACHE_SIZE_MAX_KB : size;
 	http_cache_size = size * 1024;
+	prebuffer_size *= 1024;
+	if (prebuffer_size > 0 && prebuffer_size <= http_cache_size / 2 + http_cache_size / 4)
+		http_cache_prebuffer_size = prebuffer_size;
 	wdprintf(V_INFO, "reader", "Cache size: %d kB\n", size);
+	wdprintf(V_INFO, "reader", "Cache prebuffer size: %d kB\n", prebuffer_size / 1024);
 	return size;
+}
+
+int reader_get_cache_fill(Reader *r)
+{
+	return ringbuffer_get_fill(&(r->rb_http));
 }
 
 /* get sockaddr, IPv4 or IPv6 */
@@ -112,11 +122,18 @@ static void *http_reader_thread(void *arg)
 			}
 		} while (numbytes <= 0 && !r->eof && ringbuffer_get_fill(&(r->rb_http)) > 4000);
 		wdprintf(V_DEBUG, "reader", "buf fill: %d bytes\r", ringbuffer_get_fill(&(r->rb_http)));
+		if (!r->is_ready && ringbuffer_get_fill(&(r->rb_http)) >= http_cache_prebuffer_size)
+			r->is_ready = 1;
 		fflush(stdout);
 	}
 	wdprintf(V_DEBUG, "reader", "thread done.\n");
 	r->eof = 1;
 	return NULL;
+}
+
+int reader_is_ready(Reader *r)
+{
+	return r->is_ready;
 }
 
 /* Opens a local file or HTTP URL for reading */
@@ -132,6 +149,7 @@ Reader *_reader_open(char *url, int max_redirects)
 		r->buf_size = 0;
 		r->buf_data_size = 0;
 		r->file_size = 0;
+		r->is_ready = 0;
 		wdprintf(V_DEBUG, "reader", "mutex init.\n");
 		pthread_mutex_init(&(r->mutex), NULL);
 		wdprintf(V_DEBUG, "reader", "mutex init done.\n");
@@ -345,6 +363,7 @@ Reader *_reader_open(char *url, int max_redirects)
 					r->file_size = st.st_size;
 					wdprintf(V_DEBUG, "reader", "File size = %d bytes.\n", r->file_size);
 				}
+				r->is_ready = 1;
 			} else {
 				wdprintf(V_ERROR, "reader", "Unable to open file '%s'.\n", url);
 				free(r);
@@ -378,6 +397,7 @@ int reader_close(Reader *r)
 		if (r->buf) free(r->buf);
 		cfg_free_config_file_struct(&(r->streaminfo));
 		free(r);
+		r = NULL;
 	}
 	return 0;
 }

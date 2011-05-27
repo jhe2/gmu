@@ -1435,6 +1435,14 @@ static int event_callback(GmuEvent event)
 			player_display_set_notice_message(volnotice, NOTICE_DELAY);
 			break;
 		}
+		case GMU_BUFFERING:
+			player_display_set_notice_message("BUFFERING...", NOTICE_DELAY);
+			player_display_set_playback_symbol_blinking(1);
+			break;
+		case GMU_BUFFERING_DONE:
+		case GMU_BUFFERING_FAILED:
+			player_display_set_playback_symbol_blinking(0);
+			break;
 		default:
 			break;
 	}
