@@ -1,7 +1,7 @@
 /* 
  * Gmu GP2X Music Player
  *
- * Copyright (c) 2006-2008 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: filebrowser.h  Created: 061011
  *
@@ -23,6 +23,7 @@ typedef struct FileBrowser
 	Charset     charset;
 	int         directories_first;
 	int         longest_line_so_far;
+	int         select_next_after_add;
 } FileBrowser;
 
 void    file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset);
@@ -39,4 +40,6 @@ void    file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target);
 void    file_browser_scroll_horiz(FileBrowser *fb, int direction);
 Charset file_browser_get_filenames_charset(FileBrowser *fb);
 void    file_browser_set_directories_first(FileBrowser *fb, int value);
+void    file_browser_select_next_after_add(FileBrowser *fb, int select);
+int     file_browser_is_select_next_after_add(FileBrowser *fb);
 #endif

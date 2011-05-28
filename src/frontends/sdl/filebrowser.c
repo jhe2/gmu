@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: filebrowser.c  Created: 061011
  *
@@ -29,6 +29,7 @@ void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset)
 	fb->charset = charset;
 	fb->directories_first = 0;
 	fb->longest_line_so_far = 0;
+	fb->select_next_after_add = 0;
 }
 
 void file_browser_set_directories_first(FileBrowser *fb, int value)
@@ -193,4 +194,14 @@ void file_browser_scroll_horiz(FileBrowser *fb, int direction)
 Charset file_browser_get_filenames_charset(FileBrowser *fb)
 {
 	return fb->charset;
+}
+
+int file_browser_is_select_next_after_add(FileBrowser *fb)
+{
+	return fb->select_next_after_add;
+}
+
+void file_browser_select_next_after_add(FileBrowser *fb, int select)
+{
+	fb->select_next_after_add = select;
 }

@@ -291,6 +291,10 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 						}
 					}
 				}
+				if (file_browser_is_select_next_after_add(fb)) {
+					file_browser_move_selection_down(fb);
+					update = UPDATE_TEXTAREA;
+				}
 			}
 			break;
 		case FB_DELETE_FILE:
@@ -730,7 +734,9 @@ void run_player(char *skin_name, char *decoders_str)
 		}
 
 		{
-			int directories_first = 0;
+			int   directories_first = 0, select_next_after_add = 0;
+			char *tmp;
+
 			directories_first = strncmp(cfg_get_key_value(*config, 
 														  "FileBrowserFoldersFirst"),
 														  "yes", 3) == 0 ? 1 : 0;
@@ -740,6 +746,11 @@ void run_player(char *skin_name, char *decoders_str)
 				wdprintf(V_WARNING, "sdl_frontend", "The current directory will be used instead.\n");
 			}
 			dir_read(&fb.dir, ".", directories_first);
+			tmp = cfg_get_key_value(*config, "SDL_frontend.FileBrowserSelectNextAfterAdd");
+			if (tmp) {
+				select_next_after_add = strncmp(tmp, "yes", 3) == 0 ? 1 : 0;
+				file_browser_select_next_after_add(&fb, select_next_after_add);
+			}
 		}
 
 		about_init(&tb_about, &skin, decoders_str);
