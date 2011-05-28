@@ -647,7 +647,6 @@ int main(int argc, char **argv)
 						wdprintf(V_ERROR, "gmu", "Invalid usage of -d: Verbosity level (0..5) required.\n");
 						exit(0);
 					}
-					wdprintf_set_verbosity(v);
 					break;
 				case 's':
 					if (argc >= i+2) {
@@ -708,6 +707,7 @@ int main(int argc, char **argv)
 		}*/
 	}
 
+	wdprintf_set_verbosity(v);
 	wdprintf(V_INFO, "gmu", "Detected device: %s\n", hw_get_device_model_name());
 
 	config_dir = sys_config_dir;
