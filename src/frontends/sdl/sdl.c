@@ -127,7 +127,11 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 		}
 	}
 
-	display = SDL_SetVideoMode(width, height, screen_max_depth, SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE | fullscreen);
+	display = SDL_SetVideoMode(width, height, screen_max_depth,
+#ifndef SDLFE_NO_HWACCEL
+	                           SDL_HWSURFACE | SDL_HWACCEL |
+#endif
+	                           SDL_RESIZABLE | fullscreen);
 	if (display == NULL) {
 		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize screen: %s\n", SDL_GetError());
 		exit(1);
@@ -820,8 +824,14 @@ void run_player(char *skin_name, char *decoders_str)
 				SDL_FreeSurface(tmp);
 				display = SDL_SetVideoMode(event.resize.w, event.resize.h,
 				                           buffer->format->BitsPerPixel,
-				                           SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE);
-				if (!display) exit(-2); /* should not happen */
+#ifndef SDLFE_NO_HWACCEL
+				                           SDL_HWSURFACE | SDL_HWACCEL |
+#endif
+				                           SDL_RESIZABLE);
+				if (!display) {
+					wdprintf(V_FATAL, "sdl_frontend", "Unable to set new video mode.\n");
+					exit(-2); /* should not happen */
+				}
 				update = UPDATE_ALL;
 				break;
 			}
@@ -1042,8 +1052,14 @@ void run_player(char *skin_name, char *decoders_str)
 						buffer = SDL_DisplayFormat(tmp);
 						SDL_FreeSurface(tmp);
 						display = SDL_SetVideoMode(w, h, buffer->format->BitsPerPixel,
-												   SDL_HWSURFACE | SDL_HWACCEL | SDL_RESIZABLE | (fullscreen ? SDL_FULLSCREEN : 0));
-						if (!display) exit(-2); /* should not happen */
+#ifndef SDLFE_NO_HWACCEL
+												   SDL_HWSURFACE | SDL_HWACCEL |
+#endif
+												   SDL_RESIZABLE | (fullscreen ? SDL_FULLSCREEN : 0));
+						if (!display) {
+							wdprintf(V_FATAL, "sdl_frontend", "Unable to set new video mode.\n");
+							exit(-2); /* should not happen */
+						}
 						update = UPDATE_ALL;
 						break;
 					}

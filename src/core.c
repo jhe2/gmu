@@ -59,7 +59,11 @@ static char          base_dir[256], *config_dir;
 
 static void init_sdl(void)
 {
+#ifndef CORE_WITH_SDL_VIDEO
 	if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER) < 0) {
+#else
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) < 0) {
+#endif
 		wdprintf(V_ERROR, "gmu", "ERROR: Could not initialize SDL: %s\n", SDL_GetError());
 		exit(1);
 	}
