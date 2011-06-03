@@ -148,7 +148,6 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "PlaylistSavePresets",
 						 "playlist1.m3u;playlist2.m3u;playlist3.m3u;playlist4.m3u");
 	cfg_add_key(config, "TimeDisplay", "elapsed");
-	cfg_add_key(config, "CPUClock", "default");
 	cfg_add_key(config, "DefaultFileBrowserPath", ".");
 	cfg_add_key(config, "VolumeControl", "Software"); /* Software, Hardware, Hardware+Software */
 	cfg_add_key(config, "VolumeHardwareMixerChannel", "0");

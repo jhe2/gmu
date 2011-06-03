@@ -610,26 +610,6 @@ title scrolls no matter if it fits into the display's
 width or not. If it is set to "never" the title never 
 scrolls, even if it does not fit into the display's width.
 
-* CPUCLock
-
-This option can be set to either "default" or "reduced".
-When set to "reduced" Gmu lowers the cpu frequency to
-increase the battery lifetime. You might want to turn
-of the display backlight to increase it further. To
-do that you can either turn on hold manually or select
-a display power off time-out to automatically turn of
-the backlight after a given time. Look at the
-"SecondsUntilBacklightPowerOff" option for details.
-In reduced CPU clock mode some module formats may not
-work properly. If you want to play such files and
-experience dropouts please use the normal mode (default).
-The CPUClock option is not supported on every hardware
-supported by Gmu. Also, this option is deprecated. The
-operating system should take care of CPU clock speed,
-rather than the applications changing clock speed on
-their own. This feature was introduced on the GP2X where
-the OS was not able to change the CPU clock on its own.
-
 * BacklightPowerOnOnTrackChange
 
 This option can be set to either "yes" or "no". When set
