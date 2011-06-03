@@ -505,7 +505,7 @@ static void print_cmd_help(char *prog_name)
 	printf("Gmu Music Player "VERSION_NUMBER"\n");
 	printf("Copyright (c) 2006-2011 Johannes Heimansberg\n");
 	printf("http://wejp.k.vu/projects/gmu/\n");
-	printf("\nUsage:\n%s [-h] [-r] [-m] [-c file.conf] [-s theme_name] [music_file.ext] [...]\n", prog_name);
+	printf("\nUsage:\n%s [-h] [-r] [-v V] [-c file.conf] [-s theme_name] [music_file.ext] [...]\n", prog_name);
 	printf("-h : Print this help\n");
 	printf("-d /path/to/config/dir: Use the specified path as configuration dir.\n");
 	printf("-e : Store user configuration in user's home directory (~/.config/gmu/)\n");
