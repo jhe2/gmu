@@ -1,18 +1,21 @@
 The Gmu Music Player
 
-Version 0.7.2
+Version 0.8.0
 
-Copyright (c) 2006-2010 Johannes Heimansberg
+Copyright (c) 2006-2011 Johannes Heimansberg
 http://wejp.k.vu/projects/gmu/
 
 Gmu is a music player for portable handheld consoles. It comes
 with a file browser and a playlist. It supports various play modes.
-It also has a cover viewer and can display lyrics (either from a
-text file or embedded lyrics from an ID3v2 tag).
+It also has a cover viewer and spectrum analyzer and it can display 
+lyrics (either from a text file or embedded lyrics from an ID3v2 tag).
+Gmu can play local audio files and internet audio streams (on devices
+with networking support).
 Currently, Gmu is available for various handheld devices, including
 the GP2X (both F100 and F200 versions), the GP2X Wiz, the Dingoo A320 
-and A330 (both running Dingux) and the Ben NanoNote.
-Gmu is open source software licensed under the GPLv2 and comes without
+and A330 (both running Dingux), the Ben NanoNote, the Pandora handheld
+and the Zipit Z2.
+Gmu is open source software, licensed under the GPLv2 and comes without
 any warranty. For details see file "COPYING". Gmu has been written by
 me, Johannes Heimansberg.
 
@@ -20,7 +23,9 @@ Table of contents
 -----------------
 
 1.  Installation
-2.  Supported file formats
+2.  Program information
+2.1 Supported file formats
+2.2 Usage
 3.  Controls
 3.1 GP2X defaults
 3.2 Dingoo A320/A330 defaults
@@ -65,20 +70,17 @@ The Ben NanoNote come with Gmu preinstalled. If you use an older
 Firmware image or want to upgrade Gmu, you can use opkg to do that.
 To install Gmu with opkg run:
 
-opkg install gmu_0.7.2-1_xburst.ipk
+opkg install gmu_0.8.0-1_xburst.ipk
 
 Once Gmu has been installed on the NanoNote, you can run it by
 executing 'gmu'.
 Make sure you are using a recent kernel and rootfs. Older versions
-contain errors that might prevent Gmu from running. Use at least
-version 2006-03-26. When using that rootfs version, you also need
-to replace the broken libSDL-1.2.so.0 file located in /usr/lib with
-a working one.
+contain errors that might prevent Gmu from running.
 If you have been upgrading from an older Gmu version, you might need
 to remove the /root/.config/gmu directory before starting Gmu.
 
-2. Supported file formats
--------------------------
+2.1 Supported file formats
+--------------------------
 
 Audio file formats are supported through decoder plugins, so 
 file format support may vary from one platform to another. For
@@ -92,11 +94,49 @@ the following file formats there are decoder plugins available:
 - Speex (.spx)
 - WavPack (.wv)
 - Several module formats (MOD, IT, STM, S3M, XM, 669, ULT)
-- M3U (Gmu can load and save .m3u playlists)
+- M3U (Gmu can read and write .m3u playlists)
+- PLS (Gmu can read .pls playlists)
 
 The decoder plugins use external libraries for decoding the
 specific audio files. Those libraries must be available for
 the target platform for the decoder plugins to work.
+
+2.2 Usage
+---------
+
+2.2.1 The Screen
+
+Gmu comes with a graphical frontend and is being controlled 
+through buttons. Its screen is divided into three part: The
+display area, the content area and the footer area.
+The display area shows information about the player's state,
+like the currently played track (track title, bit rate, sampling
+rate, stereo/mono), playback state (through symbols: play, pause),
+and play time. Besides that, important information are also being 
+displayed through text messages appearing instead of the track title.
+A blinking play/pause symbol denotes that playback of an internet 
+audio stream is being prepared for playback and the data are currently 
+pre-buffered for smooth playback.
+
+In the main content area Gmu shows different information depending on
+which screen has been selected. There are three main screens: The
+file browser (for browsing local files and adding files to the playlist),
+the playlist (consists of the audio tracks Gmu is going to play; Audio
+tracks can be selected and played immediately or queued for playback).
+The third screen is the track info screen, which shows various 
+information about the current track, including cover graphics and lyrics 
+(if available) and a graphical spectrum analyzer.
+
+Gmu comes with an in-program help screen with information on most
+button mappings and functions. Also see chapter 3 in this file.
+
+2.2.2 Internet audio streams
+
+To play internet audio streams, you need to download a playlist file 
+from the audio stream's website and open that file with Gmu. Both 
+common playlist file formats (m3u and pls) are supported. Currently
+Gmu supports MPEG audio for internet audio streams only. More audio 
+file formats (Ogg Vorbis, ...) will be supported in the next versions.
 
 
 3. Controls
@@ -105,7 +145,10 @@ the target platform for the decoder plugins to work.
 When running Gmu for the first time, Gmu shows an introduction 
 screen where most functions and their button mappings are explained.
 This screen can be opened again at any time by activating the help
-function.
+function. The button mappings listed in this file, might be slightly
+out-of-date. If some button does not seem to work as expected, you
+could have a look at the .keymap file that is being used to verify
+the button mapping. See 3.4 for more information about .keymap files.
 
 3.1 GP2X defaults
 -----------------
@@ -690,6 +733,38 @@ set to:
 
 Powering down the device does not work on the GP2X-F100 and -F200
 as these devices have a mechanical power switch.
+
+* SDL_frontend.FileBrowserSelectNextAfterAdd
+
+This option allows you to decide wether you want the selection in 
+the file browser to advance to the next file after adding a file to
+the playlist. It can be set to "yes" or "no".
+
+* SDL_frontend.Fullscreen
+
+With this option the fullscreen mode can be enabled or disabled
+on start-up.  It can be set to "yes" or "no". On some devices
+disabling fullscreen is useless. This is the case for most devices
+running SDL on a framebuffer device instead of an X server.
+
+* ReaderCache
+
+This option is used to set the HTTP read cache size. It is set in
+values of KB (kilo bytes). The minimum size is 256 KB, while the
+maximum size is 4096 KB. Example:
+	ReaderCache=256
+
+Usually you should leave it at its default value, although on 
+rather unstable network connections increasing the size might help
+permitting playback of http audio streams without interruption.
+
+* ReaderCachePrebufferSize
+
+This option is used to set the amount of data to be prebuffered,
+before starting playback of an http audio stream. The minimum
+prebuffer size is 0, while the maximum prebuffer size is 3/4 of
+the ReaderCache size. Setting it to half of the reader cache size
+is usually recommended.
 
 
 5.1 LogBot
