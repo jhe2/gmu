@@ -50,10 +50,11 @@ static int decode_data(char *target, int max_size)
 			int metasize = reader_read_byte(r) * 16;
 			if (metasize > 0) {
 				char *metastr;
+				int   s;
 				
 				wdprintf(V_DEBUG, "mpg123", "metadata size = %d bytes\n", metasize);
 				reader_read_bytes(r, metasize);
-				int s = reader_get_number_of_bytes_in_buffer(r);
+				s = reader_get_number_of_bytes_in_buffer(r);
 				wdprintf(V_DEBUG, "mpg123", "got %d bytes\n", s);
 				if (s > 0) {
 					metastr = malloc(s+1);
@@ -459,7 +460,8 @@ static GmuDecoder gd = {
 	meta_data_close,
 	meta_data_get_charset,
 	data_check_mime_type,
-	set_reader_handle
+	set_reader_handle,
+	NULL
 };
 
 GmuDecoder *gmu_register_decoder(void)

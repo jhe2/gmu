@@ -534,7 +534,12 @@ typedef struct M
 	int so, st, d;
 } M;
 
-View m_enable(M *m, int b, View v)
+static void m_init(M *m)
+{
+	m->so = m->st = m->d = 0;
+}
+
+static View m_enable(M *m, int b, View v)
 {
 	static int s = 0;
 	switch (s) {
@@ -554,7 +559,7 @@ View m_enable(M *m, int b, View v)
 	return v;
 }
 
-void m_read(M *m, int uka)
+static void m_read(M *m, int uka)
 {
 	switch (uka) {
 		case MOVE_CURSOR_DOWN: m->d = (m->d == -1 ? 0 : 1); break;
@@ -562,7 +567,7 @@ void m_read(M *m, int uka)
 	}
 }
 
-void m_draw(M *m, SDL_Surface *t)
+static void m_draw(M *m, SDL_Surface *t)
 {
 	SDL_Rect   srect, drect;
 	static int x = 50, y = 10, s = 8, dx = 0, dy = 0, py = 10, cy = 30;
@@ -637,7 +642,7 @@ void m_draw(M *m, SDL_Surface *t)
 	}
 }
 
-void run_player(char *skin_name, char *decoders_str)
+static void run_player(char *skin_name, char *decoders_str)
 {
 	SDL_Surface     *display = NULL;
 	SDL_Surface     *buffer = NULL;
@@ -700,6 +705,7 @@ void run_player(char *skin_name, char *decoders_str)
 	old_view = view = FILE_BROWSER;
 	if (strncmp(cfg_get_key_value(*config, "FirstRun"), "yes", 3) == 0)
 		view = HELP;
+	m_init(&m);
 
 	/* Initialize and load button mapping */
 	{
@@ -1307,7 +1313,7 @@ void run_player(char *skin_name, char *decoders_str)
 	}
 }
 
-void *start_player(void *arg)
+static void *start_player(void *arg)
 {
 	int             /*i,*/ start = 1, setup = 0;
 	char            skin_name[128] = "";
@@ -1409,12 +1415,12 @@ void *start_player(void *arg)
 
 static pthread_t fe_thread;
 
-void init(void)
+static void init(void)
 {
 	pthread_create(&fe_thread, NULL, start_player, NULL);
 }
 
-void shut_down(void)
+static void shut_down(void)
 {
 	wdprintf(V_DEBUG, "sdl_frontend", "Shutting down now!\n");
 	quit = QUIT_WITHOUT_ERROR;
@@ -1427,7 +1433,7 @@ void shut_down(void)
 	wdprintf(V_INFO, "sdl_frontend", "All done.\n");
 }
 
-const char *get_name(void)
+static const char *get_name(void)
 {
 	return "Gmu SDL frontend v0.9";
 }
@@ -1482,7 +1488,8 @@ static GmuFrontend gf = {
 	init,
 	shut_down,
 	NULL,
-	event_callback
+	event_callback,
+	NULL
 };
 
 GmuFrontend *gmu_register_frontend(void)

@@ -578,7 +578,7 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 	return result;
 }
 
-void sig_handler(int sig)
+static void sig_handler(int sig)
 {
 	wdprintf(V_DEBUG, "gmu", "Exit requested.\n");
 	gmu_core_quit();
@@ -642,7 +642,7 @@ int main(int argc, char **argv)
 				case 'v':
 					if (argc >= i+2) {
 						v = atoi(argv[i+1]);
-						if (v < V_SILENT)
+						if (v <= V_SILENT)
 							v = V_SILENT;
 						else if (v > V_DEBUG)
 							v = V_DEBUG;

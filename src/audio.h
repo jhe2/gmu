@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: audio.h  Created: 061110
  *
@@ -15,6 +15,8 @@
  */
 #define MIN_BUFFER_FILL 32768
 #define AUDIO_MAX_SW_VOLUME 16
+#ifndef _AUDIO_H
+#define _AUDIO_H
 
 int  audio_device_open(int samplerate, int channels);
 int  audio_fill_buffer(char *data, int size);
@@ -37,3 +39,4 @@ void     audio_spectrum_register_for_access(void);
 void     audio_spectrum_unregister(void);
 int      audio_spectrum_read_lock(void);
 void     audio_spectrum_read_unlock(void);
+#endif

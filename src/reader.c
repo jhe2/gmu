@@ -66,7 +66,7 @@ static int http_url_split_alloc(char *url, char **hostname, int *port, char **pa
 		char *host_begin = url+7;
 		char *port_begin = strchr(host_begin, ':');
 		char *path_tmp = NULL;
-		int   path_len = 0;
+		int   path_len = 0, host_len;
 
 		if (port_begin) {
 			*port = atoi(port_begin+1);
@@ -75,7 +75,7 @@ static int http_url_split_alloc(char *url, char **hostname, int *port, char **pa
 			*port = 80; /* default http port */
 		}
 		if (port_begin) path_tmp = strchr(port_begin, '/');
-		int host_len = (port_begin ? port_begin - host_begin : len-7);
+		host_len = (port_begin ? port_begin - host_begin : len-7);
 
 		*hostname = malloc(host_len+1);
 		if (*hostname) {
@@ -137,7 +137,7 @@ int reader_is_ready(Reader *r)
 }
 
 /* Opens a local file or HTTP URL for reading */
-Reader *_reader_open(char *url, int max_redirects)
+static Reader *_reader_open(char *url, int max_redirects)
 {
 	Reader *r = malloc(sizeof(Reader));
 	if (r) {

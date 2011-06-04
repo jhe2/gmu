@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: util.c  Created: 060929
  *
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include "charset.h"
 #include "debug.h"
+#include "util.h"
 
 void strtoupper(char *target, const char *src, int len)
 {

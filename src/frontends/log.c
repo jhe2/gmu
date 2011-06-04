@@ -28,12 +28,12 @@ static TrackInfo previous;
 static int       minimum_playtime_seconds = 0, minimum_playtime_percent = 0;
 static FILE     *lf = NULL;
 
-const char *get_name(void)
+static const char *get_name(void)
 {
 	return "Gmu Log Bot v0.1";
 }
 
-void shut_down(void)
+static void shut_down(void)
 {
 	if (lf) {
 		wdprintf(V_DEBUG, "logbot", "Closing file.\n");
@@ -42,7 +42,7 @@ void shut_down(void)
 	}
 }
 
-void init(void)
+static void init(void)
 {
 	ConfigFile *cf = gmu_core_get_config();
 	char       *tmp = cfg_get_key_value(*cf, "Log.Enable");
@@ -147,7 +147,8 @@ static GmuFrontend gf = {
 	init,
 	shut_down,
 	NULL,
-	event_callback
+	event_callback,
+	NULL
 };
 
 GmuFrontend *gmu_register_frontend(void)

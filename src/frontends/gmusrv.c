@@ -33,12 +33,12 @@ static int       running;
 #define BUF 1024
 #define PORT 4680
 
-const char *get_name(void)
+static const char *get_name(void)
 {
 	return "Gmu Srv v1";
 }
 
-void shut_down(void)
+static void shut_down(void)
 {
 	wdprintf(V_INFO, "gmusrv", "Shutting down.\n");
 	running = 0;
@@ -159,7 +159,7 @@ static void *thread_func(void *arg)
 	return NULL;
 }
 
-void init(void)
+static void init(void)
 {
 	pthread_create(&fe_thread, NULL, thread_func, NULL);
 }
@@ -169,6 +169,7 @@ static GmuFrontend gf = {
 	get_name,
 	init,
 	shut_down,
+	NULL,
 	NULL,
 	NULL
 };

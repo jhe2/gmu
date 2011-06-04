@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: hw_unknown.c  Created: 090629
  *
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "oss_mixer.h"
 #include "debug.h"
+#include "hw_unknown.h"
 
 static int selected_mixer = -1;
 

@@ -173,23 +173,23 @@ static const char *get_meta_data(GmuMetaDataType gmdt, int for_current_file)
 	return result;
 }
 
-const char *get_file_type(void)
+static const char *get_file_type(void)
 {
 	return module->modtype;
 }
 
-int meta_data_load(const char *filename)
+static int meta_data_load(const char *filename)
 {
 	int result = 0;
 	return result;
 }
 
-int meta_data_close(void)
+static int meta_data_close(void)
 {
 	return 1;
 }
 
-GmuCharset meta_data_get_charset(void)
+static GmuCharset meta_data_get_charset(void)
 {
 	return M_CHARSET_UTF_8;
 }
@@ -217,7 +217,10 @@ static GmuDecoder gd = {
 	get_decoder_buffer_size,
 	meta_data_load,
 	meta_data_close,
-	meta_data_get_charset
+	meta_data_get_charset,
+	NULL,
+	NULL,
+	NULL
 };
 
 GmuDecoder *gmu_register_decoder(void)

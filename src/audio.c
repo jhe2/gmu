@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: audio.c  Created: 061110
  *
@@ -260,7 +260,6 @@ long audio_set_sample_counter(long sample)
 long audio_increase_sample_counter(long sample_offset)
 {
 	buf_read_counter += (sample_offset * 2 * have_channels);
-	if (buf_read_counter < 0) buf_read_counter = 0;
 	return buf_read_counter;
 }
 

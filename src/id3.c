@@ -20,6 +20,7 @@
 #include "trackinfo.h"
 #include "charset.h"
 #include "debug.h"
+#include "id3.h"
 #define ID3V2_MAX_SIZE 262144
 
 int id3_read_id3v1(FILE *file, TrackInfo *ti, const char *file_type)
@@ -268,7 +269,7 @@ static void set_lyrics(TrackInfo *ti, char *str, int str_size, Charset charset)
 	}
 }
 
-int fread_unsync(char *frame_data, int fsize, FILE *file)
+static int fread_unsync(char *frame_data, int fsize, FILE *file)
 {
 	int j;
 

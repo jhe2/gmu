@@ -20,7 +20,7 @@ endif
 include $(TARGET).mk
 
 PREFIX?=/usr/local
-CFLAGS+=$(COPTS) -Wall
+CFLAGS+=$(COPTS) -Wall -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wabi -Wmissing-declarations
 
 LFLAGS_CORE=$(SDL_LIB) -ldl
 LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image

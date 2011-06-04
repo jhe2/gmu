@@ -3,7 +3,7 @@
  *
  * File: wejpconfig.h
  *
- * Copyright (c) 2003-2010 Johannes Heimansberg
+ * Copyright (c) 2003-2011 Johannes Heimansberg
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -36,7 +36,6 @@ typedef struct
 	char *value[MAXKEYS];
 	int  lastkey;
 } ConfigFile;
-#endif
 
 void  cfg_init_config_file_struct(ConfigFile *cf);
 int   cfg_add_key(ConfigFile *cf, char *key, char *value);
@@ -49,3 +48,4 @@ int   cfg_check_config_file(char *filename);
 char *cfg_get_path_to_config_file(char *filename);
 int   cfg_is_key_available(ConfigFile cf, char *key);
 int   cfg_add_key_if_not_present(ConfigFile *cf, char *key, char *value);
+#endif
