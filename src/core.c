@@ -994,6 +994,7 @@ int main(int argc, char **argv)
 	}
 	cfg_free_config_file_struct(&config);
 	SDL_Quit();
+	event_queue_free(&event_queue);
 	wdprintf(V_INFO, "gmu", "Shutdown complete.\n");
 	return 0;
 }
