@@ -38,22 +38,26 @@ static int select_file(const struct dirent *de)
 {
 	int         result = 0, i, filename_len, ext_len;
 	struct stat attr;
-	char        extension[16];
 
 	if (dir_extensions) {
 		for (i = 0; dir_extensions[i] != NULL; i++) {
-			if (stat(de->d_name, &attr) != -1) {
-				if (S_ISDIR(attr.st_mode) && show_directories) {
-					result = 1;
-					break;
+			if (de->d_name) {
+				if (show_directories && stat(de->d_name, &attr) != -1) {
+					if (S_ISDIR(attr.st_mode)) {
+						result = 1;
+						break;
+					}
 				}
-			}
-			filename_len = strlen(de->d_name);
-			ext_len      = strlen(dir_extensions[i]);
-			ext_len      = (ext_len > 15 ? 15 : ext_len);
-			strtolower(extension, de->d_name+filename_len-ext_len, ext_len+1);
-			if (strncmp(extension, dir_extensions[i], ext_len) == 0) {
-				result = 1;
+				filename_len = strlen(de->d_name);
+				ext_len      = strlen(dir_extensions[i]);
+				ext_len      = (ext_len > 15 ? 15 : ext_len);
+				if (filename_len-ext_len >= 0) {
+					if (strncasecmp(de->d_name+filename_len-ext_len, dir_extensions[i], ext_len) == 0) {
+						result = 1;
+						break;
+					}
+				}
+			} else { /* error. it is no use to continue the loop */
 				break;
 			}
 		}
@@ -88,6 +92,7 @@ int dir_read(Dir *dir, char *path, int directories_first)
 						dir->filesize_tmp[i] = -1;
 					}
 				}
+
 				/* directories first: */
 				if (directories_first) {
 					for (i = 0, j = 0; i < dir->files; i++) {

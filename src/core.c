@@ -773,7 +773,7 @@ int main(int argc, char **argv)
 
 	snprintf(temp, 511, "%s/decoders", base_dir);
 	wdprintf(V_DEBUG, "gmu", "Searching for decoders in %s.\n", temp);
-	decloader_load_all(temp);
+	wdprintf(V_DEBUG, "gmu", "%d decoders loaded successfully.\n", decloader_load_all(temp));
 
 	/* Put available file extensions in an array */
 	file_extensions_load();

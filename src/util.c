@@ -23,18 +23,18 @@
 
 void strtoupper(char *target, const char *src, int len)
 {
-	int i;
+	int i, srclen = strlen(src);
 
-	for (i = 0; i < ((int)strlen(src) < len - 1 ? (int)strlen(src) : len - 1); i++)
+	for (i = 0; i < (srclen < len - 1 ? srclen : len - 1); i++)
 		target[i] = toupper(src[i]);
 	target[i] = '\0';
 }
 
 void strtolower(char *target, const char *src, int len)
 {
-	int i;
+	int i, srclen = strlen(src);
 
-	for (i = 0; i < ((int)strlen(src) < len - 1 ? (int)strlen(src) : len - 1); i++)
+	for (i = 0; i < (srclen < len - 1 ? srclen : len - 1); i++)
 		target[i] = tolower(src[i]);
 	target[i] = '\0';
 }

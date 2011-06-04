@@ -99,10 +99,12 @@ int decloader_load_all(char *directory)
 	int           res = 0;
 	DecoderChain *dc;
 
+	wdprintf(V_DEBUG, "decloader", "Configuring decoder extension...\n");
 	dir_set_ext_filter((const char **)&dir_extensions, 0);
 
 	dc = dc_init_element();
 	dc_root = dc;
+	wdprintf(V_DEBUG, "decloader", "Searching...\n");
 
 	if (dir_read(&dir, directory, 0)) {
 		int i;
