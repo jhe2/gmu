@@ -112,7 +112,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 		int i, j; 
 		int16_t samples_l[16];
 
-		for (i = 0, j = 0; i < 16 * have_channels; i += (2 * have_channels), j++) {
+		for (i = 0, j = 0; i < 16 * 2 * have_channels; i += (2 * have_channels), j++) {
 			samples_l[j] = (buf[i+1] << 8) + buf[i];
 		}
 		calculate_dft(samples_l, 16, rex, imx);
