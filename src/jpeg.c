@@ -135,12 +135,12 @@ static void get_image_dimensions(ImageSize *is, int *width, int *height)
 {
 	unsigned int length;
 	unsigned int image_height, image_width;
-	int          data_precision, num_components;
+	int          num_components;
 	int          ci;
 
 	length = read_2_bytes(is);
 
-	data_precision = read_1_byte(is);
+	read_1_byte(is); /* data_precision */
 	image_height = read_2_bytes(is);
 	image_width = read_2_bytes(is);
 	num_components = read_1_byte(is);
