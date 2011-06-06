@@ -1,0 +1,69 @@
+# Gmu key mappings
+# Required keys: Modifier, Up, 
+# Down, Pause, ProgramInfo, Exit,
+# PlaylistPlayItem, PlaylistClear,
+# FileBrowserAddFileToPlaylistOrChDir
+# Buttons names are defined in gmuinput.conf.
+
+Modifier=Shift
+# Global mappings:
+Left=H
+Right=L
+Up=K
+Down=J
+IncreaseVolume=0
+DecreaseVolume=9
+ToggleTime=T
+Pause=P
+Stop=X
+ToggleView=Space
+PreviousTrack=N
+NextTrack=M
+SeekForward=,
+SeekBackward=B
+Lock=L
+Unlock=L
+Exit=Mod+Q
+ShutdownTimer=S
+Help=G
+ToggleFullscreen=F
+
+# Program info mappings:
+ProgramInfo=I
+ProgramInfoOkay=Enter
+# File browser mappings:
+#FileBrowserDirUp=LEFT
+#FileBrowserChDir=RIGHT
+
+FileBrowserPlayFile=A
+FileBrowserAddFileToPlaylistOrChDir=Enter
+FileBrowserAddDirToPlaylist=(Y)
+FileBrowserInsertFileIntoPlaylist=Mod+Enter
+FileBrowserNewPlFromDir=Mod+Y
+#FileBrowserDeleteFile=Mod+X
+# Playlist mappings:
+PlaylistPlayItem=Enter
+PlaylistToggleRandomMode=R
+PlaylistRemoveItem=D
+PlaylistClear=C
+PlaylistSave=S
+# Playlist save dialog:
+PlaylistSaveSelect=Enter
+PlaylistSaveCancel=ESC
+PlaylistSaveLoadList=L
+PlaylistSaveAppendList=Mod+L
+#PlaylistDeleteFile=Mod+X
+PlaylistQueue=Q
+# Track info mappings:
+TrackInfoToggleCover=(A)
+TrackInfoToggleText=(B)
+# Question dialog mappings: 
+QuestionYes=Enter
+QuestionNo=ESC
+# Setup mappings:
+SetupSelect=(B)
+SetupSaveAndExit=(X)
+SetupSaveAndRunGmu=(Y)
+SetupFileBrowserSelect=(B)
+SetupFileBrowserChDir=(A)
+SetupFileBrowserCancel=(X)
