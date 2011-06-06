@@ -129,12 +129,10 @@ static int get_button(char *button_name, int *button, int *modifier, ActivateMet
 
 	if (button_name != NULL) {
 		char *bname = button_name;
-		int   offset = 0;
 
 		if (strncmp(bname, "Mod+", 4) == 0) {
 			mod = 1;
 			bname += 4;
-			offset = 4;
 		}
 		but = input_config_get_val(bname, amethod);
 		result = 1;
