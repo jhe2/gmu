@@ -288,12 +288,12 @@ static int decode_data(char *target, int max_size)
 					speex_decoder_ctl(st, SPEEX_GET_BITRATE, &current_bitrate);
 
 					{
-						int frame_offset = 0;
+						/*int frame_offset = 0;*/
 						int new_frame_size = frame_size;
 
 						if (packet_no == 1 && j == 0 && skip_samples > 0) {
 							new_frame_size -= skip_samples + lookahead;
-							frame_offset = skip_samples + lookahead;
+							/*frame_offset = skip_samples + lookahead;*/
 						}
 						if (packet_no == page_nb_packets && skip_samples < 0) {
 							int packet_length = nframes * frame_size + skip_samples + lookahead;
