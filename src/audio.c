@@ -110,9 +110,11 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 	if (spectrum_reg > 0) {
 		int rex[9], imx[9];
 		int i, j; 
-		int16_t samples_l[16], *samples = (int16_t *)buf;
+		int16_t samples_l[16];
 
-		for (i = 0, j = 0; i < 32; i += have_channels, j++) samples_l[j] = samples[i];
+		for (i = 0, j = 0; i < 16 * have_channels; i += (2 * have_channels), j++) {
+			samples_l[j] = (buf[i+1] << 8) + buf[i];
+		}
 		calculate_dft(samples_l, 16, rex, imx);
 		SDL_mutexP(spectrum_mutex);
 		for (i = 1; i < 9; i++) amplitudes[i-1] = (imx[i] < 0 ? -imx[i] : imx[i]);
