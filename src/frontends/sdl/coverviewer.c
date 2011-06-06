@@ -211,7 +211,7 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 				int16_t a = amplitudes[i] / 327 + 2;
 				dstrect.x += barwidth+1;
 				if (amplitudes_smoothed[i] < a) amplitudes_smoothed[i] = a;
-				amplitudes_smoothed[i] = amplitudes_smoothed[i] > 50 ? 50 : amplitudes_smoothed[i];
+				amplitudes_smoothed[i] = amplitudes_smoothed[i] > 70 ? 70 : amplitudes_smoothed[i];
 				dstrect.h = amplitudes_smoothed[i];
 				dstrect.y = ay + ah / 2 + 25 - amplitudes_smoothed[i];
 				SDL_FillRect(target, &dstrect, color);
