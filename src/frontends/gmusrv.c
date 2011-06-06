@@ -47,7 +47,7 @@ static void shut_down(void)
 
 static void *thread_func(void *arg)
 {
-	int                sock, client_sock, res = EXIT_FAILURE;
+	int                sock, client_sock;
 	socklen_t          addrlen;
 	char              *buffer = malloc(BUF);
 	ssize_t            size;
@@ -150,7 +150,6 @@ static void *thread_func(void *arg)
 				}
 			}
 			close(sock);
-			res = EXIT_SUCCESS;
 		} else {
 			wdprintf(V_ERROR, "gmusrv", "ERROR: Port %d unavailable.\n", PORT);
 		}
