@@ -18,7 +18,7 @@
 #include "SDL.h"
 #include "SDL_thread.h"
 #include "SDL_image.h"
-#ifndef WITHOUT_SDL_GFX
+#ifndef SDLFE_WITHOUT_SDL_GFX
 #include "SDL_rotozoom.h"
 #endif
 #include "coverimg.h"
@@ -30,7 +30,7 @@
 
 static int cover_image_thread(void *udata)
 {
-#ifndef WITHOUT_SDL_GFX
+#ifndef SDLFE_WITHOUT_SDL_GFX
 	CoverImage  *ci = (CoverImage *)udata;
 	ImageSize    is;
 	int          width = 0, height = 0;
