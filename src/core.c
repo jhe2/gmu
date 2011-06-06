@@ -160,7 +160,7 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "BacklightPowerOnOnTrackChange", "no");
 	cfg_add_key(config, "KeyMap", "default.keymap");
 	cfg_add_key(config, "AllowVolumeControlInHoldState", "no");
-	cfg_add_key(config, "SecondsUntilBacklightPowerOff", "15");
+	cfg_add_key(config, "SecondsUntilBacklightPowerOff", "30");
 	cfg_add_key(config, "CoverArtworkLarge", "no");
 	cfg_add_key(config, "SmallCoverArtworkAlignment", "right");
 	cfg_add_key(config, "FirstRun", "yes");
