@@ -1392,11 +1392,10 @@ static void *start_player(void *arg)
 			int         len = 0, len_tmp = 0;
 
 			if (tmp) len_tmp = strlen(tmp);
-			if (!decoders_str) {
-				decoders_str = malloc(len_tmp + 4);
-			} else {
-				len = strlen(decoders_str);
-				decoders_str = realloc(decoders_str, strlen(decoders_str) + len_tmp + 4);
+			if (len_tmp > 0) {
+				printf("tmp=[%s]\n", tmp);
+				if (decoders_str) len = strlen(decoders_str);
+				decoders_str = realloc(decoders_str, (decoders_str ? strlen(decoders_str) : 0) + len_tmp + 8);
 			}
 
 			snprintf(decoders_str+len, len_tmp + 4, "- %s\n", tmp);
