@@ -145,6 +145,9 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 	}
 	SDL_WM_SetCaption("Gmu", NULL);
 	SDL_EnableUNICODE(1);
+#ifdef HW_SDL_POST_INIT
+	hw_sdl_post_init();
+#endif
 	wdprintf(V_INFO, "sdl_frontend", "SDL-Video init done.\n");
 	return display;
 }

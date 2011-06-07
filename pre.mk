@@ -15,13 +15,13 @@
 #
 
 #DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
-DECODERS_TO_BUILD?=decoders/wavpack.so
+DECODERS_TO_BUILD?=decoders/wavpack.so decoders/mpg123.so
 FRONTENDS_TO_BUILD?=frontends/sdl.so frontends/log.so frontends/gmusrv.so
 CC=gcc
 CXX=g++
 STRIP=strip
 
-SDL_LIB=$(shell /mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/bin/sdl-config --libs) -lnapp -llunaservice -lPiranha -lpalmvibe -lLunaSysMgrIpc -lfreetype
+SDL_LIB=$(shell /mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/bin/sdl-config --libs)
 SDL_CFLAGS=$(shell /mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/bin/sdl-config --cflags)
 MIKMOD_LIB=$(shell libmikmod-config --libs)
 MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
@@ -29,5 +29,5 @@ MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
 SDLFE_WITHOUT_SDL_GFX=1
 COPTS?=-O2 -funroll-all-loops -finline-functions -ffast-math -fno-short-enums -g
 CFLAGS=-I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include -I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include/SDL $(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -D_$(DEVICE) -DFILE_HW_H="\"hw_$(TARGET).h\"" -DCORE_WITH_SDL_VIDEO=1 -DSDLFE_NO_HWACCEL=1
-LFLAGS=-I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include -L/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/lib -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt COPYING gmuinput.pre.conf gmu.bmp
+LFLAGS=-I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include -L/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/lib -Wl,-export-dynamic -lpdl -lsqlite3
+DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt COPYING libs.pre gmuinput.pre.conf gmu.bmp

@@ -14,8 +14,8 @@
  * for details.
  */
 #include <stdio.h>
-#ifndef _HW_UNKNOWN_H
-#define _HW_UNKNOWN_H
+#ifndef _HW_PRE_H
+#define _HW_PRE_H
 
 #define HW_COLOR_DEPTH 32
 #define HW_SCREEN_WIDTH 480
@@ -34,4 +34,8 @@ void          hw_display_off(void);
 void          hw_display_on(void);
 void          hw_detect_device_model(void);
 const char   *hw_get_device_model_name(void);
+#define       HW_INIT_DEVICE 1
+void          hw_init_device(void);
+#define       HW_SDL_POST_INIT 1
+void          hw_sdl_post_init(void);
 #endif
