@@ -101,6 +101,9 @@ install: $(DISTFILES)
 	@echo "cd $(PREFIX)/share/gmu">>$(DESTDIR)$(PREFIX)/bin/gmu
 	@echo "$(PREFIX)/bin/gmu.bin -e -d $(PREFIX)/etc/gmu -c gmu.$(TARGET).conf ">>$(DESTDIR)$(PREFIX)/bin/gmu
 	@chmod a+x $(DESTDIR)$(PREFIX)/bin/gmu
+	@-mkdir -p $(DESTDIR)$(PREFIX)/share/applications
+	@cp gmu.desktop $(DESTDIR)$(PREFIX)/share/applications/gmu.desktop
+	@cp gmu.png $(DESTDIR)$(PREFIX)/share/pixmaps/gmu.png
 
 clean:
 	@-rm -rf *.o $(BINARY) decoders/*.so frontends/*.so
