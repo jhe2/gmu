@@ -31,7 +31,7 @@ CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif
 
 OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o
-ALLFILES=src/ Makefile *.mk gmu.png themes README.txt BUILD.txt COPYING gmu.conf.example *.keymap *.gpu *.dge *.nn gmuinput.*.conf gmu.*.conf gmu.bmp
+ALLFILES=src/ Makefile *.mk gmu.png themes README.txt BUILD.txt COPYING gmu.conf.example *.keymap *.gpu *.dge *.nn gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop
 BINARY=gmu
 
 all: $(BINARY) decoders frontends gmu-cli

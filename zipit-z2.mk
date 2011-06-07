@@ -27,4 +27,4 @@ STRIP=/home/wejp/crossdev/z2/buildroot/output/staging/usr/bin/arm-unknown-linux-
 COPTS?=-O3 -mcpu=xscale -ffast-math
 CFLAGS=-fno-strict-aliasing -fomit-frame-pointer $(SDL_CFLAGS) -I/usr/local/pandora/arm-2009q3/include -DFILE_HW_H="\"hw_$(TARGET).h\""
 LFLAGS=-L/home/wejp/crossdev/z2/buildroot/output/staging/usr/lib -lpthread -lm -ldl -lz -lgcc -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.z2 gmu-z2.sh COPYING gmuinput.z2.conf gmu.bmp
+DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.z2 gmu-z2.sh COPYING gmuinput.z2.conf gmu.bmp gmu.desktop

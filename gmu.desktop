@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Gmu Music Player
+Comment=A multi-format music player
+Exec=gmu
+Terminal=false
+Type=Application
+Icon=gmu
+Categories=Multimedia;Audio;
+StartupNotify=false
+GenericName=
