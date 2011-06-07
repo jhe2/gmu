@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "oss_mixer.h"
 #include "debug.h"
+#include "hw_pandora.h"
 
 static int selected_mixer = -1;
 

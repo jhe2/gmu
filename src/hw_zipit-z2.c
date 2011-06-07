@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include "oss_mixer.h"
 #include "debug.h"
+#include "hw_zipit-z2.h"
 
 static int display_on_value = 100, keyboard_on_value = 100;
 static int selected_mixer = -1;
