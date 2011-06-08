@@ -22,7 +22,7 @@
 #include "audio.h"
 #include "eventqueue.h"
 
-#define VERSION_NUMBER "0.7.3WIP"
+#define VERSION_NUMBER "0.8.0BETA1"
 
 #define GMU_CORE_HW_VOLUME_MAX 100
 #define GMU_CORE_SW_VOLUME_MAX AUDIO_MAX_SW_VOLUME
