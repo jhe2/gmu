@@ -3,57 +3,63 @@
 # Down, Pause, ProgramInfo, Exit,
 # PlaylistPlayItem, PlaylistClear,
 # FileBrowserAddFileToPlaylistOrChDir
-Modifier=START
+# Buttons names are defined in gmuinput.conf.
+
+Modifier=Alt
 # Global mappings:
-#Left=LEFT
-#Right=RIGHT
-Up=UP
-Down=DOWN
-IncreaseVolume=VOL+
-DecreaseVolume=VOL-
-ToggleTime=Mod+LEFT
-Pause=X
+Left=Left
+Right=Right
+Up=Up
+Down=Down
+IncreaseVolume=+
+DecreaseVolume=-
+ToggleTime=Mod+T
+Pause=P
 Stop=Mod+X
-ToggleView=SELECT
-PreviousTrack=L
-NextTrack=R
-SeekForward=Mod+R
-SeekBackward=Mod+L
-Hold=Mod+UP
-Exit=Mod+SELECT
-ShutdownTimer=Mod+DOWN
+ToggleView=Tab
+PreviousTrack=PageDown
+NextTrack=PageUp
+SeekForward=Mod+PageUp
+SeekBackward=Mod+PageDown
+Lock=Mod+Up
+Unlock=Mod+Up
+Exit=Mod+Enter
+ShutdownTimer=Mod+Down
+Help=F1
+ToggleFullscreen=F
+
 # Program info mappings:
 ProgramInfo=Mod+A
-ProgramInfoOkay=B
+ProgramInfoOkay=Enter
 # File browser mappings:
 #FileBrowserDirUp=LEFT
 #FileBrowserChDir=RIGHT
 
 FileBrowserPlayFile=A
-FileBrowserAddFileToPlaylistOrChDir=B
+FileBrowserAddFileToPlaylistOrChDir=Enter
 FileBrowserAddDirToPlaylist=Y
 FileBrowserInsertFileIntoPlaylist=Mod+B
 FileBrowserNewPlFromDir=Mod+Y
 #FileBrowserDeleteFile=Mod+X
 # Playlist mappings:
-PlaylistPlayItem=B
-PlaylistToggleRandomMode=A
+PlaylistPlayItem=Enter
+PlaylistToggleRandomMode=M
 PlaylistRemoveItem=Y
 PlaylistClear=Mod+Y
 PlaylistSave=Mod+B
 # Playlist save dialog:
-PlaylistSaveSelect=B
+PlaylistSaveSelect=Enter
 PlaylistSaveCancel=A
 PlaylistSaveLoadList=Y
 PlaylistSaveAppendList=Mod+Y
 #PlaylistDeleteFile=Mod+X
-PlaylistQueue=Mod+RIGHT
+PlaylistQueue=Q
 # Track info mappings:
 TrackInfoToggleCover=A
 TrackInfoToggleText=B
 # Question dialog mappings: 
-QuestionYes=B
-QuestionNo=A
+QuestionYes=Enter
+QuestionNo=ESC
 # Setup mappings:
 SetupSelect=B
 SetupSaveAndExit=X

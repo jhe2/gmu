@@ -29,4 +29,4 @@ MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
 COPTS?=-O2 -funroll-all-loops -finline-functions -ffast-math -fno-short-enums -g
 CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H
 LFLAGS=-I/usr/local/include -L/usr/local/lib -Wl,-export-dynamic
-DISTFILES=$(COMMON_DISTBIN_FILES) gmuinput.unknown.conf
+DISTFILES=$(COMMON_DISTBIN_FILES) gmuinput.unknown.conf gmu.sh

@@ -48,6 +48,9 @@ $(BINARY): $(OBJECTFILES)
 	@echo -e "Linking \033[1m$(BINARY)\033[0m"
 	@$(CC) $(OBJECTFILES) $(LFLAGS) $(LFLAGS_CORE) -o $(BINARY)
 
+libs.$(TARGET):
+	@-mkdir -p libs.$(TARGET)
+
 projname=gmu-$(shell awk '/define VERSION_NUMBER/ { print $$3 }' src/core.h )
 
 %.o: src/%.c
@@ -70,7 +73,6 @@ dist: $(ALLFILES)
 
 distbin: $(DISTFILES)
 	@echo -e "Creating \033[1m$(projname)-$(TARGET).zip\033[0m"
-	@-mkdir libs.$(TARGET)
 	@-rm -rf $(projname)-$(TARGET)
 	@-rm -rf $(projname)-$(TARGET).zip
 	@mkdir $(projname)-$(TARGET)
