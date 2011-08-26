@@ -28,6 +28,6 @@ MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
 
 SDLFE_WITHOUT_SDL_GFX=1
 COPTS?=-O2 -funroll-all-loops -finline-functions -ffast-math -fno-short-enums -g
-CFLAGS=-I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include -I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include/SDL $(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -D_$(DEVICE) -DFILE_HW_H="\"hw_$(TARGET).h\"" -DCORE_WITH_SDL_VIDEO=1 -DSDLFE_NO_HWACCEL=1
+CFLAGS=-I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include -I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include/SDL $(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DCORE_WITH_SDL_VIDEO=1 -DSDLFE_NO_HWACCEL=1
 LFLAGS=-I/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/include -L/mnt/disk/devel/palmpre/cross-compile/staging/armv7/usr/lib -Wl,-export-dynamic -lpdl -lsqlite3
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt COPYING libs.pre gmuinput.pre.conf gmu.bmp
+DISTFILES=$(COMMON_DISTBIN_FILES) gmuinput.pre.conf

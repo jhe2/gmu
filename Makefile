@@ -1,7 +1,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
 #
 # File: Makefile  Created: 060904
 #
@@ -20,7 +20,7 @@ endif
 include $(TARGET).mk
 
 PREFIX?=/usr/local
-CFLAGS+=$(COPTS) -Wall -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations
+CFLAGS+=$(COPTS) -Wall -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\""
 
 LFLAGS_CORE=$(SDL_LIB) -ldl
 LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image
@@ -31,8 +31,9 @@ CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif
 
 OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o
-ALLFILES=src/ Makefile *.mk gmu.png themes README.txt BUILD.txt COPYING gmu.conf.example *.keymap *.gpu *.dge *.nn gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop
-BINARY=gmu
+ALLFILES=src/ Makefile  *.sh *.dge *.gpu *.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop
+BINARY=gmu.bin
+COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
 
 all: $(BINARY) decoders frontends gmu-cli
 	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
@@ -69,6 +70,7 @@ dist: $(ALLFILES)
 
 distbin: $(DISTFILES)
 	@echo -e "Creating \033[1m$(projname)-$(TARGET).zip\033[0m"
+	@-mkdir libs.$(TARGET)
 	@-rm -rf $(projname)-$(TARGET)
 	@-rm -rf $(projname)-$(TARGET).zip
 	@mkdir $(projname)-$(TARGET)
@@ -77,7 +79,7 @@ distbin: $(DISTFILES)
 	@-cp gmu.$(TARGET).conf $(projname)-$(TARGET)/gmu.$(TARGET).conf
 	@-cp $(TARGET).keymap $(projname)-$(TARGET)/$(TARGET).keymap
 	@$(STRIP) $(projname)-$(TARGET)/decoders/*.so
-	@$(STRIP) $(projname)-$(TARGET)/gmu
+	@$(STRIP) $(projname)-$(TARGET)/$(BINARY)
 	@-$(STRIP) $(projname)-$(TARGET)/gmu-cli
 	@zip -r $(projname)-$(TARGET).zip $(projname)-$(TARGET)
 	@-rm -rf $(projname)-$(TARGET)
@@ -89,7 +91,7 @@ install: $(DISTFILES)
 	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/decoders
 	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/frontends
 	@-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/themes
-	@cp gmu $(DESTDIR)$(PREFIX)/bin/gmu.bin
+	@cp $(BINARY) $(DESTDIR)$(PREFIX)/bin
 	@-cp gmu-cli $(DESTDIR)$(PREFIX)/bin/gmu-cli
 	@cp README.txt $(DESTDIR)$(PREFIX)/share/gmu/README.txt
 	@cp -R frontends/* $(DESTDIR)$(PREFIX)/share/gmu/frontends
@@ -99,7 +101,7 @@ install: $(DISTFILES)
 	@cp *.keymap $(DESTDIR)$(PREFIX)/etc/gmu
 	@echo "#!/bin/sh">$(DESTDIR)$(PREFIX)/bin/gmu
 	@echo "cd $(PREFIX)/share/gmu">>$(DESTDIR)$(PREFIX)/bin/gmu
-	@echo "$(PREFIX)/bin/gmu.bin -e -d $(PREFIX)/etc/gmu -c gmu.$(TARGET).conf ">>$(DESTDIR)$(PREFIX)/bin/gmu
+	@echo "$(PREFIX)/bin/$(BINARY) -e -d $(PREFIX)/etc/gmu -c gmu.$(TARGET).conf ">>$(DESTDIR)$(PREFIX)/bin/gmu
 	@chmod a+x $(DESTDIR)$(PREFIX)/bin/gmu
 	@-mkdir -p $(DESTDIR)$(PREFIX)/share/applications
 	@cp gmu.desktop $(DESTDIR)$(PREFIX)/share/applications/gmu.desktop

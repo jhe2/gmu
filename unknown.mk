@@ -27,6 +27,6 @@ MIKMOD_LIB=$(shell libmikmod-config --libs)
 MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
 
 COPTS?=-O2 -funroll-all-loops -finline-functions -ffast-math -fno-short-enums -g
-CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -D_$(DEVICE) -DFILE_HW_H="\"hw_$(TARGET).h\""
+CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H
 LFLAGS=-I/usr/local/include -L/usr/local/lib -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt COPYING gmuinput.unknown.conf gmu.bmp
+DISTFILES=$(COMMON_DISTBIN_FILES) gmuinput.unknown.conf

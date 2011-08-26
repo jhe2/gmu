@@ -1,7 +1,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
 #
 # File: nanonote.mk  Created: 100305
 #
@@ -14,7 +14,6 @@
 # for details.
 #
 
-#DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
 DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/wavpack.so decoders/mikmod.so decoders/flac.so decoders/speex.so
 FRONTENDS_TO_BUILD=frontends/sdl.so frontends/log.so
 SDL_LIB=-lSDL -lpthread -ldirectfb -ldirect -lfusion -lz
@@ -26,4 +25,4 @@ TOOLCHAIN_ROOT_PATH=$(shell which $(CC)|sed 's/toolchain-mipsel_gcc-4.3.3+cs_uCl
 COPTS?=-O2 -s
 CFLAGS=-msoft-float -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include/SDL -I$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/include -ffast-math -fomit-frame-pointer $(SDL_CFLAGS) -DFILE_HW_H="\"hw_$(TARGET).h\""
 LFLAGS=-s -L$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/usr/lib -L$(TOOLCHAIN_ROOT_PATH)/target-mipsel_uClibc-0.9.30.1/root-xburst/usr/lib -lpthread -lm -ldl -lgcc -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.nanonote gmu.nn COPYING gmuinput.nanonote.conf gmu.bmp
+DISTFILES=$(COMMON_DISTBIN_FILES) gmu-nanonote.sh gmuinput.nanonote.conf

@@ -1,3 +1,3 @@
 #!/bin/sh
 cd `dirname $0`
-LD_LIBRARY_PATH=libs.pandora/ ./gmu -c gmu.pandora.conf
+LD_LIBRARY_PATH=libs.pandora/ ./gmu.bin -c gmu.pandora.conf

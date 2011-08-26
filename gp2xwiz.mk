@@ -1,7 +1,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
 #
 # File: gp2xwiz.mk  Created: 060904
 #
@@ -25,6 +25,6 @@ CXX=/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/bin/arm-open2x-linux-g++
 CC=/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/bin/arm-open2x-linux-gcc
 STRIP=/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/bin/arm-open2x-linux-strip
 COPTS?=-O3 -mtune=arm920t -ffast-math 
-CFLAGS=-fno-strict-aliasing -fomit-frame-pointer $(SDL_CFLAGS) -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/include -DFILE_HW_H="\"hw_$(TARGET).h\""
+CFLAGS=-fno-strict-aliasing -fomit-frame-pointer $(SDL_CFLAGS) -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/include
 LFLAGS=-L/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/lib -lpthread -lm -ldl -lz -lgcc -Wl,-export-dynamic
-DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.wiz wiz.keymap gp2x.keymap gmu.wiz.conf gmu.gp2x.conf gmu-wiz.gpu gmu-gp2x.gpu COPYING gmuinput.gp2x.conf gmuinput.wiz.conf gmu.bmp
+DISTFILES=$(COMMON_DISTBIN_FILES) wiz.keymap gp2x.keymap gmu.wiz.conf gmu.gp2x.conf gmu-wiz.gpu gmu-gp2x.gpu gmuinput.gp2x.conf gmuinput.wiz.conf
