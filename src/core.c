@@ -393,6 +393,31 @@ int gmu_core_playback_is_paused(void)
 	return audio_get_pause();
 }
 
+int gmu_core_playlist_is_recursive_directory_add_in_progress(void)
+{
+	return playlist_is_recursive_directory_add_in_progress();
+}
+
+Entry *gmu_core_playlist_get_next(Entry *entry)
+{
+	return playlist_get_next(entry);
+}
+
+Entry *gmu_core_playlist_get_prev(Entry *entry)
+{
+	return playlist_get_prev(entry);
+}
+
+int gmu_core_playlist_get_played(Entry *entry)
+{
+	return playlist_get_played(entry);
+}
+
+int gmu_core_playlist_entry_get_queue_pos(Entry *entry)
+{
+	return playlist_entry_get_queue_pos(entry);
+}
+
 int gmu_core_get_length_current_track(void)
 {
 	return current_track_ti.length;

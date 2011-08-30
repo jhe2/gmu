@@ -24,7 +24,6 @@
 #include "../../gmufrontend.h"
 #include "../../core.h"
 #include "../../fileplayer.h"
-#include "../../playlist.h"
 #include "../../trackinfo.h"
 #include "../../decloader.h"  /* for decoders list */
 #include "../../gmudecoder.h" /* for decoders list */
@@ -287,7 +286,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 							for (i = 0;
 							     i < gmu_core_playlist_get_length() && i != pl_browser_get_selection(pb);
 							     i++) {
-								sel_entry = playlist_get_next(sel_entry);
+								sel_entry = gmu_core_playlist_get_next(sel_entry);
 							}
 							gmu_core_playlist_insert_file_after(sel_entry, path);
 							pl_brower_move_selection_down(pb);
@@ -366,7 +365,7 @@ static void pb_delete_func(void *arg)
 	if (entry != NULL) {
 		char *f;
 		while (i < pl_browser_get_selection(p->pb)) {
-			entry = playlist_get_next(entry);
+			entry = gmu_core_playlist_get_next(entry);
 			i++;
 		}
 		if (pl_browser_are_selection_and_current_entry_equal(p->pb)) {
@@ -447,7 +446,7 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 				    gmu_core_playlist_get_play_mode() == PM_RANDOM_REPEAT)
 					gmu_core_playlist_reset_random();
 				while (i < pl_browser_get_selection(pb)) {
-					entry = playlist_get_next(entry);
+					entry = gmu_core_playlist_get_next(entry);
 					i++;
 				}
 				bufptr = strrchr(gmu_core_playlist_get_entry_filename(entry), '/')+1;
@@ -1215,7 +1214,7 @@ static void run_player(char *skin_name, char *decoders_str)
 				cnt++;
 			}
 			if (view == PLAYLIST &&
-			    playlist_is_recursive_directory_add_in_progress())
+			    gmu_core_playlist_is_recursive_directory_add_in_progress())
 				update |= UPDATE_TEXTAREA | UPDATE_HEADER;
 			if (view == EGG) update |= UPDATE_TEXTAREA | UPDATE_HEADER;
 		}
@@ -1231,7 +1230,7 @@ static void run_player(char *skin_name, char *decoders_str)
 									 (gmu_core_playback_is_paused() ? PAUSED : PLAYING)),
 									file_player_playback_get_time(), time_remaining,
 									(10 * gmu_core_get_volume()) / (gmu_core_get_volume_max()-1),
-									playlist_is_recursive_directory_add_in_progress(),
+									gmu_core_playlist_is_recursive_directory_add_in_progress(),
 									gmu_core_get_shutdown_time_remaining(),
 									buffer);
 				skin_update_display(&skin, display, buffer);
@@ -1362,7 +1361,7 @@ static void *start_player(void *arg)
 			if (strcmp(filetype, "M3U") == 0) {
 				gmu_core_add_m3u_contents_to_playlist(argv[i]);
 			} else {
-				playlist_add_item(gmu_core_get_playlist(), argv[i], filename);
+				gmu_core_playlist_add_item(gmu_core_get_playlist(), argv[i], filename);
 			}
 		}
 	}*/

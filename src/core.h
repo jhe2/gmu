@@ -75,4 +75,9 @@ void             gmu_core_add_m3u_contents_to_playlist(char *filename);
 void             gmu_core_add_pls_contents_to_playlist(char *filename);
 char            *gmu_core_get_base_dir(void);
 char            *gmu_core_get_config_dir(void);
+int              gmu_core_playlist_is_recursive_directory_add_in_progress(void);
+Entry           *gmu_core_playlist_get_next(Entry *entry);
+Entry           *gmu_core_playlist_get_prev(Entry *entry);
+int              gmu_core_playlist_get_played(Entry *entry);
+int              gmu_core_playlist_entry_get_queue_pos(Entry *entry);
 #endif

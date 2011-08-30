@@ -16,7 +16,6 @@
 #include <unistd.h>
 #include <string.h>
 #include "textrenderer.h"
-#include "playlist.h"
 #include "core.h"
 #include "plbrowser.h"
 #include "skin.h"
@@ -50,7 +49,7 @@ int pl_browser_are_selection_and_current_entry_equal(PlaylistBrowser *pb)
 	if (gmu_core_playlist_get_length() > 0) {
 		entry = gmu_core_playlist_get_first();
 		while (entry != NULL && i != pl_browser_get_selection(pb)) {
-			entry = playlist_get_next(entry);
+			entry = gmu_core_playlist_get_next(entry);
 			i++;
 		}
 		if (entry == gmu_core_playlist_get_current())
@@ -64,7 +63,7 @@ Entry *pl_browser_get_selected_entry(PlaylistBrowser *pb)
 	Entry *sel = gmu_core_playlist_get_first();
 	int    i = 0;
 	while (sel != NULL && i != pl_browser_get_selection(pb)) {
-		sel = playlist_get_next(sel);
+		sel = gmu_core_playlist_get_next(sel);
 		i++;
 	}
 	return sel;
@@ -78,7 +77,7 @@ int pl_browser_playlist_remove_selection(PlaylistBrowser *pb)
 	if (gmu_core_playlist_get_length() > 0) {
 		entry = gmu_core_playlist_get_first();
 		while (entry != NULL && i != pl_browser_get_selection(pb)) {
-			entry = playlist_get_next(entry);
+			entry = gmu_core_playlist_get_next(entry);
 			i++;
 		}
 		wdprintf(V_INFO, "sdl_plbrowser:", "Removing entry %s...\n", gmu_core_playlist_get_entry_name(entry));
@@ -116,7 +115,7 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 	     i < pb->offset + number_of_visible_lines && 
 	     i < gmu_core_playlist_get_length() && pl_entry != NULL;
 	     i++) {
-		char  c = (playlist_get_played(pl_entry) ? 'o' : ' ');
+		char  c = (gmu_core_playlist_get_played(pl_entry) ? 'o' : ' ');
 		char *entry_name = gmu_core_playlist_get_entry_name(pl_entry);
 		char *format = "%c%3d";
 		int   l = gmu_core_playlist_get_length();
@@ -129,11 +128,11 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 		if (l > 999 && l <= 9999) format = "%c%4d";
 		if (l > 9999) format = "%c%5d";
 
-		if (playlist_entry_get_queue_pos(pl_entry) == 0)
+		if (gmu_core_playlist_entry_get_queue_pos(pl_entry) == 0)
 			snprintf(buf, len, format, (pl_entry == gmu_core_playlist_get_current() ? '*' : c), i + 1);
 		else
 			snprintf(buf, len, "%cQ:%d", (pl_entry == gmu_core_playlist_get_current() ? '*' : c),
-			         playlist_entry_get_queue_pos(pl_entry));
+			         gmu_core_playlist_entry_get_queue_pos(pl_entry));
 
 		if (i == pb->offset + number_of_visible_lines - 1 && !selected_entry_drawn)
 			pb->selection = i;
@@ -151,7 +150,7 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 									   gmu_widget_get_pos_y((GmuWidget *)&pb->skin->lv, 1) + 1
 									   + (i-pb->offset)*(pb->skin->font2_char_height+1),
 									   skin_textarea_get_characters_per_line((Skin *)pb->skin)-6, RENDER_ARROW);
-		pl_entry = playlist_get_next(pl_entry);
+		pl_entry = gmu_core_playlist_get_next(pl_entry);
 	}
 }
 
@@ -176,7 +175,7 @@ int pl_browser_set_selection(PlaylistBrowser *pb, int pos)
 		}
 		if (new_first_visible_entry) {
 			for (i = 0; i < pos; i++)
-				entry = playlist_get_next(entry);
+				entry = gmu_core_playlist_get_next(entry);
 			pb->first_visible_entry = entry;
 		}  
 		res = 1;
@@ -196,7 +195,7 @@ void pl_brower_move_selection_down(PlaylistBrowser *pb)
 	if (pb->selection > pb->offset + skin_textarea_get_number_of_lines((Skin *)pb->skin) - 1) {
 		pb->offset++;
 		if (pb->first_visible_entry != NULL)
-			pb->first_visible_entry = playlist_get_next(pb->first_visible_entry);
+			pb->first_visible_entry = gmu_core_playlist_get_next(pb->first_visible_entry);
 		else
 			pb->first_visible_entry = gmu_core_playlist_get_first();
 	}
@@ -214,12 +213,12 @@ void pl_brower_move_selection_up(PlaylistBrowser *pb)
 		              pb->selection - nol + 1 : 0);
 		pb->first_visible_entry = gmu_core_playlist_get_last();
 		for (i = 0; i < nol - 1 && pb->first_visible_entry != NULL; i++)
-			pb->first_visible_entry = playlist_get_prev(pb->first_visible_entry);
+			pb->first_visible_entry = gmu_core_playlist_get_prev(pb->first_visible_entry);
 	}
 	if (pb->selection < pb->offset) {
 		pb->offset--;
 		if (pb->first_visible_entry != NULL)
-			pb->first_visible_entry = playlist_get_prev(pb->first_visible_entry);
+			pb->first_visible_entry = gmu_core_playlist_get_prev(pb->first_visible_entry);
 		else
 			pb->first_visible_entry = gmu_core_playlist_get_first();
 	}
