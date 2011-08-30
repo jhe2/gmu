@@ -218,7 +218,9 @@ char *decloader_get_all_extensions(void)
 GmuDecoder *decloader_decoder_list_get_next_decoder(int getfirst)
 {
 	static DecoderChain *dc = NULL;
+	GmuDecoder          *gd = NULL;
 
 	dc = (getfirst ? dc_root : dc->next);
-	return dc->gd;
+	if (dc) gd = dc->gd;
+	return gd;
 }

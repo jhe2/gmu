@@ -681,7 +681,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	{
 		int   w = 320, h = 240;
 		char *val;
-		
+
 		fullscreen = 0;
 		val = cfg_get_key_value(*config, "SDL_frontend.Width");
 		if (val) w = atoi(val);
@@ -690,24 +690,21 @@ static void run_player(char *skin_name, char *decoders_str)
 		val = cfg_get_key_value(*config, "SDL_frontend.Fullscreen");
 		if (val && strncmp(val, "yes", 3) == 0) fullscreen = 1;
 		display = init_sdl(input_config_has_joystick(), w, h, fullscreen);
+
+		val = cfg_get_key_value(*config, "AutoSelectCurrentPlaylistItem");
+		auto_select_cur_item = (val && strncmp(val, "yes", 3) == 0) ? 1 : 0;
+
+		val = cfg_get_key_value(*config, "TimeDisplay");
+		time_remaining = (val && strncmp(val, "remaining", 9) == 0) ? 1 : 0;
+
+		val = cfg_get_key_value(*config, "BacklightPowerOnOnTrackChange");
+		backlight_poweron_on_track_change = (val && strncmp(val, "yes", 3) == 0) ? 1 : 0;
+
+		old_view = view = FILE_BROWSER;
+		val = cfg_get_key_value(*config, "FirstRun");
+		if (val && strncmp(val, "yes", 3) == 0)
+			view = HELP;
 	}
-
-	auto_select_cur_item = strncmp(cfg_get_key_value(*config, 
-	                               "AutoSelectCurrentPlaylistItem"),
-	                               "yes", 3) == 0 ? 1 : 0;
-
-	time_remaining = strncmp(cfg_get_key_value(*config, "TimeDisplay"), 
-	                         "remaining", 9) == 0 ? 1 : 0;
-
-	backlight_poweron_on_track_change = strncmp(cfg_get_key_value(*config, 
-	                                            "BacklightPowerOnOnTrackChange"),
-	                                            "yes", 3) == 0 ? 1 : 0;
-
-	file_player_set_lyrics_file_pattern(cfg_get_key_value(*config, "LyricsFilePattern"));
-
-	old_view = view = FILE_BROWSER;
-	if (strncmp(cfg_get_key_value(*config, "FirstRun"), "yes", 3) == 0)
-		view = HELP;
 	m_init(&m);
 
 	/* Initialize and load button mapping */
@@ -1373,7 +1370,8 @@ static void *start_player(void *arg)
 	if (start || setup) {
 		config = gmu_core_get_config();
 		if (skin_name[0] == '\0') {
-			strncpy(skin_name, cfg_get_key_value(*config, "DefaultSkin"), 127);
+			char *skinname = cfg_get_key_value(*config, "DefaultSkin");
+			if (skinname) strncpy(skin_name, skinname, 127);
 			skin_name[127] = '\0';
 		}
 	}

@@ -803,6 +803,8 @@ int main(int argc, char **argv)
 	wdprintf(V_DEBUG, "gmu", "Searching for frontends in %s.\n", temp);
 	feloader_load_all(temp);
 
+	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "LyricsFilePattern"));
+
 	set_default_play_mode(&config, &pl);
 	gmu_core_set_volume(atoi(cfg_get_key_value(config, "Volume")));
 
