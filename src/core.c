@@ -537,6 +537,7 @@ static void print_cmd_help(char *prog_name)
 	printf("-c configfile.conf: Use the specified config file instead of gmu.conf\n");
 	printf("-s theme_name: Use theme \"theme_name\"\n");
 	printf("-v V : Set verbosity level to V, where V is an integer between 0 (silent) and 5 (debug).\n");
+	printf("-p /path/to/feplugin.so : Load the given frontend plugin. Can be used multiple times.\n");
 	printf("If you append files to the command line\n");
 	printf("they will be added to the playlist\n");
 	printf("and playback is started automatically.\n");
@@ -634,6 +635,8 @@ static void file_extensions_free(void)
 		free(file_extensions[i]);
 }
 
+#define MAX_FRONTEND_PLUGIN_BY_CMD_ARG 16
+
 int main(int argc, char **argv)
 {
 	char        *skin_file = "";
@@ -646,7 +649,11 @@ int main(int argc, char **argv)
 	int          auto_shutdown = 0;
 	time_t       start, end;
 	Verbosity    v = V_INFO;
+	char        *frontend_plugin_by_cmd_arg[MAX_FRONTEND_PLUGIN_BY_CMD_ARG];
+	int          frontend_plugin_by_cmd_arg_counter = 0;
 
+	for (i = 0; i < MAX_FRONTEND_PLUGIN_BY_CMD_ARG; i++)
+		frontend_plugin_by_cmd_arg[i] = NULL;
 	hw_detect_device_model();
 
 	signal(SIGINT, sig_handler);
@@ -709,6 +716,16 @@ int main(int argc, char **argv)
 					break;
 				case 'e': /* Store config in user's home directory */
 					user_config_dir[0] = '1';
+					break;
+				case 'p': /* Load given frontend plugin */
+					if (argc >= i+2) {
+						if (frontend_plugin_by_cmd_arg_counter < MAX_FRONTEND_PLUGIN_BY_CMD_ARG)
+							frontend_plugin_by_cmd_arg[frontend_plugin_by_cmd_arg_counter++] = argv[i+1];
+						i++;
+					} else {
+						wdprintf(V_ERROR, "gmu", "Invalid usage of -p: Frontend plugin name required.\n");
+						exit(0);
+					}
 					break;
 				default:
 					wdprintf(V_ERROR, "gmu", "Unknown parameter (-%c). Try -h for help.\n", argv[i][1]);
@@ -826,7 +843,14 @@ int main(int argc, char **argv)
 	/* Load frontends */
 	snprintf(temp, 511, "%s/frontends", base_dir);
 	wdprintf(V_DEBUG, "gmu", "Searching for frontends in %s.\n", temp);
-	feloader_load_all(temp);
+	/* If no plugins have been specified on the command line (-p), load all plugins: */
+	if (frontend_plugin_by_cmd_arg_counter <= 0) {
+		feloader_load_all(temp);
+	/* Otherwise load only the specified plugins: */
+	} else {
+		for (i = 0; i < frontend_plugin_by_cmd_arg_counter; i++)
+			feloader_load_single_frontend(frontend_plugin_by_cmd_arg[i]);
+	}
 
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "LyricsFilePattern"));
 

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: feloader.h  Created: 081228
  *
@@ -25,7 +25,10 @@ struct _FrontendChainElement {
 };
 
 GmuFrontend *feloader_load_frontend(char *so_file);
+/* Loads a frontend and adds it to the frontend chain: */
+int          feloader_load_single_frontend(char *so_file);
 int          feloader_load_all(char *directory);
 GmuFrontend *feloader_frontend_list_get_next_frontend(int getfirst);
 void         feloader_free(void);
+int          feloader_unload_frontend(GmuFrontend *gf);
 #endif

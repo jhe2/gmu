@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: feloader.c  Created: 081228
  *
@@ -28,8 +28,8 @@ union {
 	GmuFrontend * (*fptr) (void);
 } dlsymunion;
 
-static const char   *dir_extensions[] = { ".so", NULL };
-static FrontendChainElement *fec_root;
+static const char           *dir_extensions[] = { ".so", NULL };
+static FrontendChainElement *fec_root = NULL;
 
 static FrontendChainElement *fec_init_element(void)
 {
@@ -50,10 +50,7 @@ static void fec_free(FrontendChainElement *fec)
 		fec = tmp;
 		tmp = tmp->next;
 		if (fec) {
-			if (fec->gf && fec->gf->handle) {
-				if (fec->gf->frontend_shutdown)	(*fec->gf->frontend_shutdown)();
-				dlclose(fec->gf->handle);
-			}
+			if (fec->gf) feloader_unload_frontend(fec->gf);
 			free(fec);
 		}
 	}
@@ -64,6 +61,19 @@ void feloader_free(void)
 	fec_free(fec_root);
 }
 
+/* Unloads a frontend; Returns 1 on success, 0 otherwise */
+int feloader_unload_frontend(GmuFrontend *gf)
+{
+	int res = 0;
+	if (gf && gf->handle) {
+		if (gf->frontend_shutdown) (*gf->frontend_shutdown)();
+		dlclose(gf->handle);
+		res = 1;
+	}
+	return res;
+}
+
+/* Loads a frontend and returns a frontend object */
 GmuFrontend *feloader_load_frontend(char *so_file)
 {
 	GmuFrontend *result = NULL;
@@ -90,6 +100,31 @@ GmuFrontend *feloader_load_frontend(char *so_file)
 	dlerror(); /* Clear any possibly existing error */
 
 	return result;
+}
+
+/* Loads a frontend and adds it to the frontend chain */
+int feloader_load_single_frontend(char *so_file)
+{
+	FrontendChainElement *fec;
+	GmuFrontend          *gf;
+	int                   res = 0;
+
+	if (!fec_root) fec_root = fec_init_element();
+	fec = fec_root;
+	while (fec && fec->next) {
+		fec = fec->next;
+	}
+
+	if ((gf = feloader_load_frontend(so_file))) {
+		wdprintf(V_INFO, "feloader", "feloader: Loading %s was successful.\n", so_file);
+		wdprintf(V_INFO, "feloader", "%s: Name: %s\n", gf->identifier, (*gf->get_name)());
+		fec->gf = gf;
+		fec->next = fec_init_element();
+		res = 1;
+	} else {
+		wdprintf(V_WARNING, "feloader", "feloader: Loading %s was unsuccessful.\n", so_file);
+	}
+	return res;
 }
 
 int feloader_load_all(char *directory)
@@ -120,7 +155,7 @@ int feloader_load_all(char *directory)
 				fec = fec->next;
 				res++;
 			} else {
-				wdprintf(V_WARNING, "feloader", "feloader: Loading %s was successful.\n", dir_get_filename(&dir, i));
+				wdprintf(V_WARNING, "feloader", "feloader: Loading %s was unsuccessful.\n", dir_get_filename(&dir, i));
 			}
 		}
 		dir_free(&dir);

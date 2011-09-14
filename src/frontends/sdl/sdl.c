@@ -85,69 +85,85 @@ static int         screen_max_width = 0, screen_max_height = 0, screen_max_depth
 
 static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
-	SDL_Surface         *display;
+	SDL_Surface         *display = NULL;
 	const SDL_VideoInfo *video_info;
+	int                  init_okay = 0;
 
-	if (SDL_InitSubSystem(SDL_INIT_VIDEO | (with_joystick ? SDL_INIT_JOYSTICK : 0)) < 0) {
-		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize SDL: %s\n", SDL_GetError());
-		exit(1);
-	}
-
-	video_info = SDL_GetVideoInfo();
-	screen_max_width  = video_info->current_w;
-	screen_max_height = video_info->current_h;
-	screen_max_depth  = video_info->vfmt->BitsPerPixel;
-	wdprintf(V_INFO, "sdl_frontend", "Available screen estate: %d x %d pixels @ %d bpp\n",
-	         screen_max_width, screen_max_height, screen_max_depth);
-
-	width  = width  > screen_max_width  ? screen_max_width  : width;
-	height = height > screen_max_height ? screen_max_height : height;
-	width  = width  <= 0 ? 320 : width;
-	height = height <= 0 ? 240 : height;
-
-	if (fullscreen) {
-		fullscreen = SDL_FULLSCREEN;
-		width = screen_max_width;
-		height = screen_max_height;
-	}
-
-	/* Window icon */
-	{
-		Uint32       colorkey;
-		SDL_Surface *image;
-
-		image = SDL_LoadBMP("gmu.bmp");
-		if (image) {
-			colorkey = SDL_MapRGB(image->format, 255, 0, 255);
-			SDL_SetColorKey(image, SDL_SRCCOLORKEY, colorkey);              
-			SDL_WM_SetIcon(image, NULL);
+	if (!SDL_WasInit(SDL_INIT_VIDEO)) {
+		if (SDL_InitSubSystem(SDL_INIT_VIDEO | (with_joystick ? SDL_INIT_JOYSTICK : 0)) < 0) {
+			wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize SDL: %s\n", SDL_GetError());
 		} else {
-			wdprintf(V_WARNING, "sdl_frontend", "Window icon (gmu.bmp) not found or broken.\n");
+			wdprintf(V_DEBUG, "sdl_frontend", "SDL Video subsystem initialized.\n");
+			init_okay = 1;
 		}
+	} else {
+		wdprintf(V_ERROR, "sdl_frontend", "ERROR: SDL has already been initialized.\n");
 	}
 
-	display = SDL_SetVideoMode(width, height, screen_max_depth,
+	if (init_okay) {
+		video_info = SDL_GetVideoInfo();
+		if (video_info) {
+			screen_max_width  = video_info->current_w;
+			screen_max_height = video_info->current_h;
+			screen_max_depth  = video_info->vfmt->BitsPerPixel;
+			wdprintf(V_INFO, "sdl_frontend", "Available screen real estate: %d x %d pixels @ %d bpp\n",
+					 screen_max_width, screen_max_height, screen_max_depth);
+		} else {
+			screen_max_width  = 0;
+			screen_max_height = 0;
+			screen_max_depth  = 0;
+			wdprintf(V_WARNING, "sdl_frontend", "Unable to determine screen resolution.\n");
+		}
+
+		width  = width  > screen_max_width  ? screen_max_width  : width;
+		height = height > screen_max_height ? screen_max_height : height;
+		width  = width  <= 0 ? 320 : width;
+		height = height <= 0 ? 240 : height;
+
+		if (fullscreen) {
+			fullscreen = SDL_FULLSCREEN;
+			width = screen_max_width;
+			height = screen_max_height;
+		}
+
+		/* Window icon */
+		{
+			Uint32       colorkey;
+			SDL_Surface *image;
+
+			image = SDL_LoadBMP("gmu.bmp");
+			if (image) {
+				colorkey = SDL_MapRGB(image->format, 255, 0, 255);
+				SDL_SetColorKey(image, SDL_SRCCOLORKEY, colorkey);              
+				SDL_WM_SetIcon(image, NULL);
+			} else {
+				wdprintf(V_WARNING, "sdl_frontend", "Window icon (gmu.bmp) not found or broken.\n");
+			}
+		}
+
+		display = SDL_SetVideoMode(width, height, screen_max_depth,
 #ifndef SDLFE_NO_HWACCEL
-	                           SDL_HWSURFACE | SDL_HWACCEL |
+								   SDL_HWSURFACE | SDL_HWACCEL |
 #endif
-	                           SDL_RESIZABLE | fullscreen);
-	if (display == NULL) {
-		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize screen: %s\n", SDL_GetError());
-		exit(1);
-	}
+								   SDL_RESIZABLE | fullscreen);
+		if (display == NULL) {
+			wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize screen: %s\n", SDL_GetError());
+			exit(1);
+		}
 #ifndef SHOW_MOUSE_CURSOR
-	SDL_ShowCursor(0);
+		SDL_ShowCursor(0);
 #endif
-	if (with_joystick) {
-		wdprintf(V_DEBUG, "sdl_frontend", "Opening joystick device.\n");
-		SDL_JoystickOpen(0);
-	}
-	SDL_WM_SetCaption("Gmu", NULL);
-	SDL_EnableUNICODE(1);
+		if (with_joystick) {
+			wdprintf(V_DEBUG, "sdl_frontend", "Opening joystick device.\n");
+			SDL_JoystickOpen(0);
+		}
+		SDL_WM_SetCaption("Gmu", NULL);
+		SDL_EnableUNICODE(1);
 #ifdef HW_SDL_POST_INIT
-	hw_sdl_post_init();
+		hw_sdl_post_init();
 #endif
-	wdprintf(V_INFO, "sdl_frontend", "SDL-Video init done.\n");
+		wdprintf(V_INFO, "sdl_frontend", "SDL-Video init done.\n");
+	}
 	return display;
 }
 
@@ -644,9 +660,10 @@ static void m_draw(M *m, SDL_Surface *t)
 	}
 }
 
+static SDL_Surface *display = NULL;
+
 static void run_player(char *skin_name, char *decoders_str)
 {
-	SDL_Surface     *display = NULL;
 	SDL_Surface     *buffer = NULL;
 	SDL_Event        event;
 
@@ -678,17 +695,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	}
 
 	{
-		int   w = 320, h = 240;
 		char *val;
-
-		fullscreen = 0;
-		val = cfg_get_key_value(*config, "SDL_frontend.Width");
-		if (val) w = atoi(val);
-		val = cfg_get_key_value(*config, "SDL_frontend.Height");
-		if (val) h = atoi(val);
-		val = cfg_get_key_value(*config, "SDL_frontend.Fullscreen");
-		if (val && strncmp(val, "yes", 3) == 0) fullscreen = 1;
-		display = init_sdl(input_config_has_joystick(), w, h, fullscreen);
 
 		val = cfg_get_key_value(*config, "AutoSelectCurrentPlaylistItem");
 		auto_select_cur_item = (val && strncmp(val, "yes", 3) == 0) ? 1 : 0;
@@ -1367,7 +1374,6 @@ static void *start_player(void *arg)
 	}*/
 
 	if (start || setup) {
-		config = gmu_core_get_config();
 		if (skin_name[0] == '\0') {
 			char *skinname = cfg_get_key_value(*config, "DefaultSkin");
 			if (skinname) strncpy(skin_name, skinname, 127);
@@ -1415,7 +1421,26 @@ static pthread_t fe_thread;
 
 static void init(void)
 {
-	pthread_create(&fe_thread, NULL, start_player, NULL);
+	int   w = 320, h = 240;
+	char *val;
+	SDL_Surface *ds;
+
+	config = gmu_core_get_config();
+	fullscreen = 0;
+	val = cfg_get_key_value(*config, "SDL_frontend.Width");
+	if (val) w = atoi(val);
+	val = cfg_get_key_value(*config, "SDL_frontend.Height");
+	if (val) h = atoi(val);
+	val = cfg_get_key_value(*config, "SDL_frontend.Fullscreen");
+	if (val && strncmp(val, "yes", 3) == 0) fullscreen = 1;
+	ds = init_sdl(input_config_has_joystick(), w, h, fullscreen);
+	if (!ds) {
+		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Display surface uninitialized.\n");
+	} else {
+		wdprintf(V_INFO, "sdl_frontend", "Display surface initialized.\n");
+		display = ds;
+		pthread_create(&fe_thread, NULL, start_player, NULL);
+	}
 }
 
 static void shut_down(void)
