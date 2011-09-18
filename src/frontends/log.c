@@ -42,7 +42,7 @@ static void shut_down(void)
 	}
 }
 
-static void init(void)
+static int init(void)
 {
 	ConfigFile *cf = gmu_core_get_config();
 	char       *tmp = cfg_get_key_value(*cf, "Log.Enable");
@@ -74,6 +74,7 @@ static void init(void)
 		wdprintf(V_INFO, "logbot", "Logging has been disabled.\n");
 	}
 	trackinfo_clear(&previous);
+	return 1;
 }
 
 static void save_previous_trackinfo()

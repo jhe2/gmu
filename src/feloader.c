@@ -93,8 +93,12 @@ GmuFrontend *feloader_load_frontend(char *so_file)
 			wdprintf(V_ERROR, "feloader", "%s\n", error);
 		} else {
 			result = (*fe_load_func)();
-			(*result->frontend_init)(); /* Run frontend init function */
-			result->handle = handle;
+			if ((*result->frontend_init)()) { /* Run frontend init function */
+				result->handle = handle;
+			} else { /* Frontend init returned with error */
+				dlclose(handle);
+				result = NULL;
+			}
 		}
 	}
 	dlerror(); /* Clear any possibly existing error */
@@ -116,13 +120,13 @@ int feloader_load_single_frontend(char *so_file)
 	}
 
 	if ((gf = feloader_load_frontend(so_file))) {
-		wdprintf(V_INFO, "feloader", "feloader: Loading %s was successful.\n", so_file);
+		wdprintf(V_INFO, "feloader", "Loading %s was successful.\n", so_file);
 		wdprintf(V_INFO, "feloader", "%s: Name: %s\n", gf->identifier, (*gf->get_name)());
 		fec->gf = gf;
 		fec->next = fec_init_element();
 		res = 1;
 	} else {
-		wdprintf(V_WARNING, "feloader", "feloader: Loading %s was unsuccessful.\n", so_file);
+		wdprintf(V_WARNING, "feloader", "Loading %s was unsuccessful.\n", so_file);
 	}
 	return res;
 }

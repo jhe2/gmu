@@ -1419,9 +1419,9 @@ static void *start_player(void *arg)
 
 static pthread_t fe_thread;
 
-static void init(void)
+static int init(void)
 {
-	int   w = 320, h = 240;
+	int   w = 320, h = 240, res = 0;
 	char *val;
 	SDL_Surface *ds;
 
@@ -1439,8 +1439,10 @@ static void init(void)
 	} else {
 		wdprintf(V_INFO, "sdl_frontend", "Display surface initialized.\n");
 		display = ds;
-		pthread_create(&fe_thread, NULL, start_player, NULL);
+		if (pthread_create(&fe_thread, NULL, start_player, NULL) == 0)
+			res = 1;
 	}
+	return res;
 }
 
 static void shut_down(void)

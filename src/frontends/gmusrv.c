@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: gmusrv.c  Created: 100920
  *
@@ -158,9 +158,12 @@ static void *thread_func(void *arg)
 	return NULL;
 }
 
-static void init(void)
+static int init(void)
 {
-	pthread_create(&fe_thread, NULL, thread_func, NULL);
+	int res = 0;
+	if (pthread_create(&fe_thread, NULL, thread_func, NULL) == 0)
+		res = 1;
+	return res;
 }
 
 static GmuFrontend gf = {

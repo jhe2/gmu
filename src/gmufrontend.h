@@ -25,7 +25,7 @@ typedef struct _GmuFrontend {
 	const char * (*get_name)(void);
 	/* Init function. Can be NULL if not neccessary. Will be called ONCE when 
 	 * the decoder is loaded. */
-	void         (*frontend_init)(void);
+	int          (*frontend_init)(void);
 	/* Function to be called on unload, you should free/close everything 
 	 * that is still allocated/opened at this point. Can be NULL. */
 	void         (*frontend_shutdown)(void);

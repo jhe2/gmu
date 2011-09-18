@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
  *
  * File: lirc.c  Created: 100502
  *
@@ -26,14 +26,14 @@
 
 static pthread_t fe_thread;
 
-const char *get_name(void)
+static const char *get_name(void)
 {
 	return "Gmu LIRC Remote Control Frontend v0.1";
 }
 
 static int run = 1;
 
-void shut_down(void)
+static void shut_down(void)
 {
 	wdprintf(V_DEBUG, "lirc_frontend", "Shutting down.\n");
 	run = 0;
@@ -93,9 +93,12 @@ static void *thread_func(void *arg)
 	return NULL;
 }
 
-void init(void)
+static int init(void)
 {
-	pthread_create(&fe_thread, NULL, thread_func, NULL);
+	int res = 0;
+	if (pthread_create(&fe_thread, NULL, thread_func, NULL) == 0)
+		res = 1;
+	return res;
 }
 
 static GmuFrontend gf = {
