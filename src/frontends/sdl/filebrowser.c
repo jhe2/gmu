@@ -114,18 +114,20 @@ int file_browser_selection_is_dir(FileBrowser *fb)
 	return (dir_get_flag(&fb->dir, fb->selection) == DIRECTORY ? 1 : 0);
 }
 
+#define FB_MAXIMUM_STR_LENGTH 255
+
 void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 {
 	int       cpl = skin_textarea_get_characters_per_line((Skin *)fb->skin);
-	int       i, pl, len = (cpl > 127 ? 127 : cpl);
+	int       i, pl, len = (cpl > FB_MAXIMUM_STR_LENGTH ? FB_MAXIMUM_STR_LENGTH : cpl);
 	const int chars_left = len - 15;
-	char      buf[128], *buf2 = alloca(chars_left+1), *path = dir_get_path(&fb->dir);
-	char     *bufptr, buf3[128];
+	char      buf[FB_MAXIMUM_STR_LENGTH+1], *buf2 = alloca(chars_left+1), *path = dir_get_path(&fb->dir);
+	char     *bufptr, buf3[FB_MAXIMUM_STR_LENGTH];
 	int       number_of_visible_lines = skin_textarea_get_number_of_lines((Skin *)fb->skin);
 	int       selected_entry_drawn = 0;
 
 	pl = path ? strlen(path) : 0;
-	if (pl > 127) pl = 127;
+	if (pl > FB_MAXIMUM_STR_LENGTH) pl = FB_MAXIMUM_STR_LENGTH;
 
 	buf2[0] = '\0';
 	
@@ -137,7 +139,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		if (pl > chars_left) memcpy(buf2, "...", 3);
 	}
 
-	snprintf(buf, 63, "File browser (%s)", buf2);
+	snprintf(buf, FB_MAXIMUM_STR_LENGTH, "File browser (%s)", buf2);
 	skin_draw_header_text((Skin *)fb->skin, buf, sdl_target);
 
 	fb->longest_line_so_far = 0;
@@ -166,9 +168,9 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 						gmu_widget_get_pos_y((GmuWidget *)&fb->skin->lv, 1) + 1
 						+ (i-fb->offset)*(fb->skin->font2_char_height+1));
 
-		snprintf(buf, 127, "%s", dir_get_filename(&fb->dir, i));
+		snprintf(buf, FB_MAXIMUM_STR_LENGTH, "%s", dir_get_filename(&fb->dir, i));
 		if (fb->charset == UTF_8) {
-			charset_utf8_to_iso8859_1(buf3, buf, 127);
+			charset_utf8_to_iso8859_1(buf3, buf, FB_MAXIMUM_STR_LENGTH);
 			bufptr = buf3;
 		} else {
 			bufptr = buf;
