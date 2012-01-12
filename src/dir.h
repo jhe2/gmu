@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: dir.h  Created: 060929
  *
@@ -32,6 +32,7 @@ struct _Dir
 
 typedef struct _Dir Dir;
 
+void  dir_init(Dir *dir);
 void  dir_set_ext_filter(const char **dir_exts, int show_dirs);
 int   dir_read(Dir *dir, char *path, int directories_first);
 void  dir_free(Dir *dir);

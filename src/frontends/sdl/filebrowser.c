@@ -30,6 +30,7 @@ void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset)
 	fb->directories_first = 0;
 	fb->longest_line_so_far = 0;
 	fb->select_next_after_add = 0;
+	dir_init(&(fb->dir));
 }
 
 void file_browser_set_directories_first(FileBrowser *fb, int value)
@@ -123,14 +124,18 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 	int       number_of_visible_lines = skin_textarea_get_number_of_lines((Skin *)fb->skin);
 	int       selected_entry_drawn = 0;
 
-	pl = strlen(dir_get_path(&fb->dir));
+	pl = path ? strlen(path) : 0;
 	if (pl > 127) pl = 127;
 
-	/* We have chars_left characters for path display available) */
-	i = (pl > chars_left ? pl - chars_left : 0);
-	memcpy(buf2, path+i, pl-i);
-	buf2[pl-i] = '\0';
-	if (pl > chars_left) memcpy(buf2, "...", 3);
+	buf2[0] = '\0';
+	
+	if (pl > 0) {
+		/* We have chars_left characters for path display available) */
+		i = (pl > chars_left ? pl - chars_left : 0);
+		memcpy(buf2, path+i, pl-i);
+		buf2[pl-i] = '\0';
+		if (pl > chars_left) memcpy(buf2, "...", 3);
+	}
 
 	snprintf(buf, 63, "File browser (%s)", buf2);
 	skin_draw_header_text((Skin *)fb->skin, buf, sdl_target);

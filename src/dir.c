@@ -67,6 +67,13 @@ static int select_file(const struct dirent *de)
 	return result;
 }
 
+void dir_init(Dir *dir)
+{
+	dir->files = 0;
+	dir->ep = NULL;
+	dir->path[0] = '\0';
+}
+
 int dir_read(Dir *dir, char *path, int directories_first)
 {
 	int  i, j, result = 0;
@@ -74,6 +81,7 @@ int dir_read(Dir *dir, char *path, int directories_first)
 
 	if (getcwd(prev_wd, 255)) {
 		if (chdir(path) == 0) {
+			dir->files = 0;
 			if (getcwd(dir->path, 255)) {
 				dir->files = scandir(path, &(dir->ep), select_file, alphasort);
 				if (dir->files > MAX_FILES) dir->files = MAX_FILES;
@@ -134,7 +142,7 @@ void dir_free(Dir *dir)
 
 	for (i = 0, list = dir->ep; i < dir->files; i++, list++)
 		free(*list);
-	free(dir->ep);
+	if (dir->ep) free(dir->ep);
 }
 
 char *dir_get_filename(Dir *dir, int i)

@@ -279,43 +279,45 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 				update = UPDATE_ALL;
 			} else {
 				char  filetype[16] = "(none)";
-				char *tmp = get_file_extension(file_browser_get_selected_file(fb));
-				if (tmp != NULL)
-					strtoupper(filetype, tmp, 15);
-				if (strcmp(filetype, "M3U") == 0) {
-					wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
-					gmu_core_add_m3u_contents_to_playlist(file_browser_get_selected_file(fb));
-					player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
-				} else if (strcmp(filetype, "PLS") == 0) {
-					wdprintf(V_INFO, "sdl_frontend", "PLS detected.\n");
-					gmu_core_add_pls_contents_to_playlist(file_browser_get_selected_file(fb));
-					player_display_set_notice_message("PLS ADDED TO PLAYLIST", NOTICE_DELAY);
-				} else {
-					if (getcwd(cwd, 255) != NULL) {
-						snprintf(path, 255, "%s/%s", cwd,
-						         file_browser_get_selected_file(fb));
-						if (user_key_action == FB_INSERT_FILE_INTO_PL) { /* insert item */
-							Entry *sel_entry = gmu_core_playlist_get_first();
-							int    i;
+				char *sel_file = file_browser_get_selected_file(fb);
+				char *tmp = sel_file ? get_file_extension(sel_file) : NULL;
+				if (tmp != NULL) strtoupper(filetype, tmp, 15);
+				if (sel_file) {
+					if (strcmp(filetype, "M3U") == 0) {
+						wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
+						gmu_core_add_m3u_contents_to_playlist(file_browser_get_selected_file(fb));
+						player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
+					} else if (strcmp(filetype, "PLS") == 0) {
+						wdprintf(V_INFO, "sdl_frontend", "PLS detected.\n");
+						gmu_core_add_pls_contents_to_playlist(file_browser_get_selected_file(fb));
+						player_display_set_notice_message("PLS ADDED TO PLAYLIST", NOTICE_DELAY);
+					} else {
+						if (getcwd(cwd, 255) != NULL) {
+							snprintf(path, 255, "%s/%s", cwd,
+									 file_browser_get_selected_file(fb));
+							if (user_key_action == FB_INSERT_FILE_INTO_PL) { /* insert item */
+								Entry *sel_entry = gmu_core_playlist_get_first();
+								int    i;
 
-							wdprintf(V_DEBUG, "sdl_frontend", "Inserting entry after %d...\n", pl_browser_get_selection(pb));
-							for (i = 0;
-							     i < gmu_core_playlist_get_length() && i != pl_browser_get_selection(pb);
-							     i++) {
-								sel_entry = gmu_core_playlist_get_next(sel_entry);
+								wdprintf(V_DEBUG, "sdl_frontend", "Inserting entry after %d...\n", pl_browser_get_selection(pb));
+								for (i = 0;
+									 i < gmu_core_playlist_get_length() && i != pl_browser_get_selection(pb);
+									 i++) {
+									sel_entry = gmu_core_playlist_get_next(sel_entry);
+								}
+								gmu_core_playlist_insert_file_after(sel_entry, path);
+								pl_brower_move_selection_down(pb);
+								player_display_set_notice_message("ITEM INSERTED IN PLAYLIST", NOTICE_DELAY);
+							} else { /* add item */
+								gmu_core_playlist_add_file(path);
+								player_display_set_notice_message("ITEM ADDED TO PLAYLIST", NOTICE_DELAY);
 							}
-							gmu_core_playlist_insert_file_after(sel_entry, path);
-							pl_brower_move_selection_down(pb);
-							player_display_set_notice_message("ITEM INSERTED IN PLAYLIST", NOTICE_DELAY);
-						} else { /* add item */
-							gmu_core_playlist_add_file(path);
-							player_display_set_notice_message("ITEM ADDED TO PLAYLIST", NOTICE_DELAY);
 						}
 					}
-				}
-				if (file_browser_is_select_next_after_add(fb)) {
-					file_browser_move_selection_down(fb);
-					update = UPDATE_TEXTAREA;
+					if (file_browser_is_select_next_after_add(fb)) {
+						file_browser_move_selection_down(fb);
+						update = UPDATE_TEXTAREA;
+					}
 				}
 			}
 			break;
@@ -757,11 +759,8 @@ static void run_player(char *skin_name, char *decoders_str)
 														  "FileBrowserFoldersFirst"),
 														  "yes", 3) == 0 ? 1 : 0;
 			file_browser_set_directories_first(&fb, directories_first);
-			if (!chdir(cfg_get_key_value(*config, "DefaultFileBrowserPath"))) {
-				wdprintf(V_WARNING, "sdl_frontend", "WARNING: Could not open DefaultFileBrowserPath for reading!\n");
-				wdprintf(V_WARNING, "sdl_frontend", "The current directory will be used instead.\n");
-			}
-			dir_read(&fb.dir, ".", directories_first);
+			tmp = cfg_get_key_value(*config, "DefaultFileBrowserPath");
+			if (tmp) file_browser_change_dir(&fb, tmp);
 			tmp = cfg_get_key_value(*config, "SDL_frontend.FileBrowserSelectNextAfterAdd");
 			if (tmp) {
 				select_next_after_add = strncmp(tmp, "yes", 3) == 0 ? 1 : 0;
