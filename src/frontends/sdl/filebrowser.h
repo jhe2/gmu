@@ -1,7 +1,7 @@
 /* 
- * Gmu GP2X Music Player
+ * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: filebrowser.h  Created: 061011
  *
@@ -34,6 +34,7 @@ void    file_browser_move_selection_up(FileBrowser *fb);
 void    file_browser_move_selection_n_items_down(FileBrowser *fb, int n);
 void    file_browser_move_selection_n_items_up(FileBrowser *fb, int n);
 char   *file_browser_get_selected_file(FileBrowser *fb);
+char   *file_browser_get_selected_file_full_path_alloc(FileBrowser *fb);
 int     file_browser_change_dir(FileBrowser *fb, char *new_dir);
 int     file_browser_selection_is_dir(FileBrowser *fb);
 void    file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target);

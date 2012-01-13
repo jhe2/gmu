@@ -106,6 +106,7 @@ int decloader_load_all(char *directory)
 	dc_root = dc;
 	wdprintf(V_DEBUG, "decloader", "Searching...\n");
 
+	dir_init(&dir);
 	if (dir_read(&dir, directory, 0)) {
 		int i;
 

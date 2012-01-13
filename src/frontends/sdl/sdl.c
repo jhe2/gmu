@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: sdl.c  Created: 060929
  *
@@ -200,64 +200,47 @@ static int play_previous(TrackInfo *ti, CoverViewer *cv)
 	return gmu_core_previous();
 }
 
-struct _fb_delete_params {
-	char        *file;
-	FileBrowser *fb;
-};
-
-static void fb_delete_func(void *arg)
-{
-	struct _fb_delete_params *p = (struct _fb_delete_params *)arg;
-	if (p->file != NULL) {
-		wdprintf(V_DEBUG, "sdl_frontend", "Delete file %s\n", p->file);
-		if (remove(p->file) == 0) {
-			player_display_set_notice_message("FILE DELETED!", NOTICE_DELAY);
-			file_browser_change_dir(p->fb, ".");
-		} else {
-			player_display_set_notice_message("COULD NOT DELETE FILE!", NOTICE_DELAY);
-		}
-	}
-}
-
 static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb, 
                                        TrackInfo   *ti, CoverViewer *cv,
                                        int          user_key_action,
                                        int          items_skip)
 {
-	Update                          update = UPDATE_NONE;
-	char                            cwd[256];
-	static char                     path[256];
-	static struct _fb_delete_params fdp;
+	Update update = UPDATE_NONE;
+	char  *path = NULL;
 
 	switch (user_key_action) {
 		case FB_PLAY_FILE:
 			if (!file_browser_selection_is_dir(fb)) {
 				gmu_core_playlist_set_current(NULL);
-				if (getcwd(cwd, 255) != NULL) {
-					snprintf(path, 255, "%s/%s", cwd,
-					         file_browser_get_selected_file(fb));
+				path = file_browser_get_selected_file_full_path_alloc(fb);
+				if (path) {
 					play_file(path, ti, cv);
+					free(path);
 				}
 			}
 			break;
 		case FB_ADD_DIR_TO_PL:
 			if (file_browser_selection_is_dir(fb)) {
-				if (gmu_core_playlist_add_dir(file_browser_get_selected_file(fb)))
+				char *sf = file_browser_get_selected_file_full_path_alloc(fb);
+				if (sf && gmu_core_playlist_add_dir(sf))
 					player_display_set_notice_message("ADDING DIRECTORY...", NOTICE_DELAY);
 				else
 					player_display_set_notice_message("ALREADY ADDING A DIRECTORY", NOTICE_DELAY);
 				update = UPDATE_ALL;
+				if (sf) free(sf);
 			} else {
 				player_display_set_notice_message("NOT A DIRECTORY", NOTICE_DELAY);
 			}
 			break;
 		case FB_NEW_PL_FROM_DIR:
 			if (file_browser_selection_is_dir(fb)) {
+				char *sf = file_browser_get_selected_file_full_path_alloc(fb);
 				pl_browser_playlist_clear(pb);
 				player_display_set_notice_message("CREATING NEW PLAYLIST...", NOTICE_DELAY);
-				if (gmu_core_playlist_add_dir(file_browser_get_selected_file(fb)))
+				if (sf && gmu_core_playlist_add_dir(sf))
 					player_display_set_notice_message("DIRECTORY ADDED", NOTICE_DELAY);
 				update = UPDATE_ALL;
+				if (sf) free(sf);
 			} else {
 				player_display_set_notice_message("NOT A DIRECTORY", NOTICE_DELAY);
 			}
@@ -292,9 +275,8 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 						gmu_core_add_pls_contents_to_playlist(file_browser_get_selected_file(fb));
 						player_display_set_notice_message("PLS ADDED TO PLAYLIST", NOTICE_DELAY);
 					} else {
-						if (getcwd(cwd, 255) != NULL) {
-							snprintf(path, 255, "%s/%s", cwd,
-									 file_browser_get_selected_file(fb));
+						path = file_browser_get_selected_file_full_path_alloc(fb);
+						if (path) {
 							if (user_key_action == FB_INSERT_FILE_INTO_PL) { /* insert item */
 								Entry *sel_entry = gmu_core_playlist_get_first();
 								int    i;
@@ -312,6 +294,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 								gmu_core_playlist_add_file(path);
 								player_display_set_notice_message("ITEM ADDED TO PLAYLIST", NOTICE_DELAY);
 							}
+							free(path);
 						}
 					}
 					if (file_browser_is_select_next_after_add(fb)) {
@@ -321,25 +304,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 				}
 			}
 			break;
-		case FB_DELETE_FILE:
-			if (!file_browser_selection_is_dir(fb)) {
-				char buf[128], *bufptr;
-				if (getcwd(cwd, 255) != NULL) {
-					snprintf(path, 255, "%s/%s", cwd,
-				         	file_browser_get_selected_file(fb));
-				}
-				bufptr = file_browser_get_selected_file(fb);
-				bufptr = charset_filename_convert_alloc(bufptr);
-				snprintf(buf, 127, "Delete \"%s\"?", bufptr);
-				free(bufptr);
-				fdp.fb = fb;
-				fdp.file = path;
-				question_set(&dlg, FILE_BROWSER, &view, buf, &fb_delete_func, &fdp);
-				view = QUESTION;
-				update = UPDATE_ALL;
-			} else {
-				player_display_set_notice_message("CANNOT DELETE DIRECTORIES!", NOTICE_DELAY);
-			}
+		case FB_DELETE_FILE: /* No longer supported */
 			break;
 		case MOVE_CURSOR_DOWN:
 			file_browser_move_selection_n_items_down(fb, items_skip);
@@ -1312,7 +1277,7 @@ static void run_player(char *skin_name, char *decoders_str)
 			}
 			cfg_add_key(config, "SDL_frontend.Fullscreen", fullscreen ? "yes" : "no");
 		}
-		dir_free(&fb.dir);
+		/*dir_free(&fb.dir);*/
 		cover_viewer_free(&cv);
 		skin_free(&skin);
 	}

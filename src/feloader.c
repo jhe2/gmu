@@ -142,6 +142,7 @@ int feloader_load_all(char *directory)
 	fec = fec_init_element();
 	fec_root = fec;
 
+	dir_init(&dir);
 	if (dir_read(&dir, directory, 0)) {
 		int i;
 

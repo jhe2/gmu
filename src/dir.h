@@ -37,10 +37,12 @@ void  dir_set_ext_filter(const char **dir_exts, int show_dirs);
 int   dir_read(Dir *dir, char *path, int directories_first);
 void  dir_free(Dir *dir);
 char *dir_get_filename(Dir *dir, int i);
+char *dir_get_filename_with_full_path_alloc(Dir *dir, int i);
 long  dir_get_filesize(Dir *dir, int i);
 void  dir_get_human_readable_filesize(Dir *dir, int i,
                                       char *target, int target_size);
 int   dir_get_number_of_files(Dir *dir);
 int   dir_get_flag(Dir *dir, int i);
 char *dir_get_path(Dir *dir);
+char *dir_get_new_dir_alloc(char *current_dir, char *new_dir);
 #endif

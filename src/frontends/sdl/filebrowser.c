@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: filebrowser.c  Created: 061011
  *
@@ -92,19 +92,32 @@ char *file_browser_get_selected_file(FileBrowser *fb)
 	return dir_get_filename(&fb->dir, fb->selection);
 }
 
+char *file_browser_get_selected_file_full_path_alloc(FileBrowser *fb)
+{
+	return dir_get_filename_with_full_path_alloc(&fb->dir, fb->selection);
+}
+
 int file_browser_change_dir(FileBrowser *fb, char *new_dir)
 {
-	char buf[128];
-	int  result = 0;
+	int   result = 0;
+	char *ndir = NULL;
 
-	strncpy(buf, new_dir, 127);
-	if (chdir(buf) == 0) {
-		dir_free(&fb->dir);
-		dir_read(&fb->dir, ".", fb->directories_first);
-		fb->selection = 0;
-		fb->offset = 0;
-		fb->horiz_offset = 0;
-		result = 1;
+	if (new_dir) {
+		int len = strlen(new_dir);
+		if (len > 0) {
+			ndir = malloc(len+1);
+			if (ndir) {
+				memcpy(ndir, new_dir, len+1);
+				dir_free(&fb->dir);
+				printf("new_dir=[%s]\n", ndir);
+				dir_read(&fb->dir, ndir, fb->directories_first);
+				fb->selection = 0;
+				fb->offset = 0;
+				fb->horiz_offset = 0;
+				result = 1;
+				free(ndir);
+			}
+		}
 	}
 	return result;
 }

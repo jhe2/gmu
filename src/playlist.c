@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playlist.c  Created: 060930
  *
@@ -93,7 +93,7 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 		entry->next = NULL;
 		if (file[0] != '/' && strncmp(file, "http://", 7) != 0) {
 			char path[256];
-			if (getcwd(path, 253)) {
+			if (getcwd(path, 253)) { /* do we still need this? */
 				snprintf(entry->filename, 255, "%s/%s", path, file);
 			} else {
 				entry->filename[0] = '\0';
@@ -151,45 +151,37 @@ static int internal_playlist_add_dir(Playlist *pl, char *directory)
 {
 	Dir       dir;
 	int       i;
-	char      filetype[16], *cwd, *prev_cwd;
+	char      filetype[16];
 	int       result = 1;
 
-	cwd = malloc(256);
-	prev_cwd = malloc(256);
+	wdprintf(V_INFO, "playlist", "Adding '%s'...\n", directory);
 
-	if (cwd && prev_cwd && getcwd(prev_cwd, 255) != NULL) {
-		wdprintf(V_INFO, "playlist", "Adding %s...\n", directory);
-		if (chdir(directory) == 0) {
-			dir_read(&dir, ".", 1);
-
-			if (getcwd(cwd, 255) != NULL) {
-				for (i = 0; i < dir_get_number_of_files(&dir); i++) {
-					if (dir_get_flag(&dir, i) == DIRECTORY) {
-						if (dir_get_filename(&dir, i)[0] != '.')
-							internal_playlist_add_dir(pl, dir_get_filename(&dir, i));
-					} else {
-						char  path[256];
-						char *tmp = get_file_extension(dir_get_filename(&dir, i));
-						filetype[0] = '\0';
-						if (tmp != NULL)
-							strtoupper(filetype, tmp, 15);
-						snprintf(path, 255, "%s/%s", cwd, dir_get_filename(&dir, i));
-						playlist_add_file(pl, path);
-						/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
+	if (dir_read(&dir, directory, 1)) {
+		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
+			if (dir_get_flag(&dir, i) == DIRECTORY) {
+				if (dir_get_filename(&dir, i)[0] != '.') {
+					char *f = dir_get_filename_with_full_path_alloc(&dir, i);
+					if (f) {
+						internal_playlist_add_dir(pl, f);
+						free(f);
 					}
 				}
+			} else {
+				char *tmp = get_file_extension(dir_get_filename(&dir, i));
+				char *f   = dir_get_filename_with_full_path_alloc(&dir, i);
+				filetype[0] = '\0';
+				if (tmp != NULL) strtoupper(filetype, tmp, 15);
+				if (f) {
+					playlist_add_file(pl, f);
+					free(f);
+				}
+				/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 			}
-			dir_free(&dir);
-			if (chdir(prev_cwd) == -1)
-				wdprintf(V_ERROR, "playlist", "ERROR: Failed changing directory to previous directory.\n");
-		} else {
-			wdprintf(V_ERROR, "playlist", "ERROR: Failed changing directory.\n");
-			result = 0;
 		}
-		wdprintf(V_INFO, "playlist", "Done adding %s.\n", directory);
-		free(cwd);
-		free(prev_cwd);
 	}
+	dir_free(&dir);
+
+	wdprintf(V_INFO, "playlist", "Done adding %s.\n", directory);
 	return result;
 }
 
@@ -204,6 +196,7 @@ static void *thread_add_dir(void *udata)
 
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread created.\n");
 	internal_playlist_add_dir(tp->pl, tp->directory);
+	free(tp->directory);
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread finished.\n");
 	recursive_directory_add_in_progress = 0;
 	return NULL;
@@ -216,12 +209,16 @@ int playlist_add_dir(Playlist *pl, char *directory)
 	int                    res = 0;
 
 	if (!recursive_directory_add_in_progress) {
+		int len = strlen(directory);
 		recursive_directory_add_in_progress = 1;
-		tp.directory = directory;
-		tp.pl = pl;
-		pthread_create(&thread, NULL, thread_add_dir, &tp);
-		pthread_detach(thread);
-		res = 1;
+		tp.directory = malloc(len);
+		if (tp.directory) {
+			memcpy(tp.directory, directory, len+1);
+			tp.pl = pl;
+			pthread_create(&thread, NULL, thread_add_dir, &tp);
+			pthread_detach(thread);
+			res = 1;
+		}
 	}
 	return res;
 }
