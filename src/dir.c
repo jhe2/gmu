@@ -132,7 +132,7 @@ int dir_read(Dir *dir, char *path, int directories_first)
 					dir->filesize[i] = dir->filesize_tmp[i];
 				}
 			}
-			result = 1;
+			if (dir->files > 0) result = 1;
 		}
 	}
 	return result;
@@ -145,7 +145,10 @@ void dir_free(Dir *dir)
 
 	for (i = 0, list = dir->ep; i < dir->files; i++, list++)
 		free(*list);
-	if (dir->ep) free(dir->ep);
+	if (dir->ep) {
+		free(dir->ep);
+		dir->ep = NULL;
+	}
 }
 
 char *dir_get_filename(Dir *dir, int i)

@@ -109,12 +109,10 @@ int file_browser_change_dir(FileBrowser *fb, char *new_dir)
 			if (ndir) {
 				memcpy(ndir, new_dir, len+1);
 				dir_free(&fb->dir);
-				printf("new_dir=[%s]\n", ndir);
-				dir_read(&fb->dir, ndir, fb->directories_first);
+				result = dir_read(&fb->dir, ndir, fb->directories_first);
 				fb->selection = 0;
 				fb->offset = 0;
 				fb->horiz_offset = 0;
-				result = 1;
 				free(ndir);
 			}
 		}

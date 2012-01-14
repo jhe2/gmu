@@ -251,14 +251,22 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 			break;
 		case FB_CHDIR:
 			if (file_browser_selection_is_dir(fb)) {
-				file_browser_change_dir(fb, file_browser_get_selected_file(fb));
+				if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
+					do {
+						wdprintf(V_WARNING, "sdl_frontend", "Directory not accessible. Trying parent...");
+					} while (!file_browser_change_dir(fb, ".."));
+				}
 				update = UPDATE_ALL;
 			}
 			break;
 		case FB_ADD_FILE_TO_PL_OR_CHDIR:
 		case FB_INSERT_FILE_INTO_PL:
 			if (file_browser_selection_is_dir(fb)) {
-				file_browser_change_dir(fb, file_browser_get_selected_file(fb));
+				if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
+					do {
+						wdprintf(V_WARNING, "sdl_frontend", "Directory not accessible. Trying parent...");
+					} while (!file_browser_change_dir(fb, ".."));
+				}
 				update = UPDATE_ALL;
 			} else {
 				char  filetype[16] = "(none)";
