@@ -47,6 +47,22 @@ void dir_init(Dir *dir)
 	dir->files = 0;
 	dir->ep = NULL;
 	dir->path[0] = '\0';
+	dir->base_dir[0] = '\0';
+}
+
+void dir_set_base_dir(Dir *dir, char *base_dir)
+{
+	if (base_dir) {
+		if (strlen(base_dir) < 256)
+			strncpy(dir->base_dir, base_dir, 255);
+		else
+			dir->base_dir[0] = '\0';
+	}
+}
+
+char *dir_get_base_dir(Dir *dir)
+{
+	return dir->base_dir;
 }
 
 int dir_read(Dir *dir, char *path, int directories_first)
@@ -58,14 +74,13 @@ int dir_read(Dir *dir, char *path, int directories_first)
 	if (dir->path[0] == '\0' || (dir->path[0] == '.' && dir->path[1] == '\0'))
 		if (!getcwd(dir->path, 255)) dir->path[0] = '\0';
 	
-	if (dir->path[0]) {
+	if (dir->path[0] && dir->base_dir[0]) {
 		new_path = dir_get_new_dir_alloc(dir->path, path);
 		wdprintf(V_DEBUG, "dir", "old path=%s\nnew path=%s\n", dir->path, new_path);
-		if (new_path) {
+		if (new_path && strncmp(new_path, dir->base_dir, strlen(dir->base_dir)) == 0) {
 			dir->files = 0;
 			memset(dir->path, 0, 256);
 			strncpy(dir->path, new_path, 255);
-			free(new_path);
 			wdprintf(V_DEBUG, "dir", "scanning path=[%s]\n", dir->path);
 			dir->files = scandir(dir->path, &(dir->ep), select_file, alphasort);
 			wdprintf(V_DEBUG, "dir", "files found=%d\n", dir->files);
@@ -134,6 +149,7 @@ int dir_read(Dir *dir, char *path, int directories_first)
 			}
 			if (dir->files > 0) result = 1;
 		}
+		if (new_path) free(new_path);
 	}
 	return result;
 }
@@ -143,9 +159,9 @@ void dir_free(Dir *dir)
 	int             i;
 	struct dirent **list;
 
-	for (i = 0, list = dir->ep; i < dir->files; i++, list++)
-		free(*list);
 	if (dir->ep) {
+		for (i = 0, list = dir->ep; i < dir->files; i++, list++)
+			free(*list);
 		free(dir->ep);
 		dir->ep = NULL;
 	}

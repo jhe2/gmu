@@ -26,7 +26,7 @@ typedef struct FileBrowser
 	int         select_next_after_add;
 } FileBrowser;
 
-void    file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset);
+void    file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, char *base_dir);
 int     file_browser_set_selection(FileBrowser *fb, int selection);
 int     file_browser_get_selection(FileBrowser *fb);
 void    file_browser_move_selection_down(FileBrowser *fb);

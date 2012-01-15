@@ -143,6 +143,7 @@ int feloader_load_all(char *directory)
 	fec_root = fec;
 
 	dir_init(&dir);
+	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
 		int i;
 

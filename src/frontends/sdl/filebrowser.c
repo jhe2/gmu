@@ -20,7 +20,7 @@
 #include "filebrowser.h"
 #include "skin.h"
 
-void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset)
+void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, char *base_dir)
 {
 	fb->skin = skin;
 	fb->horiz_offset = 0;
@@ -31,6 +31,7 @@ void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset)
 	fb->longest_line_so_far = 0;
 	fb->select_next_after_add = 0;
 	dir_init(&(fb->dir));
+	dir_set_base_dir(&(fb->dir), base_dir);
 }
 
 void file_browser_set_directories_first(FileBrowser *fb, int value)
@@ -97,7 +98,7 @@ char *file_browser_get_selected_file_full_path_alloc(FileBrowser *fb)
 	return dir_get_filename_with_full_path_alloc(&fb->dir, fb->selection);
 }
 
-int file_browser_change_dir(FileBrowser *fb, char *new_dir)
+static int internal_change_dir(FileBrowser *fb, char *new_dir)
 {
 	int   result = 0;
 	char *ndir = NULL;
@@ -117,6 +118,14 @@ int file_browser_change_dir(FileBrowser *fb, char *new_dir)
 			}
 		}
 	}
+	return result;
+}
+
+int file_browser_change_dir(FileBrowser *fb, char *new_dir)
+{
+	int result = internal_change_dir(fb, new_dir);
+	if (!result) result = internal_change_dir(fb, "..");
+	if (!result) result = internal_change_dir(fb, dir_get_base_dir(&(fb->dir)));
 	return result;
 }
 

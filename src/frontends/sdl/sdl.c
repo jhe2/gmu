@@ -252,9 +252,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 		case FB_CHDIR:
 			if (file_browser_selection_is_dir(fb)) {
 				if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
-					do {
-						wdprintf(V_WARNING, "sdl_frontend", "Directory not accessible. Trying parent...");
-					} while (!file_browser_change_dir(fb, ".."));
+					wdprintf(V_WARNING, "sdl_frontend", "Failed to change directory. Even fallbacks did not work.\n");
 				}
 				update = UPDATE_ALL;
 			}
@@ -263,9 +261,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 		case FB_INSERT_FILE_INTO_PL:
 			if (file_browser_selection_is_dir(fb)) {
 				if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
-					do {
-						wdprintf(V_WARNING, "sdl_frontend", "Directory not accessible. Trying parent...");
-					} while (!file_browser_change_dir(fb, ".."));
+					wdprintf(V_WARNING, "sdl_frontend", "Failed to change directory. Even fallbacks did not work.\n");
 				}
 				update = UPDATE_ALL;
 			} else {
@@ -715,11 +711,13 @@ static void run_player(char *skin_name, char *decoders_str)
 
 		dir_set_ext_filter(gmu_core_get_file_extensions(), 1);
 		if (strncmp(cfg_get_key_value(*config, "FileSystemCharset"), "UTF-8", 5) == 0) {
-			file_browser_init(&fb, &skin, UTF_8);
+			char *base_dir = cfg_get_key_value(*config, "SDL_frontend.BaseDir");
+			file_browser_init(&fb, &skin, UTF_8, base_dir ? base_dir : "/");
 			pl_browser_init(&pb, &skin, UTF_8);
 			charset_filename_set(UTF_8);
 		} else {
-			file_browser_init(&fb, &skin, ISO_8859_1);
+			char *base_dir = cfg_get_key_value(*config, "SDL_frontend.BaseDir");
+			file_browser_init(&fb, &skin, ISO_8859_1, base_dir ? base_dir : "/");
 			pl_browser_init(&pb, &skin, ISO_8859_1);
 			charset_filename_set(ISO_8859_1);
 		}

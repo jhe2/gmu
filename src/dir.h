@@ -28,11 +28,14 @@ struct _Dir
 	long            filesize[MAX_FILES];
 	char           *filename[MAX_FILES];
 	char            path[256];
+	char            base_dir[256];
 };
 
 typedef struct _Dir Dir;
 
 void  dir_init(Dir *dir);
+void  dir_set_base_dir(Dir *dir, char *base_dir);
+char *dir_get_base_dir(Dir *dir);
 void  dir_set_ext_filter(const char **dir_exts, int show_dirs);
 int   dir_read(Dir *dir, char *path, int directories_first);
 void  dir_free(Dir *dir);
