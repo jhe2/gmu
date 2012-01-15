@@ -1283,7 +1283,7 @@ static void run_player(char *skin_name, char *decoders_str)
 			}
 			cfg_add_key(config, "SDL_frontend.Fullscreen", fullscreen ? "yes" : "no");
 		}
-		/*dir_free(&fb.dir);*/
+		file_browser_free(&fb);
 		cover_viewer_free(&cv);
 		skin_free(&skin);
 	}

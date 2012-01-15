@@ -44,6 +44,7 @@ static int select_file(const struct dirent *de)
 
 void dir_init(Dir *dir)
 {
+	dir->entries = 0;
 	dir->files = 0;
 	dir->ep = NULL;
 	dir->path[0] = '\0';
@@ -78,11 +79,12 @@ int dir_read(Dir *dir, char *path, int directories_first)
 		new_path = dir_get_new_dir_alloc(dir->path, path);
 		wdprintf(V_DEBUG, "dir", "old path=%s\nnew path=%s\n", dir->path, new_path);
 		if (new_path && strncmp(new_path, dir->base_dir, strlen(dir->base_dir)) == 0) {
-			dir->files = 0;
 			memset(dir->path, 0, 256);
 			strncpy(dir->path, new_path, 255);
 			wdprintf(V_DEBUG, "dir", "scanning path=[%s]\n", dir->path);
-			dir->files = scandir(dir->path, &(dir->ep), select_file, alphasort);
+			dir_free(dir);
+			dir->entries = scandir(dir->path, &(dir->ep), select_file, alphasort);
+			dir->files = dir->entries;
 			wdprintf(V_DEBUG, "dir", "files found=%d\n", dir->files);
 			if (dir->files > MAX_FILES) dir->files = MAX_FILES;
 			for (i = 0; i < dir->files; i++) {
@@ -160,7 +162,7 @@ void dir_free(Dir *dir)
 	struct dirent **list;
 
 	if (dir->ep) {
-		for (i = 0, list = dir->ep; i < dir->files; i++, list++)
+		for (i = 0, list = dir->ep; i < dir->entries; i++, list++)
 			free(*list);
 		free(dir->ep);
 		dir->ep = NULL;

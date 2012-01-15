@@ -34,6 +34,11 @@ void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, char 
 	dir_set_base_dir(&(fb->dir), base_dir);
 }
 
+void file_browser_free(FileBrowser *fb)
+{
+	dir_free(&(fb->dir));
+}
+
 void file_browser_set_directories_first(FileBrowser *fb, int value)
 {
 	fb->directories_first = value;

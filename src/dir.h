@@ -21,7 +21,8 @@
 struct _Dir
 {
 	struct dirent **ep;
-	int             files;
+	/* "entries" contains all fetched files, while "files" contains the number of visible files */
+	int             entries, files;
 	short           flag_tmp[MAX_FILES];
 	short           flag[MAX_FILES];
 	long            filesize_tmp[MAX_FILES];
