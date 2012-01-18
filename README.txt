@@ -157,8 +157,9 @@ These are the default controls. You can remap all button
 by creating your own keymap file. See below for details.
 These key mappings assume that the stick click is available,
 which is not the case for GP2X-F200 units. When using a
-GP2X-F200 run the Gmu setup tool and select the 
-gp2x-f200.keymap file or create your own keymap file.
+GP2X-F200 edit the gmu.gp2x.conf file with a text editor and
+change the line "KeyMap=gp2x.keymap" to "KeyMap=gp2x-f200.keymap"
+to use the gp2x-f200.keymap file or create your own keymap file.
 With the gp2x-f200.keymap file the left shoulder button is
 used as the modifier key instead of the stick click.
 
@@ -331,9 +332,8 @@ A, B, X, Y, START, SELECT, L, R, VOL+, VOL-, STICK_CLICK,
 STICK_LEFT, STICK_RIGHT, STICK_UP and STICK_DOWN.
 
 There are a few alternate keymap example files included.
-To use them, either edit your gmu.conf and change the
-KeyMap=default.keymap line accordingly or use the Gmu
-setup tool to change it.
+To use them, edit your gmu.conf with a text editor and change the
+KeyMap=default.keymap line accordingly.
 
 
 4. Command line arguments
@@ -369,10 +369,6 @@ Example:
 
 ./gmu -s theme_name
 
-The Gmu setup tool can be launched by using the -c parameter.
-There is a shell script called gmu-setup.gpu included in the
-Gmu archive that runs Gmu with the -c parameter.
-
 
 5. Config file
 --------------
@@ -385,8 +381,9 @@ Notepad++ (Windows only). Do not use Notepad or (which is even worse)
 Wordpad.
 
 Please note: Most of the following options can be changed 
-through the Gmu setup tool without editing the config file.
-In the 0.7.0 series the setup tool is currently not available.
+through the Gmu setup tool (up to Gmu version 0.6.3) without editing 
+the config file. In the 0.7.0 and later series the setup tool is 
+currently not available.
 
 Supported options:
 

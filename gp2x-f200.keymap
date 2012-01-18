@@ -9,6 +9,7 @@ Left=Left
 Right=Right
 Up=Up
 Down=Down
+PageDown=Mod+Down
 IncreaseVolume=VolUp
 DecreaseVolume=VolDown
 #ToggleTime=Mod+VolDown
@@ -18,7 +19,7 @@ ToggleView=Select
 #PreviousTrack=L
 NextTrack=R
 SeekForward=Mod+R
-#SeekBackward=Mod+L
+SeekBackward=Mod+L
 Lock=Mod+Select
 Unlock=Mod+Select
 Exit=Mod+Start
@@ -29,6 +30,7 @@ ProgramInfoOkay=B
 # File browser mappings:
 #FileBrowserDirUp=Left
 #FileBrowserChDir=Right
+
 FileBrowserPlayFile=A
 FileBrowserAddFileToPlaylistOrChDir=B
 FileBrowserAddDirToPlaylist=Y
@@ -47,7 +49,7 @@ PlaylistSaveCancel=A
 PlaylistSaveLoadList=Y
 PlaylistSaveAppendList=Mod+Y
 #PlaylistDeleteFile=Mod+X
-PlaylistQueue=Mod+VOL+
+PlaylistQueue=Mod+VolUp
 # Track info mappings:
 TrackInfoToggleCover=A
 TrackInfoToggleText=B
