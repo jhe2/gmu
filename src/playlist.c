@@ -213,7 +213,7 @@ int playlist_add_dir(Playlist *pl, char *directory)
 	if (!recursive_directory_add_in_progress) {
 		int len = strlen(directory);
 		recursive_directory_add_in_progress = 1;
-		tp.directory = malloc(len);
+		tp.directory = malloc(len+1);
 		if (tp.directory) {
 			memcpy(tp.directory, directory, len+1);
 			tp.pl = pl;
