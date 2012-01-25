@@ -16,13 +16,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/time.h>
 #include "eventqueue.h"
 
 void event_queue_init(EventQueue *eq)
 {
-		eq->first = NULL;
-		eq->last = NULL;
-		pthread_mutex_init(&(eq->mutex), NULL);
+	eq->first = NULL;
+	eq->last = NULL;
+	pthread_mutex_init(&(eq->mutex), NULL);
+	pthread_mutex_init(&(eq->mutex_cond), NULL);
+	pthread_cond_init(&(eq->cond), NULL);
 }
 
 int event_queue_push(EventQueue *eq, GmuEvent ev)
@@ -40,6 +43,7 @@ int event_queue_push(EventQueue *eq, GmuEvent ev)
 		if (!eq->first) eq->first = new_entry;
 		result = 1;
 	}
+	pthread_cond_broadcast(&(eq->cond));
 	pthread_mutex_unlock(&(eq->mutex));
 	return result;
 }
@@ -72,10 +76,34 @@ void event_queue_clear(EventQueue *eq)
 void event_queue_free(EventQueue *eq)
 {
 	event_queue_clear(eq);
+	pthread_cond_broadcast(&(eq->cond));
 	pthread_mutex_destroy(&(eq->mutex));
+	pthread_cond_destroy(&(eq->cond));
+	pthread_mutex_destroy(&(eq->mutex_cond));
 }
 
 int event_queue_is_event_waiting(EventQueue *eq)
 {
-	return (eq->first ? 1 : 0);
+	int res;
+	pthread_mutex_lock(&(eq->mutex));
+	res = (eq->first ? 1 : 0);
+	pthread_mutex_unlock(&(eq->mutex));
+	return res;
+}
+
+void event_queue_wait_for_event(EventQueue *eq, int with_timeout)
+{
+	pthread_mutex_lock(&(eq->mutex_cond));
+	if (with_timeout <= 0) {
+		pthread_cond_wait(&(eq->cond), &(eq->mutex_cond));
+	} else {
+		struct timespec ts;
+		struct timeval  tp;
+		gettimeofday(&tp, NULL);
+		ts.tv_sec  = tp.tv_sec;
+		ts.tv_nsec = tp.tv_usec * 1000;
+		ts.tv_sec += with_timeout;
+		pthread_cond_timedwait(&(eq->cond), &(eq->mutex_cond), &ts);
+	}
+	pthread_mutex_unlock(&(eq->mutex_cond));
 }

@@ -23,7 +23,8 @@
 #define RINGBUFFER_SIZE 131072
 
 static RingBuffer    audio_rb;
-static SDL_mutex    *audio_mutex, *spectrum_mutex;
+static SDL_mutex    *audio_mutex, *spectrum_mutex, *cond_mutex;
+static SDL_cond     *cond_data_needed;
 static unsigned long buf_read_counter;
 static int           have_samplerate, have_channels;
 static int           device_open;
@@ -94,6 +95,9 @@ void audio_spectrum_read_unlock(void)
 static void fill_audio(void *udata, Uint8 *stream, int len)
 {
 	while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(100);
+	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL * 3) {
+		SDL_CondSignal(cond_data_needed);
+	}
 	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL) {
 		wdprintf(V_WARNING, "audio", "Buffer (almost) empty! Buffer fill: %d bytes\n", 
 		         RINGBUFFER_SIZE - ringbuffer_get_free(&audio_rb));
@@ -161,8 +165,10 @@ int audio_device_open(int samplerate, int channels)
 		result = 0;
 	}
 	ringbuffer_clear(&audio_rb);
-	if (result == 0)
+	if (result == 0) {
+		SDL_CondSignal(cond_data_needed);
 		SDL_PauseAudio(1);
+	}
 	return result;
 }
 
@@ -212,6 +218,8 @@ void audio_buffer_init(void)
 	ringbuffer_init(&audio_rb, RINGBUFFER_SIZE);
 	audio_mutex = SDL_CreateMutex();
 	spectrum_mutex = SDL_CreateMutex();
+	cond_mutex = SDL_CreateMutex();
+	cond_data_needed = SDL_CreateCond();
 }
 
 void audio_buffer_clear(void)
@@ -225,6 +233,8 @@ void audio_buffer_free(void)
 	ringbuffer_free(&audio_rb);
 	SDL_DestroyMutex(audio_mutex);
 	SDL_DestroyMutex(spectrum_mutex);
+	SDL_DestroyCond(cond_data_needed);
+	SDL_DestroyMutex(cond_mutex);
 }
 
 void audio_device_close(void)
@@ -268,4 +278,11 @@ long audio_increase_sample_counter(long sample_offset)
 long audio_get_sample_count(void)
 {
 	return buf_read_counter / (2 * have_channels);
+}
+
+void audio_wait_until_more_data_is_needed(void)
+{
+	SDL_mutexP(cond_mutex);
+	SDL_CondWaitTimeout(cond_data_needed, cond_mutex, 1000);
+	SDL_mutexV(cond_mutex);
 }

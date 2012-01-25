@@ -34,6 +34,7 @@ int  audio_get_volume(void);
 long audio_set_sample_counter(long sample);
 long audio_increase_sample_counter(long sample_offset);
 long audio_get_sample_count(void);
+void audio_wait_until_more_data_is_needed(void);
 int16_t *audio_spectrum_get_current_amplitudes(void);
 void     audio_spectrum_register_for_access(void);
 void     audio_spectrum_unregister(void);

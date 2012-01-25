@@ -29,7 +29,8 @@ struct _EventQueueEntry
 struct _EventQueue
 {
 	EventQueueEntry *first, *last;
-	pthread_mutex_t  mutex;
+	pthread_mutex_t  mutex, mutex_cond;
+	pthread_cond_t   cond;
 };
 
 typedef struct _EventQueue EventQueue;
@@ -39,5 +40,6 @@ int      event_queue_push(EventQueue *eq, GmuEvent ev);
 GmuEvent event_queue_pop(EventQueue *eq);
 void     event_queue_clear(EventQueue *eq);
 int      event_queue_is_event_waiting(EventQueue *eq);
+void     event_queue_wait_for_event(EventQueue *eq, int with_timeout);
 void     event_queue_free(EventQueue *eq);
 #endif

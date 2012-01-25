@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: core.c  Created: 081115
  *
@@ -75,9 +75,9 @@ static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 	M3u m3u;
 	if (m3u_open_file(&m3u, filename)) {
 		while (m3u_read_next_item(&m3u)) {
-		   playlist_add_item(pl,
-		                     m3u_current_item_get_full_path(&m3u),
-		                     m3u_current_item_get_title(&m3u));
+			playlist_add_item(pl,
+			                  m3u_current_item_get_full_path(&m3u),
+			                  m3u_current_item_get_title(&m3u));
 		}
 		m3u_close_file(&m3u);
 		event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
@@ -527,7 +527,7 @@ char *gmu_core_get_config_dir(void)
 
 static void print_cmd_help(char *prog_name)
 {
-	printf("Gmu Music Player "VERSION_NUMBER"\n");
+	printf("Gmu Music Player " VERSION_NUMBER "\n");
 	printf("Copyright (c) 2006-2011 Johannes Heimansberg\n");
 	printf("http://wejp.k.vu/projects/gmu/\n");
 	printf("\nUsage:\n%s [-h] [-r] [-v V] [-c file.conf] [-s theme_name] [music_file.ext] [...]\n", prog_name);
@@ -879,7 +879,8 @@ int main(int argc, char **argv)
 	while (gmu_running || event_queue_is_event_waiting(&event_queue)) {
 		GmuFrontend *fe = NULL;
 
-		usleep(100000);
+		if (global_command == NO_CMD)
+			event_queue_wait_for_event(&event_queue, 2);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item = playlist_get_entry(&pl, global_param);
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);

@@ -301,14 +301,15 @@ static void *decode_audio_thread(void *udata)
 					} else {
 						int ret = 0;
 						while (!ret && item_status == PLAYING) {
+							if (audio_buffer_get_fill() > MIN_BUFFER_FILL * 3)
+								audio_wait_until_more_data_is_needed();
 							ret = audio_fill_buffer(pcmout, size);
-							SDL_Delay(10);
-							/*usleep(5);*/
+							if (!ret) SDL_Delay(10);
 						}
 						if (SDL_GetAudioStatus() != SDL_AUDIO_PLAYING &&
 							!audio_get_pause() && playback_status == PLAYING &&
 							audio_buffer_get_fill() > audio_buffer_get_size() / 2) {
-							wdprintf(V_DEBUG, "fileplayer", "UNPAUSE AUDIO!\n");
+							wdprintf(V_DEBUG, "fileplayer", "Unpausing audio...\n");
 							SDL_PauseAudio(0);
 						}
 					}

@@ -270,17 +270,17 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 				char *tmp = sel_file ? get_file_extension(sel_file) : NULL;
 				if (tmp != NULL) strtoupper(filetype, tmp, 15);
 				if (sel_file) {
-					if (strcmp(filetype, "M3U") == 0) {
-						wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
-						gmu_core_add_m3u_contents_to_playlist(file_browser_get_selected_file(fb));
-						player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
-					} else if (strcmp(filetype, "PLS") == 0) {
-						wdprintf(V_INFO, "sdl_frontend", "PLS detected.\n");
-						gmu_core_add_pls_contents_to_playlist(file_browser_get_selected_file(fb));
-						player_display_set_notice_message("PLS ADDED TO PLAYLIST", NOTICE_DELAY);
-					} else {
-						path = file_browser_get_selected_file_full_path_alloc(fb);
-						if (path) {
+					path = file_browser_get_selected_file_full_path_alloc(fb);
+					if (path) {
+						if (strcmp(filetype, "M3U") == 0) {
+							wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
+							gmu_core_add_m3u_contents_to_playlist(path);
+							player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
+						} else if (strcmp(filetype, "PLS") == 0) {
+							wdprintf(V_INFO, "sdl_frontend", "PLS detected.\n");
+							gmu_core_add_pls_contents_to_playlist(path);
+							player_display_set_notice_message("PLS ADDED TO PLAYLIST", NOTICE_DELAY);
+						} else {
 							if (user_key_action == FB_INSERT_FILE_INTO_PL) { /* insert item */
 								Entry *sel_entry = gmu_core_playlist_get_first();
 								int    i;
@@ -298,8 +298,8 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 								gmu_core_playlist_add_file(path);
 								player_display_set_notice_message("ITEM ADDED TO PLAYLIST", NOTICE_DELAY);
 							}
-							free(path);
 						}
+						free(path);
 					}
 					if (file_browser_is_select_next_after_add(fb)) {
 						file_browser_move_selection_down(fb);
