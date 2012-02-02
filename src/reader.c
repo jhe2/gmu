@@ -440,10 +440,17 @@ int reader_read_bytes(Reader *r, int size)
 	if (r->buf) r->buf_size = size;
 	if (r->file) {
 		if (r->buf) {
+			long pos = ftell(r->file);
 			memset(r->buf, 0, r->buf_size);
 			if (fread(r->buf, size, 1, r->file) < 1) {
+				do { /* Not the most elegant solution.. ;) */
+					size--;
+					if (fseek(r->file, pos, SEEK_SET) != 0)
+						wdprintf(V_ERROR, "reader", "Unable to seek to pos %d:(\n", pos);
+				} while (fread(r->buf, size, 1, r->file) < 1 && size > 0);
+				if (size > 0) read_okay = 1;
 				r->eof = feof(r->file);
-				r->buf_data_size = 0; /* Maybe not such a good idea. We could have gotten a few bytes. */
+				r->buf_data_size = size;
 			} else {				
 				r->buf[size] = '\0';
 				read_okay = 1;

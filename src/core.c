@@ -108,11 +108,11 @@ void gmu_core_add_pls_contents_to_playlist(char *filename)
 	add_pls_contents_to_playlist(&pl, filename);
 }
 
-static int play_next(Playlist *pl, TrackInfo *ti)
+static int play_next(Playlist *pl, TrackInfo *ti, int skip_current)
 {
 	int result = 0;
 	if (playlist_next(pl)) {
-		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), ti);
+		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), ti, skip_current);
 		result = 1;
 		/*event_queue_push(&event_queue, GMU_TRACK_CHANGE);*/
 		player_status = PLAYING;
@@ -126,7 +126,7 @@ static int play_previous(Playlist *pl, TrackInfo *ti)
 	if (playlist_prev(pl)) {
 		Entry *entry = playlist_get_current(pl);
 		if (entry != NULL) {
-			file_player_play_file(playlist_get_entry_filename(pl, entry), ti);
+			file_player_play_file(playlist_get_entry_filename(pl, entry), ti, 1);
 			result = 1;
 			/*event_queue_push(&event_queue, GMU_TRACK_CHANGE);*/
 			player_status = PLAYING;
@@ -234,7 +234,7 @@ int gmu_core_pause(void)
 
 int gmu_core_next(void)
 {
-	return play_next(&pl, &current_track_ti);
+	return play_next(&pl, &current_track_ti, 1);
 }
 
 int gmu_core_previous(void)
@@ -242,7 +242,7 @@ int gmu_core_previous(void)
 	return play_previous(&pl, &current_track_ti);
 }
 
-int gmu_core_stop(void)
+static int stop_playback(void)
 {
 	int res = 0;
 	if (player_status != STOPPED) {
@@ -254,6 +254,12 @@ int gmu_core_stop(void)
 		res = 1;
 	}
 	return res;
+}
+
+int gmu_core_stop(void)
+{
+	audio_set_pause(1);
+	return stop_playback();
 }
 
 int gmu_core_play_pl_item(int item)
@@ -852,6 +858,7 @@ int main(int argc, char **argv)
 			feloader_load_single_frontend(frontend_plugin_by_cmd_arg[i]);
 	}
 
+	file_player_init();
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "LyricsFilePattern"));
 
 	set_default_play_mode(&config, &pl);
@@ -886,22 +893,22 @@ int main(int argc, char **argv)
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);
 			if (tmp_item != NULL) {
 				playlist_set_current(&pl, tmp_item);
-				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), &current_track_ti);
+				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), &current_track_ti, 1);
 			}
 			global_command = NO_CMD;
 			global_param = 0;
 		} else if (global_command == PLAY_FILE && global_filename[0] != '\0') {
 			wdprintf(V_DEBUG, "gmu", "Direct file playback: %s\n", global_filename);
 			playlist_set_current(&pl, NULL);
-			file_player_play_file(global_filename, &current_track_ti);
+			file_player_play_file(global_filename, &current_track_ti, 1);
 			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 			global_command = NO_CMD;
 		} else if ((file_player_get_item_status() == FINISHED && 
 		            file_player_get_playback_status() == PLAYING) || 
 		           global_command == NEXT) {
-			if (global_filename[0] != '\0' || !play_next(&pl, &current_track_ti)) {
+			if (global_filename[0] != '\0' || !play_next(&pl, &current_track_ti, 0)) {
 				statu = STOPPED; /* no next track? -> STOP */
-				gmu_core_stop();
+				stop_playback();
 				if (shutdown_timer == -1) { /* Shutdown after last track */
 					auto_shutdown = 1;
 					event_queue_push(&event_queue, GMU_QUIT);

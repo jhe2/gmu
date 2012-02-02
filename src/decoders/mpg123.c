@@ -105,7 +105,7 @@ static int decode_data(char *target, int max_size)
 				mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
 			}
 		} else {
-			wdprintf(V_WARNING, "mpg123", "Got not data from reader :(\n");
+			wdprintf(V_WARNING, "mpg123", "Got no data from reader :(\n");
 		}
 	}
 	mpg123_info(player, &mi);

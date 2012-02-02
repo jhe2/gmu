@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: audio.c  Created: 061110
  *
@@ -28,17 +28,18 @@ static SDL_cond     *cond_data_needed;
 static unsigned long buf_read_counter;
 static int           have_samplerate, have_channels;
 static int           device_open;
-static int           paused;
+static int           paused, done;
 static char          buf[65536];
 static int           volume, volume_internal;
 static int           spectrum_reg = 0;
 
 int audio_fill_buffer(char *data, int size)
 {
-	int result;
-	while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(50);
-	result = ringbuffer_write(&audio_rb, data, size);
-	while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(50);
+	int result = 0;
+	if (SDL_mutexP(audio_mutex) == 0) {
+		result = ringbuffer_write(&audio_rb, data, size);
+		SDL_mutexV(audio_mutex);
+	}
 	return result;
 }
 
@@ -94,21 +95,38 @@ void audio_spectrum_read_unlock(void)
 
 static void fill_audio(void *udata, Uint8 *stream, int len)
 {
-	while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(100);
+	SDL_mutexP(audio_mutex);
 	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL * 3) {
 		SDL_CondSignal(cond_data_needed);
 	}
 	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL) {
-		wdprintf(V_WARNING, "audio", "Buffer (almost) empty! Buffer fill: %d bytes\n", 
-		         RINGBUFFER_SIZE - ringbuffer_get_free(&audio_rb));
-		SDL_PauseAudio(1);
-		while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(100);
-		while (ringbuffer_get_free(&audio_rb) > 65536) SDL_Delay(100);
-		while (SDL_mutexP(audio_mutex) == -1) SDL_Delay(100);
-		if (!paused) SDL_PauseAudio(0);
+		wdprintf(V_WARNING, "audio", "Buffer %sempty! Buffer fill: %d bytes\n",
+		         ringbuffer_get_fill(&audio_rb) > 0 ? "almost " : "",
+		         ringbuffer_get_fill(&audio_rb));
+		if (ringbuffer_get_fill(&audio_rb) == 0) {
+			SDL_PauseAudio(1);
+			if (SDL_mutexV(audio_mutex) == 0) {
+				if (done) {
+					audio_set_pause(1);
+				} else {
+					while (ringbuffer_get_free(&audio_rb) > 65536 && !paused && !done) {
+						wdprintf(V_DEBUG, "audio", "Waiting for buffer to refill...\n");
+						SDL_Delay(100);
+					}
+				}
+				SDL_mutexP(audio_mutex);
+			}
+			if (!paused) SDL_PauseAudio(0);
+		}
 	}
-	buf_read_counter += len;
-	ringbuffer_read(&audio_rb, buf, len);
+	if (!ringbuffer_read(&audio_rb, buf, len)) {
+		int avail = ringbuffer_get_fill(&audio_rb);
+		memset(buf, 0, 65536);
+		if (ringbuffer_read(&audio_rb, buf, avail))
+			buf_read_counter += avail;
+	} else {
+		buf_read_counter += len;
+	}
 
 	/* When requested, run DFT on a few samples of each block of data for visualization purposes */
 	if (spectrum_reg > 0) {
@@ -126,7 +144,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 	}
 
 	SDL_MixAudio(stream, (unsigned char *)buf, len, volume);
-	while (SDL_mutexV(audio_mutex) == -1) SDL_Delay(100);
+	SDL_mutexV(audio_mutex);
 }
 
 int audio_device_open(int samplerate, int channels)
@@ -160,14 +178,15 @@ int audio_device_open(int samplerate, int channels)
 			wdprintf(V_INFO, "audio", "Device opened with %d Hz, %d channels and sample buffer w/ %d samples.\n",
 			         obtained.freq, obtained.channels, obtained.samples);
 		}
+		ringbuffer_clear(&audio_rb);
 	} else {
 		wdprintf(V_INFO, "audio", "Using already opened audio device with the same settings...\n");
 		result = 0;
 	}
-	ringbuffer_clear(&audio_rb);
+
 	if (result == 0) {
+		done = 0;
 		SDL_CondSignal(cond_data_needed);
-		SDL_PauseAudio(1);
 	}
 	return result;
 }
@@ -185,6 +204,11 @@ int audio_set_pause(int pause_state)
 		wdprintf(V_WARNING, "audio", "Device not opened. Cannot set pause state!\n");
 	}
 	return paused;
+}
+
+void audio_set_done(void)
+{
+	done = 1;
 }
 
 int audio_get_pause(void)
@@ -212,6 +236,7 @@ void audio_buffer_init(void)
 	volume = SDL_MIX_MAXVOLUME;
 	volume_internal = 15;
 	paused = 1;
+	done = 0;
 	device_open = 0;
 	have_samplerate = 1;
 	have_channels = 1;
