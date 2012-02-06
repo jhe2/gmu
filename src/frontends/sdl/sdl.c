@@ -1153,7 +1153,7 @@ static void run_player(char *skin_name, char *decoders_str)
 		}
 
 		if (event.type == SDL_USEREVENT) {
-			if (update_event == GMU_TRACK_CHANGE) {
+			if (update_event == GMU_TRACKINFO_CHANGE) {
 				update = UPDATE_ALL;
 				update_event = GMU_NO_EVENT;
 			}
@@ -1442,7 +1442,7 @@ static int event_callback(GmuEvent event)
 		case GMU_QUIT:
 			quit = QUIT_WITHOUT_ERROR;
 			break;
-		case GMU_TRACK_CHANGE:
+		case GMU_TRACKINFO_CHANGE:
 			if (initialized) {
 				ti = gmu_core_get_current_trackinfo_ref();
 				if (tid) SDL_RemoveTimer(tid);

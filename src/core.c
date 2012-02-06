@@ -114,7 +114,7 @@ static int play_next(Playlist *pl, TrackInfo *ti, int skip_current)
 	if (playlist_next(pl)) {
 		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), ti, skip_current);
 		result = 1;
-		/*event_queue_push(&event_queue, GMU_TRACK_CHANGE);*/
+		event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 		player_status = PLAYING;
 	}
 	return result;
@@ -128,7 +128,7 @@ static int play_previous(Playlist *pl, TrackInfo *ti)
 		if (entry != NULL) {
 			file_player_play_file(playlist_get_entry_filename(pl, entry), ti, 1);
 			result = 1;
-			/*event_queue_push(&event_queue, GMU_TRACK_CHANGE);*/
+			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 			player_status = PLAYING;
 		}
 	}
@@ -267,6 +267,7 @@ int gmu_core_play_pl_item(int item)
 	global_command = PLAY_ITEM;
 	global_param = item;
 	player_status = PLAYING;
+	event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 	return 0;
 }
 
@@ -275,6 +276,7 @@ int gmu_core_play_file(const char *filename)
 	strncpy(global_filename, filename, 255);
 	global_command = PLAY_FILE;
 	player_status = PLAYING;
+	event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 	return 0;
 }
 
@@ -901,7 +903,6 @@ int main(int argc, char **argv)
 			wdprintf(V_DEBUG, "gmu", "Direct file playback: %s\n", global_filename);
 			playlist_set_current(&pl, NULL);
 			file_player_play_file(global_filename, &current_track_ti, 1);
-			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 			global_command = NO_CMD;
 		} else if ((file_player_get_item_status() == FINISHED && 
 		            file_player_get_playback_status() == PLAYING) || 
@@ -924,7 +925,6 @@ int main(int argc, char **argv)
 			         trackinfo_get_artist(&current_track_ti),
 				     trackinfo_get_title(&current_track_ti),
 				     trackinfo_get_album(&current_track_ti));
-			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 		}
 		if (statu != file_player_get_item_status()) {
 			statu = file_player_get_item_status();
