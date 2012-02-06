@@ -225,15 +225,17 @@ static void *decode_audio_thread(void *udata)
 		if (file) len = strlen(file);
 		if (len > 0) {
 			filename = malloc(len+1);
-			strncpy(filename, file, len);
-			filename[len] = '\0';
-			
+			if (filename) {
+				strncpy(filename, file, len);
+				filename[len] = '\0';
+				item_status = PLAYING;
+			}
 			free(file); file = NULL;
 		}
 		pthread_mutex_unlock(&mutex);
 		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
 		r = NULL;
-		if (!file_player_shut_down && filename) {
+		if (!file_player_shut_down && filename && item_status == PLAYING) {
 			char *tmp;
 			wdprintf(V_INFO, "fileplayer", "Playing %s...\n", filename);
 			tmp = get_file_extension(filename);
@@ -264,11 +266,10 @@ static void *decode_audio_thread(void *udata)
 				}
 
 				if (*gd->meta_data_get_charset) charset = (*gd->meta_data_get_charset)();
-				playback_status = item_status = PLAYING;
-
 				if (gd->set_reader_handle) (*gd->set_reader_handle)(r);
+				playback_status = PLAYING;
 
-				if (!file_player_shut_down && (*gd->open_file)(filename)) {
+				if (item_status == PLAYING && !file_player_shut_down && (*gd->open_file)(filename)) {
 					trackinfo_clear(ti);
 					strncpy(ti->file_name, filename, SIZE_FILE_NAME-1);
 
@@ -404,11 +405,14 @@ static void *decode_audio_thread(void *udata)
 					wdprintf(V_DEBUG, "fileplayer", "Unable to open file.\n");
 				}
 			}
-			free(filename);
 			if (item_status == STOPPED) audio_buffer_clear();
 			if (item_status != STOPPED) item_status = FINISHED;
 			wdprintf(V_DEBUG, "fileplayer", "Decoder thread: Playback done.\n");
 			audio_set_done();
+		}
+		if (filename) {
+			free(filename);
+			filename = NULL;
 		}
 		if (gd->set_reader_handle) {
 			if (r) reader_close(r);
