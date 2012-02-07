@@ -448,8 +448,11 @@ int reader_read_bytes(Reader *r, int size)
 					if (fseek(r->file, pos, SEEK_SET) != 0)
 						wdprintf(V_ERROR, "reader", "Unable to seek to pos %d:(\n", pos);
 				} while (fread(r->buf, size, 1, r->file) < 1 && size > 0);
-				if (size > 0) read_okay = 1;
 				r->eof = feof(r->file);
+				if (size > 0)
+					read_okay = 1;
+				else
+					r->eof = 1;
 				r->buf_data_size = size;
 			} else {				
 				r->buf[size] = '\0';
