@@ -671,8 +671,7 @@ static int process_command(int rfd, Connection *c)
 							send_buf(rfd, "\r\n");
 							/* 3) Set flags in connection struct to WebSocket */
 							connection_set_state(c, WEBSOCKET_OPEN);
-							websocket_send_string(c, "foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar-12345");
-							websocket_send_string(c, "nachricht vom server...");
+							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
 						} else if (!connection_file_is_open(c)) { // ?? open file (if not open already) ??
 							char filename[512];
 							memset(filename, 0, 512);
@@ -764,6 +763,15 @@ static void loop(int listen_fd)
 			if (connection_get_state(&(connection[conn_num])) == HTTP_BUSY) { /* feed data */
 				/* Read CHUNK_SIZE bytes from file and send data to socket & update remaining bytes counter */
 				connection_file_read_chunk(&(connection[conn_num]));
+			} else if (connection[conn_num].state == WEBSOCKET_OPEN) {
+				char str[256];
+				static int i = 0, t = 0;
+				if (i == 1000) {
+					snprintf(str, 255, "{ \"cmd\": \"time\", \"time\" : %d }", t++);
+					websocket_send_string(&(connection[conn_num]), str);
+					i = 0;
+				}
+				i++;
 			}
 			if (FD_ISSET(rfd, &readfds)) { /* Data received on connection socket */
 				char msgbuf[MAXLEN+1];
@@ -804,7 +812,7 @@ static void loop(int listen_fd)
 
 						if (unmasked_message) {
 							char str[1000];
-							snprintf(str, 999, "So you said '%s'\n", unmasked_message);
+							snprintf(str, 999, "{ \"cmd\": \"echo\", \"message\" : \"%s\" }", unmasked_message);
 							websocket_send_string(&(connection[conn_num]), str);
 						}
 						if (unmasked_message) free(unmasked_message);
