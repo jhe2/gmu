@@ -209,7 +209,7 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 
 static void *decode_audio_thread(void *udata)
 {
-	GmuDecoder *gd;
+	GmuDecoder *gd = NULL;
 	Reader     *r;
 	long        ret  = 1;
 	static char pcmout[BUF_SIZE];
@@ -414,7 +414,7 @@ static void *decode_audio_thread(void *udata)
 			free(filename);
 			filename = NULL;
 		}
-		if (gd->set_reader_handle) {
+		if (gd && gd->set_reader_handle) {
 			if (r) reader_close(r);
 			(*gd->set_reader_handle)(NULL);
 		}
