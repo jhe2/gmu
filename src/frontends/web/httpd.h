@@ -45,4 +45,5 @@ typedef enum HTTPCommand {
 } HTTPCommand;
 
 void *httpd_run_server(void *nodata);
+void  httpd_stop_server(void);
 #endif

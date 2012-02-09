@@ -23,11 +23,10 @@ static const char *get_name(void)
 }
 
 static pthread_t fe_thread;
-static int server_running = 0;
 
 static void server_stop(void)
 {
-	server_running = 0;
+	httpd_stop_server();
 	pthread_join(fe_thread, NULL);
 }
 

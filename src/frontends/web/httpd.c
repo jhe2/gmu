@@ -838,3 +838,8 @@ static void loop(int listen_fd)
 		}
 	}
 }
+
+void httpd_stop_server(void)
+{
+	server_running = 0;
+}
