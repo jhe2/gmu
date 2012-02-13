@@ -996,7 +996,7 @@ static void run_player(char *skin_name, char *decoders_str)
 						break;
 					case GLOBAL_PAUSE:
 						if (file_player_get_playback_status())
-							gmu_core_pause();
+							gmu_core_play_pause();
 						SDL_Delay(50);
 						break;
 					case GLOBAL_SEEK_FWD:

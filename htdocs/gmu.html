@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="script.js"></script>
+		<link href="style.css" rel="stylesheet" type="text/css" media="screen" />
+		<title>Gmu Music Player</title>
+	</head>
+	<body>
+		<div id="wrapper">
+			<div id="header">
+				<div id="coverart"><img src="gmu.png" width="80" height="80" alt="Gmu" /></div>
+				<div id="trackinfo">
+					<table>
+						<tr><th>Title</th><td>Some title</td></tr>
+						<tr><th>Artist</th><td>Some artist</td></tr>
+						<tr><th>Album</th><td>Some album</td></tr>
+						<tr><th>Track</th><td>3/14</td></tr>
+					</table>
+				</div>
+				<div id="controls">
+					<div id="buttons">
+						<div id="btn-prev" class="button">prev</div>
+						<div id="btn-play" class="button-pressed">play</div>
+						<div id="btn-pause" class="button">pause</div>
+						<div id="btn-stop" class="button">stop</div>
+						<div id="btn-next" class="button">next</div>
+					</div>
+					<div id="progressbar">
+						<div id="progressmarker"></div>
+						<div id="time">03:14</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="tabs">
+				<ul>
+					<li>File browser</li>
+					<li>Media library</li>
+					<li>Playlist</li>
+				</ul>
+			</div>
+
+			<div id="container">
+				<div id="log">
+				</div>
+				<p id="examples">e.g. try 'hi'</p>
+				<input id="text" type="text" /><button onclick="doSend(document.getElementById('text').value);" id="send">Send</button>
+				<button id="disconnect">Disconnect</button>
+			</div>
+		</div>
+	</body>
+</html>
+

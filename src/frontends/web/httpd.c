@@ -26,6 +26,7 @@
 #include "base64.h"
 #include "sha1.h"
 #include "httpd.h"
+#include "queue.h"
 
 /*
  * 500 Internal Server Error
@@ -35,6 +36,8 @@
  */
 
 static int send_block(int soc, unsigned char *buf, int size);
+static Queue queue;
+static char  webserver_root[256];
 
 static char *http_status[] = {
 	"100", "Continue",
@@ -338,10 +341,13 @@ static void send_http_header(int soc, char *code,
 static void loop(int listen_fd);
 static int  tcp_server_init(int port);
 
-void *httpd_run_server(void *nodata)
-{	
-	int port = SERVER_PORT;
+void *httpd_run_server(void *data)
+{
+	int   port = SERVER_PORT;
+	char *wr = (char *)data;
 
+	if (wr) strncpy(webserver_root, wr, 255); else webserver_root[0] = '\0';
+	queue_init(&queue);
 	printf("Starting server on port %d.\n", port);
 	loop(tcp_server_init(port));
 	return NULL;
@@ -675,7 +681,7 @@ static int process_command(int rfd, Connection *c)
 						} else if (!connection_file_is_open(c)) { // ?? open file (if not open already) ??
 							char filename[512];
 							memset(filename, 0, 512);
-							snprintf(filename, 511, "%s%s", WEBSERVER_ROOT, ressource);
+							snprintf(filename, 511, "%s/htdocs%s", webserver_root, ressource);
 							file_okay = connection_file_open(c, filename);
 							if (file_okay) {
 								if (!head_only) connection_set_state(c, HTTP_BUSY);
@@ -710,6 +716,14 @@ static int process_command(int rfd, Connection *c)
 	return 0;
 }
 
+/*
+ * Send string "str" to all connected WebSocket clients
+ */
+void httpd_send_websocket_broadcast(char *str)
+{
+	queue_push(&queue, str);
+}
+
 /* 
  * Webserver main loop
  * listen_fd is the socket file descriptor where the server is 
@@ -731,6 +745,7 @@ static void loop(int listen_fd)
 		fd_set         readfds;
 		int            ret, rfd;
 		struct timeval tv;
+		char          *websocket_msg;
 
 		/* previously: 2 seconds timeout */
 		tv.tv_sec  = 0;
@@ -756,8 +771,13 @@ static void loop(int listen_fd)
 			}
 		}
 
+		/* Check WebSocket data send queue and fetch the next item if at
+		 * least one is available */
+		websocket_msg = queue_pop_alloc(&queue);
+
 		/* Check all open TCP connections for incoming data. 
-		 * Also handle ongoing http file requests here. */
+		 * Also handle ongoing http file requests and pending 
+		 * WebSocket transmit requests here. */
 		for (rfd = listen_fd + 1; rfd <= maxfd; ++rfd) {
 			int conn_num = rfd-listen_fd-1;
 			if (connection_get_state(&(connection[conn_num])) == HTTP_BUSY) { /* feed data */
@@ -766,6 +786,11 @@ static void loop(int listen_fd)
 			} else if (connection[conn_num].state == WEBSOCKET_OPEN) {
 				char str[256];
 				static int i = 0, t = 0;
+				/* If data for sending through websocket have been fetched
+				 * from the queue, send the data to all open WebSocket connections */
+				if (websocket_msg) {
+					websocket_send_string(&(connection[conn_num]), websocket_msg);
+				}
 				if (i == 1000) {
 					snprintf(str, 255, "{ \"cmd\": \"time\", \"time\" : %d }", t++);
 					websocket_send_string(&(connection[conn_num]), str);
@@ -836,7 +861,9 @@ static void loop(int listen_fd)
 				}
 			}
 		}
+		if (websocket_msg) free(websocket_msg);
 	}
+	queue_free(&queue);
 }
 
 void httpd_stop_server(void)

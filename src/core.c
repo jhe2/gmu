@@ -205,30 +205,35 @@ ConfigFile *gmu_core_get_config(void)
 	return &config;
 }
 
+/* Start playback */
 int gmu_core_play(void)
 {
 	int res = 0;
 	if (file_player_get_playback_status() == STOPPED)
 		res = gmu_core_next();
 	else
-		gmu_core_pause();
+		audio_set_pause(0);
 	player_status = PLAYING;
+	event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 	return res;
 }
 
+/* Toggle between pause and playback states */
 int gmu_core_play_pause(void)
 {
 	if (gmu_core_playback_is_paused())
 		gmu_core_play();
 	else
 		gmu_core_pause();
-	return 0;
+	return audio_get_pause();
 }
 
+/* Pause playback */
 int gmu_core_pause(void)
 {
+	audio_set_pause(1);
+	player_status = PAUSED;
 	event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
-	audio_set_pause(!audio_get_pause());
 	return 0;
 }
 
@@ -246,11 +251,11 @@ static int stop_playback(void)
 {
 	int res = 0;
 	if (player_status != STOPPED) {
-		/*event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);*/
 		file_player_stop_playback();
 		gmu_core_playlist_reset_random();
 		gmu_core_playlist_set_current(NULL);
 		player_status = STOPPED;
+		event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 		res = 1;
 	}
 	return res;

@@ -178,6 +178,6 @@ frontends/gmusrv.so: src/frontends/gmusrv.c
 	@echo -e "Compiling \033[1m$<\033[0m"
 	@$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $<
 
-frontends/gmuhttp.so: src/frontends/web/gmuhttp.c sha1.o base64.o httpd.o
+frontends/gmuhttp.so: src/frontends/web/gmuhttp.c sha1.o base64.o httpd.o queue.o
 	@echo -e "Compiling \033[1m$<\033[0m"
-	@$(CC) $(CFLAGS) -shared -fpic -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -lpthread sha1.o base64.o httpd.o
+	@$(CC) $(CFLAGS) -shared -fpic -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -lpthread sha1.o base64.o httpd.o queue.o

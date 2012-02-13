@@ -44,6 +44,7 @@ typedef enum HTTPCommand {
 	GET, HEAD, POST, UNKNOWN
 } HTTPCommand;
 
-void *httpd_run_server(void *nodata);
+void *httpd_run_server(void *webserver_root);
 void  httpd_stop_server(void);
+void  httpd_send_websocket_broadcast(char *str);
 #endif

@@ -13,7 +13,9 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
+#include <stdint.h>
 #include <pthread.h>
+#include "../../core.h"
 #include "../../gmufrontend.h"
 #include "httpd.h"
 
@@ -32,10 +34,34 @@ static void server_stop(void)
 
 static int init(void)
 {
-	int res = 0;
-	if (pthread_create(&fe_thread, NULL, httpd_run_server, NULL) == 0)
+	int   res = 0;
+	char *webserver_root = gmu_core_get_base_dir();
+
+	if (pthread_create(&fe_thread, NULL, httpd_run_server, webserver_root) == 0)
 		res = 1;
 	return res;
+}
+
+static int event_callback(GmuEvent event)
+{
+	switch (event) {
+		case GMU_QUIT:
+			break;
+		case GMU_TRACKINFO_CHANGE:
+			httpd_send_websocket_broadcast(
+				"{ \"cmd\": \"trackinfo\", \"title\" : \"unknown\", \"artist\" : \"unknown\" }"
+			);
+			break;
+		case GMU_PLAYBACK_STATE_CHANGE: {
+			char str[256];
+			snprintf(str, 255, "{ \"cmd\": \"playback_state\", \"state\" : %d }", gmu_core_get_status());
+			httpd_send_websocket_broadcast(str);
+			break;
+		}
+		default:
+			break;
+	}
+	return 0;
 }
 
 static GmuFrontend gf = {
@@ -43,6 +69,8 @@ static GmuFrontend gf = {
 	get_name,
 	init,
 	server_stop,
+	NULL,
+	event_callback,
 	NULL
 };
 

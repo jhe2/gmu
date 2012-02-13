@@ -337,7 +337,7 @@ static void *decode_audio_thread(void *udata)
 								SDL_Delay(200);
 							}
 							if (check_count <= 0) {
-								item_status = STOPPED;
+								item_status = FINISHED;
 								wdprintf(V_DEBUG, "fileplayer", "Prebuffering failed.\n");
 								event_queue_push(gmu_core_get_event_queue(), GMU_BUFFERING_FAILED);
 							} else {
