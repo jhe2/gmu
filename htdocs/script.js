@@ -31,6 +31,7 @@ function start(websocketServerLocation)
 			switch(foo['state']) {
 				case 0: // stop
 					document.getElementById("btn-play").className = "button";
+					document.getElementById("btn-pause").className = "button";
 					break;
 				case 1: // play
 					document.getElementById("btn-play").className = "button-pressed";
