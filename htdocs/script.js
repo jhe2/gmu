@@ -1,6 +1,6 @@
 var socket, disconnected = true;
 
-start("ws://" + document.location.hostname + ":" + document.location.port + "/foobar");
+start("ws://" + document.location.host + "/foobar");
 
 function start(websocketServerLocation)
 {
