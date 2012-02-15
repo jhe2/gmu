@@ -621,7 +621,7 @@ static int process_command(int rfd, Connection *c)
 					if (strcasecmp(key, "Host") == 0) host = value; // not good, we need to copy the string!
 					if (strcasecmp(key, "Upgrade") == 0 && strcasecmp(value, "websocket") == 0)
 						websocket_upgrade = 1;
-					if (strcasecmp(key, "Connection") == 0 && strcasecmp(value, "Upgrade") == 0)
+					if (strcasecmp(key, "Connection") == 0 && strcasestr(value, "Upgrade"))
 						websocket_connection = 1;
 					if (strcasecmp(key, "Sec-WebSocket-Key") == 0) {
 						strncpy(websocket_key, value, 31);
