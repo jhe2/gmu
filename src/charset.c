@@ -1,11 +1,11 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: charset.c  Created: 061115
  *
- * Description: Charset conversion functions (UTF-8/UTF-16 -> ISO-8859-1)
+ * Description: Charset conversion functions (UTF-8/UTF-16/ISO-8859-1)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,6 +52,22 @@ int charset_utf8_to_iso8859_1(char *target, const char *source, int target_size)
 	return valid;
 }
 
+static UCodePoint get_utf16_code_point(const char *source, ByteOrder byte_order)
+{
+	unsigned char b1, b2;
+	UCodePoint    code_point;
+
+	if (byte_order == BE) {
+		b1 = (unsigned char)source[0];
+		b2 = (unsigned char)source[1];
+	} else {
+		b1 = (unsigned char)source[1];
+		b2 = (unsigned char)source[0];
+	}
+	code_point = 256 * b1 + b2;
+	return code_point;
+}
+
 int charset_utf16_to_iso8859_1(char       *target, int target_size,
                                const char *source, int source_size,
                                ByteOrder   byte_order)
@@ -70,22 +86,13 @@ int charset_utf16_to_iso8859_1(char       *target, int target_size,
 	wdprintf(V_DEBUG, "charset", "utf-16: byte order: %s endian\n", byte_order == BE ? "big" : "little");
 	wdprintf(V_DEBUG, "charset", "utf-16: valid utf-16 till here: %s\n", valid ? "yes" : "no");
 	while (valid && i < source_size - 1 && !(source[i] == 0 && source[i+1] == 0)) {
-		unsigned char b1, b2;
-		int      code_point;
-		if (byte_order == BE) {
-			b1 = (unsigned char)source[i];
-			b2 = (unsigned char)source[i+1];
-		} else {
-			b1 = (unsigned char)source[i+1];
-			b2 = (unsigned char)source[i];
-		}
-		code_point = 256 * b1 + b2;
-		if (code_point >= 0xd800 && code_point <= 0xf800) { /* surrogates */
+		int code_point = get_utf16_code_point(source+i, byte_order);
+		if (code_point >= UNICODE_SUR_HIGH_START && code_point <= UNICODE_SUR_HIGH_END) { /* surrogates */
 			i += 2; /* skip next 16 bit. we ignore everything outside the BMP */
 			target[j] = '?';
 			if (j < target_size - 1) j++;
 		} else if (code_point < 256) {
-			target[j] = b2;
+			target[j] = code_point;
 			if (j < target_size - 1) j++;
 		} else {
 			/*wdprintf(V_DEBUG, "charset", "utf-16: code_point = %d\n", code_point);*/
@@ -106,7 +113,7 @@ int charset_iso8859_1_to_utf8(char *target, const char *source, int target_size)
 	for (i = 0, j = 0; i < len && j < target_size-1; i++, j++) {
 		if (src[i] < 128) { /* ASCII char */
 			target[j] = src[i];
-		} else { /* Latin-1 chracter => 2 byte UTF-8 char */
+		} else { /* Latin-1 character => 2 byte UTF-8 char */
 			target[j]   = 192 + (src[i] >> 6);
 			target[j+1] = 128 + (src[i] & 63);
 			j++;
@@ -137,6 +144,81 @@ char *charset_filename_convert_alloc(const char *filename)
 			break;
 	}
 	return buf;
+}
+
+int charset_utf16_to_utf8(char       *target, int target_size,
+                          const char *source, int source_size,
+                          ByteOrder   byte_order)
+{
+	int valid = 1, i = (byte_order == BOM ? 2 : 0), j = 0;
+
+	if (source_size < 2) valid = 0;
+	if (valid && byte_order == BOM) { /* check byte order */
+		if ((unsigned char)source[0] == 0xff && (unsigned char)source[1] == 0xfe)
+			byte_order = LE;
+		else if ((unsigned char)source[1] == 0xff && (unsigned char)source[0] == 0xfe)
+			byte_order = BE;
+		else
+			valid = 0; 
+	}
+	wdprintf(V_DEBUG, "charset", "utf-16: byte order: %s endian\n", byte_order == BE ? "big" : "little");
+	wdprintf(V_DEBUG, "charset", "utf-16: valid utf-16 till here: %s\n", valid ? "yes" : "no");
+	while (valid && i < source_size - 1 && !(source[i] == 0 && source[i+1] == 0)) {
+		UCodePoint code_point = get_utf16_code_point(source+i, byte_order);
+		int        bm, bytes_to_write = 0;
+
+		/* If high surrogate, we need to get the next surrogate as well and convert to UTF32 */
+		if (code_point >= UNICODE_SUR_HIGH_START && code_point <= UNICODE_SUR_HIGH_END) {
+			/* If the 16 bits following the high surrogate are in the source buffer... */
+			if (i + 2 < source_size) {
+				UCodePoint cp2 = get_utf16_code_point(source + i + 2, byte_order);
+				/* If it's a low surrogate, convert to UTF32. */
+				if (cp2 >= UNICODE_SUR_LOW_START && cp2 <= UNICODE_SUR_LOW_END) {
+					code_point = ((code_point - UNICODE_SUR_HIGH_START) << 10)
+					           + (cp2 - UNICODE_SUR_LOW_START) + 0x0010000UL;
+					i += 2;
+				}
+			} else { /* We don't have the 16 bits following the high surrogate. */
+				valid = 0;
+				break;
+			}
+		}
+
+		if (code_point < 0x80) {
+			bytes_to_write = 1;
+			bm = 0x00;
+		} else if (code_point < 0x800) {
+			bytes_to_write = 2;
+			bm = 0xC0;
+		} else if (code_point < 0x10000) {
+			bytes_to_write = 3;
+			bm = 0xE0;
+		} else if (code_point < 0x110000) {
+			bytes_to_write = 4;
+			bm = 0xF0;
+		} else {
+			bytes_to_write = 3;
+			bm = 0xE0;
+			code_point = UNICODE_REPLACEMENT_CHAR;
+		}
+
+		if (j + bytes_to_write < target_size) {
+			switch (bytes_to_write) { /* everything falls through */
+				case 4: target[j+3] = (((code_point >> 6) | 0x80) & 0xBF);
+				case 3: target[j+2] = (((code_point >> (6 * (bytes_to_write-3))) | 0x80) & 0xBF);
+				case 2: target[j+1] = (((code_point >> (6 * (bytes_to_write-2))) | 0x80) & 0xBF);
+				case 1: target[j]   =  ((code_point >> (6 * (bytes_to_write-1))) | bm);
+			}
+			j += bytes_to_write;
+		} else {
+			valid = 0;
+			break;
+		}
+
+		i += 2;
+	}
+	target[j] = '\0';
+	return valid;
 }
 
 /*int charset_convert_string_autodetect(const char *source, char *target,
@@ -175,3 +257,20 @@ int charset_convert_string(const char *source, Charset source_charset,
 	}
 	return result;
 }
+
+int charset_is_valid_utf8_string(char *str)
+{
+	return 0;
+}
+
+/*int main(int argc, char **argv)
+{
+	char inbuffer[1000], outbuffer[1000];
+	memset(inbuffer, 0, 1000);
+	fgets(inbuffer, 1000, stdin);
+	int res = charset_utf16_to_utf8(outbuffer, 999,
+                          inbuffer, 999,
+                          BOM);
+    printf("r=%d : %s\n", res, outbuffer);
+	return 0;
+}*/
