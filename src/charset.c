@@ -260,7 +260,26 @@ int charset_convert_string(const char *source, Charset source_charset,
 
 int charset_is_valid_utf8_string(char *str)
 {
-	return 0;
+	int            i, len = strlen(str), valid = 1;
+	unsigned char *src = (unsigned char *)str;
+	for (i = 0; i < len; i++) {
+		if (src[i] < 128) { /* ASCII char */
+			/* nothing to do */
+		} else if (src[i] >= 192 && src[i] < 224) { /* 2 byte char */
+			if (src[i+1] < 128) valid = 0;
+			i += 1;
+		} else if (src[i] >= 224 && src[i] < 240) { /* 3 byte char */
+			if (src[i+1] < 128 || src[i+2] < 128) valid = 0;
+			i += 2;
+		} else if (src[i] >= 240 && src[i] < 248) { /* 4 byte char */
+			if (src[i+1] < 128 || src[i+2] < 128 || src[i+3] < 128) valid = 0;
+			i += 3;
+		} else {
+			valid = 0;
+		}
+		if (!valid)	break;
+	}
+	return valid;
 }
 
 /*int main(int argc, char **argv)
