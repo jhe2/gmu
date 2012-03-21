@@ -1,7 +1,7 @@
 /* 
  * Gmu GP2X Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: id3.c  Created: 061030
  *
@@ -87,112 +87,48 @@ static int calc_size(const unsigned char *four_bytes)
 	       (four_bytes[1] << 16) + (four_bytes[0] << 24);
 }
 
-static void set_title(TrackInfo *ti, char *str, int str_size, Charset charset)
+typedef enum {
+	TITLE, ARTIST, ALBUM, COMMENT, DATE, TRACKNR, LYRICS
+} MetaDataItem;
+
+static int set_data(TrackInfo *ti, MetaDataItem mdi, char *str, int str_size, Charset charset)
 {
+	int res = 0;
 	if (str[0] != '\0') {
+		char *target = NULL;
+		int   target_size = 0;
+		switch (mdi) {
+			case TITLE:   target = ti->title;   target_size = SIZE_TITLE-1;   break;
+			case ARTIST:  target = ti->artist;  target_size = SIZE_ARTIST-1;  break;
+			case ALBUM:   target = ti->album;   target_size = SIZE_ALBUM-1;   break;
+			case COMMENT: target = ti->comment; target_size = SIZE_COMMENT-1; break;
+			case DATE:    target = ti->date;    target_size = SIZE_DATE-1;    break;
+			case TRACKNR: target = ti->tracknr; target_size = SIZE_TRACKNR-1; break;
+			case LYRICS:  target = ti->lyrics;  target_size = SIZE_LYRICS-1;  break;
+		}
 		switch (charset) {
 			case ISO_8859_1:
-				strncpy(ti->title, str, SIZE_TITLE-1);
+				res = charset_iso8859_1_to_utf8(target, str, target_size);
 				break;
 			case UTF_8:
-				charset_utf8_to_iso8859_1(ti->title, str, SIZE_TITLE-1);
+				if (charset_is_valid_utf8_string(str)) {
+					strncpy(target, str, target_size);
+					res = 1;
+				} else {
+					ti->title[0] = '\0';
+				}
 				break;
 			case UTF_16:
-				charset_utf16_to_iso8859_1(ti->title, SIZE_TITLE-1, str, str_size, BE);
+				res = charset_utf16_to_utf8(target, target_size, str, str_size, BE);
 				break;
 			case UTF_16_BOM:
-				charset_utf16_to_iso8859_1(ti->title, SIZE_TITLE-1, str, str_size, BOM);
+				res = charset_utf16_to_utf8(target, target_size, str, str_size, BOM);
 				break;
 			default:
 				break;
 		}
 	}
-}
-
-static void set_artist(TrackInfo *ti, char *str, int str_size, Charset charset)
-{
-	if (str[0] != '\0') {
-		switch (charset) {
-			case ISO_8859_1:
-				strncpy(ti->artist, str, SIZE_ARTIST-1);
-				break;
-			case UTF_8:
-				charset_utf8_to_iso8859_1(ti->artist, str, SIZE_ARTIST-1);
-				break;
-			case UTF_16:
-				charset_utf16_to_iso8859_1(ti->artist, SIZE_ARTIST-1, str, str_size, BE);
-				break;
-			case UTF_16_BOM:
-				charset_utf16_to_iso8859_1(ti->artist, SIZE_ARTIST-1, str, str_size, BOM);
-				break;
-			default:
-				break;
-		}
-	}
-}
-
-static void set_album(TrackInfo *ti, char *str, int str_size, Charset charset)
-{
-	switch (charset) {
-		case ISO_8859_1:
-			strncpy(ti->album, str, SIZE_ALBUM-1);
-			break;
-		case UTF_8:
-			charset_utf8_to_iso8859_1(ti->album, str, SIZE_ALBUM-1);
-			break;
-		case UTF_16:
-			charset_utf16_to_iso8859_1(ti->album, SIZE_ALBUM-1, str, str_size, BE);
-			break;
-		case UTF_16_BOM:
-			charset_utf16_to_iso8859_1(ti->album, SIZE_ALBUM-1, str, str_size, BOM);
-			break;
-		default:
-			break;
-	}
-}
-
-static void set_comment(TrackInfo *ti, char *str, int str_size, Charset charset)
-{
-	if (str[0] != '\0') {
-		switch (charset) {
-			case ISO_8859_1:
-				strncpy(ti->comment, str, SIZE_COMMENT-1);
-				break;
-			case UTF_8:
-				charset_utf8_to_iso8859_1(ti->comment, str, SIZE_COMMENT-1);
-				break;
-			case UTF_16:
-				charset_utf16_to_iso8859_1(ti->comment, SIZE_COMMENT-1, str, str_size, BE);
-				break;
-			case UTF_16_BOM:
-				charset_utf16_to_iso8859_1(ti->comment, SIZE_COMMENT-1, str, str_size, BOM);
-				break;
-			default:
-				break;
-		}
-	}
-}
-
-static void set_date(TrackInfo *ti, char *str, int str_size, Charset charset)
-{
-	if (str[0] != '\0') {
-		switch (charset) {
-			case ISO_8859_1:
-				strncpy(ti->date, str, SIZE_DATE-1);
-				break;
-			case UTF_8:
-				charset_utf8_to_iso8859_1(ti->date, str, SIZE_DATE-1);
-				break;
-			case UTF_16:
-				charset_utf16_to_iso8859_1(ti->date, SIZE_DATE-1, str, str_size, BE);
-				break;
-			case UTF_16_BOM:
-				charset_utf16_to_iso8859_1(ti->date, SIZE_DATE-1, str, str_size, BOM);
-				break;
-			default:
-				break;
-		}
-	}
+	return res;
 }
 
 static void set_cover_art(TrackInfo *ti, char *data, int data_size, Charset charset)
@@ -215,28 +151,6 @@ static void set_cover_art(TrackInfo *ti, char *data, int data_size, Charset char
 	trackinfo_set_image(ti, data+m, data_size-m, mime_type);
 }
 
-static void set_tracknr(TrackInfo *ti, char *str, int str_size, Charset charset)
-{
-	if (str[0] != '\0') {
-		switch (charset) {
-			case ISO_8859_1:
-				strncpy(ti->tracknr, str, SIZE_TRACKNR-1);
-				break;
-			case UTF_8:
-				charset_utf8_to_iso8859_1(ti->tracknr, str, SIZE_TRACKNR-1);
-				break;
-			case UTF_16:
-				charset_utf16_to_iso8859_1(ti->tracknr, SIZE_TRACKNR-1, str, str_size, BE);
-				break;
-			case UTF_16_BOM:
-				charset_utf16_to_iso8859_1(ti->tracknr, SIZE_TRACKNR-1, str, str_size, BOM);
-				break;
-			default:
-				break;
-		}
-	}
-}
-
 static void set_lyrics(TrackInfo *ti, char *str, int str_size, Charset charset)
 {
 	if (str[0] != '\0') {
@@ -249,22 +163,7 @@ static void set_lyrics(TrackInfo *ti, char *str, int str_size, Charset charset)
 		if (charset == UTF_16 || charset == UTF_16_BOM) i++;
 		i++;
 		/*wdprintf(V_DEBUG, "id3", "i=%d str_size=%d str=%s\n", i, str_size, str);*/
-		switch (charset) {
-			case ISO_8859_1:
-				strncpy(ti->lyrics, str+i, SIZE_LYRICS-1);
-				break;
-			case UTF_8:
-				charset_utf8_to_iso8859_1(ti->lyrics, str+i, SIZE_LYRICS-1);
-				break;
-			case UTF_16:
-				charset_utf16_to_iso8859_1(ti->lyrics, SIZE_LYRICS-1, str+i, str_size-i, BE);
-				break;
-			case UTF_16_BOM:
-				charset_utf16_to_iso8859_1(ti->lyrics, SIZE_LYRICS-1, str+i, str_size-i, BOM);
-				break;
-			default:
-				break;
-		}
+		set_data(ti, LYRICS, str+i, str_size, charset);
 		ti->has_lyrics = 1;
 	}
 }
@@ -389,21 +288,21 @@ int id3_read_id3v2(FILE *file, TrackInfo *ti, const char *file_type)
 								/*wdprintf(V_DEBUG, "id3", "Frame data: %s\n", frame_data+1);*/
 
 								if (strncmp(frame_id, "TIT2", 4) == 0) {
-									set_title(ti, frame_data+1, fsize-1, charset);
-									result = 1;
+									int r = set_data(ti, TITLE, frame_data+1, fsize-1, charset);
+									if (!result) result = r;
 								} else if (strncmp(frame_id, "TPE1", 4) == 0) {
-									set_artist(ti, frame_data+1, fsize-1, charset);
-									result = 1;
+									int r = set_data(ti, ARTIST, frame_data+1, fsize-1, charset);
+									if (!result) result = r;
 								} else if (strncmp(frame_id, "TALB", 4) == 0) {
-									set_album(ti, frame_data+1, fsize-1, charset);	
+									set_data(ti, ALBUM, frame_data+1, fsize-1, charset);	
 								} else if (strncmp(frame_id, "TRCK", 4) == 0) {
-									set_tracknr(ti, frame_data+1, fsize-1, charset);
+									set_data(ti, TRACKNR, frame_data+1, fsize-1, charset);
 								} else if (strncmp(frame_id, "TYER", 4) == 0) { /* 2.3.0 */
-									set_date(ti, frame_data+1, fsize-1, charset);						
+									set_data(ti, DATE, frame_data+1, fsize-1, charset);						
 								} else if (strncmp(frame_id, "TDRC", 4) == 0) { /* 2.4.0 */
-									set_date(ti, frame_data+1, fsize-1, charset);
+									set_data(ti, DATE, frame_data+1, fsize-1, charset);
 								} else if (strncmp(frame_id, "COMM", 4) == 0) {
-									set_comment(ti, frame_data+1, fsize-1, charset);
+									set_data(ti, COMMENT, frame_data+1, fsize-1, charset);
 								} else if (strncmp(frame_id, "APIC", 4) == 0) {
 									set_cover_art(ti, frame_data+1, fsize-1, charset);
 								} else if (strncmp(frame_id, "USLT", 4) == 0) {
