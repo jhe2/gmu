@@ -115,7 +115,7 @@ static int set_data(TrackInfo *ti, MetaDataItem mdi, char *str, int str_size, Ch
 					strncpy(target, str, target_size);
 					res = 1;
 				} else {
-					ti->title[0] = '\0';
+					target[0] = '\0';
 				}
 				break;
 			case UTF_16:
