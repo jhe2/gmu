@@ -37,5 +37,5 @@ char *charset_filename_convert_alloc(const char *filename);
 int   charset_convert_string(const char *source, Charset source_charset,
                              char       *target, Charset target_charset,
                              int         target_size);
-int   charset_is_valid_utf8_string(char *str);
+int   charset_is_valid_utf8_string(const char *str);
 #endif

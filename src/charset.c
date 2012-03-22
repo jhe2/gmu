@@ -258,7 +258,7 @@ int charset_convert_string(const char *source, Charset source_charset,
 	return result;
 }
 
-int charset_is_valid_utf8_string(char *str)
+int charset_is_valid_utf8_string(const char *str)
 {
 	int            i, len = strlen(str), valid = 1;
 	unsigned char *src = (unsigned char *)str;

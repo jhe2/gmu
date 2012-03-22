@@ -138,31 +138,41 @@ void file_player_stop_playback(void)
 static int strncpy_charset_conv(char *target, const char* source, int target_size,
                                 int source_size, GmuCharset charset)
 {
+	int res = 0;
 	switch (charset) {
 		case M_CHARSET_ISO_8859_1:
 		case M_CHARSET_ISO_8859_15:
-			strncpy(target, source, target_size);
+			res = charset_iso8859_1_to_utf8(target, source, target_size);
 			break;
 		case M_CHARSET_UTF_8:
-			charset_utf8_to_iso8859_1(target, source, target_size);
+			if (charset_is_valid_utf8_string(source)) {
+				strncpy(target, source, target_size);
+				res = 1;
+			} else {
+				target[0] = '\0';
+			}
 			break;
 		case M_CHARSET_UTF_16_BOM:
-			charset_utf16_to_iso8859_1(target, target_size, source, source_size, BOM);
+			res = charset_utf16_to_utf8(target, target_size, source, source_size, BOM);
 			break;
 		case M_CHARSET_UTF_16_BE:
-			charset_utf16_to_iso8859_1(target, target_size, source, source_size, BE);
+			res = charset_utf16_to_utf8(target, target_size, source, source_size, BE);
 			break;
 		case M_CHARSET_UTF_16_LE:
-			charset_utf16_to_iso8859_1(target, target_size, source, source_size, LE);
+			res = charset_utf16_to_utf8(target, target_size, source, source_size, LE);
 			break;
 		case M_CHARSET_AUTODETECT:
 			wdprintf(V_DEBUG, "fileplayer", "Charset autodetect!\n");
-			if (!charset_utf8_to_iso8859_1(target, source, target_size))
-				if (!charset_utf16_to_iso8859_1(target, target_size, source, source_size, BOM))
-					strncpy(target, source, target_size);
+			if (charset_is_valid_utf8_string(source)) {
+				strncpy(target, source, target_size);
+				res = 1;
+			} else {
+				if (!(res = charset_utf16_to_utf8(target, target_size, source, source_size, BOM)))
+					res = charset_iso8859_1_to_utf8(target, source, target_size);
+			}
 			break;
 	}
-	return 0;
+	return res;
 }
 
 /* Return 1 when new meta data differs from previous data, 0 otherwise */
@@ -271,7 +281,10 @@ static void *decode_audio_thread(void *udata)
 
 				if (item_status == PLAYING && !file_player_shut_down && (*gd->open_file)(filename)) {
 					trackinfo_clear(ti);
-					strncpy(ti->file_name, filename, SIZE_FILE_NAME-1);
+					if (charset_is_valid_utf8_string(filename))
+						strncpy(ti->file_name, filename, SIZE_FILE_NAME-1);
+					else
+						charset_iso8859_1_to_utf8(ti->file_name, filename, SIZE_FILE_NAME-1);
 
 					/* Assume 44.1 kHz stereo as default */
 					ti->samplerate = 44100;
@@ -312,7 +325,6 @@ static void *decode_audio_thread(void *udata)
 						} else {
 							wdprintf(V_DEBUG, "fileplayer", "Audio device ready!\n");
 						}
-						charset_utf8_to_iso8859_1(ti->file_name, filename, SIZE_FILE_NAME-1);
 
 						/* read meta data */
 						if (update_metadata(gd, ti, charset))
