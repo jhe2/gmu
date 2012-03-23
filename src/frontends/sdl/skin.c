@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: skin.c  Created: 061107
  *
@@ -212,16 +212,16 @@ static int skin_config_load(Skin *skin, char *skin_name)
 					wdprintf(V_DEBUG, "skin", "Loading fonts...\n");
 					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font_display_name);
 					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
-					a = lcd_init(&skin->font_display, tmp, 
-								 skin->font_display_char_width, skin->font_display_char_height);
+					a = textrenderer_init(&skin->font_display, tmp, 
+					                      skin->font_display_char_width, skin->font_display_char_height);
 					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font1_name);
 					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
-					b = lcd_init(&skin->font1, tmp, 
-								 skin->font1_char_width, skin->font1_char_height);
+					b = textrenderer_init(&skin->font1, tmp, 
+								          skin->font1_char_width, skin->font1_char_height);
 					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font2_name);
 					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
-					c = lcd_init(&skin->font2, tmp,
-								 skin->font2_char_width, skin->font2_char_height);
+					c = textrenderer_init(&skin->font2, tmp,
+					                      skin->font2_char_width, skin->font2_char_height);
 					if (a && b && c)
 						wdprintf(V_INFO, "skin", "skin: Skin data loaded successfully.\n");
 					else
@@ -254,9 +254,9 @@ void skin_free(Skin *skin)
 	if (skin->display_symbols) SDL_FreeSurface(skin->display_symbols);
 	if (skin->arrow_up) SDL_FreeSurface(skin->arrow_up);
 	if (skin->arrow_down) SDL_FreeSurface(skin->arrow_down);
-	lcd_free(&skin->font1);
-	lcd_free(&skin->font2);
-	lcd_free(&skin->font_display);
+	textrenderer_free(&skin->font1);
+	textrenderer_free(&skin->font2);
+	textrenderer_free(&skin->font_display);
 	gmu_widget_free(&(skin->display));
 	gmu_widget_free(&(skin->lv));
 	gmu_widget_free(&(skin->header));
@@ -376,22 +376,22 @@ int skin_textarea_get_characters_per_line(Skin *skin)
 
 void skin_draw_header_text(Skin *skin, char *text, SDL_Surface *target)
 {
-	lcd_draw_string(&skin->font1, text, target, 
-	                gmu_widget_get_pos_x(&skin->header, 1),
-			                             gmu_widget_get_pos_y(&skin->header, 0) +
-			                             (gmu_widget_get_height(&skin->header, 0) -
-			                              skin->font1_char_height) / 2);
+	textrenderer_draw_string(&skin->font1, text, target, 
+	                         gmu_widget_get_pos_x(&skin->header, 1),
+			                 gmu_widget_get_pos_y(&skin->header, 0) +
+			                 (gmu_widget_get_height(&skin->header, 0) -
+			                 skin->font1_char_height) / 2);
 }
 
 void skin_draw_footer_text(Skin *skin, char *text, SDL_Surface *target)
 {
 	int len = skin_textarea_get_characters_per_line(skin);
-	lcd_draw_string_with_highlight(&skin->font1, &skin->font2, text, 0, target,
-			                       gmu_widget_get_pos_x(&skin->footer, 1),
-			                       gmu_widget_get_pos_y(&skin->footer, 0) +
-			                       (gmu_widget_get_height(&skin->footer, 0) -
-			                        skin->font1_char_height) / 2,
-			                       len, RENDER_CROP);
+	textrenderer_draw_string_with_highlight(&skin->font1, &skin->font2, text, 0, target,
+			                                gmu_widget_get_pos_x(&skin->footer, 1),
+			                                gmu_widget_get_pos_y(&skin->footer, 0) +
+			                                (gmu_widget_get_height(&skin->footer, 0) -
+			                                skin->font1_char_height) / 2,
+			                                len, RENDER_CROP);
 }
 
 void skin_draw_scroll_arrow_up(Skin *skin, SDL_Surface *target)

@@ -43,10 +43,10 @@ int question_process_action(Question *dlg, int user_key_action)
 void question_draw(Question *dlg, SDL_Surface *sdl_target)
 {
 	skin_draw_header_text(dlg->skin, "Question", sdl_target);
-	lcd_draw_string(&dlg->skin->font1, dlg->question, sdl_target,
-	                gmu_widget_get_pos_x((GmuWidget *)&dlg->skin->lv, 1),
-	                gmu_widget_get_pos_y((GmuWidget *)&dlg->skin->lv, 1) + 
-	                gmu_widget_get_height((GmuWidget *)&dlg->skin->lv, 1) / 2 - dlg->skin->font1_char_height);
+	textrenderer_draw_string(&dlg->skin->font1, dlg->question, sdl_target,
+	                         gmu_widget_get_pos_x((GmuWidget *)&dlg->skin->lv, 1),
+	                         gmu_widget_get_pos_y((GmuWidget *)&dlg->skin->lv, 1) + 
+	                         gmu_widget_get_height((GmuWidget *)&dlg->skin->lv, 1) / 2 - dlg->skin->font1_char_height);
 }
 
 void question_set(Question *dlg, View return_view, View *view, char *question,

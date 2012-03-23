@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: skin.h  Created: 061107
  *
@@ -65,7 +65,7 @@ typedef struct _Skin
 	int  font2_char_height;
 
 	/* data */
-	LCD          font1, font2, font_display;
+	TextRenderer font1, font2, font_display;
 	GmuWidget    header, display, lv, footer;
 	SDL_Surface *display_symbols, *arrow_up, *arrow_down;
 

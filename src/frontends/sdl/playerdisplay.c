@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playerdisplay.c  Created: 061109
  *
@@ -41,7 +41,7 @@ void player_display_set_playback_symbol_blinking(int blink)
 	playback_symbol_blinking = blink;
 }
 
-static void player_display_show_volume(LCD *lcd, SDL_Surface *target, int volume)
+static void player_display_show_volume(TextRenderer *tr, SDL_Surface *target, int volume)
 {
 /*	if (skin.config.volume_offset_x >= 0 && skin.config.volume_offset_y >= 0) {
 		char vol_ch1 = 0, vol_ch2 = 0;
@@ -59,17 +59,17 @@ static void player_display_show_volume(LCD *lcd, SDL_Surface *target, int volume
 		else if (volume == 10) vol_ch2 = 'l';
 
 		if (vol_ch1)
-			lcd_draw_char(&skin.data.font_display, vol_ch1, target, 
-			              skin.config.volume_offset_x,
-			              skin.config.volume_offset_y);		
+			textrenderer_draw_char(&skin.data.font_display, vol_ch1, target, 
+			                       skin.config.volume_offset_x,
+			                       skin.config.volume_offset_y);		
 		if (vol_ch2)
-			lcd_draw_char(&skin.data.font_display, vol_ch2, target, 
-			              skin.config.volume_offset_x + lcd->chwidth,
-			              skin.config.volume_offset_y);
+			textrenderer_draw_char(&skin.data.font_display, vol_ch2, target, 
+			                       skin.config.volume_offset_x + tr->chwidth,
+			                       skin.config.volume_offset_y);
 	}*/
 }
 
-void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
+void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_status,
                          int ptime_msec, int ptime_remaining, int volume,
                          int busy, int shutdown_time, SDL_Surface *buffer)
 {
@@ -108,7 +108,7 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 	}
 
 	/* Volume */
-	player_display_show_volume(lcd, buffer, volume);
+	player_display_show_volume(tr, buffer, volume);
 
 	if (skin.title_scroller_offset_x1 >= 0 && skin.title_scroller_offset_y >= 0) {
 		char       lcd_text[MAX_LENGTH+1], temp[MAX_LENGTH+1];
@@ -137,18 +137,18 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 			lcd_text[len] = '\0';
 			notice_time_left--;
 		}
-		lcd_draw_string(&skin.font_display, lcd_text, buffer,
-		                skin.title_scroller_offset_x1,
-		                skin.title_scroller_offset_y);
+		textrenderer_draw_string(&skin.font_display, lcd_text, buffer,
+		                         skin.title_scroller_offset_x1,
+		                         skin.title_scroller_offset_y);
 		if (busy && len > 2) { /* show busy indicator when busy */
 			char       busy_ch[] = { '-', '\\', 'I', '/' };
 			static int ch_sel = 0;
 
-			lcd_draw_char(&skin.font_display, busy_ch[ch_sel], buffer,
-			              skin.title_scroller_offset_x1 +
-			              (title_scroller_chars-1) *
-			              (skin.font_display_char_width+1),
-			              skin.title_scroller_offset_y);
+			textrenderer_draw_char(&skin.font_display, busy_ch[ch_sel], buffer,
+			                      skin.title_scroller_offset_x1 +
+			                      (title_scroller_chars-1) *
+			                      (skin.font_display_char_width+1),
+			                      skin.title_scroller_offset_y);
 			ch_sel++;
 			if (ch_sel > 3) ch_sel = 0;
 		} else if ((shutdown_time > 0 || shutdown_time == -1) && len > 3) {
@@ -158,24 +158,24 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 				snprintf(tmp, 5, " %3d", shutdown_time);
 			else
 				snprintf(tmp, 5, " [S]");
-			lcd_draw_string(&skin.font_display, tmp, buffer,
-		                skin.title_scroller_offset_x1 +
-		                (title_scroller_chars-4) *
-			            (skin.font_display_char_width+1),
-		                skin.title_scroller_offset_y);
+			textrenderer_draw_string(&skin.font_display, tmp, buffer,
+		                             skin.title_scroller_offset_x1 +
+		                             (title_scroller_chars-4) *
+			                         (skin.font_display_char_width+1),
+		                             skin.title_scroller_offset_y);
 		}
 	}
 	if (skin.bitrate_offset_x >= 0 && skin.bitrate_offset_y >= 0) {
 		snprintf(buf, 27, "%4d KBPS", (int)(ti->recent_bitrate / 1000));
-		lcd_draw_string(&skin.font_display, buf, buffer,
-		                skin.bitrate_offset_x, skin.bitrate_offset_y);
+		textrenderer_draw_string(&skin.font_display, buf, buffer,
+		                         skin.bitrate_offset_x, skin.bitrate_offset_y);
 	}
 	if (skin.frequency_offset_x >= 0 && skin.frequency_offset_y >= 0) {
 		char tmp6[6];
 		snprintf(tmp6, 6, "%05d", ti->samplerate);
 		snprintf(buf, 27, "%c%c.%c KHZ", tmp6[0] != '0' ? tmp6[0] : ' ', tmp6[1], tmp6[2]);
-		lcd_draw_string(&skin.font_display, buf, buffer,
-		                skin.frequency_offset_x, skin.frequency_offset_y);
+		textrenderer_draw_string(&skin.font_display, buf, buffer,
+		                         skin.frequency_offset_x, skin.frequency_offset_y);
 	}
 	if (skin.time_offset_x >= 0 && skin.time_offset_y >= 0) {
 		if (min >= 0 && min <= 99 && sec >= 0)
@@ -184,8 +184,8 @@ void player_display_draw(LCD *lcd, TrackInfo *ti, PB_Status player_status,
 			snprintf(buf, 27, "%03d:%02d", min, sec);
 		else
 			snprintf(buf, 27, " --:--");
-		lcd_draw_string(&skin.font_display, buf, buffer,
-		                skin.time_offset_x, skin.time_offset_y);
+		textrenderer_draw_string(&skin.font_display, buf, buffer,
+		                         skin.time_offset_x, skin.time_offset_y);
 	}
 }
 

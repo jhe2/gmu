@@ -172,8 +172,8 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 	for (i = fb->offset; 
 	     i < fb->offset + number_of_visible_lines && i < dir_get_number_of_files(&fb->dir); 
 	     i++) {
-	    int  line_length = 0;
-	    LCD *font, *font_inverted;
+	    int           line_length = 0;
+	    TextRenderer *font, *font_inverted;
 
 		if (dir_get_flag(&fb->dir, i) == DIRECTORY) {
 			snprintf(buf, len, "[DIR]");
@@ -186,12 +186,12 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		if (i == fb->offset + number_of_visible_lines - 1 && !selected_entry_drawn)
 			fb->selection = i;
 
-		font          = (LCD *)(i == fb->selection ? &fb->skin->font2 : &fb->skin->font1);
-		font_inverted = (LCD *)(i == fb->selection ? &fb->skin->font1 : &fb->skin->font2);
-		lcd_draw_string(font, buf, sdl_target, 
-						gmu_widget_get_pos_x((GmuWidget *)&fb->skin->lv, 1), 
-						gmu_widget_get_pos_y((GmuWidget *)&fb->skin->lv, 1) + 1
-						+ (i-fb->offset)*(fb->skin->font2_char_height+1));
+		font          = (TextRenderer *)(i == fb->selection ? &fb->skin->font2 : &fb->skin->font1);
+		font_inverted = (TextRenderer *)(i == fb->selection ? &fb->skin->font1 : &fb->skin->font2);
+		textrenderer_draw_string(font, buf, sdl_target, 
+		                         gmu_widget_get_pos_x((GmuWidget *)&fb->skin->lv, 1), 
+		                         gmu_widget_get_pos_y((GmuWidget *)&fb->skin->lv, 1) + 1
+		                         + (i-fb->offset)*(fb->skin->font2_char_height+1));
 
 		snprintf(buf, FB_MAXIMUM_STR_LENGTH, "%s", dir_get_filename(&fb->dir, i));
 		if (fb->charset == UTF_8) {
@@ -205,12 +205,12 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		if (line_length > fb->longest_line_so_far)
 			fb->longest_line_so_far = line_length;
 
-		lcd_draw_string_with_highlight(font, font_inverted, bufptr, fb->horiz_offset, sdl_target, 
-									   gmu_widget_get_pos_x((GmuWidget *)&fb->skin->lv, 1)
-									   + fb->skin->font1_char_width * 7,
-									   gmu_widget_get_pos_y((GmuWidget *)&fb->skin->lv, 1)+ 1
-									   + (i-fb->offset) * (fb->skin->font2_char_height + 1),
-									   cpl-6, RENDER_ARROW);
+		textrenderer_draw_string_with_highlight(font, font_inverted, bufptr, fb->horiz_offset, sdl_target, 
+		                                        gmu_widget_get_pos_x((GmuWidget *)&fb->skin->lv, 1)
+		                                        + fb->skin->font1_char_width * 7,
+		                                        gmu_widget_get_pos_y((GmuWidget *)&fb->skin->lv, 1)+ 1
+		                                        + (i-fb->offset) * (fb->skin->font2_char_height + 1),
+		                                        cpl-6, RENDER_ARROW);
 		if (i == fb->selection) selected_entry_drawn = 1;
 	}
 }

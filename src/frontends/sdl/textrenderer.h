@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: textrenderer.h  Created: 060929
  *
@@ -16,25 +16,25 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
-#ifndef _TEXTRENDERER_H
-#define _TEXTRENDERER_H
-struct _LCD
+#ifndef GMU_TEXTRENDERER_H
+#define GMU_TEXTRENDERER_H
+struct _TextRenderer
 {
 	SDL_Surface *chars;
 	int chwidth, chheight;
 };
 
-typedef struct _LCD LCD;
+typedef struct _TextRenderer TextRenderer;
 
 typedef enum { RENDER_DEFAULT, RENDER_CROP, RENDER_ARROW } Render_Mode;
 
-int  lcd_init(LCD *lcd, char *chars_file, int chwidth, int chheight);
-void lcd_free(LCD *lcd);
-void lcd_draw_char(const LCD *lcd, char ch, SDL_Surface *target, int target_x, int target_y);
-void lcd_draw_string(const LCD *lcd, const char *str, SDL_Surface *target, int target_x, int target_y);
-void lcd_draw_string_with_highlight(const LCD *lcd1, const LCD *lcd2,
-                                    const char *str, int str_offset,
-                                    SDL_Surface *target, int target_x, int target_y,
-                                    int max_length, Render_Mode rm);
-int  lcd_get_string_length(const char *str);
+int  textrenderer_init(TextRenderer *tr, char *chars_file, int chwidth, int chheight);
+void textrenderer_free(TextRenderer *tr);
+void textrenderer_draw_char(const TextRenderer *tr, char ch, SDL_Surface *target, int target_x, int target_y);
+void textrenderer_draw_string(const TextRenderer *tr, const char *str, SDL_Surface *target, int target_x, int target_y);
+void textrenderer_draw_string_with_highlight(const TextRenderer *tr1, const TextRenderer *tr2,
+                                             const char *str, int str_offset,
+                                             SDL_Surface *target, int target_x, int target_y,
+                                             int max_length, Render_Mode rm);
+int  textrenderer_get_string_length(const char *str);
 #endif

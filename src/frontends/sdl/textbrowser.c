@@ -128,10 +128,10 @@ void text_browser_draw(TextBrowser *tb, SDL_Surface *sdl_target)
 		strncpy(line, tb->text+char_offset, line_length);
 		line[line_length] = '\0';
 
-		lcd_draw_string_with_highlight(&tb->skin->font1, &tb->skin->font2,
-		                               line, tb->offset_x, sdl_target,
-		                               tb->pos_x + indent, tb->pos_y + yo,
-		                               tb->chars_per_line-1, RENDER_ARROW);
+		textrenderer_draw_string_with_highlight(&tb->skin->font1, &tb->skin->font2,
+		                                        line, tb->offset_x, sdl_target,
+		                                        tb->pos_x + indent, tb->pos_y + yo,
+		                                        tb->chars_per_line-1, RENDER_ARROW);
 		yo += tb->skin->font1_char_height+1;
 		char_offset += line_length + 1;
 	}

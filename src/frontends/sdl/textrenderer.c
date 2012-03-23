@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: textrenderer.c  Created: 060929
  *
@@ -18,16 +18,16 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
-int lcd_init(LCD *lcd, char *chars_file, int chwidth, int chheight)
+int textrenderer_init(TextRenderer *tr, char *chars_file, int chwidth, int chheight)
 {
 	int          result = 0;
 	SDL_Surface *tmp = IMG_Load(chars_file);
 
-	lcd->chars = NULL;
+	tr->chars = NULL;
 	if (tmp) {
-		if ((lcd->chars = SDL_DisplayFormatAlpha(tmp))) {
-			lcd->chwidth  = chwidth;
-			lcd->chheight = chheight;
+		if ((tr->chars = SDL_DisplayFormatAlpha(tmp))) {
+			tr->chwidth  = chwidth;
+			tr->chheight = chheight;
 			result = 1;
 		}
 		SDL_FreeSurface(tmp);
@@ -35,44 +35,44 @@ int lcd_init(LCD *lcd, char *chars_file, int chwidth, int chheight)
 	return result;
 }
 
-void lcd_free(LCD *lcd)
+void textrenderer_free(TextRenderer *tr)
 {
-	if (lcd->chars != NULL) {
-		SDL_FreeSurface(lcd->chars);
-		lcd->chars = NULL;
+	if (tr->chars != NULL) {
+		SDL_FreeSurface(tr->chars);
+		tr->chars = NULL;
 	}
 }
 
-void lcd_draw_char(const LCD *lcd, char ch, SDL_Surface *target, int target_x, int target_y)
+void textrenderer_draw_char(const TextRenderer *tr, char ch, SDL_Surface *target, int target_x, int target_y)
 {
-	int      n = ((unsigned char)ch - '!') * lcd->chwidth;
+	int      n = ((unsigned char)ch - '!') * tr->chwidth;
 	SDL_Rect srect, drect;
 
 	if (n >= 0) {
 		srect.x = 1 + n;
 		srect.y = 1;
-		srect.w = lcd->chwidth;
-		srect.h = lcd->chheight;
+		srect.w = tr->chwidth;
+		srect.h = tr->chheight;
 
 		drect.x = target_x;
 		drect.y = target_y;
 		drect.w = 1;
 		drect.h = 1;
 
-		SDL_BlitSurface(lcd->chars, &srect, target, &drect);
+		SDL_BlitSurface(tr->chars, &srect, target, &drect);
 	}
 }
 
-void lcd_draw_string(const LCD *lcd, const char *str, SDL_Surface *target, int target_x, int target_y)
+void textrenderer_draw_string(const TextRenderer *tr, const char *str, SDL_Surface *target, int target_x, int target_y)
 {
 	int i;
 	int l = (int)strlen(str);
 
 	for (i = 0; i < l; i++)
-		lcd_draw_char(lcd, str[i], target, target_x + i * (lcd->chwidth + 1), target_y);
+		textrenderer_draw_char(tr, str[i], target, target_x + i * (tr->chwidth + 1), target_y);
 }
 
-int lcd_get_string_length(const char *str)
+int textrenderer_get_string_length(const char *str)
 {
 	int i, len = (int)strlen(str);
 	int len_const = len;
@@ -82,10 +82,10 @@ int lcd_get_string_length(const char *str)
 	return len;
 }
 
-void lcd_draw_string_with_highlight(const LCD *lcd1, const LCD *lcd2,
-                                    const char *str, int str_offset,
-                                    SDL_Surface *target, int target_x, int target_y,
-                                    int max_length, Render_Mode rm)
+void textrenderer_draw_string_with_highlight(const TextRenderer *tr1, const TextRenderer *tr2,
+                                             const char *str, int str_offset,
+                                             SDL_Surface *target, int target_x, int target_y,
+                                             int max_length, Render_Mode rm)
 {
 	int highlight = 0;
 	int i, j;
@@ -93,9 +93,9 @@ void lcd_draw_string_with_highlight(const LCD *lcd1, const LCD *lcd2,
 
 	if (rm == RENDER_ARROW) {
 		if (str_offset > 0)
-			lcd_draw_char(lcd2, '<', target, target_x, target_y);
-		if (lcd_get_string_length(str) - str_offset > max_length) {
-			lcd_draw_char(lcd2, '>', target, target_x + (max_length - 1) * (lcd2->chwidth + 1), target_y);
+			textrenderer_draw_char(tr2, '<', target, target_x, target_y);
+		if (textrenderer_get_string_length(str) - str_offset > max_length) {
+			textrenderer_draw_char(tr2, '>', target, target_x + (max_length - 1) * (tr2->chwidth + 1), target_y);
 			max_length--;
 		}
 	}
@@ -121,11 +121,11 @@ void lcd_draw_string_with_highlight(const LCD *lcd1, const LCD *lcd2,
 		}
 		if (j >= str_offset && (j != str_offset || str_offset == 0)) {
 			if (!highlight)
-				lcd_draw_char(lcd1, str[i], target, 
-				              target_x + (j-str_offset) * (lcd1->chwidth + 1), target_y);
+				textrenderer_draw_char(tr1, str[i], target, 
+				                       target_x + (j-str_offset) * (tr1->chwidth + 1), target_y);
 			else
-				lcd_draw_char(lcd2, str[i], target, 
-				              target_x + (j-str_offset) * (lcd2->chwidth + 1), target_y);
+				textrenderer_draw_char(tr2, str[i], target, 
+				                       target_x + (j-str_offset) * (tr2->chwidth + 1), target_y);
 		}
 	}
 }

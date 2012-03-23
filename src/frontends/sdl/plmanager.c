@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: plmanager.c  Created: 061223
  *
@@ -71,13 +71,13 @@ void plmanager_draw(PlaylistManager *ps, SDL_Surface *sdl_target)
 
 	for (i = 0; i < PLMANAGER_MAX_ITEMS && ps->filenames[i][0] != '\0'; i++) {
 		if (i == ps->selection)
-			lcd_draw_string(&ps->skin->font2, ps->filenames[i], sdl_target, 
-			                posx+1, 
-			                posy+1+i*(ps->skin->font2_char_height+1));
+			textrenderer_draw_string(&ps->skin->font2, ps->filenames[i], sdl_target, 
+			                         posx+1, 
+			                         posy+1+i*(ps->skin->font2_char_height+1));
 		else
-			lcd_draw_string(&ps->skin->font1, ps->filenames[i], sdl_target, 
-			                posx+1, 
-			                posy+1+i*(ps->skin->font2_char_height+1));
+			textrenderer_draw_string(&ps->skin->font1, ps->filenames[i], sdl_target, 
+			                         posx+1, 
+			                         posy+1+i*(ps->skin->font2_char_height+1));
 	}
 }
 

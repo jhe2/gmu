@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playerdisplay.h  Created: 061109
  *
@@ -23,7 +23,7 @@
 
 enum { SCROLL_AUTO, SCROLL_ALWAYS, SCROLL_NEVER };
 
-void player_display_draw(LCD *lcd, TrackInfo *ti,PB_Status player_status,
+void player_display_draw(TextRenderer *tr, TrackInfo *ti,PB_Status player_status,
                          int ptime_msec, int ptime_remaining, int volume,
                          int busy, int shutdown_time, SDL_Surface *buffer);
 void player_display_set_notice_message(char *message, int timeout);
