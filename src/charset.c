@@ -282,14 +282,47 @@ int charset_is_valid_utf8_string(const char *str)
 	return valid;
 }
 
+int charset_utf8_to_codepoints(UCodePoint *target, const char *source, int target_size)
+{
+	int            i, j, len = strlen(source), valid = 1;
+	unsigned char *src = (unsigned char *)source;
+	len = (len < target_size ? len : target_size);
+	for (i = 0, j = 0; i < len; i++) {
+		if (src[i] < 128) { /* ASCII char */
+			target[j] = src[i];
+		} else if (src[i] >= 192 && src[i] < 224) { /* 2 byte char */
+			if (src[i+1] < 128) valid = 0;
+			target[j] = ((src[i] & 0x1F) << 6) + (src[i+1] & 0x3F);
+			i += 1;
+		} else if (src[i] >= 224 && src[i] < 240) { /* 3 byte char */
+			if (src[i+1] < 128 || src[i+2] < 128) valid = 0;
+			target[j] = ((src[i] & 0x0F) << 12) + ((src[i+1] & 0x3F) << 6) + (src[i+2] & 0x3F);
+			i += 2;
+		} else if (src[i] >= 240 && src[i] < 248) { /* 4 byte char */
+			if (src[i+1] < 128 || src[i+2] < 128 || src[i+3] < 128) valid = 0;
+			target[j] = ((src[i] & 0x07) << 18) + ((src[i+1] & 0x3F) << 12) + 
+			            ((src[i+2] & 0x3F) << 6) + (src[i+3] & 0x3F);
+			i += 3;
+		} else {
+			valid = 0;
+		}
+		if (valid == 0) {
+			/*wdprintf(V_DEBUG, "charset", "utf-8: Invalid UTF-8 string!\n");*/
+			break;
+		}
+		j++;
+	}
+	target[j] = 0;
+	return valid;
+}
+
 /*int main(int argc, char **argv)
 {
-	char inbuffer[1000], outbuffer[1000];
-	memset(inbuffer, 0, 1000);
-	fgets(inbuffer, 1000, stdin);
-	int res = charset_utf16_to_utf8(outbuffer, 999,
-                          inbuffer, 999,
-                          BOM);
-    printf("r=%d : %s\n", res, outbuffer);
+	int i;
+	UCodePoint buf[100];
+	memset(buf, 0, sizeof(UCodePoint) * 100);
+	charset_utf8_to_codepoints(buf, argv[1], 100);
+	for (i = 0; i < 100 && buf[i]; i++)
+		printf("%02d: %lx (%ld)\n", i, (unsigned long)buf[i], buf[i]);
 	return 0;
 }*/

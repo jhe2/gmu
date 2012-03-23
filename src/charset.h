@@ -22,7 +22,7 @@
 #define UNICODE_SUR_LOW_END      0xDFFF
 typedef enum Charset { ASCII, ISO_8859_1, ISO_8859_15, UTF_8, UTF_16, UTF_16_BOM, UNKNOWN_CHARSET } Charset;
 typedef enum { BE, LE, BOM } ByteOrder;
-typedef long UCodePoint;
+typedef unsigned long UCodePoint;
 
 int   charset_utf8_to_iso8859_1(char *target, const char *source, int target_size);
 int   charset_utf16_to_iso8859_1(char       *target, int target_size,
@@ -38,4 +38,5 @@ int   charset_convert_string(const char *source, Charset source_charset,
                              char       *target, Charset target_charset,
                              int         target_size);
 int   charset_is_valid_utf8_string(const char *str);
+int   charset_utf8_to_codepoints(UCodePoint *target, const char *source, int target_size);
 #endif
