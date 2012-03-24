@@ -194,8 +194,8 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		                         + (i-fb->offset)*(fb->skin->font2_char_height+1));
 
 		snprintf(buf, FB_MAXIMUM_STR_LENGTH, "%s", dir_get_filename(&fb->dir, i));
-		if (fb->charset == UTF_8) {
-			charset_utf8_to_iso8859_1(buf3, buf, FB_MAXIMUM_STR_LENGTH);
+		if (fb->charset != UTF_8) {
+			charset_iso8859_1_to_utf8(buf3, buf, FB_MAXIMUM_STR_LENGTH);
 			bufptr = buf3;
 		} else {
 			bufptr = buf;

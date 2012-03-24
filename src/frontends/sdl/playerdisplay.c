@@ -111,35 +111,55 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 	player_display_show_volume(tr, buffer, volume);
 
 	if (skin.title_scroller_offset_x1 >= 0 && skin.title_scroller_offset_y >= 0) {
-		char       lcd_text[MAX_LENGTH+1], temp[MAX_LENGTH+1];
-		char       text[MAX_LENGTH+1];
-		int        len = (title_scroller_chars + 1 > MAX_LENGTH ? 
-		                  MAX_LENGTH : title_scroller_chars + 1);
-		static int display_message_pos = 0;
+		char        lcd_text[MAX_LENGTH+1], temp[MAX_LENGTH+1];
+		char        text[MAX_LENGTH+1];
+		int         len = (title_scroller_chars > MAX_LENGTH ? 
+		                   MAX_LENGTH : title_scroller_chars);
+		static int  display_message_pos = 0;
+		int         str_max_visible_len = (busy && len > 2) ? len-2 : (shutdown_time != 0 && len > 3 ? len-4 : len);
+		int         str_len = 0;
+		UCodePoint *lcd_text_cp;
 
 		trackinfo_get_full_title(ti, temp, MAX_LENGTH);
 		memset(text, ' ', len);
 		snprintf(text + len, MAX_LENGTH-len, "%s ", temp);
+		/* Fix the string in case it was cropped due to length limit 
+		 * and left an incomplete uft8 char at the end: */
+		charset_fix_broken_utf8_string(text);
+		str_len = charset_utf8_len(text);
+
 		if (notice_time_left == 0) {
-			if (display_message_pos < (int)strlen(text)) {
-				if (((int)(strlen(temp)) > title_scroller_chars &&
-				    scrolling == SCROLL_AUTO) || scrolling == SCROLL_ALWAYS)
+			if (display_message_pos < str_len) {
+				if ((str_len > title_scroller_chars &&
+				    scrolling == SCROLL_AUTO) || scrolling == SCROLL_ALWAYS) {
 					display_message_pos++;
-				else
+				} else {
 					display_message_pos = title_scroller_chars + 1;
+				}
+				strtoupper(lcd_text, text, strlen(text)+1);
 			} else {
 				display_message_pos = 0;
 			}
-			strtoupper(lcd_text, text + display_message_pos,
-			           (busy && len > 2) ? len-2 : (shutdown_time != 0 && len > 3 ? len-4 : len));
 		} else {
 			strncpy(lcd_text, notice_message, len);
+			str_len = charset_utf8_len(lcd_text);
 			lcd_text[len] = '\0';
 			notice_time_left--;
 		}
-		textrenderer_draw_string(&skin.font_display, lcd_text, buffer,
-		                         skin.title_scroller_offset_x1,
-		                         skin.title_scroller_offset_y);
+
+		lcd_text_cp = str_len > 0 ? malloc(sizeof(UCodePoint) * (str_len+1)) : NULL;
+		if (lcd_text_cp) {
+			if (charset_utf8_to_codepoints(lcd_text_cp, lcd_text, str_len+1)) {
+				int len = str_len < str_max_visible_len ? str_len : str_max_visible_len;
+				int pos = notice_time_left ? 0 : display_message_pos;
+				if (len > str_len - display_message_pos) len = str_len - pos;
+				textrenderer_draw_string_codepoints(&skin.font_display, lcd_text_cp+pos,
+				                                    len, buffer, 
+				                                    skin.title_scroller_offset_x1,
+				                                    skin.title_scroller_offset_y);
+			}
+			free(lcd_text_cp);
+		}
 		if (busy && len > 2) { /* show busy indicator when busy */
 			char       busy_ch[] = { '-', '\\', 'I', '/' };
 			static int ch_sel = 0;

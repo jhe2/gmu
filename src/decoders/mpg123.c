@@ -408,7 +408,7 @@ static int meta_data_close(void)
 
 static GmuCharset meta_data_get_charset(void)
 {
-	return M_CHARSET_ISO_8859_1;
+	return M_CHARSET_UTF_8;
 }
 
 static int data_check_mime_type(const char *data, int size)

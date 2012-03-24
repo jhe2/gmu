@@ -437,8 +437,8 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 					i++;
 				}
 				bufptr = strrchr(gmu_core_playlist_get_entry_filename(entry), '/')+1;
-				if (pl_browser_get_filenames_charset(pb) == UTF_8) {
-					charset_utf8_to_iso8859_1(buf2, bufptr, 127);
+				if (pl_browser_get_filenames_charset(pb) != UTF_8) {
+					charset_iso8859_1_to_utf8(buf2, bufptr, 127);
 					bufptr = buf2;
 				}
 				snprintf(buf, 127, "Delete \"%s\"?", bufptr);

@@ -39,4 +39,8 @@ int   charset_convert_string(const char *source, Charset source_charset,
                              int         target_size);
 int   charset_is_valid_utf8_string(const char *str);
 int   charset_utf8_to_codepoints(UCodePoint *target, const char *source, int target_size);
+int   charset_utf8_len(const char *str);
+/* Fiexes a broken UTF-8 string. If there is nothing to be fixed,
+ * the string is left as is and 0 is returned, 1 otherwise */
+int   charset_fix_broken_utf8_string(char *str);
 #endif
