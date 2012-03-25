@@ -77,7 +77,7 @@ void textrenderer_draw_string(const TextRenderer *tr, const char *str, SDL_Surfa
 	int utf8_chars = charset_utf8_len(str);
 	UCodePoint *ustr = utf8_chars > 0 ? malloc(sizeof(UCodePoint) * (utf8_chars+1)) : NULL;
 
-	if (ustr && charset_utf8_to_codepoints(ustr, str, l)) {
+	if (ustr && charset_utf8_to_codepoints(ustr, str, utf8_chars)) {
 		textrenderer_draw_string_codepoints(tr, ustr, utf8_chars, target, target_x, target_y);
 	}
 	if (ustr) free(ustr);
@@ -126,7 +126,7 @@ void textrenderer_draw_string_with_highlight(const TextRenderer *tr1, const Text
 		}
 	}
 
-	if (ustr && charset_utf8_to_codepoints(ustr, str, l)) {
+	if (ustr && charset_utf8_to_codepoints(ustr, str, utf8_chars)) {
 		for (i = 0, j = 0; i < utf8_chars && j - str_offset < max_length; i++, j++) {
 			if (str[i] == '*' && i+1 < utf8_chars && str[i+1] == '*') {
 				highlight = !highlight;
