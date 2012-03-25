@@ -286,7 +286,7 @@ int charset_utf8_to_codepoints(UCodePoint *target, const char *source, int targe
 {
 	int            i, j, len = strlen(source), valid = 1;
 	unsigned char *src = (unsigned char *)source;
-	len = (len < target_size ? len : target_size);
+	len = (len < target_size-1 ? len : target_size-1);
 	for (i = 0, j = 0; i < len; i++) {
 		if (src[i] < 128) { /* ASCII char */
 			target[j] = src[i];
@@ -321,7 +321,7 @@ int charset_utf8_to_codepoints(UCodePoint *target, const char *source, int targe
 		}
 		j++;
 	}
-	target[j] = 0;
+	for (i = j; i < target_size; i++) target[i] = 0;
 	return valid;
 }
 

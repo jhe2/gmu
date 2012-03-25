@@ -46,8 +46,8 @@ void textrenderer_free(TextRenderer *tr)
 
 void textrenderer_draw_char(const TextRenderer *tr, UCodePoint ch, SDL_Surface *target, int target_x, int target_y)
 {
-	int      n = ((unsigned char)ch - '!') * tr->chwidth;
-	SDL_Rect srect, drect;
+	const int n = (ch - '!') * tr->chwidth;
+	SDL_Rect  srect, drect;
 
 	if (n >= 0) {
 		srect.x = 1 + n;
@@ -67,14 +67,13 @@ void textrenderer_draw_char(const TextRenderer *tr, UCodePoint ch, SDL_Surface *
 void textrenderer_draw_string_codepoints(const TextRenderer *tr, const UCodePoint *str, int str_len, SDL_Surface *target, int target_x, int target_y)
 {
 	int i;
-	for (i = 0; i < str_len; i++)
+	for (i = 0; i < str_len && str[i]; i++)
 		textrenderer_draw_char(tr, str[i], target, target_x + i * (tr->chwidth + 1), target_y);
 }
 
 void textrenderer_draw_string(const TextRenderer *tr, const char *str, SDL_Surface *target, int target_x, int target_y)
 {
-	int l = (int)strlen(str);
-	int utf8_chars = charset_utf8_len(str);
+	int utf8_chars = charset_utf8_len(str)+1;
 	UCodePoint *ustr = utf8_chars > 0 ? malloc(sizeof(UCodePoint) * (utf8_chars+1)) : NULL;
 
 	if (ustr && charset_utf8_to_codepoints(ustr, str, utf8_chars)) {
@@ -102,7 +101,7 @@ void textrenderer_draw_string_with_highlight(const TextRenderer *tr1, const Text
 	int highlight = 0;
 	int i, j;
 	int l = (int)strlen(str);
-	int utf8_chars = charset_utf8_len(str);
+	int utf8_chars = charset_utf8_len(str)+1;
 	UCodePoint *ustr = utf8_chars > 0 ? malloc(sizeof(UCodePoint) * (utf8_chars+1)) : NULL;
 
 	if (rm == RENDER_ARROW) {
