@@ -287,7 +287,7 @@ int charset_utf8_to_codepoints(UCodePoint *target, const char *source, int targe
 	int            i, j, len = strlen(source), valid = 1;
 	unsigned char *src = (unsigned char *)source;
 	len = (len < target_size-1 ? len : target_size-1);
-	for (i = 0, j = 0; i < len; i++) {
+	for (i = 0, j = 0; j < len && source[i]; i++) {
 		if (src[i] < 128) { /* ASCII char */
 			target[j] = src[i];
 		} else if (src[i] >= 192 && src[i] < 224) { /* 2 byte char */
