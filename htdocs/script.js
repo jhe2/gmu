@@ -51,9 +51,8 @@ function start(websocketServerLocation)
 					}
 					break;
 				case 'trackinfo':
-					writeToScreen('foobar');
 					writeToScreen('Track:' + msg['artist'] + ' - ' + msg['title']);
-					setTrackInfo(msg['artist'], msg['title'], '');
+					setTrackInfo(msg['artist'], msg['title'], msg['album']);
 					break;
 				default:
 					if (msg.data) writeToScreen('msg='+msg.data);
