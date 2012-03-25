@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include "../../core.h"
+#include "../../trackinfo.h"
 #include "../../gmufrontend.h"
 #include "httpd.h"
 
@@ -42,20 +43,29 @@ static int init(void)
 	return res;
 }
 
+#define MSG_MAX_LEN 512
+
 static int event_callback(GmuEvent event)
 {
+	char msg[MSG_MAX_LEN];
+	int  r;
+
 	switch (event) {
 		case GMU_QUIT:
 			break;
-		case GMU_TRACKINFO_CHANGE:
-			httpd_send_websocket_broadcast(
-				"{ \"cmd\": \"trackinfo\", \"title\" : \"unknown\", \"artist\" : \"unknown\" }"
-			);
+		case GMU_TRACKINFO_CHANGE: {
+			TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
+			r = snprintf(msg, MSG_MAX_LEN,
+			             "{ \"cmd\": \"trackinfo\", \"title\" : \"%s\", \"artist\" : \"%s\", \"album\" : \"%s\" }",
+			             trackinfo_get_title(ti), trackinfo_get_artist(ti), trackinfo_get_album(ti));
+			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
+		}
 		case GMU_PLAYBACK_STATE_CHANGE: {
-			char str[256];
-			snprintf(str, 255, "{ \"cmd\": \"playback_state\", \"state\" : %d }", gmu_core_get_status());
-			httpd_send_websocket_broadcast(str);
+			r = snprintf(msg, MSG_MAX_LEN,
+			             "{ \"cmd\": \"playback_state\", \"state\" : %d }",
+			             gmu_core_get_status());
+			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
 		default:

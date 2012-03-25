@@ -28,27 +28,36 @@ function start(websocketServerLocation)
 
 		socket.onmessage = function(msg)
 		{
-			var foo = JSON.parse(msg.data);
+			var msg = JSON.parse(msg.data);
 
-			if (foo['cmd'] == 'time') {
-				writeToTimeDisplay(foo['time']);
-			} else if (foo['cmd'] == 'playback_state') {
-				switch(foo['state']) {
-					case 0: // stop
-						document.getElementById("btn-play").className = "button";
-						document.getElementById("btn-pause").className = "button";
-						break;
-					case 1: // play
-						document.getElementById("btn-play").className = "button-pressed";
-						document.getElementById("btn-pause").className = "button";
-						break;
-					case 2: // pause
-						document.getElementById("btn-pause").className = "button-pressed";
-						document.getElementById("btn-play").className = "button";
-						break;
-				}
-			} else {
-				writeToScreen(msg.data);
+			switch (msg['cmd']) {
+				case 'time':
+					writeToTimeDisplay(msg['time']);
+					break;
+				case 'playback_state':
+					switch(msg['state']) {
+						case 0: // stop
+							document.getElementById("btn-play").className = "button";
+							document.getElementById("btn-pause").className = "button";
+							break;
+						case 1: // play
+							document.getElementById("btn-play").className = "button-pressed";
+							document.getElementById("btn-pause").className = "button";
+							break;
+						case 2: // pause
+							document.getElementById("btn-pause").className = "button-pressed";
+							document.getElementById("btn-play").className = "button";
+							break;
+					}
+					break;
+				case 'trackinfo':
+					writeToScreen('foobar');
+					writeToScreen('Track:' + msg['artist'] + ' - ' + msg['title']);
+					setTrackInfo(msg['artist'], msg['title'], '');
+					break;
+				default:
+					if (msg.data) writeToScreen('msg='+msg.data);
+					break;
 			}
 		}
 	} else { /* No WebSocket support */
@@ -80,3 +89,9 @@ function writeToTimeDisplay(message)
 	output.innerHTML = message;
 }
 
+function setTrackInfo(artist, title, album)
+{
+	document.getElementById('ti-artist').innerHTML = artist;
+	document.getElementById('ti-title').innerHTML  = title;
+	document.getElementById('ti-album').innerHTML  = album;
+}
