@@ -23,6 +23,18 @@
 #include "id3.h"
 #define ID3V2_MAX_SIZE 262144
 
+static int convert_copy_strip(char *target, const char *source, int size)
+{
+	int res = 1, i;
+	if (charset_is_valid_utf8_string(source))
+		strncpy(target, source, size-1);
+	else
+		res = charset_iso8859_1_to_utf8(target, source, size-1);
+	for (i = size-1; i > 0 && (target[i] == ' ' || target[i] == '\0'); i--)
+	target[i] = '\0';
+	return res;
+}
+
 int id3_read_id3v1(FILE *file, TrackInfo *ti, const char *file_type)
 {
 	int result = 0;
@@ -40,8 +52,6 @@ int id3_read_id3v1(FILE *file, TrackInfo *ti, const char *file_type)
 			    fread(album, 30, 1, file)  &&
 			    fread(year, 4, 1, file)    &&
 			    fread(comment, 30, 1, file)) {
-				int i;
-
 				title[30] = '\0';
 				artist[30] = '\0';
 				album[30] = '\0';
@@ -55,18 +65,12 @@ int id3_read_id3v1(FILE *file, TrackInfo *ti, const char *file_type)
 					snprintf(ti->file_type, SIZE_FILE_TYPE-1, "%s (ID3v1)", file_type);
 				}
 				if (strlen(title) > 0) {
-					strncpy(ti->title, title, SIZE_TITLE-1);
-					for (i = SIZE_TITLE-1; i > 0 && (ti->title[i] == ' ' || ti->title[i] == '\0'); i--)
-					ti->title[i] = '\0';
+					convert_copy_strip(ti->title, title, SIZE_TITLE-1);
 				}
-				strncpy(ti->artist, artist, SIZE_ARTIST-1);
-				for (i = SIZE_ARTIST-1; i > 0 && (ti->artist[i] == ' ' || ti->artist[i] == '\0'); i--)
-					ti->artist[i] = '\0';
-				strncpy(ti->album, album, SIZE_ALBUM-1);
-				for (i = SIZE_ALBUM-1; i > 0 && (ti->album[i] == ' ' || ti->album[i] == '\0'); i--)
-					ti->album[i] = '\0';
-				strncpy(ti->comment, comment, SIZE_COMMENT-1);
-				strncpy(ti->date, year, SIZE_DATE-1);
+				convert_copy_strip(ti->artist, artist, SIZE_ARTIST-1);
+				convert_copy_strip(ti->album, album, SIZE_ALBUM-1);
+				convert_copy_strip(ti->comment, comment, SIZE_COMMENT-1);
+				convert_copy_strip(ti->date, year, SIZE_DATE-1);
 				snprintf(ti->tracknr, SIZE_TRACKNR-1, "%d", tracknr);
 				result = 1;
 			}
