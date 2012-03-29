@@ -28,14 +28,14 @@ function start(websocketServerLocation)
 
 		socket.onmessage = function(msg)
 		{
-			var msg = JSON.parse(msg.data);
+			var jmsg = JSON.parse(msg.data);
 
-			switch (msg['cmd']) {
+			switch (jmsg['cmd']) {
 				case 'time':
-					writeToTimeDisplay(msg['time']);
+					writeToTimeDisplay(jmsg['time']);
 					break;
 				case 'playback_state':
-					switch(msg['state']) {
+					switch(jmsg['state']) {
 						case 0: // stop
 							document.getElementById("btn-play").className = "button";
 							document.getElementById("btn-pause").className = "button";
@@ -51,11 +51,11 @@ function start(websocketServerLocation)
 					}
 					break;
 				case 'trackinfo':
-					writeToScreen('Track:' + msg['artist'] + ' - ' + msg['title']);
-					setTrackInfo(msg['artist'], msg['title'], msg['album']);
+					writeToScreen('Track:' + jmsg['artist'] + ' - ' + jmsg['title']);
+					setTrackInfo(jmsg['artist'], jmsg['title'], jmsg['album']);
 					break;
 				default:
-					if (msg.data) writeToScreen('msg='+msg.data);
+					if (msg.data != undefined) writeToScreen('msg='+msg.data);
 					break;
 			}
 		}
