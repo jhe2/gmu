@@ -27,6 +27,7 @@
 #include "sha1.h"
 #include "httpd.h"
 #include "queue.h"
+#include "core.h"
 
 /*
  * 500 Internal Server Error
@@ -724,6 +725,21 @@ void httpd_send_websocket_broadcast(char *str)
 	queue_push(&queue, str);
 }
 
+static void gmu_http_handle_websocket_message(char *message)
+{
+	if (strcmp(message, "next") == 0) {
+		gmu_core_next();
+	} else if (strcmp(message, "prev") == 0) {
+		gmu_core_previous();
+	} else if (strcmp(message, "stop") == 0) {
+		gmu_core_stop();
+	} else if (strcmp(message, "pause") == 0) {
+		gmu_core_pause();
+	} else if (strcmp(message, "play") == 0) {
+		gmu_core_play();
+	}
+}
+
 /* 
  * Webserver main loop
  * listen_fd is the socket file descriptor where the server is 
@@ -836,9 +852,10 @@ static void loop(int listen_fd)
 						connection_reset_timeout(&(connection[conn_num]));
 
 						if (unmasked_message) {
-							char str[1000];
+							gmu_http_handle_websocket_message(unmasked_message);
+							/*char str[1000];
 							snprintf(str, 999, "{ \"cmd\": \"echo\", \"message\" : \"%s\" }", unmasked_message);
-							websocket_send_string(&(connection[conn_num]), str);
+							websocket_send_string(&(connection[conn_num]), str);*/
 						}
 						if (unmasked_message) free(unmasked_message);
 					}
