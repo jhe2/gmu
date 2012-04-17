@@ -5,7 +5,7 @@
 		<link href="style.css" rel="stylesheet" type="text/css" media="screen" />
 		<title>Gmu Music Player</title>
 	</head>
-	<body>
+	<body onload="init();">
 		<div id="wrapper">
 			<div id="header">
 				<div id="coverart"><img src="gmu.png" width="80" height="80" alt="Gmu" /></div>
@@ -32,21 +32,30 @@
 				</div>
 			</div>
 
-			<div id="tabs">
-				<ul>
-					<li>File browser</li>
-					<li>Media library</li>
-					<li>Playlist</li>
+			<div class="tabmenu">
+				<ul class="tabmenu">
+					<li class="inactive" name="tabitem" id="tfb" onclick="select_tab('fb');">File Browser</li>
+					<li class="active"   name="tabitem" id="tpl" onclick="select_tab('pl');">Playlist</li>
+					<li class="inactive" name="tabitem" id="tlo" onclick="select_tab('lo');">Log</li>
 				</ul>
 			</div>
-
-			<div id="container">
+			<div class="tab" name="tab" id="fb" style="display:none; overflow:auto; overflow-x:hidden;">
+				<p id="filebrowser">FILE BROWSER</p>
+			</div>
+			<div class="tab" name="tab" id="pl" style="overflow:auto; overflow-x:hidden;" onscroll="pl_handle_scroll_event();">
+				<table id="playlisttable" class="list"></table>
+			</div>
+			<div class="tab" name="tab" id="lo" style="display:none; overflow:auto; overflow-x:hidden;">
 				<div id="log">
+					Log
 				</div>
+			</div>
+
+			<!--<div id="container">
 				<p id="examples">e.g. try 'hi'</p>
 				<input id="text" type="text" /><button onclick="doSend(document.getElementById('text').value);" id="send">Send</button>
 				<button id="disconnect">Disconnect</button>
-			</div>
+			</div>-->
 		</div>
 	</body>
 </html>

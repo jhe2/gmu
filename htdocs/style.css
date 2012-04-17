@@ -153,3 +153,73 @@ body {
 	text-align:center;
 	margin-left:2px;
 }
+
+div.tab {
+	margin:0;
+	border-left:1px solid #333;
+	border-top:1px solid #333;
+	border-right:1px solid #111;
+	border-bottom:1px solid #111;
+	background-color:#222;
+	position:absolute;
+	top:122px;
+	bottom:5px;
+	width:95%;
+	margin-left:2.5%;
+	margin-right:2.5%;
+	padding:0px;
+}
+
+div.tab div {
+	padding:5px;
+}
+
+ul.tabmenu {
+	position:absolute;
+	top:90px;
+	margin:0;
+	height:12px;
+	width:80%;
+	z-index:1;
+	cursor:default;
+}
+
+ul.tabmenu li.active {
+	font-size:11px;
+	text-align:center;
+	display:inline;
+	list-style:none;
+	border-left:1px solid #333;
+	border-top:1px solid #333;
+	border-right:1px solid #111;
+	background-color:#222;
+	z-index:1;
+	padding:10px;
+	height:12px;
+	width:120px;
+	float:left;
+	margin-right:5px;
+}
+
+ul.tabmenu li.inactive {
+	font-size:11px;
+	text-align:center;
+	display:inline;
+	list-style:none;
+	border-left:1px solid #222;
+	border-top:1px solid #222;
+	border-right:1px solid #000;
+	background-color:#111;
+	z-index:0;
+	padding:10px;
+	height:11px;
+	width:120px;
+	float:left;
+	margin-right:5px;
+}
+
+div.tabmenu {
+	text-align:left;
+	height:12px;
+	width:100%;
+}

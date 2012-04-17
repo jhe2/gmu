@@ -94,3 +94,19 @@ function setTrackInfo(artist, title, album)
 	document.getElementById('ti-title').innerHTML  = title;
 	document.getElementById('ti-album').innerHTML  = album;
 }
+
+function select_tab(tab_id)
+{
+	elem = document.getElementsByName('tab');
+	for (i = 0; i < elem.length; i++)
+		elem[i].style.display = "none";
+	elem = document.getElementsByName('tabitem');
+	for (i = 0; i < elem.length; i++)
+		elem[i].className = "inactive";
+	document.getElementById('t'+tab_id).className = "active";
+	document.getElementById(tab_id).style.display = "block";
+}
+
+function init()
+{
+}
