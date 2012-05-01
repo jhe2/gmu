@@ -5,6 +5,14 @@ body {
 	color:white;
 }
 
+a {
+	color:orange;
+	text-decoration:none;
+}
+a:hover {
+	text-decoration:underline;
+}
+
 #container {
 	border:1px solid grey;
 	width:800px;
@@ -222,4 +230,14 @@ div.tabmenu {
 	text-align:left;
 	height:12px;
 	width:100%;
+}
+
+#playlisttable {
+	table-layout:fixed;
+}
+
+#playlisttable tr,td {
+	border:0;
+	margin:0;
+	padding:0;
 }

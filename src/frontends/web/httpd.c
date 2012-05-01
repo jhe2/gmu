@@ -679,6 +679,7 @@ static int process_command(int rfd, Connection *c)
 							/* 3) Set flags in connection struct to WebSocket */
 							connection_set_state(c, WEBSOCKET_OPEN);
 							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
+							gmu_http_send_initial_information(c);
 						} else if (!connection_file_is_open(c)) { // ?? open file (if not open already) ??
 							char filename[512];
 							memset(filename, 0, 512);
@@ -725,7 +726,37 @@ void httpd_send_websocket_broadcast(char *str)
 	queue_push(&queue, str);
 }
 
-static void gmu_http_handle_websocket_message(char *message)
+#define MSG_MAX_LEN 512
+
+void gmu_http_playlist_get_info(Connection *c)
+{
+	char msg[MSG_MAX_LEN];
+	int  r = snprintf(msg, MSG_MAX_LEN,
+	                  "{ \"cmd\": \"playlist_info\", \"changed_at_position\" : 0, \"length\" : %d }",
+	                  gmu_core_playlist_get_length());
+	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
+}
+
+void gmu_http_playlist_get_item(int id, Connection *c)
+{
+	char   msg[MSG_MAX_LEN];
+	Entry *item = gmu_core_playlist_get_entry(id);
+	int    r = snprintf(msg, MSG_MAX_LEN,
+	                    "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
+	                    id, gmu_core_playlist_get_entry_name(item), 0);
+	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
+}
+
+void gmu_http_send_initial_information(Connection *c)
+{
+	char msg[MSG_MAX_LEN];
+	int  r = snprintf(msg, MSG_MAX_LEN,
+	                  "{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %d }",
+	                  gmu_core_playlist_get_length());
+	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
+}
+
+static void gmu_http_handle_websocket_message(char *message, Connection *c)
 {
 	if (strcmp(message, "next") == 0) {
 		gmu_core_next();
@@ -737,6 +768,24 @@ static void gmu_http_handle_websocket_message(char *message)
 		gmu_core_pause();
 	} else if (strcmp(message, "play") == 0) {
 		gmu_core_play();
+	} else if (strncmp(message, "play:", 5) == 0) {
+		char *itm = message+5;
+		int   item = -1;
+		if (itm) item = atoi(itm);
+		if (item >= 0) {
+			gmu_core_play_pl_item(item);
+		}
+	} else if (strncmp(message, "playlist_get_item:", 18) == 0) {
+		char *itm = message+18;
+		int   item = -1;
+		if (itm) item = atoi(itm);
+		if (item >= 0) {
+			printf("item=%d\n", item);
+			gmu_http_playlist_get_item(item, c);
+		}
+	} else if (strcmp(message, "playlist_get_info") == 0) {
+		printf("playlist_info requested!\n");
+		gmu_http_playlist_get_info(c);
 	}
 }
 
@@ -807,12 +856,12 @@ static void loop(int listen_fd)
 				if (websocket_msg) {
 					websocket_send_string(&(connection[conn_num]), websocket_msg);
 				}
-				if (i == 1000) {
+				/*if (i == 1000) {
 					snprintf(str, 255, "{ \"cmd\": \"time\", \"time\" : %d }", t++);
 					websocket_send_string(&(connection[conn_num]), str);
 					i = 0;
 				}
-				i++;
+				i++;*/
 			}
 			if (FD_ISSET(rfd, &readfds)) { /* Data received on connection socket */
 				char msgbuf[MAXLEN+1];
@@ -852,7 +901,7 @@ static void loop(int listen_fd)
 						connection_reset_timeout(&(connection[conn_num]));
 
 						if (unmasked_message) {
-							gmu_http_handle_websocket_message(unmasked_message);
+							gmu_http_handle_websocket_message(unmasked_message, &(connection[conn_num]));
 							/*char str[1000];
 							snprintf(str, 999, "{ \"cmd\": \"echo\", \"message\" : \"%s\" }", unmasked_message);
 							websocket_send_string(&(connection[conn_num]), str);*/
@@ -868,7 +917,8 @@ static void loop(int listen_fd)
 					//websocket_send_string(&(connection[conn_num]), "baz");
 	
 				if (connection_is_valid(&(connection[conn_num])) &&
-					connection_is_timed_out(&(connection[conn_num]))) { /* close idle connection */
+					connection_is_timed_out(&(connection[conn_num])) &&
+					connection[conn_num].state != WEBSOCKET_OPEN) { /* close idle connection */
 					printf("Closing connection to idle client %d...\n", rfd);
 					FD_CLR(rfd, &the_state);
 					close(rfd);

@@ -42,10 +42,16 @@
 			<div class="tab" name="tab" id="fb" style="display:none; overflow:auto; overflow-x:hidden;">
 				<p id="filebrowser">FILE BROWSER</p>
 			</div>
-			<div class="tab" name="tab" id="pl" style="overflow:auto; overflow-x:hidden;" onscroll="pl_handle_scroll_event();">
-				<table id="playlisttable" class="list"></table>
+			<div class="tab" name="tab" id="pl" style="overflow:hidden; overflow-x:hidden;" onscroll="pl_handle_scroll_event();">
+				<div style="overflow:hidden;">
+					<table id="playlisttable" class="list" style="position:absolute; top:0; left:0; right:20px; width:95%;"></table>
+					<div id="plscrollbar" onscroll="handle_playlist_scroll(); writeToTimeDisplay('foo:'+this.scrollTop);" style="overflow-y:auto; overflow-x:hidden; width:10px; height:99%; position:absolute; top:0; right:0;">
+						<div id="plscrolldummy" style="height:10px; width:1px;">X</div>
+					</div>
+				</div>
 			</div>
 			<div class="tab" name="tab" id="lo" style="display:none; overflow:auto; overflow-x:hidden;">
+				<input id="text" type="text" /><button onclick="doSend(document.getElementById('text').value);" id="send">Send</button>
 				<div id="log">
 					Log
 				</div>
