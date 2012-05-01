@@ -160,12 +160,15 @@ function add_row(table_id, col1, col2, col3, bg)
 	cell1 = ro.insertCell(0);
 	cell1.innerHTML = col1;
 	cell1.style.width = "5%";
+	cell1.style.height = "20px";
 	cell2 = ro.insertCell(1);
 	cell2.innerHTML = col2;
 	cell2.style.width = "90%";
+	cell2.style.height = "20px";
 	cell3 = ro.insertCell(2);
 	cell3.innerHTML = col3;
 	cell3.style.width = "5%";
+	cell3.style.height = "20px";
 }
 
 function play(id)
@@ -215,11 +218,12 @@ function mouse_scroll_event_handler(e)
 function pl_set_number_of_items(items)
 {
 	pl.length = rows;
-	document.getElementById("plscrolldummy").style.height = "" + (items*pl_item_height-100) + "px";
+	document.getElementById("plscrolldummy").style.height = "" + (items*pl_item_height) + "px";
 }
 
 function init_pl_table()
 {
+	document.getElementById("playlisttable").innerHTML = '';
 	add_row("playlisttable", '?', '?', '?', '#111');
 	var pl = document.getElementById('pl');
 	var plt = document.getElementById("playlisttable");
@@ -243,4 +247,8 @@ function init()
 	init_pl_table();
 	start("ws://" + document.location.host + "/foobar");
 	//doSend("playlist_get_info");
+	window.onresize = function(event) {
+		init_pl_table();
+		handle_playlist_scroll();
+	}
 }
