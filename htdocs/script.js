@@ -68,7 +68,6 @@ function start(websocketServerLocation)
 				case 'playlist_change':
 					t = document.getElementById("playlisttable");
 					rows = jmsg['length'];
-					pl.length = 0;
 					pl_set_number_of_items(rows);
 					writeToTimeDisplay("pl length="+rows);
 					toggle_state = false;
@@ -89,15 +88,7 @@ function start(websocketServerLocation)
 									"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> " +
 									jmsg['title'] + "</a>";
 						r.childNodes[2].innerHTML = '?';
-						for (i = 0; i <= visible_pl_line_count; i++) {
-							pos = jmsg['position']+1+i;
-							if (!pl[pos]) {
-								doSend("playlist_get_item:"+pos);
-								break;
-							}
-						}
 					}
-					//writeToScreen(jmsg['position']);
 					break;
 				default:
 					if (msg.data != undefined) writeToScreen('msg='+msg.data);
@@ -192,16 +183,21 @@ function handle_playlist_scroll()
 		} else {
 			var j = i;
 			do {
-				if (!pl[first_visible_pl_line+j]) {
-					if ((r = t.rows[j])) {
+				if (!pl[first_visible_pl_line+j] && (r = t.rows[j])) {
+					if (first_visible_pl_line+j+1 < pl.length) {
 						r.childNodes[0].innerHTML = first_visible_pl_line+j+1;
 						r.childNodes[1].innerHTML = '?';
-						r.childNodes[2].innerHTML = '?';				
+						r.childNodes[2].innerHTML = '?';
+					} else {
+						r.childNodes[0].innerHTML = '';
+						r.childNodes[1].innerHTML = '';
+						r.childNodes[2].innerHTML = '';
 					}
 				}
 				j++;
 			} while (j <= visible_pl_line_count);
-			doSend("playlist_get_item:"+(first_visible_pl_line+i));
+			if (first_visible_pl_line+i < pl.length)
+				doSend("playlist_get_item:"+(first_visible_pl_line+i));
 		}
 	}
 	//writeToScreen("fvl="+first_visible_pl_line+" scrolltop="+document.getElementById('plscrollbar').scrollTop);
