@@ -88,6 +88,13 @@ function start(websocketServerLocation)
 									"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> " +
 									jmsg['title'] + "</a>";
 						r.childNodes[2].innerHTML = '?';
+						for (i = 0; i <= visible_pl_line_count; i++) {
+							pos = jmsg['position']+1+i;
+							if (!pl[pos]) {
+								doSend("playlist_get_item:"+pos);
+								break;
+							}
+						}
 					}
 					break;
 				default:
