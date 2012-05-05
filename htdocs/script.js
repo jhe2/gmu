@@ -90,8 +90,10 @@ function start(websocketServerLocation)
 						r.childNodes[2].innerHTML = '?';
 						for (i = 0; i <= visible_pl_line_count; i++) {
 							pos = jmsg['position']+1+i;
-							if (!pl[pos]) {
+							if (pos < pl.length && !pl[pos]) {
 								doSend("playlist_get_item:"+pos);
+								break;
+							} else if (pos >= pl.length) {
 								break;
 							}
 						}
