@@ -19,11 +19,11 @@
 				</div>
 				<div id="controls">
 					<div id="buttons">
-						<div id="btn-prev" class="button" onClick="doSend('prev');"><img src="icon_prev.png" width="32" height="32" alt="Previous" /></div>
-						<div id="btn-play" class="button" onClick="doSend('play');"><img src="icon_play.png" width="32" height="32" alt="Play" /></div>
-						<div id="btn-pause" class="button" onClick="doSend('pause');"><img src="icon_pause.png" width="32" height="32" alt="Pause" /></div>
-						<div id="btn-stop" class="button" onClick="doSend('stop');"><img src="icon_stop.png" width="32" height="32" alt="Stop" /></div>
-						<div id="btn-next" class="button" onClick="doSend('next');"><img src="icon_next.png" width="32" height="32" alt="Next" /></div>
+						<div id="btn-prev" class="button" onClick="do_send('prev');"><img src="icon_prev.png" width="32" height="32" alt="Previous" /></div>
+						<div id="btn-play" class="button" onClick="do_send('play');"><img src="icon_play.png" width="32" height="32" alt="Play" /></div>
+						<div id="btn-pause" class="button" onClick="do_send('pause');"><img src="icon_pause.png" width="32" height="32" alt="Pause" /></div>
+						<div id="btn-stop" class="button" onClick="do_send('stop');"><img src="icon_stop.png" width="32" height="32" alt="Stop" /></div>
+						<div id="btn-next" class="button" onClick="do_send('next');"><img src="icon_next.png" width="32" height="32" alt="Next" /></div>
 					</div>
 					<div id="progressbar">
 						<div id="progressmarker"></div>
@@ -45,13 +45,13 @@
 			<div class="tab" name="tab" id="pl" style="overflow:hidden; overflow-x:hidden;" onscroll="pl_handle_scroll_event();">
 				<div style="overflow:hidden;">
 					<table id="playlisttable" class="list"></table>
-					<div id="plscrollbar" onscroll="handle_playlist_scroll(); writeToTimeDisplay('foo:'+this.scrollTop);">
+					<div id="plscrollbar" onscroll="handle_playlist_scroll(); write_to_time_display('foo:'+this.scrollTop);">
 						<div id="plscrolldummy" style="height:10px; width:1px;">X</div>
 					</div>
 				</div>
 			</div>
 			<div class="tab" name="tab" id="lo" style="display:none; overflow:auto; overflow-x:hidden;">
-				<input id="text" type="text" /><button onclick="doSend(document.getElementById('text').value);" id="send">Send</button>
+				<input id="text" type="text" /><button onclick="do_send(document.getElementById('text').value);" id="send">Send</button>
 				<div id="log">
 					Log
 				</div>

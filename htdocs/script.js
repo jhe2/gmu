@@ -23,7 +23,7 @@ function start(websocketServerLocation)
 		socket.onclose = function()
 		{
 			if (!disconnected) {
-				writeToScreen(": Disconnected from server. Reconnecting...");
+				write_to_screen(": Disconnected from server. Reconnecting...");
 				disconnected = true;
 			}
 			//try to reconnect in 2 seconds
@@ -32,7 +32,7 @@ function start(websocketServerLocation)
 
 		socket.onopen = function()
 		{
-			writeToScreen(": Socket has been opened!");
+			write_to_screen(": Socket has been opened!");
 			disconnected = false;
 		}
 
@@ -42,7 +42,7 @@ function start(websocketServerLocation)
 
 			switch (jmsg['cmd']) {
 				case 'time':
-					writeToTimeDisplay(jmsg['time']);
+					write_to_time_display(jmsg['time']);
 					break;
 				case 'playback_state':
 					switch(jmsg['state']) {
@@ -61,15 +61,15 @@ function start(websocketServerLocation)
 					}
 					break;
 				case 'trackinfo':
-					writeToScreen('Track:' + jmsg['artist'] + ' - ' + jmsg['title']);
-					setTrackInfo(jmsg['artist'], jmsg['title'], jmsg['album']);
+					write_to_screen('Track:' + jmsg['artist'] + ' - ' + jmsg['title']);
+					set_trackinfo(jmsg['artist'], jmsg['title'], jmsg['album']);
 					break;
 				case 'playlist_info':
 				case 'playlist_change':
 					t = document.getElementById("playlisttable");
 					rows = jmsg['length'];
 					pl_set_number_of_items(rows);
-					writeToTimeDisplay("pl length="+rows);
+					write_to_time_display("pl length="+rows);
 					toggle_state = false;
 					current_length = t.rows.length;
 					for (id = 0; r = t.rows[id]; id++) {
@@ -91,7 +91,7 @@ function start(websocketServerLocation)
 						for (i = 0; i <= visible_pl_line_count; i++) {
 							pos = jmsg['position']+1+i;
 							if (pos < pl.length && !pl[pos]) {
-								doSend("playlist_get_item:"+pos);
+								do_send("playlist_get_item:"+pos);
 								break;
 							} else if (pos >= pl.length) {
 								break;
@@ -100,22 +100,22 @@ function start(websocketServerLocation)
 					}
 					break;
 				default:
-					if (msg.data != undefined) writeToScreen('msg='+msg.data);
+					if (msg.data != undefined) write_to_screen('msg='+msg.data);
 					break;
 			}
 		}
 	} else { /* No WebSocket support */
-		writeToScreen('Your web browser does not seem to support WebSockets. :(');
+		write_to_screen('Your web browser does not seem to support WebSockets. :(');
 	}
 }
 
-function doSend(message)
+function do_send(message)
 {
-	//writeToScreen("SENT: " + message);
+	//write_to_screen("SENT: " + message);
 	socket.send(message);
 }
 
-function writeToScreen(message)
+function write_to_screen(message)
 {
 	var output = document.getElementById('log');
 	var pre = document.createElement("p");
@@ -124,7 +124,7 @@ function writeToScreen(message)
 	output.appendChild(pre);
 }
 
-function writeToTimeDisplay(message)
+function write_to_time_display(message)
 {
 	var output = document.getElementById('time');
 	/*var pre = document.createElement("p");
@@ -133,7 +133,7 @@ function writeToTimeDisplay(message)
 	output.innerHTML = message;
 }
 
-function setTrackInfo(artist, title, album)
+function set_trackinfo(artist, title, album)
 {
 	document.getElementById('ti-artist').innerHTML = artist;
 	document.getElementById('ti-title').innerHTML  = title;
@@ -173,7 +173,7 @@ function add_row(table_id, col1, col2, col3, bg)
 
 function play(id)
 {
-	doSend("play:"+id);
+	do_send("play:"+id);
 }
 
 function handle_playlist_scroll()
@@ -206,10 +206,10 @@ function handle_playlist_scroll()
 				j++;
 			} while (j <= visible_pl_line_count);
 			if (first_visible_pl_line+i < pl.length)
-				doSend("playlist_get_item:"+(first_visible_pl_line+i));
+				do_send("playlist_get_item:"+(first_visible_pl_line+i));
 		}
 	}
-	//writeToScreen("fvl="+first_visible_pl_line+" scrolltop="+document.getElementById('plscrollbar').scrollTop);
+	//write_to_screen("fvl="+first_visible_pl_line+" scrolltop="+document.getElementById('plscrollbar').scrollTop);
 }
 
 function mouse_scroll_event_handler(e)
@@ -233,25 +233,30 @@ function init_pl_table()
 	var pl = document.getElementById('pl');
 	var plt = document.getElementById("playlisttable");
 	var height = pl.clientHeight;
-	//writeToTimeDisplay("height="+height);
+	//write_to_time_display("height="+height);
 	pl_item_height = plt.clientHeight;
 	visible_pl_line_count = parseInt(height / pl_item_height) + 1;
 	for (i = 0; i < visible_pl_line_count; i++)
 		add_row("playlisttable", '', '?', '', '#111');
 }
 
+function add_event_handler(elem_name, event, event_handler)
+{
+	elem = document.getElementById(elem_name);
+	if (elem.attachEvent) // if IE (and Opera depending on user setting)
+		elem.attachEvent("on"+event, event_handler);
+	else if (elem.addEventListener) // W3C browsers
+		elem.addEventListener(event, event_handler, false);
+}
+
 function init()
 {
 	var mousewheelevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel"; // FF doesn't recognize mousewheel as of FF3.x
 
-	elem = document.getElementById('pl');
-	if (elem.attachEvent) // if IE (and Opera depending on user setting)
-		elem.attachEvent("on"+mousewheelevt, mouse_scroll_event_handler);
-	else if (elem.addEventListener) // W3C browsers
-		elem.addEventListener(mousewheelevt, mouse_scroll_event_handler, false);
+	add_event_handler('pl', mousewheelevt, mouse_scroll_event_handler);
 	init_pl_table();
 	start("ws://" + document.location.host + "/foobar");
-	//doSend("playlist_get_info");
+	//do_send("playlist_get_info");
 	window.onresize = function(event) {
 		init_pl_table();
 		handle_playlist_scroll();
