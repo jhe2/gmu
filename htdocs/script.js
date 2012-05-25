@@ -12,6 +12,8 @@ var visible_pl_line_count = 0, first_visible_pl_line = 0;
 var pl_item_height = 1;
 var pl = [];
 
+window.onload = function() { init(); }
+
 function start(websocketServerLocation)
 {	
 	if (typeof WebSocket != 'undefined')
@@ -112,7 +114,7 @@ function start(websocketServerLocation)
 function do_send(message)
 {
 	//write_to_screen("SENT: " + message);
-	socket.send(message);
+	if (socket) socket.send(message);
 }
 
 function write_to_screen(message)
@@ -176,6 +178,35 @@ function play(id)
 	do_send("play:"+id);
 }
 
+function pl_set_number_of_items(items)
+{
+	pl.length = rows;
+	document.getElementById("plscrolldummy").style.height = "" + (items*pl_item_height) + "px";
+}
+
+function init_pl_table()
+{
+	document.getElementById("playlisttable").innerHTML = '';
+	add_row("playlisttable", '?', '?', '?', '#111');
+	var pl = document.getElementById('pl');
+	var plt = document.getElementById("playlisttable");
+	var height = pl.clientHeight;
+	//write_to_time_display("height="+height);
+	pl_item_height = plt.clientHeight;
+	visible_pl_line_count = parseInt(height / pl_item_height) + 1;
+	for (i = 0; i < visible_pl_line_count; i++)
+		add_row("playlisttable", '', '?', '', '#111');
+}
+
+function add_event_handler(elem_id, event, event_handler)
+{
+	elem = document.getElementById(elem_id);
+	if (elem.attachEvent) // if IE (and Opera depending on user setting)
+		elem.attachEvent("on"+event, event_handler);
+	else if (elem.addEventListener) // W3C browsers
+		elem.addEventListener(event, event_handler, false);
+}
+
 function handle_playlist_scroll()
 {
 	first_visible_pl_line = parseInt(document.getElementById('plscrollbar').scrollTop / pl_item_height);
@@ -212,7 +243,7 @@ function handle_playlist_scroll()
 	//write_to_screen("fvl="+first_visible_pl_line+" scrolltop="+document.getElementById('plscrollbar').scrollTop);
 }
 
-function mouse_scroll_event_handler(e)
+function handle_mouse_scroll_event(e)
 {
 	var evt = window.event || e; // equalize event object
 	var delta = evt.detail ? evt.detail * (-120) : evt.wheelDelta; // delta returns +120 when wheel is scrolled up, -120 when scrolled down
@@ -220,40 +251,63 @@ function mouse_scroll_event_handler(e)
 	document.getElementById('plscrollbar').scrollTop += dir;
 }
 
-function pl_set_number_of_items(items)
+function handle_btn_next(e)
 {
-	pl.length = rows;
-	document.getElementById("plscrolldummy").style.height = "" + (items*pl_item_height) + "px";
+	do_send('next');
 }
 
-function init_pl_table()
+function handle_btn_prev(e)
 {
-	document.getElementById("playlisttable").innerHTML = '';
-	add_row("playlisttable", '?', '?', '?', '#111');
-	var pl = document.getElementById('pl');
-	var plt = document.getElementById("playlisttable");
-	var height = pl.clientHeight;
-	//write_to_time_display("height="+height);
-	pl_item_height = plt.clientHeight;
-	visible_pl_line_count = parseInt(height / pl_item_height) + 1;
-	for (i = 0; i < visible_pl_line_count; i++)
-		add_row("playlisttable", '', '?', '', '#111');
+	do_send('prev');
 }
 
-function add_event_handler(elem_name, event, event_handler)
+function handle_btn_play(e)
 {
-	elem = document.getElementById(elem_name);
-	if (elem.attachEvent) // if IE (and Opera depending on user setting)
-		elem.attachEvent("on"+event, event_handler);
-	else if (elem.addEventListener) // W3C browsers
-		elem.addEventListener(event, event_handler, false);
+	do_send('play');
+}
+
+function handle_btn_pause(e)
+{
+	do_send('pause');
+}
+
+function handle_btn_stop(e)
+{
+	do_send('stop');
+}
+
+function handle_tab_select_fb(e)
+{
+	var evt = window.event || e;
+	select_tab('fb');
+}
+
+function handle_tab_select_pl(e)
+{
+	var evt = window.event || e;
+	select_tab('pl');
+}
+
+function handle_tab_select_log(e)
+{
+	var evt = window.event || e;
+	select_tab('lo');
 }
 
 function init()
 {
-	var mousewheelevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel"; // FF doesn't recognize mousewheel as of FF3.x
+	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel"; // FF doesn't recognize mousewheel as of FF3.x
 
-	add_event_handler('pl', mousewheelevt, mouse_scroll_event_handler);
+	add_event_handler('pl',          mwevt,    handle_mouse_scroll_event);
+	add_event_handler('btn-next',    'click',  handle_btn_next);
+	add_event_handler('btn-prev',    'click',  handle_btn_prev);
+	add_event_handler('btn-play',    'click',  handle_btn_play);
+	add_event_handler('btn-pause',   'click',  handle_btn_pause);
+	add_event_handler('btn-stop',    'click',  handle_btn_stop);
+	add_event_handler('plscrollbar', 'scroll', handle_playlist_scroll);
+	add_event_handler('tfb',         'click',  handle_tab_select_fb);
+	add_event_handler('tpl',         'click',  handle_tab_select_pl);
+	add_event_handler('tlo',         'click',  handle_tab_select_log);
 	init_pl_table();
 	start("ws://" + document.location.host + "/foobar");
 	//do_send("playlist_get_info");
