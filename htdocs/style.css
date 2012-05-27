@@ -176,6 +176,7 @@ div.tab {
 	margin-left:2.5%;
 	margin-right:2.5%;
 	padding:0px;
+	overflow-x:hidden;
 }
 
 div.tab div {
@@ -251,4 +252,9 @@ div.tabmenu {
 	width:10px;
 	position:absolute;
 	top:0; right:0; bottom:0;
+}
+
+#plscrolldummy {
+	height:10px;
+	width:1px;
 }
