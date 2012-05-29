@@ -11,6 +11,7 @@ var socket = null, disconnected = true;
 var visible_pl_line_count = 0, first_visible_pl_line = 0;
 var pl_item_height = 1;
 var pl = [];
+var selected_tab = 'pl';
 
 window.onload = function() { init(); }
 
@@ -152,6 +153,7 @@ function select_tab(tab_id)
 		elem[i].className = "inactive";
 	document.getElementById('t'+tab_id).className = "active";
 	document.getElementById(tab_id).style.display = "block";
+	selected_tab = tab_id;
 }
 
 function add_row(table_id, col1, col2, col3, bg)
@@ -207,6 +209,11 @@ function add_event_handler(elem_id, event, event_handler)
 		elem.addEventListener(event, event_handler, false);
 }
 
+function pl_scroll_n_rows(n)
+{
+	document.getElementById('plscrollbar').scrollTop += (20 * n);
+}
+
 function handle_playlist_scroll()
 {
 	first_visible_pl_line = parseInt(document.getElementById('plscrollbar').scrollTop / pl_item_height);
@@ -247,8 +254,8 @@ function handle_mouse_scroll_event(e)
 {
 	var evt = window.event || e; // equalize event object
 	var delta = evt.detail ? evt.detail * (-120) : evt.wheelDelta; // delta returns +120 when wheel is scrolled up, -120 when scrolled down
-	dir = (delta <= -120) ? 20 : -20;
-	document.getElementById('plscrollbar').scrollTop += dir;
+	dir = (delta <= -120) ? 1 : -1;
+	pl_scroll_n_rows(dir);
 }
 
 function handle_btn_next(e)
@@ -294,10 +301,26 @@ function handle_tab_select_log(e)
 	select_tab('lo');
 }
 
+function handle_keypress(e)
+{
+	// Page up: 33, down: 34, Crsr down: 40, up: 38
+	switch (selected_tab) {
+		case 'pl':
+			if (e.keyCode == 40)      // Cursor down
+				pl_scroll_n_rows(1);
+			else if (e.keyCode == 38) // Cursor up
+				pl_scroll_n_rows(-1);
+			break;
+		default:
+			break;
+	}
+}
+
 function init()
 {
 	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel"; // FF doesn't recognize mousewheel as of FF3.x
 
+	document.onkeypress = handle_keypress;
 	add_event_handler('pl',          mwevt,    handle_mouse_scroll_event);
 	add_event_handler('btn-next',    'click',  handle_btn_next);
 	add_event_handler('btn-prev',    'click',  handle_btn_prev);
