@@ -320,7 +320,7 @@ function init()
 {
 	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel"; // FF doesn't recognize mousewheel as of FF3.x
 
-	document.onkeypress = handle_keypress;
+	document.onkeydown = handle_keypress;
 	add_event_handler('pl',          mwevt,    handle_mouse_scroll_event);
 	add_event_handler('btn-next',    'click',  handle_btn_next);
 	add_event_handler('btn-prev',    'click',  handle_btn_prev);
