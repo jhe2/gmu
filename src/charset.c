@@ -286,8 +286,8 @@ int charset_utf8_to_codepoints(UCodePoint *target, const char *source, int targe
 {
 	int            i, j, len = strlen(source), valid = 1;
 	unsigned char *src = (unsigned char *)source;
-	len = (len < target_size-1 ? len : target_size-1);
-	for (i = 0, j = 0; j < len && source[i]; i++) {
+
+	for (i = 0, j = 0; j < target_size && source[i]; i++) {
 		if (src[i] < 128) { /* ASCII char */
 			target[j] = src[i];
 		} else if (src[i] >= 192 && src[i] < 224) { /* 2 byte char */
@@ -348,7 +348,7 @@ int charset_utf8_len(const char *str)
 		} else {
 			valid = 0;
 		}
-		if (valid == 0) {
+		if (!valid) {
 			u8len = 0;
 			/*wdprintf(V_DEBUG, "charset", "utf-8: Invalid UTF-8 string!\n");*/
 			break;
