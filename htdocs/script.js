@@ -7,115 +7,123 @@
  *
  * Description: HTTP/Websocket frontend
  */
-var socket = null, disconnected = true;
+
 var visible_pl_line_count = 0, first_visible_pl_line = 0;
 var pl_item_height = 1;
 var pl = [];
 var selected_tab = 'pl';
 
+var con = null;
+
 window.onload = function() { init(); }
 
-function start(websocketServerLocation)
-{	
-	if (typeof WebSocket != 'undefined')
-		socket = new WebSocket(websocketServerLocation);
-	else if (typeof MozWebSocket != 'undefined')
-		socket = new MozWebSocket(websocketServerLocation);
+function Connection()
+{
+	c = this;
+	this.socket = null;
+	this.disconnected = true;
+	this.start = function start(websocketServerLocation)
+	{	
+		if (typeof WebSocket != 'undefined')
+			this.socket = new WebSocket(websocketServerLocation);
+		else if (typeof MozWebSocket != 'undefined')
+			this.socket = new MozWebSocket(websocketServerLocation);
 
-	if (socket) {
-		socket.onclose = function()
-		{
-			if (!disconnected) {
-				write_to_screen(": Disconnected from server. Reconnecting...");
-				disconnected = true;
+		if (this.socket) {
+			this.socket.onclose = function()
+			{
+				if (!this.disconnected) {
+					write_to_screen(": Disconnected from server. Reconnecting...");
+					this.disconnected = true;
+				}
+				//try to reconnect in 2 seconds
+				setTimeout('c.start("'+websocketServerLocation+'")', 2000);
+			};
+
+			this.socket.onopen = function()
+			{
+				write_to_screen(": Socket has been opened!");
+				this.disconnected = false;
 			}
-			//try to reconnect in 2 seconds
-			setTimeout('start("'+websocketServerLocation+'")', 2000);
-		};
 
-		socket.onopen = function()
-		{
-			write_to_screen(": Socket has been opened!");
-			disconnected = false;
-		}
+			this.socket.onmessage = function(msg)
+			{
+				var jmsg = JSON.parse(msg.data);
 
-		socket.onmessage = function(msg)
-		{
-			var jmsg = JSON.parse(msg.data);
-
-			switch (jmsg['cmd']) {
-				case 'time':
-					write_to_time_display(jmsg['time']);
-					break;
-				case 'playback_state':
-					switch(jmsg['state']) {
-						case 0: // stop
-							document.getElementById("btn-play").className = "button";
-							document.getElementById("btn-pause").className = "button";
-							break;
-						case 1: // play
-							document.getElementById("btn-play").className = "button-pressed";
-							document.getElementById("btn-pause").className = "button";
-							break;
-						case 2: // pause
-							document.getElementById("btn-pause").className = "button-pressed";
-							document.getElementById("btn-play").className = "button";
-							break;
-					}
-					break;
-				case 'trackinfo':
-					write_to_screen('Track:' + jmsg['artist'] + ' - ' + jmsg['title']);
-					set_trackinfo(jmsg['artist'], jmsg['title'], jmsg['album']);
-					break;
-				case 'playlist_info':
-				case 'playlist_change':
-					t = document.getElementById("playlisttable");
-					rows = jmsg['length'];
-					pl_set_number_of_items(rows);
-					write_to_time_display("pl length="+rows);
-					toggle_state = false;
-					current_length = t.rows.length;
-					for (id = 0; r = t.rows[id]; id++) {
-						r.childNodes[1].innerHTML = '!';
-						r.childNodes[2].innerHTML = '?';
-					}
-					handle_playlist_scroll();
-					break;
-				case 'playlist_item':
-					pl[jmsg['position']] = jmsg['title'];
-					t = document.getElementById("playlisttable");
-					r = t.rows[jmsg['position']-first_visible_pl_line];
-					if (r) {
-						r.childNodes[0].innerHTML = jmsg['position'];
-						r.childNodes[1].innerHTML = "<a href=\"javascript:play("+jmsg['position']+");\">" + 
-									"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> " +
-									jmsg['title'] + "</a>";
-						r.childNodes[2].innerHTML = '?';
-						for (i = 0; i <= visible_pl_line_count; i++) {
-							pos = jmsg['position']+1+i;
-							if (pos < pl.length && !pl[pos]) {
-								do_send("playlist_get_item:"+pos);
+				switch (jmsg['cmd']) {
+					case 'time':
+						write_to_time_display(jmsg['time']);
+						break;
+					case 'playback_state':
+						switch(jmsg['state']) {
+							case 0: // stop
+								document.getElementById("btn-play").className = "button";
+								document.getElementById("btn-pause").className = "button";
 								break;
-							} else if (pos >= pl.length) {
+							case 1: // play
+								document.getElementById("btn-play").className = "button-pressed";
+								document.getElementById("btn-pause").className = "button";
 								break;
+							case 2: // pause
+								document.getElementById("btn-pause").className = "button-pressed";
+								document.getElementById("btn-play").className = "button";
+								break;
+						}
+						break;
+					case 'trackinfo':
+						write_to_screen('Track:' + jmsg['artist'] + ' - ' + jmsg['title']);
+						set_trackinfo(jmsg['artist'], jmsg['title'], jmsg['album']);
+						break;
+					case 'playlist_info':
+					case 'playlist_change':
+						t = document.getElementById("playlisttable");
+						rows = jmsg['length'];
+						pl_set_number_of_items(rows);
+						write_to_time_display("pl length="+rows);
+						toggle_state = false;
+						current_length = t.rows.length;
+						for (id = 0; r = t.rows[id]; id++) {
+							r.childNodes[1].innerHTML = '!';
+							r.childNodes[2].innerHTML = '?';
+						}
+						handle_playlist_scroll();
+						break;
+					case 'playlist_item':
+						pl[jmsg['position']] = jmsg['title'];
+						t = document.getElementById("playlisttable");
+						r = t.rows[jmsg['position']-first_visible_pl_line];
+						if (r) {
+							r.childNodes[0].innerHTML = jmsg['position'];
+							r.childNodes[1].innerHTML = "<a href=\"javascript:play("+jmsg['position']+");\">" + 
+										"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> " +
+										jmsg['title'] + "</a>";
+							r.childNodes[2].innerHTML = '?';
+							for (i = 0; i <= visible_pl_line_count; i++) {
+								pos = jmsg['position']+1+i;
+								if (pos < pl.length && !pl[pos]) {
+									c.do_send("playlist_get_item:"+pos);
+									break;
+								} else if (pos >= pl.length) {
+									break;
+								}
 							}
 						}
-					}
-					break;
-				default:
-					if (msg.data != undefined) write_to_screen('msg='+msg.data);
-					break;
+						break;
+					default:
+						if (msg.data != undefined) write_to_screen('msg='+msg.data);
+						break;
+				}
 			}
+		} else { /* No WebSocket support */
+			write_to_screen('Your web browser does not seem to support WebSockets. :(');
 		}
-	} else { /* No WebSocket support */
-		write_to_screen('Your web browser does not seem to support WebSockets. :(');
 	}
-}
 
-function do_send(message)
-{
-	//write_to_screen("SENT: " + message);
-	if (socket) socket.send(message);
+	this.do_send = function do_send(message)
+	{
+		//write_to_screen("SENT: " + message);
+		if (this.socket) this.socket.send(message);
+	}
 }
 
 function write_to_screen(message)
@@ -177,7 +185,7 @@ function add_row(table_id, col1, col2, col3, bg)
 
 function play(id)
 {
-	do_send("play:"+id);
+	con.do_send("play:"+id);
 }
 
 function pl_set_number_of_items(items)
@@ -244,7 +252,7 @@ function handle_playlist_scroll()
 				j++;
 			} while (j <= visible_pl_line_count);
 			if (first_visible_pl_line+i < pl.length)
-				do_send("playlist_get_item:"+(first_visible_pl_line+i));
+				con.do_send("playlist_get_item:"+(first_visible_pl_line+i));
 		}
 	}
 	//write_to_screen("fvl="+first_visible_pl_line+" scrolltop="+document.getElementById('plscrollbar').scrollTop);
@@ -260,27 +268,27 @@ function handle_mouse_scroll_event(e)
 
 function handle_btn_next(e)
 {
-	do_send('next');
+	con.do_send('next');
 }
 
 function handle_btn_prev(e)
 {
-	do_send('prev');
+	con.do_send('prev');
 }
 
 function handle_btn_play(e)
 {
-	do_send('play');
+	con.do_send('play');
 }
 
 function handle_btn_pause(e)
 {
-	do_send('pause');
+	con.do_send('pause');
 }
 
 function handle_btn_stop(e)
 {
-	do_send('stop');
+	con.do_send('stop');
 }
 
 function handle_tab_select_fb(e)
@@ -318,6 +326,7 @@ function handle_keypress(e)
 
 function init()
 {
+	con = new Connection();
 	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel"; // FF doesn't recognize mousewheel as of FF3.x
 
 	document.onkeydown = handle_keypress;
@@ -332,8 +341,7 @@ function init()
 	add_event_handler('tpl',         'click',  handle_tab_select_pl);
 	add_event_handler('tlo',         'click',  handle_tab_select_log);
 	init_pl_table();
-	start("ws://" + document.location.host + "/foobar");
-	//do_send("playlist_get_info");
+	con.start("ws://" + document.location.host + "/foobar");
 	window.onresize = function(event) {
 		init_pl_table();
 		handle_playlist_scroll();
