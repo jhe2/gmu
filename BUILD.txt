@@ -1,5 +1,5 @@
 Gmu Music Player
-Copyright (c) 2006-2011 Johannes Heimansberg
+Copyright (c) 2006-2012 Johannes Heimansberg
 http://wejp.k.vu/
 
 1. Build Instructions
@@ -79,3 +79,12 @@ the hw_new_target.c/h files.
 You probably also want to adjust the button mappings to match your new device.
 This can be done through config files. You do not need to recompile Gmu for
 changing the button configuration.
+
+By default, Gmu's plugins are built as external loadable plugins. It is now
+also possible to build Gmu as one static binary with all plugins built-in.
+This can be useful for platforms where you are unable to dynamically load
+shared objects (e.g. if you are forced to statically link the binary due
+to a very old userland like on the GP2X with the default firmware).
+To compile statically set STATIC=1. The unknown.mk target has been prepared
+to support such a static build. Have a look at that file to get an idea how
+to adapt your own .mk target file for static building.

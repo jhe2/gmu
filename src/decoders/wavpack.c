@@ -255,7 +255,7 @@ static GmuDecoder gd = {
 	NULL
 };
 
-GmuDecoder *gmu_register_decoder(void)
+GmuDecoder *GMU_REGISTER_DECODER(void)
 {
 	return &gd;
 }

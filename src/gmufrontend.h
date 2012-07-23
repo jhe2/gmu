@@ -41,5 +41,5 @@ typedef struct _GmuFrontend {
 
 /* This function must be implemented by the frontend. It must return a valid
  * GmuFrontend object */
-GmuFrontend *gmu_register_frontend(void);
+GmuFrontend *GMU_REGISTER_FRONTEND(void);
 #endif

@@ -32,4 +32,5 @@ GmuDecoder *decloader_get_decoder_for_data_chunk(char *data, int size);
 char       *decloader_get_all_extensions(void);
 GmuDecoder *decloader_decoder_list_get_next_decoder(int getfirst);
 void        decloader_free(void);
+int         decloader_load_builtin_decoders(void);
 #endif

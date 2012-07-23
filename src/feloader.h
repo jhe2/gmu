@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: feloader.h  Created: 081228
  *
@@ -31,4 +31,5 @@ int          feloader_load_all(char *directory);
 GmuFrontend *feloader_frontend_list_get_next_frontend(int getfirst);
 void         feloader_free(void);
 int          feloader_unload_frontend(GmuFrontend *gf);
+int          feloader_load_builtin_frontends(void);
 #endif

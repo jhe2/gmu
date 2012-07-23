@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: feloader.c  Created: 081228
  *
@@ -22,6 +22,9 @@
 #include "gmufrontend.h"
 #include "util.h"
 #include "debug.h"
+#if STATIC
+#include "../tmp-felist.h"
+#endif
 
 union {
 	void *ptr;
@@ -175,4 +178,25 @@ GmuFrontend *feloader_frontend_list_get_next_frontend(int getfirst)
 
 	fec = (getfirst ? fec_root : fec->next);
 	return fec->gf;
+}
+
+int feloader_load_builtin_frontends(void)
+{
+	int res = 0;
+#if STATIC
+	int i;
+	FrontendChainElement *fec;
+	
+	fec = fec_init_element();
+	fec_root = fec;
+	for (i = 0; feload_funcs[i]; i++) {
+		wdprintf(V_INFO, "feloader", "Loading internal frontend %d...\n", i);
+		fec->gf = (*feload_funcs[i])();
+		(*fec->gf->frontend_init)();
+		fec->next = fec_init_element();
+		fec = fec->next;
+		res = 1;
+	}
+#endif
+	return res;
 }

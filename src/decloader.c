@@ -22,6 +22,9 @@
 #include "gmudecoder.h"
 #include "util.h"
 #include "debug.h"
+#if STATIC
+#include "../tmp-declist.h"
+#endif
 
 union {
 	void *ptr;
@@ -225,4 +228,31 @@ GmuDecoder *decloader_decoder_list_get_next_decoder(int getfirst)
 	dc = (getfirst ? dc_root : dc->next);
 	if (dc) gd = dc->gd;
 	return gd;
+}
+
+int decloader_load_builtin_decoders(void)
+{
+	int res = 0;
+#if STATIC
+	DecoderChain *dc;
+	int i;
+
+	dc = dc_init_element();
+	dc_root = dc;
+	for (i = 0; decload_funcs[i]; i++) {
+		wdprintf(V_INFO, "decloader", "Loading internal decoder %d...\n", i);
+		dc->gd = (*decload_funcs[i])();
+		wdprintf(V_INFO, "decloader", "Loading decoder %d was successful.\n", i);
+		wdprintf(V_INFO, "decloader", "%s: Name: %s\n", dc->gd->identifier, (*dc->gd->get_name)());
+		if (dc->gd->get_file_extensions) {
+			int len = strlen(extensions);
+			wdprintf(V_INFO, "decloader", "%s: File extensions: %s\n", dc->gd->identifier, (*dc->gd->get_file_extensions)());
+			snprintf(extensions+len, 1023-len, "%s;", (*dc->gd->get_file_extensions)());
+		}
+		dc->next = dc_init_element();
+		dc = dc->next;
+		res = 1;
+	}
+#endif
+	return res;
 }

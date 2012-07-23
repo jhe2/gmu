@@ -112,5 +112,5 @@ typedef struct _GmuDecoder {
 
 /* This function must be implemented by the decoder. It must return a valid
  * GmuDecoder object */
-GmuDecoder *gmu_register_decoder(void);
+GmuDecoder *GMU_REGISTER_DECODER(void);
 #endif

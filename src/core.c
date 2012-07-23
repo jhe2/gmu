@@ -830,9 +830,13 @@ int main(int argc, char **argv)
 	else if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0)
 		volume_max = GMU_CORE_HW_VOLUME_MAX;
 
+#if STATIC
+	decloader_load_builtin_decoders();
+#else
 	snprintf(temp, 511, "%s/decoders", base_dir);
 	wdprintf(V_DEBUG, "gmu", "Searching for decoders in %s.\n", temp);
 	wdprintf(V_DEBUG, "gmu", "%d decoders loaded successfully.\n", decloader_load_all(temp));
+#endif
 
 	/* Put available file extensions in an array */
 	file_extensions_load();
@@ -857,6 +861,9 @@ int main(int argc, char **argv)
 	snprintf(temp, 511, "%s/frontends", base_dir);
 	wdprintf(V_DEBUG, "gmu", "Searching for frontends in %s.\n", temp);
 	/* If no plugins have been specified on the command line (-p), load all plugins: */
+#if STATIC
+	feloader_load_builtin_frontends();
+#else
 	if (frontend_plugin_by_cmd_arg_counter <= 0) {
 		feloader_load_all(temp);
 	/* Otherwise load only the specified plugins: */
@@ -864,6 +871,7 @@ int main(int argc, char **argv)
 		for (i = 0; i < frontend_plugin_by_cmd_arg_counter; i++)
 			feloader_load_single_frontend(frontend_plugin_by_cmd_arg[i]);
 	}
+#endif
 
 	file_player_init();
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "LyricsFilePattern"));

@@ -73,10 +73,11 @@ void about_init(TextBrowser *tb_about, Skin *skin, char *decoders)
 	                    "Config directory: %s\n\n"
 	                    "Gmu supports various file formats\n"
 	                    "through decoder plugins.\n\n"
-	                    "Loaded decoders:\n\n%s\n"
+	                    "%s decoders:\n\n%s\n"
 	                    "%s",
 	                    gmu_core_get_device_model_name(),
 	                    gmu_core_get_config_dir(),
+	                    STATIC ? "Static build with built-in" : "Loaded",
 	                    decoders,
 	                    text_about_gmu);
 
