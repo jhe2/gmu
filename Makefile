@@ -41,6 +41,7 @@ DECODER_PLUGIN_LOADER_FUNCTION=gmu_register_decoder
 CFLAGS+=-DSTATIC=0
 PLUGIN_CFLAGS=-shared -o $@ -fpic
 GENERATED_HEADERFILES_STATIC=
+PLUGIN_OBJECTFILES=
 else
 # static build (with builtin plugins)
 FRONTEND_PLUGIN_LOADER_FUNCTION=f`echo $@|md5sum|cut -d ' ' -f 1`

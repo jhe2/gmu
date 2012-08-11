@@ -14,7 +14,7 @@
 # for details.
 #
 
-ifeq (0,STATIC)
+ifeq (0,$(STATIC))
 # normal build
 DECODERS_TO_BUILD?=decoders/vorbis.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so decoders/speex.so
 FRONTENDS_TO_BUILD?=frontends/sdl.so frontends/log.so frontends/gmuhttp.so
