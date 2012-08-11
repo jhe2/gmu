@@ -19,6 +19,7 @@
 #include "../../trackinfo.h"
 #include "../../gmufrontend.h"
 #include "httpd.h"
+#include "json.h"
 
 static const char *get_name(void)
 {
@@ -55,10 +56,18 @@ static int event_callback(GmuEvent event)
 			break;
 		case GMU_TRACKINFO_CHANGE: {
 			TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
+			char *tmp_title, *tmp_artist, *tmp_album;
+			
+			tmp_title  = json_string_escape_alloc(trackinfo_get_title(ti));
+			tmp_artist = json_string_escape_alloc(trackinfo_get_artist(ti));
+			tmp_album  = json_string_escape_alloc(trackinfo_get_album(ti));
 			r = snprintf(msg, MSG_MAX_LEN,
 			             "{ \"cmd\": \"trackinfo\", \"title\" : \"%s\", \"artist\" : \"%s\", \"album\" : \"%s\" }",
-			             trackinfo_get_title(ti), trackinfo_get_artist(ti), trackinfo_get_album(ti));
+			             tmp_title, tmp_artist, tmp_album);
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
+			if (tmp_title)  free(tmp_title);
+			if (tmp_artist) free(tmp_artist);
+			if (tmp_album)  free(tmp_album);
 			break;
 		}
 		case GMU_PLAYBACK_STATE_CHANGE: {
