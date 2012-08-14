@@ -14,6 +14,7 @@
 # for details.
 #
 Q?=@
+STATIC=0
 TARGET?=unknown
 include $(TARGET).mk
 
@@ -32,7 +33,6 @@ OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o
 ALLFILES=src/ Makefile  *.sh *.dge *.gpu *.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop
 BINARY=gmu.bin
 COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
-STATIC?=0
 
 ifeq (0,$(STATIC))
 # normal dynamic build (with runtime-loadable plugins)
@@ -194,9 +194,9 @@ frontends/gmusrv.so: src/frontends/gmusrv.c
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $<
 
-frontends/gmuhttp.so: src/frontends/web/gmuhttp.c sha1.o base64.o httpd.o queue.o
+frontends/gmuhttp.so: src/frontends/web/gmuhttp.c sha1.o base64.o httpd.o queue.o json.o
 	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread sha1.o base64.o httpd.o queue.o
+	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread sha1.o base64.o httpd.o queue.o json.o
 
 tmp-felist.h:
 	@echo -e "Creating file \033[1mtmp-felist.h\033[0m"
