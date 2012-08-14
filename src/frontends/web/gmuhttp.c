@@ -13,6 +13,7 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
+#include <stdlib.h>
 #include <stdint.h>
 #include <pthread.h>
 #include "../../core.h"

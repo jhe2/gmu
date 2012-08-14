@@ -47,4 +47,22 @@ typedef enum HTTPCommand {
 void *httpd_run_server(void *webserver_root);
 void  httpd_stop_server(void);
 void  httpd_send_websocket_broadcast(char *str);
+
+int  connection_init(Connection *c, int fd);
+void connection_reset_timeout(Connection *c);
+int  connection_is_valid(Connection *c);
+void connection_close(Connection *c);
+void connection_free_request_header(Connection *c);
+int  connection_is_timed_out(Connection *c);
+void connection_set_state(Connection *c, ConnectionState s);
+ConnectionState connection_get_state(Connection *c);
+int  connection_file_is_open(Connection *c);
+int  connection_file_open(Connection *c, char *filename);
+void connection_file_close(Connection *c);
+int  connection_get_number_of_bytes_to_send(Connection *c);
+int  connection_file_read_chunk(Connection *c);
+
+void gmu_http_playlist_get_info(Connection *c);
+void gmu_http_playlist_get_item(int id, Connection *c);
+void gmu_http_send_initial_information(Connection *c);
 #endif

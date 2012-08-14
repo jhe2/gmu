@@ -23,11 +23,11 @@ char *json_string_escape_alloc(char *src)
 	char *res = NULL;
 	int   len = src ? strlen(src) : 0;
 
-	if (len) {
-		res = malloc(len*2); /* len*2 = worst case */
+	if (len > 0) {
+		res = malloc(len*2+1); /* len*2 = worst case */
 		if (res) {
 			int i, j;
-			for (i = 0, j = 0; src[i]; i++, j++) {
+			for (i = 0, j = 0; src[i] && j < len*2; i++, j++) {
 				if (src[i] < 32) {
 					res[j] = 32;
 				} else if (src[i] == '"' || src[i] == '\\') {

@@ -28,6 +28,7 @@
 #include "httpd.h"
 #include "queue.h"
 #include "core.h"
+#include "json.h"
 
 /*
  * 500 Internal Server Error
@@ -739,11 +740,15 @@ void gmu_http_playlist_get_info(Connection *c)
 
 void gmu_http_playlist_get_item(int id, Connection *c)
 {
-	char   msg[MSG_MAX_LEN];
+	char   msg[MSG_MAX_LEN], *tmp_title = NULL;
 	Entry *item = gmu_core_playlist_get_entry(id);
-	int    r = snprintf(msg, MSG_MAX_LEN,
-	                    "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
-	                    id, gmu_core_playlist_get_entry_name(item), 0);
+	int    r;
+
+	tmp_title = json_string_escape_alloc(gmu_core_playlist_get_entry_name(item));
+	r = snprintf(msg, MSG_MAX_LEN,
+	             "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
+	             id, tmp_title ? tmp_title : "??", 0);
+	if (tmp_title) free(tmp_title);
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
@@ -849,8 +854,8 @@ static void loop(int listen_fd)
 				/* Read CHUNK_SIZE bytes from file and send data to socket & update remaining bytes counter */
 				connection_file_read_chunk(&(connection[conn_num]));
 			} else if (connection[conn_num].state == WEBSOCKET_OPEN) {
-				char str[256];
-				static int i = 0, t = 0;
+				/*char str[256];
+				static int i = 0, t = 0;*/
 				/* If data for sending through websocket have been fetched
 				 * from the queue, send the data to all open WebSocket connections */
 				if (websocket_msg) {
