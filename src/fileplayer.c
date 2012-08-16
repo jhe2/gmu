@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: fileplayer.c  Created: 070107
  *
@@ -437,13 +437,8 @@ static void *decode_audio_thread(void *udata)
 	return NULL;
 }
 
-int file_player_play_file(char *file, TrackInfo *lti, int skip_current)
+int file_player_play_file(char *filename, TrackInfo *lti, int skip_current)
 {
-	static char filename[256];
-
-	strncpy(filename, file, 255);
-	filename[255] = '\0';
-
 	item_status = skip_current ? STOPPED : FINISHED;
 	playback_status = PLAYING;
 
