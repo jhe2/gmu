@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: util.c  Created: 060929
  *
@@ -177,17 +177,19 @@ static char *replace_char_with_string_alloc(char *str, char char_to_replace, cha
 	int   len_str_to_insert = strlen(str_to_insert);
 	char *res_str = malloc(MAX_REPLACE_STR_LENGTH);
 
-	for (i = 0, k = 0; i < l && k < MAX_REPLACE_STR_LENGTH; i++)
-		if (str[i] == char_to_replace) {
-			int copy_len = len_str_to_insert > MAX_REPLACE_STR_LENGTH - k ?
-			                                   MAX_REPLACE_STR_LENGTH - k : len_str_to_insert;
-			strncpy(res_str+k, str_to_insert, copy_len);
-			k += copy_len;
-		} else {
-			res_str[k] = str[i];
-			k++;
-		}
-	res_str[k] = '\0';
+	if (res_str) {
+		for (i = 0, k = 0; i < l && k < MAX_REPLACE_STR_LENGTH; i++)
+			if (str[i] == char_to_replace) {
+				int copy_len = len_str_to_insert > MAX_REPLACE_STR_LENGTH - k ?
+												   MAX_REPLACE_STR_LENGTH - k : len_str_to_insert;
+				strncpy(res_str+k, str_to_insert, copy_len);
+				k += copy_len;
+			} else {
+				res_str[k] = str[i];
+				k++;
+			}
+		res_str[k] = '\0';
+	}
 	return res_str;
 }
 
@@ -220,8 +222,10 @@ char *get_file_matching_given_pattern_alloc(char *original_file,
 	wdprintf(V_DEBUG, "util", "path = %s\n", path);
 	if (get_first_matching_file_pattern_list(new_file, 256, path, pattern)) {
 		res_str = malloc(256);
-		snprintf(res_str, 255, "%s/%s", path, new_file);
-		res_str[255] = '\0';
+		if (res_str) {
+			snprintf(res_str, 255, "%s/%s", path, new_file);
+			res_str[255] = '\0';
+		}
 	}
 	if (filename_without_ext[0] != '\0') free(pattern);
 	return res_str;

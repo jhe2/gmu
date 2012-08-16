@@ -133,15 +133,18 @@ void charset_filename_set(Charset charset)
 char *charset_filename_convert_alloc(const char *filename)
 {
 	char *buf;
-	buf = malloc(256);
-	buf[255] = '\0';
-	switch (filename_charset) {
-		case UTF_8:
-			charset_utf8_to_iso8859_1(buf, filename, 255);
-			break;
-		default:
-			strncpy(buf, filename, 255);
-			break;
+	int   len = filename ? strlen(filename) : 0;
+	if (len > 0) buf = malloc(len+1);
+	if (buf) {
+		buf[len] = '\0';
+		switch (filename_charset) {
+			case UTF_8:
+				charset_utf8_to_iso8859_1(buf, filename, len);
+				break;
+			default:
+				strncpy(buf, filename, len);
+				break;
+		}
 	}
 	return buf;
 }

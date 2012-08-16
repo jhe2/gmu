@@ -338,14 +338,13 @@ static Reader *_reader_open(char *url, int max_redirects)
 					int   len = strlen(v);
 					char *vc = NULL;
 					
-					if (len > 0) {
-						vc = malloc(len+1);
+					if (len > 0 && (vc = malloc(len+1))) {
 						strncpy(vc, v, len);
 						vc[len] = '\0';
 					}
-					wdprintf(V_INFO, "reader", "302 Redirect found: %s\n", vc);
+					wdprintf(V_INFO, "reader", "302 Redirect found: %s\n", vc ? vc : "unknown");
 					reader_close(r);
-					if (max_redirects > 0) {
+					if (max_redirects > 0 && vc) {
 						r = _reader_open(vc, max_redirects-1);
 					} else {
 						wdprintf(V_WARNING, "reader", "Too many HTTP redirects.\n");

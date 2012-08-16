@@ -80,14 +80,18 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 		pthread_mutex_lock(&(pl->mutex));
 		if (pl->first == NULL) { /* playlist empty */
 			pl->first = malloc(sizeof(Entry));
-			entry = pl->first;
-			entry->prev = NULL;
-			pl->last = pl->first;
+			if (pl->first) {
+				entry = pl->first;
+				entry->prev = NULL;
+				pl->last = pl->first;
+			}
 		} else {
 			pl->last->next = malloc(sizeof(Entry));
-			entry = pl->last->next;
-			entry->prev = pl->last;
-			pl->last = entry;
+			if (pl->last->next) {
+				entry = pl->last->next;
+				entry->prev = pl->last;
+				pl->last = entry;
+			}
 		}
 		entry->played = 0;
 		entry->next = NULL;
@@ -238,21 +242,23 @@ int playlist_insert_item_after(Playlist *pl, Entry *entry, char *file, char *nam
 	if (entry != NULL) {
 		pthread_mutex_lock(&(pl->mutex));
 		new_entry = malloc(sizeof(Entry));
-		strncpy(new_entry->filename, file, 255);
-		strncpy(new_entry->name, name, 63);
-		new_entry->played = 0;
-		new_entry->next_in_queue = NULL;
-		new_entry->prev = entry;
-		if (entry->next != NULL)
-			new_entry->next = entry->next;
-		else
-			new_entry->next = NULL;
-		entry->next = new_entry;
-		if (new_entry->next != NULL)
-			new_entry->next->prev = new_entry;
-		pl->length++;
-		pthread_mutex_unlock(&(pl->mutex));
-		result = 1;
+		if (new_entry) {
+			strncpy(new_entry->filename, file, 255);
+			strncpy(new_entry->name, name, 63);
+			new_entry->played = 0;
+			new_entry->next_in_queue = NULL;
+			new_entry->prev = entry;
+			if (entry->next != NULL)
+				new_entry->next = entry->next;
+			else
+				new_entry->next = NULL;
+			entry->next = new_entry;
+			if (new_entry->next != NULL)
+				new_entry->next->prev = new_entry;
+			pl->length++;
+			pthread_mutex_unlock(&(pl->mutex));
+			result = 1;
+		}
 	}
 	return result;
 }
