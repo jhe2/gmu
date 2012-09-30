@@ -30,6 +30,7 @@
 #include "core.h"
 #include "json.h"
 #include "websocket.h"
+#include "debug.h"
 
 /*
  * 500 Internal Server Error
@@ -95,7 +96,7 @@ static char *get_next_key_value_pair(char *str, char *key, int key_len, char *va
 	/* Check for end of header: "\n\r\n\r" */
 	if ((str[sc] == '\r' && str[sc+1] == '\n') || str[sc] == '\n') {
 		eoh = 1;
-		printf("End of header detected!\n");
+		wdprintf(V_DEBUG, "httpd", "End of header detected!\n");
 	}
 
 	key[0] = '\0';
@@ -109,7 +110,7 @@ static char *get_next_key_value_pair(char *str, char *key, int key_len, char *va
 			if (i < key_len-1 && ch != ':' && ch != '=' && ch != '\r' && ch != '\n') key[i++] = ch;
 		}
 		key[i] = '\0';
-		//printf("key=[%s]\n", key);
+		//wdprintf(V_DEBUG, "httpd", "key=[%s]\n", key);
 
 		/* extract value */
 		i = 0;
@@ -122,7 +123,7 @@ static char *get_next_key_value_pair(char *str, char *key, int key_len, char *va
 		}
 		value[i] = '\0';
 	}
-	//printf("value=[%s]\n", value);
+	//wdprintf(V_DEBUG, "httpd", "value=[%s]\n", value);
 	return str+sc+1;
 }
 
@@ -192,7 +193,7 @@ int connection_is_timed_out(Connection *c)
 
 void connection_set_state(Connection *c, ConnectionState s)
 {
-	printf("Connection: new state=%d\n", s);
+	wdprintf(V_DEBUG, "httpd", "Connection: new state=%d\n", s);
 	c->state = s;
 }
 
@@ -214,7 +215,7 @@ int connection_file_open(Connection *c, char *filename)
 	c->local_file = NULL;
 	if (stat(filename, &fst) == 0) {
 		if (S_ISREG(fst.st_mode)) {
-			printf("Connection: Opening file %s (%d bytes)...\n", filename, (int)fst.st_size);
+			wdprintf(V_DEBUG, "httpd", "Connection: Opening file %s (%d bytes)...\n", filename, (int)fst.st_size);
 			c->local_file = fopen(filename, "r");
 			c->total_size = fst.st_size;
 		}
@@ -243,7 +244,7 @@ int connection_file_read_chunk(Connection *c)
 		char blob[CHUNK_SIZE];
 		if (c->fd && c->local_file && c->remaining_bytes_to_send > 0) {
 			int size = CHUNK_SIZE;
-			printf("Connection: Reading chunk of data...\n");
+			wdprintf(V_DEBUG, "httpd", "Connection: Reading chunk of data...\n");
 			if (c->remaining_bytes_to_send < CHUNK_SIZE) size = c->remaining_bytes_to_send;
 			// read CHUNK_SIZE bytes from file
 			fread(blob, size, 1, c->local_file);
@@ -264,7 +265,7 @@ int connection_file_read_chunk(Connection *c)
 			connection_set_state(c, HTTP_IDLE);
 		}
 	} else {
-		printf("Connection: ERROR, file handle invalid.\n");
+		wdprintf(V_DEBUG, "httpd", "Connection: ERROR, file handle invalid.\n");
 	}
 	return 0;
 }
@@ -350,7 +351,7 @@ static void websocket_send_string(Connection *c, char *str)
 		buf = malloc(len+10); /* data length + 1 byte for flags + 9 bytes for length (1+8) */
 		if (buf) {
 			memset(buf, 0, len);
-			printf("websocket_send_string(): len=%d str='%s' %d|%d\n", len, str, len >> 8, len & 0xFF);
+			wdprintf(V_DEBUG, "httpd", "websocket_send_string(): len=%d str='%s' %d|%d\n", len, str, len >> 8, len & 0xFF);
 			if (len <= 125) {
 				snprintf(buf, 1023, "%c%c%s", 0x80+0x01, len, str);
 				send_block(c->fd, (unsigned char *)buf, len+2);
@@ -377,7 +378,7 @@ void *httpd_run_server(void *data)
 
 	if (wr) strncpy(webserver_root, wr, 255); else webserver_root[0] = '\0';
 	queue_init(&queue);
-	printf("Starting server on port %d.\n", port);
+	wdprintf(V_INFO, "httpd", "Starting server on port %d.\n", port);
 	loop(tcp_server_init(port));
 	return NULL;
 }
@@ -561,28 +562,28 @@ static int process_command(int rfd, Connection *c)
 					len = strlen(options);
 					for (; options[0] != '\0' && (options[0] == '\r' || options[0] == '\n'); options++);
 				} else {
-					printf("No options. :(\n");
+					wdprintf(V_DEBUG, "httpd", "No options. :(\n");
 				}
 			} else {
-				printf("Unexpected end of data.\n");
+				wdprintf(V_DEBUG, "httpd", "Unexpected end of data.\n");
 			}
 			for (i = len-1; i > 0 && (str[i] == '\n' || str[i] == '\r'); i--)
 				str[i] = '\0';
 		}
-		if (command) printf("%04d Command: [%s]\n", rfd, command);
+		if (command) wdprintf(V_DEBUG, "httpd", "%04d Command: [%s]\n", rfd, command);
 		if (ressource) {
-			printf("%04d Ressource: [%s]\n", rfd, ressource);
-			printf("%04d Mime type: %s\n", rfd, get_mime_type(ressource));
+			wdprintf(V_DEBUG, "httpd", "%04d Ressource: [%s]\n", rfd, ressource);
+			wdprintf(V_DEBUG, "httpd", "%04d Mime type: %s\n", rfd, get_mime_type(ressource));
 		}
-		if (http_version) printf("%04d http_version: [%s]\n", rfd, http_version);
+		if (http_version) wdprintf(V_DEBUG, "httpd", "%04d http_version: [%s]\n", rfd, http_version);
 		if (options) {
 			char key[128], value[256], *opts = options;
 			int  websocket_version = 0, websocket_upgrade = 0, websocket_connection = 0;
-			printf("%04d Options: [%s]\n", rfd, options);
+			wdprintf(V_DEBUG, "httpd", "%04d Options: [%s]\n", rfd, options);
 			while (opts) {
 				opts = get_next_key_value_pair(opts, key, 128, value, 256);
 				if (key[0]) {
-					printf("key=[%s] value=[%s]\n", key, value);
+					wdprintf(V_DEBUG, "httpd", "key=[%s] value=[%s]\n", key, value);
 					if (strcasecmp(key, "Host") == 0) host = value; // not good, we need to copy the string!
 					if (strcasecmp(key, "Upgrade") == 0 && strcasecmp(value, "websocket") == 0)
 						websocket_upgrade = 1;
@@ -599,7 +600,7 @@ static int process_command(int rfd, Connection *c)
 			}
 			if (websocket_upgrade && websocket_connection && websocket_version && websocket_key[0] &&
 			    get_command(command) == GET) {
-				printf("---> Client wants to upgrade connection to WebSocket version %d with key '%s'.\n",
+				wdprintf(V_DEBUG, "httpd", "---> Client wants to upgrade connection to WebSocket version %d with key '%s'.\n",
 				       websocket_version, websocket_key);
 			} else { /* If there is no valid websocket request, clear the key as it being used later
 			            to check for websocket request */
@@ -620,24 +621,24 @@ static int process_command(int rfd, Connection *c)
 							char str[61], str2[61];
 							SHA1_CTX sha;
 							uint8_t  digest[SHA1_DIGEST_SIZE];
-							printf("%04d Proceeding with websocket connection upgrade...\n", rfd);
+							wdprintf(V_DEBUG, "httpd", "%04d Proceeding with websocket connection upgrade...\n", rfd);
 							/* 1) Calculate response key (SHA1, Base64) */
 							snprintf(str, 61, "%s%s", websocket_key, websocket_magic);
 							str[60] = '\0';
-							printf("Voodoo = '%s'\n", str);
+							wdprintf(V_DEBUG, "httpd", "Voodoo = '%s'\n", str);
 							SHA1_Init(&sha);
 							SHA1_Update(&sha, (const uint8_t *)str, strlen(str));
 							SHA1_Final(&sha, digest);
 							memset(str, 0, 61);
 							base64_encode_data((unsigned char *)digest, 20, str, 30);
-							printf("Calculated base 64 response value: '%s'\n", str);
+							wdprintf(V_DEBUG, "httpd", "Calculated base 64 response value: '%s'\n", str);
 							/* 2) Send 101 response with appropriate data */
 							send_buf(rfd, "HTTP/1.1 101 Switching Protocols\r\n");
 							send_buf(rfd, "Server: Gmu http server\r\n");
 							send_buf(rfd, "Upgrade: websocket\r\n");
 							send_buf(rfd, "Connection: Upgrade\r\n");
 							snprintf(str2, 60, "Sec-WebSocket-Accept: %s\r\n", str);
-							printf(str2);
+							wdprintf(V_DEBUG, "httpd", str2);
 							send_buf(rfd, str2);
 							send_buf(rfd, "\r\n");
 							/* 3) Set flags in connection struct to WebSocket */
@@ -748,11 +749,11 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 		int   item = -1;
 		if (itm) item = atoi(itm);
 		if (item >= 0) {
-			printf("item=%d\n", item);
+			wdprintf(V_DEBUG, "httpd", "item=%d\n", item);
 			gmu_http_playlist_get_item(item, c);
 		}
 	} else if (strcmp(message, "playlist_get_info") == 0) {
-		printf("playlist_info requested!\n");
+		wdprintf(V_DEBUG, "httpd", "playlist_info requested!\n");
 		gmu_http_playlist_get_info(c);
 	}
 }
@@ -800,7 +801,7 @@ static void loop(int listen_fd)
 				if (rfd > maxfd) maxfd = rfd;
 				//connection_counter++;
 				connection_init(&(connection[rfd-listen_fd-1]), rfd);
-				printf("Connection count: ++\n");
+				wdprintf(V_DEBUG, "httpd", "Connection count: ++\n");
 			}
 		}
 
@@ -843,13 +844,13 @@ static void loop(int listen_fd)
 				if (ret == ERROR) {
 					FD_CLR(rfd, &the_state); /* remove dead client */
 					//connection_counter--;
-					printf("Connection count: --\n");
+					wdprintf(V_DEBUG, "httpd", "Connection count: --\n");
 				} else {
 					int len = msgbuflen;
 					int len_header = 0;
 
 					if (connection[conn_num].state != WEBSOCKET_OPEN) {
-						printf("%04d http message.\n", rfd);
+						wdprintf(V_DEBUG, "httpd", "%04d http message.\n", rfd);
 						if (connection[conn_num].http_request_header)
 							len_header = strlen(connection[conn_num].http_request_header);
 						connection[conn_num].http_request_header = 
@@ -864,7 +865,7 @@ static void loop(int listen_fd)
 						}
 					} else {
 						char *unmasked_message = NULL;
-						printf("%04d websocket message received.\n", rfd);
+						wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", rfd);
 						unmasked_message = websocket_mask_unmask_message_alloc(msgbuf, MAXLEN);
 						connection_reset_timeout(&(connection[conn_num]));
 
@@ -887,12 +888,12 @@ static void loop(int listen_fd)
 				if (connection_is_valid(&(connection[conn_num])) &&
 					connection_is_timed_out(&(connection[conn_num])) &&
 					connection[conn_num].state != WEBSOCKET_OPEN) { /* close idle connection */
-					printf("Closing connection to idle client %d...\n", rfd);
+					wdprintf(V_DEBUG, "httpd", "Closing connection to idle client %d...\n", rfd);
 					FD_CLR(rfd, &the_state);
 					close(rfd);
 					connection_close(&(connection[conn_num]));
 					//connection_counter--;
-					printf("Connection count: -- (idle)\n");
+					wdprintf(V_DEBUG, "httpd", "Connection count: -- (idle)\n");
 				}
 			}
 		}
