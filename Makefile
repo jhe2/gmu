@@ -194,7 +194,7 @@ frontends/gmusrv.so: src/frontends/gmusrv.c
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $<
 
-frontends/gmuhttp.so: src/frontends/web/gmuhttp.c sha1.o base64.o httpd.o queue.o json.o
+frontends/gmuhttp.so: src/frontends/web/gmuhttp.c sha1.o base64.o httpd.o queue.o json.o websocket.o
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread sha1.o base64.o httpd.o queue.o json.o
 

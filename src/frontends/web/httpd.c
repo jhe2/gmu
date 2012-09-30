@@ -29,6 +29,7 @@
 #include "queue.h"
 #include "core.h"
 #include "json.h"
+#include "websocket.h"
 
 /*
  * 500 Internal Server Error
@@ -340,6 +341,32 @@ static void send_http_header(int soc, char *code,
 	send_buf(soc, "\r\n");
 }
 
+static void websocket_send_string(Connection *c, char *str)
+{	
+	if (str) {
+		char *buf;
+		int   len = strlen(str);
+		
+		buf = malloc(len+10); /* data length + 1 byte for flags + 9 bytes for length (1+8) */
+		if (buf) {
+			memset(buf, 0, len);
+			printf("websocket_send_string(): len=%d str='%s' %d|%d\n", len, str, len >> 8, len & 0xFF);
+			if (len <= 125) {
+				snprintf(buf, 1023, "%c%c%s", 0x80+0x01, len, str);
+				send_block(c->fd, (unsigned char *)buf, len+2);
+			} else if (len > 125 && len < 65535) {
+				snprintf(buf, 1023, "%c%c%c%c%s", 0x80+0x01, 126, 
+						 (unsigned char)(len >> 8), (unsigned char)(len & 0xFF), str);
+				send_block(c->fd, (unsigned char *)buf, len+4);
+			} else { /* More than 64k bytes */
+				/* Such long strings are not supported right now */
+			}
+			free(buf);
+		}
+		connection_reset_timeout(c);
+	}
+}
+
 static void loop(int listen_fd);
 static int  tcp_server_init(int port);
 
@@ -491,70 +518,6 @@ static void http_response_not_implemented(int fd)
 		int   body_len = strlen(str);
 		send_http_header(fd, "501", body_len, NULL, "text/html");
 		tcp_server_write(fd, str, body_len);
-}
-
-static void websocket_send_string(Connection *c, char *str)
-{	
-	if (str) {
-		char *buf;
-		int   len = strlen(str);
-		
-		buf = malloc(len+10); /* data length + 1 byte for flags + 9 bytes for length (1+8) */
-		if (buf) {
-			memset(buf, 0, len);
-			printf("websocket_send_string(): len=%d str='%s' %d|%d\n", len, str, len >> 8, len & 0xFF);
-			if (len <= 125) {
-				snprintf(buf, 1023, "%c%c%s", 0x80+0x01, len, str);
-				send_block(c->fd, (unsigned char *)buf, len+2);
-			} else if (len > 125 && len < 65535) {
-				snprintf(buf, 1023, "%c%c%c%c%s", 0x80+0x01, 126, 
-						 (unsigned char)(len >> 8), (unsigned char)(len & 0xFF), str);
-				send_block(c->fd, (unsigned char *)buf, len+4);
-			} else { /* More than 64k bytes */
-				/* Such long strings are not supported right now */
-			}
-			free(buf);
-		}
-		connection_reset_timeout(c);
-	}
-}
-
-static char *websocket_unmask_message_alloc(char *msgbuf, int msgbuf_size)
-{
-	char *flags, *mask = NULL, *message, *unmasked_message = NULL;
-	int   masked, len, i, offset = 0;
-
-	flags  = msgbuf;
-	len    = msgbuf[1] & 127;
-	if (len == 126) {
-		len = (((unsigned int)msgbuf[2]) << 8) + (unsigned char)msgbuf[3];
-		offset += 2;
-	} else if (len == 127) {
-		len = -1; /* unsupported */
-	}
-
-	if (len > 0 && len < msgbuf_size) {
-		masked = (msgbuf[1] & 128) ? 1 : 0;
-		if (masked) mask = msgbuf + 2 + offset;
-		message = msgbuf + 2 + (masked ? 4 : 0) + offset;
-		printf("websocket_unmask_message_alloc(): len=%d flags=%x masked=%d\n", len, flags[0], masked);
-		if (masked) {
-			unmasked_message = malloc(len+1);
-			if (unmasked_message)  {
-				for (i = 0; i < len; i++) {
-					char c = message[i] ^ mask[i % 4];
-					unmasked_message[i] = c;
-				}
-				unmasked_message[len] = '\0';
-				printf("websocket_unmask_message_alloc(): unmasked text='%s'\n", unmasked_message);
-			}
-		} else {
-			printf("websocket_unmask_message_alloc(): ERROR: Unmasked message: [%s]\n", message);
-		}
-	} else {
-		printf("websocket_unmask_message_alloc(): invalid length: %d (max. length: %d)\n", len, msgbuf_size);
-	}
-	return unmasked_message;
 }
 
 static int process_command(int rfd, Connection *c)
@@ -902,7 +865,7 @@ static void loop(int listen_fd)
 					} else {
 						char *unmasked_message = NULL;
 						printf("%04d websocket message received.\n", rfd);
-						unmasked_message = websocket_unmask_message_alloc(msgbuf, MAXLEN);
+						unmasked_message = websocket_mask_unmask_message_alloc(msgbuf, MAXLEN);
 						connection_reset_timeout(&(connection[conn_num]));
 
 						if (unmasked_message) {
