@@ -30,6 +30,7 @@
 #include "core.h"
 #include "json.h"
 #include "websocket.h"
+#include "net.h"
 #include "debug.h"
 
 /*
@@ -39,7 +40,6 @@
  * 505 HTTP Version not supported
  */
 
-static int send_block(int soc, unsigned char *buf, int size);
 static Queue queue;
 static char  webserver_root[256];
 
@@ -249,7 +249,7 @@ int connection_file_read_chunk(Connection *c)
 			// read CHUNK_SIZE bytes from file
 			fread(blob, size, 1, c->local_file);
 			// write bytes to socket
-			send_block(c->fd, (unsigned char *)blob, size);
+			net_send_block(c->fd, (unsigned char *)blob, size);
 			// decrement remaining bytes counter
 			c->remaining_bytes_to_send -= size;
 			c->connection_time = time(NULL);
@@ -266,39 +266,6 @@ int connection_file_read_chunk(Connection *c)
 		}
 	} else {
 		wdprintf(V_DEBUG, "httpd", "Connection: ERROR, file handle invalid.\n");
-	}
-	return 0;
-}
-
-/* Send data of specified length 'size' to the client socket */
-static int send_block(int soc, unsigned char *buf, int size)
-{
-	unsigned char *r = buf;
-	int            len = 0;
-
-	while (size > 0) {
-		if ((len = send(soc, r, size, 0)) == -1)
-			return -1;
-		size -= len;
-		r += len;
-	}
-	return 0;
-}
-
-/* Send a null-terminated string of arbitrary length to the client socket */
-static int send_buf(int soc, char *buf)
-{
-	char *r = buf;
-	int   len = 0;
-	int   rlen = strlen(buf);
-
-	if (soc) {
-		while (rlen > 0) {
-			if ((len = send(soc, r, strlen(r), 0)) == -1)
-				return -1;
-			rlen -= len;
-			r += len;
-		}
 	}
 	return 0;
 }
@@ -320,12 +287,12 @@ static void send_http_header(int soc, char *code,
 		}
 	}
 	snprintf(msg, 254, "HTTP/1.1 %s %s\r\n", code, code_text);
-	send_buf(soc, msg);
+	net_send_buf(soc, msg);
 	/*stime = time(NULL);
 	ptm = gmtime(&stime);
 	strftime(msg, 255, "Date: %a, %d %b %Y %H:%M:%S %Z\r\n", ptm);
 	send_buf(soc, msg);*/
-	send_buf(soc, "Server: Gmu http server\r\n");
+	net_send_buf(soc, "Server: Gmu http server\r\n");
 
 	/*if (pftime != NULL) {
 		pftm = gmtime(pftime);
@@ -333,37 +300,19 @@ static void send_http_header(int soc, char *code,
 		send_buf(soc, msg);
 	}*/
 
-	send_buf(soc, "Accept-Ranges: none\r\n");
+	net_send_buf(soc, "Accept-Ranges: none\r\n");
 	snprintf(msg, 254, "Content-Length: %d\r\n", length);
-	send_buf(soc, msg);
+	net_send_buf(soc, msg);
 	//send_buf(soc, "Connection: close\r\n");
 	snprintf(msg, 254, "Content-Type: %s\r\n", content_type);
-	send_buf(soc, msg);
-	send_buf(soc, "\r\n");
+	net_send_buf(soc, msg);
+	net_send_buf(soc, "\r\n");
 }
 
 static void websocket_send_string(Connection *c, char *str)
 {	
 	if (str) {
-		char *buf;
-		int   len = strlen(str);
-		
-		buf = malloc(len+10); /* data length + 1 byte for flags + 9 bytes for length (1+8) */
-		if (buf) {
-			memset(buf, 0, len);
-			wdprintf(V_DEBUG, "httpd", "websocket_send_string(): len=%d str='%s' %d|%d\n", len, str, len >> 8, len & 0xFF);
-			if (len <= 125) {
-				snprintf(buf, 1023, "%c%c%s", 0x80+0x01, len, str);
-				send_block(c->fd, (unsigned char *)buf, len+2);
-			} else if (len > 125 && len < 65535) {
-				snprintf(buf, 1023, "%c%c%c%c%s", 0x80+0x01, 126, 
-						 (unsigned char)(len >> 8), (unsigned char)(len & 0xFF), str);
-				send_block(c->fd, (unsigned char *)buf, len+4);
-			} else { /* More than 64k bytes */
-				/* Such long strings are not supported right now */
-			}
-			free(buf);
-		}
+		websocket_send_str(c->fd, str, 0);
 		connection_reset_timeout(c);
 	}
 }
@@ -633,14 +582,14 @@ static int process_command(int rfd, Connection *c)
 							base64_encode_data((unsigned char *)digest, 20, str, 30);
 							wdprintf(V_DEBUG, "httpd", "Calculated base 64 response value: '%s'\n", str);
 							/* 2) Send 101 response with appropriate data */
-							send_buf(rfd, "HTTP/1.1 101 Switching Protocols\r\n");
-							send_buf(rfd, "Server: Gmu http server\r\n");
-							send_buf(rfd, "Upgrade: websocket\r\n");
-							send_buf(rfd, "Connection: Upgrade\r\n");
+							net_send_buf(rfd, "HTTP/1.1 101 Switching Protocols\r\n");
+							net_send_buf(rfd, "Server: Gmu http server\r\n");
+							net_send_buf(rfd, "Upgrade: websocket\r\n");
+							net_send_buf(rfd, "Connection: Upgrade\r\n");
 							snprintf(str2, 60, "Sec-WebSocket-Accept: %s\r\n", str);
 							wdprintf(V_DEBUG, "httpd", str2);
-							send_buf(rfd, str2);
-							send_buf(rfd, "\r\n");
+							net_send_buf(rfd, str2);
+							net_send_buf(rfd, "\r\n");
 							/* 3) Set flags in connection struct to WebSocket */
 							connection_set_state(c, WEBSOCKET_OPEN);
 							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
@@ -866,7 +815,7 @@ static void loop(int listen_fd)
 					} else {
 						char *unmasked_message = NULL;
 						wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", rfd);
-						unmasked_message = websocket_mask_unmask_message_alloc(msgbuf, MAXLEN);
+						unmasked_message = websocket_unmask_message_alloc(msgbuf, MAXLEN);
 						connection_reset_timeout(&(connection[conn_num]));
 
 						if (unmasked_message) {

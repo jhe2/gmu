@@ -10,5 +10,8 @@
 
 #ifndef WEBSOCKET_H
 #define WEBSOCKET_H
-char *websocket_mask_unmask_message_alloc(char *msgbuf, int msgbuf_size);
+char *websocket_unmask_message_alloc(char *msgbuf, int msgbuf_size);
+char *websocket_prepare_message_from_str_alloc(char *str, int mask);
+char *websocket_client_generate_sec_websocket_key_alloc(void);
+int   websocket_send_str(int sock, char *str, int mask);
 #endif
