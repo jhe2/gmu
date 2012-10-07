@@ -1,11 +1,11 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: ringbuffer.c  Created: 060928
  *
- * Description: Audio ring buffer
+ * Description: General purpose ring buffer
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@ int ringbuffer_init(RingBuffer *rb, int size)
 	rb->read_ptr    = 0;
 	rb->write_ptr   = 0;
 	rb->buffer_fill = 0;
+	rb->unread_ptr  = -1;
 	return rb->buffer ? 1 : 0;
 }
 
@@ -97,4 +98,23 @@ int ringbuffer_get_free(RingBuffer *rb)
 int ringbuffer_get_size(RingBuffer *rb)
 {
 	return rb->size;
+}
+
+/* Remembers current ringbuffer read position for possible unrolling with unread. */
+void ringbuffer_set_unread_pos(RingBuffer *rb)
+{
+	rb->unread_ptr = rb->read_ptr;
+}
+
+/* Rolls back all reads since last ringbuffer_set_unread_pos() call.
+ * No writes or other changes must have been made to the ring buffer inbetween. */
+int ringbuffer_unread(RingBuffer *rb)
+{
+	int res = 0;
+	if (rb->unread_ptr > -1) {
+		rb->read_ptr = rb->unread_ptr;
+		rb->unread_ptr = -1;
+		res = 1;
+	}
+	return res;
 }

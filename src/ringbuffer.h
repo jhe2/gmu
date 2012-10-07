@@ -1,11 +1,11 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: ringbuffer.h  Created: 060928
  *
- * Description: Audio ring buffer
+ * Description: General purpose ring buffer
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,12 +13,12 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
-#ifndef _RINGBUFFER_H
-#define _RINGBUFFER_H
+#ifndef WEJ_RINGBUFFER_H
+#define WEJ_RINGBUFFER_H
 struct _RingBuffer {
 	int   size;
 	char *buffer;
-	int   read_ptr, write_ptr, buffer_fill;
+	int   read_ptr, write_ptr, buffer_fill, unread_ptr;
 };
 
 typedef struct _RingBuffer RingBuffer;
@@ -31,4 +31,6 @@ int  ringbuffer_get_fill(RingBuffer *rb);
 int  ringbuffer_get_free(RingBuffer *rb);
 void ringbuffer_clear(RingBuffer *rb);
 int  ringbuffer_get_size(RingBuffer *rb);
+void ringbuffer_set_unread_pos(RingBuffer *rb);
+int  ringbuffer_unread(RingBuffer *rb);
 #endif
