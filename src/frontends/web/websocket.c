@@ -49,7 +49,7 @@ char *websocket_unmask_message_alloc(char *msgbuf, int msgbuf_size)
 		if (masked) mask = msgbuf + 2 + offset;
 		message = msgbuf + 2 + (masked ? 4 : 0) + offset;
 		wdprintf(V_DEBUG, "websocket", "websocket_unmask_message_alloc(): len=%d flags=%x masked=%d\n", len, flags[0], masked);
-		wdprintf(V_DEBUG, "websocket", "mask_key=%c%c%c%c\n", mask[0], mask[1], mask[2], mask[3]);
+		if (mask) wdprintf(V_DEBUG, "websocket", "mask_key=%c%c%c%c\n", mask[0], mask[1], mask[2], mask[3]);
 		if (masked) {
 			unmasked_message = mask_message_alloc(message, len, mask);
 			wdprintf(V_DEBUG, "websocket", "websocket_unmask_message_alloc(): unmasked text='%s'\n", unmasked_message);
