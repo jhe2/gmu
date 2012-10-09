@@ -129,3 +129,52 @@ int websocket_send_str(int sock, char *str, int mask)
 	}
 	return res;
 }
+
+
+int websocket_calculate_payload_size(char *websocket_packet_header)
+{
+	int len = websocket_packet_header[1] & 127;
+	if (len == 126) {
+		len = (((unsigned int)websocket_packet_header[2]) << 8) + (unsigned char)websocket_packet_header[3];
+	} else if (len == 127) {
+		len = -1; /* unsupported */
+	}
+	return len;
+}
+
+int websocket_calculate_packet_size(char *websocket_packet)
+{
+	int len = websocket_packet[1] & 127;
+	int size = 1;
+	if (len > 0) {
+		if (len < 126)
+			size += 1;
+		else if (len == 126)
+			size += 4;
+		else if (len == 127)
+			size += 8;
+	}
+	if (websocket_packet[1] & 128) /* masked -> 4 bytes extra */
+		size += 4;
+	len = websocket_calculate_payload_size(websocket_packet);
+	if (len > 0) size += len; else size = -1;
+	return size;
+}
+
+char *websocket_get_payload(char *websocket_packet)
+{
+	char *payload = NULL;
+	int   len = websocket_packet[1] & 127;
+	if (len > 0) {
+		payload = websocket_packet;
+		if (len < 126)
+			payload += 2;
+		else if (len == 126)
+			payload += 5;
+		else if (len == 127)
+			payload += 9;
+	}
+	if (websocket_packet[1] & 128) /* masked -> 4 bytes extra */
+		payload += 4;
+	return payload;
+}
