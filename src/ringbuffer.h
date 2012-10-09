@@ -18,7 +18,7 @@
 struct _RingBuffer {
 	int   size;
 	char *buffer;
-	int   read_ptr, write_ptr, buffer_fill, unread_ptr;
+	int   read_ptr, write_ptr, buffer_fill, unread_ptr, unread_fill;
 };
 
 typedef struct _RingBuffer RingBuffer;

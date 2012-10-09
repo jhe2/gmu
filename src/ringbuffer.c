@@ -24,6 +24,7 @@ int ringbuffer_init(RingBuffer *rb, int size)
 	rb->read_ptr    = 0;
 	rb->write_ptr   = 0;
 	rb->buffer_fill = 0;
+	rb->unread_fill = 0;
 	rb->unread_ptr  = -1;
 	return rb->buffer ? 1 : 0;
 }
@@ -104,6 +105,7 @@ int ringbuffer_get_size(RingBuffer *rb)
 void ringbuffer_set_unread_pos(RingBuffer *rb)
 {
 	rb->unread_ptr = rb->read_ptr;
+	rb->unread_fill = rb->buffer_fill;
 }
 
 /* Rolls back all reads since last ringbuffer_set_unread_pos() call.
@@ -112,6 +114,7 @@ int ringbuffer_unread(RingBuffer *rb)
 {
 	int res = 0;
 	if (rb->unread_ptr > -1) {
+		rb->buffer_fill = rb->unread_fill;
 		rb->read_ptr = rb->unread_ptr;
 		rb->unread_ptr = -1;
 		res = 1;
