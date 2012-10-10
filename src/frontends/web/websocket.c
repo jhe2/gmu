@@ -150,7 +150,7 @@ int websocket_calculate_packet_size(char *websocket_packet)
 		if (len < 126)
 			size += 1;
 		else if (len == 126)
-			size += 4;
+			size += 3;
 		else if (len == 127)
 			size += 8;
 	}
@@ -170,7 +170,7 @@ char *websocket_get_payload(char *websocket_packet)
 		if (len < 126)
 			payload += 2;
 		else if (len == 126)
-			payload += 5;
+			payload += 4;
 		else if (len == 127)
 			payload += 9;
 	}
