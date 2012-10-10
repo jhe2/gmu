@@ -47,4 +47,6 @@ void         json_object_free(JSON_Object *object);
 void         json_object_attach_key(JSON_Object *object, JSON_Key *key);
 JSON_Key    *json_key_new(void);
 char        *json_string_escape_alloc(char *src);
+JSON_Key    *json_get_key_object_for_key(JSON_Object *object, char *key);
+char        *json_get_string_value_for_key(JSON_Object *object, char *key);
 #endif

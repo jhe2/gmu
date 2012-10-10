@@ -315,3 +315,31 @@ char *json_string_escape_alloc(char *src)
 	}
 	return res;
 }
+
+JSON_Key *json_get_key_object_for_key(JSON_Object *object, char *key)
+{
+	JSON_Key *res = NULL;
+	if (object) {
+		JSON_Key *k = object->first_key;
+		while (k) {
+			if (k->key_name && strcmp(k->key_name, key) == 0 && k->type == STRING) {
+				res = k;
+				break;
+			}
+			k = k->next;
+		}
+	}
+	return res;
+}
+
+char *json_get_string_value_for_key(JSON_Object *object, char *key)
+{
+	char *res = NULL;
+	if (object) {
+		JSON_Key *k = json_get_key_object_for_key(object, key);
+		if (k && k->key_name && strcmp(k->key_name, key) == 0 && k->type == STRING) {
+			res = k->key_value_str;
+		}
+	}
+	return res;
+}
