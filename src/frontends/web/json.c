@@ -300,7 +300,7 @@ char *json_string_escape_alloc(char *src)
 		if (res) {
 			int i, j;
 			for (i = 0, j = 0; src[i] && j < len*2; i++, j++) {
-				if (src[i] < 32) {
+				if (((unsigned char)src[i]) < 32) {
 					res[j] = 32;
 				} else if (src[i] == '"' || src[i] == '\\') {
 					res[j] = '\\';
