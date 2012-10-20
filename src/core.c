@@ -950,8 +950,11 @@ int main(int argc, char **argv)
 		fe = feloader_frontend_list_get_next_frontend(1);
 		while (fe) {
 			/* call callback functions of the frontend plugins... */
-			if (*fe->mainloop_iteration)
+			if (*fe->mainloop_iteration) {
+				wdprintf(V_DEBUG, "gmu", "Running frontend mainloop for %s.\n", fe->identifier);
 				(*fe->mainloop_iteration)();
+				wdprintf(V_DEBUG, "gmu", "Frontend mainloop for %s done.\n", fe->identifier);
+			}
 			fe = feloader_frontend_list_get_next_frontend(0);
 		}
 
@@ -972,12 +975,16 @@ int main(int argc, char **argv)
 		while (event_queue_is_event_waiting(&event_queue)) {
 			GmuEvent event = event_queue_pop(&event_queue);
 
+			wdprintf(V_DEBUG, "gmu", "Pushing event to frontends:\n");
 			fe = feloader_frontend_list_get_next_frontend(1);
 			while (fe) {
-				if (event != GMU_NO_EVENT && *fe->event_callback)
+				if (event != GMU_NO_EVENT && *fe->event_callback) {
+					wdprintf(V_DEBUG, "gmu", "- Frontend: %s\n", fe->identifier);
 					(*fe->event_callback)(event);
+				}
 				fe = feloader_frontend_list_get_next_frontend(0);
 			}
+			wdprintf(V_DEBUG, "gmu", "Done.\n");
 		}
 	}
 
