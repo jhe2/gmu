@@ -74,11 +74,13 @@ static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 {
 	M3u m3u;
 	if (m3u_open_file(&m3u, filename)) {
+		playlist_get_lock(pl);
 		while (m3u_read_next_item(&m3u)) {
 			playlist_add_item(pl,
 			                  m3u_current_item_get_full_path(&m3u),
 			                  m3u_current_item_get_title(&m3u));
 		}
+		playlist_release_lock(pl);
 		m3u_close_file(&m3u);
 		event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	}
@@ -93,11 +95,13 @@ static void add_pls_contents_to_playlist(Playlist *pl, char *filename)
 {
 	PLS pls;
 	if (pls_open_file(&pls, filename)) {
+		playlist_get_lock(pl);
 		while (pls_read_next_item(&pls)) {
 		   playlist_add_item(pl,
 		                     pls_current_item_get_full_path(&pls),
 		                     pls_current_item_get_title(&pls));
 		}
+		playlist_release_lock(pl);
 		pls_close_file(&pls);
 		event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	}
@@ -111,18 +115,21 @@ void gmu_core_add_pls_contents_to_playlist(char *filename)
 static int play_next(Playlist *pl, TrackInfo *ti, int skip_current)
 {
 	int result = 0;
+	playlist_get_lock(pl);
 	if (playlist_next(pl)) {
 		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), ti, skip_current);
 		result = 1;
 		event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 		player_status = PLAYING;
 	}
+	playlist_release_lock(pl);
 	return result;
 }
 
 static int play_previous(Playlist *pl, TrackInfo *ti)
 {
 	int result = 0;
+	playlist_get_lock(pl);
 	if (playlist_prev(pl)) {
 		Entry *entry = playlist_get_current(pl);
 		if (entry != NULL) {
@@ -132,6 +139,7 @@ static int play_previous(Playlist *pl, TrackInfo *ti)
 			player_status = PLAYING;
 		}
 	}
+	playlist_release_lock(pl);
 	return result;
 }
 
@@ -175,13 +183,17 @@ int gmu_core_export_playlist(char *file)
 	int result = 0;
 
 	if (m3u_export_file(&m3u_export, file)) {
-		Entry *entry = playlist_get_first(&pl);
+		Entry *entry;
+
+		playlist_get_lock(&pl);
+		entry = playlist_get_first(&pl);
 		while (entry != NULL) {
 			m3u_export_write_entry(&m3u_export, 
 			                       playlist_get_entry_filename(&pl, entry), 
 			                       playlist_get_entry_name(&pl, entry), 0);
 			entry = playlist_get_next(entry);
 		}
+		playlist_release_lock(&pl);
 		m3u_export_close_file(&m3u_export);
 		result = 1;
 	}
@@ -190,6 +202,7 @@ int gmu_core_export_playlist(char *file)
 
 static void set_default_play_mode(ConfigFile *config, Playlist *pl)
 {
+	playlist_get_lock(pl);
 	if (strncmp(cfg_get_key_value(*config, "DefaultPlayMode"), "random", 6) == 0)
 		playlist_set_play_mode(pl, PM_RANDOM);
 	else if (strncmp(cfg_get_key_value(*config, "DefaultPlayMode"), "repeat1", 11) == 0)
@@ -198,6 +211,7 @@ static void set_default_play_mode(ConfigFile *config, Playlist *pl)
 		playlist_set_play_mode(pl, PM_REPEAT_ALL);
 	else if (strncmp(cfg_get_key_value(*config, "DefaultPlayMode"), "random+repeat", 13) == 0)
 		playlist_set_play_mode(pl, PM_RANDOM_REPEAT);
+	playlist_release_lock(pl);
 }
 
 ConfigFile *gmu_core_get_config(void)
@@ -252,8 +266,10 @@ static int stop_playback(void)
 	int res = 0;
 	if (player_status != STOPPED) {
 		file_player_stop_playback();
+		playlist_get_lock(&pl);
 		gmu_core_playlist_reset_random();
 		gmu_core_playlist_set_current(NULL);
+		playlist_release_lock(&pl);
 		player_status = STOPPED;
 		event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 		res = 1;
@@ -288,32 +304,47 @@ int gmu_core_play_file(const char *filename)
 /* Playlist wrapper functions: */
 int gmu_core_playlist_set_current(Entry *entry)
 {
-	int res = playlist_set_current(&pl, entry);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_set_current(&pl, entry);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
 
 int gmu_core_playlist_add_item(char *file, char *name)
 {
-	int res = playlist_add_item(&pl, file, name);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_add_item(&pl, file, name);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
 
 void gmu_core_playlist_reset_random(void)
 {
+	playlist_get_lock(&pl);
 	playlist_reset_random(&pl);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 }
 
 PlayMode gmu_core_playlist_get_play_mode(void)
 {
-	return playlist_get_play_mode(&pl);
+	PlayMode pm;
+	playlist_get_lock(&pl);
+	pm = playlist_get_play_mode(&pl);
+	playlist_release_lock(&pl);
+	return pm;
 }
 
 int gmu_core_playlist_add_dir(char *dir)
 {
-	int res = playlist_add_dir(&pl, dir);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_add_dir(&pl, dir);
+	playlist_release_lock(&pl);
 	/* TODO: Implement callback handler for callback function,
 	 * that will be called when adding the directory is completed */
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
@@ -322,24 +353,38 @@ int gmu_core_playlist_add_dir(char *dir)
 
 Entry *gmu_core_playlist_get_first(void)
 {
-	return playlist_get_first(&pl);
+	Entry *first;
+	playlist_get_lock(&pl);
+	first = playlist_get_first(&pl);
+	playlist_release_lock(&pl);
+	return first;
 }
 
 int gmu_core_playlist_get_length(void)
 {
-	return playlist_get_length(&pl);
+	int len;
+	playlist_get_lock(&pl);
+	len = playlist_get_length(&pl);
+	playlist_release_lock(&pl);
+	return len;
 }
 
 int gmu_core_playlist_insert_file_after(Entry *entry, char *filename_with_path)
 {
-	int res = playlist_insert_file_after(&pl, entry, filename_with_path);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_insert_file_after(&pl, entry, filename_with_path);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
 
 int gmu_core_playlist_add_file(char *filename_with_path)
 {
-	int res = playlist_add_file(&pl, filename_with_path);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_add_file(&pl, filename_with_path);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
@@ -351,37 +396,56 @@ char *gmu_core_playlist_get_entry_filename(Entry *entry)
 
 PlayMode gmu_core_playlist_cycle_play_mode(void)
 {
-	PlayMode res = playlist_cycle_play_mode(&pl);
+	PlayMode res;
+	playlist_get_lock(&pl);
+	res = playlist_cycle_play_mode(&pl);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
 
 int gmu_core_playlist_entry_enqueue(Entry *entry)
 {
-	int res = playlist_entry_enqueue(&pl, entry);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_entry_enqueue(&pl, entry);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
 
 int gmu_core_playlist_get_current_position(void)
 {
-	return playlist_get_current_position(&pl);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_get_current_position(&pl);
+	playlist_release_lock(&pl);
+	return res;
 }
 
 void gmu_core_playlist_clear(void)
 {
+	playlist_get_lock(&pl);
 	playlist_clear(&pl);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 }
 
 Entry *gmu_core_playlist_get_entry(int item)
 {
-	return playlist_get_entry(&pl, item);
+	Entry *e;
+	playlist_get_lock(&pl);
+	e = playlist_get_entry(&pl, item);
+	playlist_release_lock(&pl);
+	return e;
 }
 
 int gmu_core_playlist_entry_delete(Entry *entry)
 {
-	int res = playlist_entry_delete(&pl, entry);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_entry_delete(&pl, entry);
+	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
@@ -413,17 +477,29 @@ int gmu_core_playlist_is_recursive_directory_add_in_progress(void)
 
 Entry *gmu_core_playlist_get_next(Entry *entry)
 {
-	return playlist_get_next(entry);
+	Entry *e;
+	playlist_get_lock(&pl);
+	e = playlist_get_next(entry);
+	playlist_release_lock(&pl);
+	return e;
 }
 
 Entry *gmu_core_playlist_get_prev(Entry *entry)
 {
-	return playlist_get_prev(entry);
+	Entry *e;
+	playlist_get_lock(&pl);
+	e = playlist_get_prev(entry);
+	playlist_release_lock(&pl);
+	return e;
 }
 
 int gmu_core_playlist_get_played(Entry *entry)
 {
-	return playlist_get_played(entry);
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_get_played(entry);
+	playlist_release_lock(&pl);
+	return res;
 }
 
 int gmu_core_playlist_entry_get_queue_pos(Entry *entry)
@@ -904,17 +980,23 @@ int main(int argc, char **argv)
 		if (global_command == NO_CMD)
 			event_queue_wait_for_event(&event_queue, 2);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
-			Entry *tmp_item = playlist_get_entry(&pl, global_param);
+			Entry *tmp_item;
+			
+			playlist_get_lock(&pl);
+			tmp_item = playlist_get_entry(&pl, global_param);
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);
 			if (tmp_item != NULL) {
 				playlist_set_current(&pl, tmp_item);
 				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), &current_track_ti, 1);
 			}
+			playlist_release_lock(&pl);
 			global_command = NO_CMD;
 			global_param = 0;
 		} else if (global_command == PLAY_FILE && global_filename[0] != '\0') {
 			wdprintf(V_DEBUG, "gmu", "Direct file playback: %s\n", global_filename);
+			playlist_get_lock(&pl);
 			playlist_set_current(&pl, NULL);
+			playlist_release_lock(&pl);
 			file_player_play_file(global_filename, &current_track_ti, 1);
 			global_command = NO_CMD;
 		} else if ((file_player_get_item_status() == FINISHED && 

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playlist.h  Created: 060930
  *
@@ -47,6 +47,8 @@ typedef struct _Playlist Playlist;
 
 void     playlist_init(Playlist *pl);
 void     playlist_free(Playlist *pl);
+void     playlist_get_lock(Playlist *pl);
+void     playlist_release_lock(Playlist *pl);
 void     playlist_clear(Playlist *pl);
 int      playlist_add_item(Playlist *pl, char *file, char *name);
 int      playlist_add_file(Playlist *pl, char *filename_with_path);

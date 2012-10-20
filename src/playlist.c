@@ -45,30 +45,39 @@ void playlist_init(Playlist *pl)
 }
 
 void playlist_free(Playlist *pl)
+{	
+	pthread_mutex_lock(&(pl->mutex));
+	playlist_clear(pl);
+	pthread_mutex_unlock(&(pl->mutex));
+	pthread_mutex_destroy(&(pl->mutex));
+}
+
+void playlist_get_lock(Playlist *pl)
+{
+	pthread_mutex_lock(&(pl->mutex));
+}
+
+void playlist_release_lock(Playlist *pl)
+{
+	pthread_mutex_unlock(&(pl->mutex));
+}
+
+void playlist_clear(Playlist *pl)
 {
 	Entry *entry, *next;
 	
-	pthread_mutex_lock(&(pl->mutex));
 	entry = pl->first;
 	while (entry != NULL) {
 		next = entry->next;
 		free(entry);
 		entry = next;
 	}
-	pthread_mutex_unlock(&(pl->mutex));
-}
-
-void playlist_clear(Playlist *pl)
-{
-	playlist_free(pl);
-	pthread_mutex_lock(&(pl->mutex));
 	pl->length  = 0;
 	pl->current = NULL;
 	pl->first   = NULL;
 	pl->last    = NULL;
 	pl->played_items = 0;
 	pl->queue_start = NULL;
-	pthread_mutex_unlock(&(pl->mutex));
 }
 
 int playlist_add_item(Playlist *pl, char *file, char *name)
@@ -77,7 +86,6 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 	Entry *entry;
 
 	if (pl->length < PLAYLIST_MAX_LENGTH) {
-		pthread_mutex_lock(&(pl->mutex));
 		if (pl->first == NULL) { /* playlist empty */
 			pl->first = malloc(sizeof(Entry));
 			if (pl->first) {
@@ -114,7 +122,6 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 			entry->next_in_queue = NULL;
 			pl->length++;
 		}
-		pthread_mutex_unlock(&(pl->mutex));
 	} else {
 		result = 0;
 	}
@@ -240,7 +247,6 @@ int playlist_insert_item_after(Playlist *pl, Entry *entry, char *file, char *nam
 	int    result = 0;
 
 	if (entry != NULL) {
-		pthread_mutex_lock(&(pl->mutex));
 		new_entry = malloc(sizeof(Entry));
 		if (new_entry) {
 			strncpy(new_entry->filename, file, 255);
@@ -256,7 +262,6 @@ int playlist_insert_item_after(Playlist *pl, Entry *entry, char *file, char *nam
 			if (new_entry->next != NULL)
 				new_entry->next->prev = new_entry;
 			pl->length++;
-			pthread_mutex_unlock(&(pl->mutex));
 			result = 1;
 		}
 	}
@@ -334,20 +339,19 @@ PlayMode playlist_cycle_play_mode(Playlist *pl)
 
 void playlist_reset_random(Playlist *pl)
 {
-	Entry *entry = playlist_get_first(pl);
-	pthread_mutex_lock(&(pl->mutex));
+	Entry *entry;
+
+	entry = pl->first;
 	while (entry) {
 		entry->played = 0;
 		entry = entry->next;
 	}
 	pl->played_items = 0;
-	pthread_mutex_unlock(&(pl->mutex));
 }
 
 int playlist_entry_delete(Playlist *pl, Entry *entry)
 {
 	int result = 1;
-	pthread_mutex_lock(&(pl->mutex));
 	if (entry != NULL && pl->length > 0) {
 		if (entry->prev == NULL && entry->next == NULL) { /* remove last remaining entry */
 			pl->first = NULL;
@@ -372,27 +376,22 @@ int playlist_entry_delete(Playlist *pl, Entry *entry)
 	} else {
 		result = 0;
 	}
-	pthread_mutex_unlock(&(pl->mutex));
 	return result;
 }
 
 char *playlist_get_entry_name(Playlist *pl, Entry *entry)
 {
 	char *result = NULL;
-	pthread_mutex_lock(&(pl->mutex));
 	if (entry != NULL)
 		result = entry->name;
-	pthread_mutex_unlock(&(pl->mutex));
 	return result;
 }
 
 char *playlist_get_entry_filename(Playlist *pl, Entry *entry)
 {
 	char *result = NULL;
-	pthread_mutex_lock(&(pl->mutex));
 	if (entry != NULL)
 		result = entry->filename;
-	pthread_mutex_unlock(&(pl->mutex));
 	return result;
 }
 
@@ -401,14 +400,12 @@ char *playlist_get_name(Playlist *pl, int item)
 	char  *result = NULL;
 	Entry *entry = pl->first;
 
-	pthread_mutex_lock(&(pl->mutex));
 	if (item < pl->length) {
 		int i;
 		for (i = 0; i < item && entry->next != NULL; i++)
 			entry = entry->next;
 		result = entry->name;
 	}
-	pthread_mutex_unlock(&(pl->mutex));
 	return result;
 }
 
@@ -417,27 +414,28 @@ char *playlist_get_filename(Playlist *pl, int item)
 	char  *result = NULL;
 	Entry *entry = pl->first;
 
-	pthread_mutex_lock(&(pl->mutex));
 	if (item < pl->length) {
 		int i;
 		for (i = 0; i < item && entry->next != NULL; i++)
 			entry = entry->next;
 		result = entry->filename;
 	}
-	pthread_mutex_unlock(&(pl->mutex));
 	return result;
 }
 
 int playlist_get_length(Playlist *pl)
 {
-	return pl->length;
+	int len;
+	len = pl->length;
+	return len;
 }
 
 int playlist_next(Playlist *pl)
 {
 	int result = 0;
-	int    i, l, next_item;
+	int    i, next_item;
 	Entry *entry;
+
 	if (pl->queue_start != NULL) { /* Queue not empty? */
 		Entry *iter = pl->queue_start;
 		pl->current = pl->queue_start;
@@ -477,10 +475,9 @@ int playlist_next(Playlist *pl)
 				break;
 			case PM_RANDOM:
 			case PM_RANDOM_REPEAT:
-				entry = playlist_get_first(pl);
-				l     = playlist_get_length(pl);
-				if (l > 0) {
-					next_item = rand() / (RAND_MAX / l);
+				entry = pl->first;
+				if (pl->length > 0) {
+					next_item = rand() / (RAND_MAX / pl->length);
 
 					for (i = 0; i < next_item; i++)
 						entry = entry->next;
@@ -491,10 +488,10 @@ int playlist_next(Playlist *pl)
 						playlist_set_current(pl, entry);
 						result = 1;
 					}
-				}
-				if (pl->play_mode == PM_RANDOM_REPEAT) {
-					if (pl->played_items >= pl->length) { /* all tracks played? */
-						playlist_reset_random(pl);
+					if (pl->play_mode == PM_RANDOM_REPEAT) {
+						if (pl->played_items >= pl->length) { /* all tracks played? */
+							playlist_reset_random(pl);
+						}
 					}
 				}
 				break;
@@ -506,6 +503,7 @@ int playlist_next(Playlist *pl)
 int playlist_prev(Playlist *pl)
 {
 	int result = 0;
+
 	switch (pl->play_mode) {
 		case PM_CONTINUE:
 			if (pl->current != NULL && pl->current->prev != NULL &&
@@ -552,13 +550,12 @@ Entry *playlist_get_current(Playlist *pl)
 int playlist_get_current_position(Playlist *pl)
 {
 	int    res = -1;
-	Entry *entry = playlist_get_first(pl);
-	pthread_mutex_lock(&(pl->mutex));
+	Entry *entry = pl->first;
+
 	if (entry != NULL) {
 		for (res = 0; entry != playlist_get_current(pl) && res < playlist_get_length(pl); res++)
 			entry = playlist_get_next(entry);
 	}
-	pthread_mutex_unlock(&(pl->mutex));
 	return res;
 }
 
@@ -575,7 +572,6 @@ int playlist_entry_get_queue_pos(Entry *entry)
 int playlist_entry_enqueue(Playlist *pl, Entry *entry)
 {
 	if (entry) {
-		pthread_mutex_lock(&(pl->mutex));
 		if (entry->queue_pos == 0) { /* Item not yet in queue -> enqueue item */
 			if (pl->queue_start != NULL) { /* Queue is not empty */
 				Entry *iter = pl->queue_start;
@@ -613,23 +609,21 @@ int playlist_entry_enqueue(Playlist *pl, Entry *entry)
 					cont = 0;
 			} while (cont);
 		}
-		pthread_mutex_unlock(&(pl->mutex));
 	}
 	return 0;
 }
 
 Entry *playlist_get_entry(Playlist *pl, int item)
 {
-	Entry *entry = playlist_get_first(pl);
+	Entry *entry;
 	int    i = 0;
 
-	pthread_mutex_lock(&(pl->mutex));
+	entry = pl->first;
 	if (entry != NULL) {
 		while (i < item && entry) {
 			entry = playlist_get_next(entry);
 			i++;
 		}
 	}
-	pthread_mutex_unlock(&(pl->mutex));
 	return entry;
 }
