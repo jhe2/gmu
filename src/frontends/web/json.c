@@ -197,14 +197,20 @@ JSON_Object *json_parse_alloc(char *json_data)
 								int   start = ++i;
 								char *key_value = NULL;
 								wdprintf(V_DEBUG, "json", "String found.\n");
-								while (json_data[i] != '"' && i < len) i++;
+								while (json_data[i] != '"' && i < len) {
+									if (json_data[i] == '\\' && i-1 < len) i++;
+									i++;
+								}
 								wdprintf(V_DEBUG, "json", "String length = %d\n", i - start);
 								if (i - start > 0) {
 									key_value = malloc(i - start + 1);
 									if (key_value) {
-										int j;
-										for (j = start; j < i; j++) key_value[j - start] = json_data[j];
-										key_value[j - start] = '\0';
+										int j, k;
+										for (j = start, k = 0; j < i; j++, k++) {
+											if (json_data[j] == '\\' && j < i) j++;
+											key_value[k] = json_data[j];
+										}
+										key_value[k] = '\0';
 										wdprintf(V_DEBUG, "json", "Key value = [%s]\n", key_value);
 										if (current_key) {
 											wdprintf(V_DEBUG, "json", "Storing value..\n");
