@@ -32,6 +32,7 @@
 #include "websocket.h"
 #include "net.h"
 #include "debug.h"
+#include "dir.h"
 
 /*
  * 500 Internal Server Error
@@ -674,6 +675,30 @@ void gmu_http_send_initial_information(Connection *c)
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
+#define MAX_LEN 65536
+
+static void gmu_http_read_dir(char *directory, Connection *c)
+{
+	Dir dir;
+	dir_init(&dir);
+	dir_set_base_dir(&dir, "/");
+	if (dir_read(&dir, directory, 1)) {
+		char res[MAX_LEN] = "{ \"cmd\": \"dir_read\", \"res\": \"ok\", \"data\": {";
+		int  pos, i, num_files = dir_get_number_of_files(&dir);
+		for (i = 0, pos = strlen(res); i < num_files; i++) {
+			snprintf(res+pos, MAX_LEN-pos, "\"%d\": \"%s\", ", i, dir_get_filename(&dir, i));
+			pos = strlen(res);
+			if (pos > MAX_LEN - 65) break;
+		}
+		snprintf(res+pos, MAX_LEN-pos, "\"-1\": \"END\" } }");
+		wdprintf(V_DEBUG, "httpd", "dir_read result: [%s]\n", res);
+		websocket_send_string(c, res);
+	} else { /* Error condition */
+		websocket_send_string(c, "{ \"cmd\": \"dir_read\", \"res\" : \"error\", \"msg\" : \"Unable to read directory\" }");
+	}
+	dir_free(&dir);
+}
+
 static void gmu_http_handle_websocket_message(char *message, Connection *c)
 {
 	if (strcmp(message, "next") == 0) {
@@ -704,6 +729,11 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 	} else if (strcmp(message, "playlist_get_info") == 0) {
 		wdprintf(V_DEBUG, "httpd", "playlist_info requested!\n");
 		gmu_http_playlist_get_info(c);
+	} else if (strncmp(message, "dir_read:", 9) == 0) {
+		char *itm = message+9;
+		
+		wdprintf(V_DEBUG, "httpd", "dir_read requested (dir=[%s])!\n", itm);
+		gmu_http_read_dir(itm, c);
 	}
 }
 
