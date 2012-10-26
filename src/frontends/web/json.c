@@ -129,7 +129,6 @@ JSON_Object *json_parse_alloc(char *json_data)
 					if (v >= 0) i += v; else break;
 					if (json_data[i] == '{') { /* Object found */
 						s = STATE_SEARCH_KEY;
-						i++;
 						wdprintf(V_DEBUG, "json", "JSON object found.\n");
 					} else { /* Malformed JSON data */
 						wdprintf(V_WARNING, "json", "ERROR: Malformed JSON data found: '{' expected.\n");
@@ -328,7 +327,7 @@ JSON_Key *json_get_key_object_for_key(JSON_Object *object, char *key)
 	if (object) {
 		JSON_Key *k = object->first_key;
 		while (k) {
-			if (k->key_name && strcmp(k->key_name, key) == 0 && k->type == STRING) {
+			if (k->key_name && strcmp(k->key_name, key) == 0) {
 				res = k;
 				break;
 			}
