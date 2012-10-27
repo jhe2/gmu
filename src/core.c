@@ -266,10 +266,8 @@ static int stop_playback(void)
 	int res = 0;
 	if (player_status != STOPPED) {
 		file_player_stop_playback();
-		playlist_get_lock(&pl);
 		gmu_core_playlist_reset_random();
 		gmu_core_playlist_set_current(NULL);
-		playlist_release_lock(&pl);
 		player_status = STOPPED;
 		event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 		res = 1;
