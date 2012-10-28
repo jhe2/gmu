@@ -269,7 +269,6 @@ JSON_Object *json_parse_alloc(char *json_data)
 						switch (json_data[i]) {
 							case ',': /* End of key/value pair */
 								wdprintf(V_DEBUG, "json", "Comma found -> Searching for next key.\n");
-								i++;
 								s = STATE_SEARCH_KEY;
 								break;
 							case '}': /* End of object */
