@@ -347,3 +347,15 @@ char *json_get_string_value_for_key(JSON_Object *object, char *key)
 	}
 	return res;
 }
+
+double json_get_number_value_for_key(JSON_Object *object, char *key)
+{
+	double res = 0.0;
+	if (object) {
+		JSON_Key *k = json_get_key_object_for_key(object, key);
+		if (k && k->key_name && strcmp(k->key_name, key) == 0 && k->type == NUMBER) {
+			res = k->key_value_number;
+		}
+	}
+	return res;
+}
