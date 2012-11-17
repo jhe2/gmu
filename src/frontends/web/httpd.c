@@ -687,8 +687,10 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 		int  pos, i, num_files = dir_get_number_of_files(&dir);
 		for (i = 0, pos = strlen(res); i < num_files; i++) {
 			char *tmp = json_string_escape_alloc(dir_get_filename(&dir, i));
+			int   filesize = dir_get_filesize(&dir, i);
 			if (tmp) {
-				snprintf(res+pos, MAX_LEN-pos, "\"%d\": \"%s\", ", i, tmp);
+				snprintf(res+pos, MAX_LEN-pos, "\"%d\": { \"name\": \"%s\", \"size\": %d, \"is_dir\": %d },",
+				         i, tmp, filesize, dir_get_flag(&dir, i) == DIRECTORY);
 				free(tmp);
 			}
 			pos = strlen(res);
