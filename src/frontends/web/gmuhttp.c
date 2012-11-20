@@ -47,7 +47,7 @@ static int init(void)
 
 #define MSG_MAX_LEN 512
 
-static int event_callback(GmuEvent event)
+static int event_callback(GmuEvent event, int param)
 {
 	char msg[MSG_MAX_LEN];
 	int  r;

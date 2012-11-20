@@ -105,7 +105,7 @@ static void update_trackinfo(TrackInfo *ti)
 	if (ti)	memcpy(&previous, ti, sizeof(TrackInfo)); else trackinfo_clear(&previous);
 }
 
-static int event_callback(GmuEvent event)
+static int event_callback(GmuEvent event, int param)
 {
 	if (logging_enabled) {
 		static int pt = 0, mtp = 0;

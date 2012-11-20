@@ -1433,7 +1433,7 @@ static const char *get_name(void)
 	return "Gmu SDL frontend v0.9";
 }
 
-static int event_callback(GmuEvent event)
+static int event_callback(GmuEvent event, int param)
 {
 	TrackInfo *ti;
 

@@ -1069,14 +1069,16 @@ int main(int argc, char **argv)
 		}
 
 		while (event_queue_is_event_waiting(&event_queue)) {
+			int      event_param = event_queue_get_parameter(&event_queue);
 			GmuEvent event = event_queue_pop(&event_queue);
 
+			wdprintf(V_DEBUG, "gmu", "Got event %d with param %d\n", event, event_param);
 			wdprintf(V_DEBUG, "gmu", "Pushing event to frontends:\n");
 			fe = feloader_frontend_list_get_next_frontend(1);
 			while (fe) {
 				if (event != GMU_NO_EVENT && *fe->event_callback) {
 					wdprintf(V_DEBUG, "gmu", "- Frontend: %s\n", fe->identifier);
-					(*fe->event_callback)(event);
+					(*fe->event_callback)(event, event_param);
 				}
 				fe = feloader_frontend_list_get_next_frontend(0);
 			}

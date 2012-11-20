@@ -34,7 +34,7 @@ typedef struct _GmuFrontend {
 	void         (*mainloop_iteration)(void);
 	/* Will be called whenever Gmu's state has changed (e.g. playlist modified,
 	 * current track changed, ...) */
-	int          (*event_callback)(GmuEvent event_type);
+	int          (*event_callback)(GmuEvent event_type, int param);
 	/* internal handle, do not use */
 	void         *handle;
 } GmuFrontend;
