@@ -675,30 +675,38 @@ void gmu_http_send_initial_information(Connection *c)
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
-#define MAX_LEN 65536
+#define MAX_LEN 32768
 
 static void gmu_http_read_dir(char *directory, Connection *c)
 {
 	Dir dir;
 	dir_init(&dir);
 	dir_set_base_dir(&dir, "/");
+	dir_set_ext_filter(gmu_core_get_file_extensions(), 1);
 	if (dir_read(&dir, directory, 1)) {
-		char res[MAX_LEN] = "{ \"cmd\": \"dir_read\", \"res\": \"ok\", \"data\": {";
-		int  pos, i, num_files = dir_get_number_of_files(&dir);
-		for (i = 0, pos = strlen(res); i < num_files; i++) {
-			char *tmp = json_string_escape_alloc(dir_get_filename(&dir, i));
-			int   filesize = dir_get_filesize(&dir, i);
-			if (tmp) {
-				snprintf(res+pos, MAX_LEN-pos, "\"%d\": { \"name\": \"%s\", \"size\": %d, \"is_dir\": %d },",
-				         i, tmp, filesize, dir_get_flag(&dir, i) == DIRECTORY);
-				free(tmp);
+		int i = 0, num_files = dir_get_number_of_files(&dir);
+		while (i < num_files) {
+			char res[MAX_LEN] = "{ \"cmd\": \"dir_read\", \"res\": \"ok\", \"data\": {";
+			int  pos;
+			for (pos = strlen(res); i < num_files; i++) {
+				char *tmp = json_string_escape_alloc(dir_get_filename(&dir, i));
+				int   filesize = dir_get_filesize(&dir, i);
+				int   pos_prev = pos;
+				if (tmp) {
+					snprintf(res+pos, MAX_LEN-pos, "\"%d\": { \"name\": \"%s\", \"size\": %d, \"is_dir\": %d },",
+							 i, tmp, filesize, dir_get_flag(&dir, i) == DIRECTORY);
+					free(tmp);
+				}
+				pos = strlen(res);
+				if (pos > MAX_LEN - 65) {
+					pos = pos_prev;
+					break;
+				}
 			}
-			pos = strlen(res);
-			if (pos > MAX_LEN - 65) break;
+			snprintf(res+pos, MAX_LEN-pos, "\"-1\": \"END\" } }");
+			wdprintf(V_DEBUG, "httpd", "dir_read result: [%s] size=%d\n", res, pos);
+			websocket_send_string(c, res);
 		}
-		snprintf(res+pos, MAX_LEN-pos, "\"-1\": \"END\" } }");
-		wdprintf(V_DEBUG, "httpd", "dir_read result: [%s]\n", res);
-		websocket_send_string(c, res);
 	} else { /* Error condition */
 		websocket_send_string(c, "{ \"cmd\": \"dir_read\", \"res\" : \"error\", \"msg\" : \"Unable to read directory\" }");
 	}
