@@ -80,7 +80,8 @@ static int event_callback(GmuEvent event, int param)
 		}
 		case GMU_PLAYLIST_CHANGE: {
 			r = snprintf(msg, MSG_MAX_LEN,
-			             "{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %d }",
+			             "{ \"cmd\": \"playlist_change\", \"changed_at_position\" : %d, \"length\" : %d }",
+			             param,
 			             gmu_core_playlist_get_length());
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
