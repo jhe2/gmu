@@ -135,6 +135,10 @@ static const char ones_count_table [] = {
     0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,8
 };
 
+void init_words (WavpackStream *wps);
+void update_error_limit (struct words_data *w, uint32_t flags);
+int log2s (int32_t value);
+
 ///////////////////////////// executable code ////////////////////////////////
 
 void init_words (WavpackStream *wps)

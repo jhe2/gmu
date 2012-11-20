@@ -355,7 +355,7 @@ int restore_weight (signed char weight);
 
 // float.c
 
-int read_float_info (WavpackStream *wps, WavpackMetadata *wpmd);
+//int read_float_info (WavpackStream *wps, WavpackMetadata *wpmd);
 void float_values (WavpackStream *wps, int32_t *values, int32_t num_values);
 
 // wputils.c
