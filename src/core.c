@@ -306,7 +306,7 @@ int gmu_core_playlist_set_current(Entry *entry)
 	playlist_get_lock(&pl);
 	res = playlist_set_current(&pl, entry);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	/*event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);*/
 	return res;
 }
 
@@ -398,7 +398,7 @@ PlayMode gmu_core_playlist_cycle_play_mode(void)
 	playlist_get_lock(&pl);
 	res = playlist_cycle_play_mode(&pl);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	event_queue_push(&event_queue, GMU_PLAYMODE_CHANGE);
 	return res;
 }
 
@@ -408,7 +408,7 @@ int gmu_core_playlist_entry_enqueue(Entry *entry)
 	playlist_get_lock(&pl);
 	res = playlist_entry_enqueue(&pl, entry);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	event_queue_push(&event_queue, GMU_QUEUE_CHANGE);
 	return res;
 }
 
