@@ -24,6 +24,7 @@ struct _EventQueueEntry
 {
 	EventQueueEntry *next;
 	GmuEvent         event;
+	int              param;
 };
 
 struct _EventQueue
@@ -37,6 +38,10 @@ typedef struct _EventQueue EventQueue;
 
 void     event_queue_init(EventQueue *eq);
 int      event_queue_push(EventQueue *eq, GmuEvent ev);
+int      event_queue_push_with_parameter(EventQueue *eq, GmuEvent ev, int param);
+/* Function to fetch the (optional) parameter that can be pushed with an event.
+ * To be called before popping the actual event! */
+int      event_queue_get_parameter(EventQueue *eq);
 GmuEvent event_queue_pop(EventQueue *eq);
 void     event_queue_clear(EventQueue *eq);
 int      event_queue_is_event_waiting(EventQueue *eq);

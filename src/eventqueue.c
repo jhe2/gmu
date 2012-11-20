@@ -28,7 +28,7 @@ void event_queue_init(EventQueue *eq)
 	pthread_cond_init(&(eq->cond), NULL);
 }
 
-int event_queue_push(EventQueue *eq, GmuEvent ev)
+int event_queue_push_with_parameter(EventQueue *eq, GmuEvent ev, int param)
 {
 	EventQueueEntry *new_entry;
 	int              result = 0;
@@ -37,6 +37,7 @@ int event_queue_push(EventQueue *eq, GmuEvent ev)
 	pthread_mutex_lock(&(eq->mutex));
 	if (new_entry) {
 		new_entry->event = ev;
+		new_entry->param = param;
 		new_entry->next = NULL;
 		if (eq->last) eq->last->next = new_entry;
 		eq->last = new_entry;
@@ -46,6 +47,20 @@ int event_queue_push(EventQueue *eq, GmuEvent ev)
 	pthread_cond_broadcast(&(eq->cond));
 	pthread_mutex_unlock(&(eq->mutex));
 	return result;
+}
+
+int event_queue_push(EventQueue *eq, GmuEvent ev)
+{
+	return event_queue_push_with_parameter(eq, ev, 0);
+}
+
+int event_queue_get_parameter(EventQueue *eq)
+{
+	int p = 0;
+	if (eq->first) {
+		p = eq->first->param;
+	}
+	return p;
 }
 
 GmuEvent event_queue_pop(EventQueue *eq)
