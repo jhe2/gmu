@@ -50,4 +50,5 @@ char        *json_string_escape_alloc(char *src);
 JSON_Key    *json_get_key_object_for_key(JSON_Object *object, char *key);
 char        *json_get_string_value_for_key(JSON_Object *object, char *key);
 double       json_get_number_value_for_key(JSON_Object *object, char *key);
+char        *json_get_first_key_string(JSON_Object *object);
 #endif

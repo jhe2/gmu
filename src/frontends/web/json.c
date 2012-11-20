@@ -359,3 +359,8 @@ double json_get_number_value_for_key(JSON_Object *object, char *key)
 	}
 	return res;
 }
+
+char *json_get_first_key_string(JSON_Object *object)
+{
+	return object->first_key->key_name;
+}
