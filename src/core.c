@@ -74,7 +74,9 @@ static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 {
 	M3u m3u;
 	if (m3u_open_file(&m3u, filename)) {
+		int len;
 		playlist_get_lock(pl);
+		len = playlist_get_length(pl);
 		while (m3u_read_next_item(&m3u)) {
 			playlist_add_item(pl,
 			                  m3u_current_item_get_full_path(&m3u),
@@ -82,7 +84,7 @@ static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 		}
 		playlist_release_lock(pl);
 		m3u_close_file(&m3u);
-		event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+		event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
 	}
 }
 
@@ -95,7 +97,9 @@ static void add_pls_contents_to_playlist(Playlist *pl, char *filename)
 {
 	PLS pls;
 	if (pls_open_file(&pls, filename)) {
+		int len;
 		playlist_get_lock(pl);
+		len = playlist_get_length(pl);
 		while (pls_read_next_item(&pls)) {
 		   playlist_add_item(pl,
 		                     pls_current_item_get_full_path(&pls),
@@ -103,7 +107,7 @@ static void add_pls_contents_to_playlist(Playlist *pl, char *filename)
 		}
 		playlist_release_lock(pl);
 		pls_close_file(&pls);
-		event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+		event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
 	}
 }
 
@@ -312,11 +316,12 @@ int gmu_core_playlist_set_current(Entry *entry)
 
 int gmu_core_playlist_add_item(char *file, char *name)
 {
-	int res;
+	int res, len;
 	playlist_get_lock(&pl);
+	len = playlist_get_length(&pl);
 	res = playlist_add_item(&pl, file, name);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
 	return res;
 }
 
@@ -339,13 +344,14 @@ PlayMode gmu_core_playlist_get_play_mode(void)
 
 int gmu_core_playlist_add_dir(char *dir)
 {
-	int res;
+	int res, len;
 	playlist_get_lock(&pl);
+	len = playlist_get_length(&pl);
 	res = playlist_add_dir(&pl, dir);
 	playlist_release_lock(&pl);
 	/* TODO: Implement callback handler for callback function,
 	 * that will be called when adding the directory is completed */
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
 	return res;
 }
 
@@ -446,6 +452,16 @@ int gmu_core_playlist_entry_delete(Entry *entry)
 	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
+}
+
+Entry *gmu_core_playlist_item_delete(int item)
+{
+	Entry *next = NULL;
+	playlist_get_lock(&pl);
+	next = playlist_item_delete(&pl, item);
+	playlist_release_lock(&pl);
+	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, item);
+	return next;
 }
 
 Entry *gmu_core_playlist_get_current(void)

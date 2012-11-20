@@ -379,6 +379,20 @@ int playlist_entry_delete(Playlist *pl, Entry *entry)
 	return result;
 }
 
+Entry *playlist_item_delete(Playlist *pl, int item)
+{
+	int    i;
+	Entry *entry = pl->first, *next = NULL;
+	for (i = 0; entry != NULL && i != item; i++) {
+		entry = playlist_get_next(entry);
+	}
+	if (entry) {
+		next = entry->next;
+		playlist_entry_delete(pl, entry);
+	}
+	return next;
+}
+
 char *playlist_get_entry_name(Playlist *pl, Entry *entry)
 {
 	char *result = NULL;

@@ -71,19 +71,13 @@ Entry *pl_browser_get_selected_entry(PlaylistBrowser *pb)
 
 int pl_browser_playlist_remove_selection(PlaylistBrowser *pb)
 {
-	int    i = 0, result = 0;
+	int    result = 0;
 	Entry *entry;
 
 	if (gmu_core_playlist_get_length() > 0) {
-		entry = gmu_core_playlist_get_first();
-		while (entry != NULL && i != pl_browser_get_selection(pb)) {
-			entry = gmu_core_playlist_get_next(entry);
-			i++;
-		}
-		wdprintf(V_INFO, "sdl_plbrowser:", "Removing entry %s...\n", gmu_core_playlist_get_entry_name(entry));
+		entry = gmu_core_playlist_item_delete(pl_browser_get_selection(pb));
 		if (pb->first_visible_entry == entry)
 			pb->first_visible_entry = (entry->next ? entry->next : entry->prev);
-		result = gmu_core_playlist_entry_delete(entry);
 		if (pb->selection > gmu_core_playlist_get_length() - 1)
 			pb->selection = (gmu_core_playlist_get_length() - 1 >= 0 ? 
 			                 gmu_core_playlist_get_length() - 1 : 0);

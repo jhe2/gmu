@@ -67,6 +67,8 @@ Entry   *playlist_get_last(Playlist *pl);
 Entry   *playlist_get_next(Entry *entry);
 Entry   *playlist_get_prev(Entry *entry);
 int      playlist_entry_delete(Playlist *pl, Entry *entry);
+/* Deletes playlist item at position 'item' and returns a reference to the next pl entry */
+Entry   *playlist_item_delete(Playlist *pl, int item);
 char    *playlist_get_entry_name(Playlist *pl, Entry *entry);
 char    *playlist_get_entry_filename(Playlist *pl, Entry *entry);
 PlayMode playlist_get_play_mode(Playlist *pl);

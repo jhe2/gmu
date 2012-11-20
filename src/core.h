@@ -68,6 +68,7 @@ int              gmu_core_playlist_get_current_position(void);
 void             gmu_core_playlist_clear(void);
 Entry           *gmu_core_playlist_get_entry(int item);
 int              gmu_core_playlist_entry_delete(Entry *entry);
+Entry           *gmu_core_playlist_item_delete(int item);
 Entry           *gmu_core_playlist_get_current(void);
 char            *gmu_core_playlist_get_entry_name(Entry *entry);
 Entry           *gmu_core_playlist_get_last(void);
