@@ -342,16 +342,22 @@ PlayMode gmu_core_playlist_get_play_mode(void)
 	return pm;
 }
 
-int gmu_core_playlist_add_dir(char *dir)
+static void add_dir_finish_callback(void)
 {
-	int res, len;
+	int len;
 	playlist_get_lock(&pl);
 	len = playlist_get_length(&pl);
-	res = playlist_add_dir(&pl, dir);
 	playlist_release_lock(&pl);
-	/* TODO: Implement callback handler for callback function,
-	 * that will be called when adding the directory is completed */
+	wdprintf(V_DEBUG, "gmu", "In callback: Recursive directory add done.\n");
 	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
+}
+
+int gmu_core_playlist_add_dir(char *dir)
+{
+	int res;
+	playlist_get_lock(&pl);
+	res = playlist_add_dir(&pl, dir, add_dir_finish_callback);
+	playlist_release_lock(&pl);
 	return res;
 }
 
