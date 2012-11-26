@@ -86,6 +86,13 @@ static int event_callback(GmuEvent event, int param)
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
+		case GMU_PLAYBACK_TIME_CHANGE: {
+			r = snprintf(msg, MSG_MAX_LEN,
+			             "{ \"cmd\": \"playback_time\", \"time\" : %d }",
+			             param);
+			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
+			break;
+		}
 		default:
 			break;
 	}

@@ -760,6 +760,7 @@ int main(int argc, char **argv)
 	Verbosity    v = V_INFO;
 	char        *frontend_plugin_by_cmd_arg[MAX_FRONTEND_PLUGIN_BY_CMD_ARG];
 	int          frontend_plugin_by_cmd_arg_counter = 0;
+	int          pb_time = -1;
 
 	for (i = 0; i < MAX_FRONTEND_PLUGIN_BY_CMD_ARG; i++)
 		frontend_plugin_by_cmd_arg[i] = NULL;
@@ -998,7 +999,7 @@ int main(int argc, char **argv)
 		GmuFrontend *fe = NULL;
 
 		if (global_command == NO_CMD)
-			event_queue_wait_for_event(&event_queue, 2);
+			event_queue_wait_for_event(&event_queue, 1);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item;
 			
@@ -1072,6 +1073,11 @@ int main(int argc, char **argv)
 			auto_shutdown = 1;
 			event_queue_push(&event_queue, GMU_QUIT);
 			gmu_running = 0;
+		}
+
+		if (pb_time != file_player_playback_get_time()) {
+			pb_time = file_player_playback_get_time();
+			event_queue_push_with_parameter(&event_queue, GMU_PLAYBACK_TIME_CHANGE, pb_time);
 		}
 
 		while (event_queue_is_event_waiting(&event_queue)) {
