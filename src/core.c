@@ -789,7 +789,7 @@ int main(int argc, char **argv)
 						else if (v > V_DEBUG)
 							v = V_DEBUG;
 					} else {
-						wdprintf(V_ERROR, "gmu", "Invalid usage of -d: Verbosity level (0..5) required.\n");
+						wdprintf(V_ERROR, "gmu", "Invalid usage of -v: Verbosity level (0..5) required.\n");
 						exit(0);
 					}
 					break;
