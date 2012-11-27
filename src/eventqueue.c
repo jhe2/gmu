@@ -106,19 +106,31 @@ int event_queue_is_event_waiting(EventQueue *eq)
 	return res;
 }
 
+static void timespec_add(struct timespec* a, struct timespec* b, struct timespec* out)
+{
+	time_t sec  = a->tv_sec + b->tv_sec;
+	long   nsec = a->tv_nsec + b->tv_nsec;
+
+	sec += nsec / 1000000000L;
+	nsec = nsec % 1000000000L;
+
+	out->tv_sec  = sec;
+	out->tv_nsec = nsec;
+}
+
+/* with_timeout = timeout in milli seconds */
 void event_queue_wait_for_event(EventQueue *eq, int with_timeout)
 {
 	pthread_mutex_lock(&(eq->mutex_cond));
 	if (with_timeout <= 0) {
 		pthread_cond_wait(&(eq->cond), &(eq->mutex_cond));
 	} else {
-		struct timespec ts;
-		struct timeval  tp;
-		gettimeofday(&tp, NULL);
-		ts.tv_sec  = tp.tv_sec;
-		ts.tv_nsec = tp.tv_usec * 1000;
-		ts.tv_sec += with_timeout;
-		pthread_cond_timedwait(&(eq->cond), &(eq->mutex_cond), &ts);
+		struct timespec ts, tsa, target_ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		tsa.tv_sec  = with_timeout / 1000;
+		tsa.tv_nsec = (with_timeout % 1000) * 1000L * 1000L;
+		timespec_add(&ts, &tsa, &target_ts);
+		pthread_cond_timedwait(&(eq->cond), &(eq->mutex_cond), &target_ts);
 	}
 	pthread_mutex_unlock(&(eq->mutex_cond));
 }

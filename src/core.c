@@ -999,7 +999,7 @@ int main(int argc, char **argv)
 		GmuFrontend *fe = NULL;
 
 		if (global_command == NO_CMD)
-			event_queue_wait_for_event(&event_queue, 1);
+			event_queue_wait_for_event(&event_queue, 500);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item;
 			

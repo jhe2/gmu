@@ -21,7 +21,7 @@ include $(TARGET).mk
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\""
 
-LFLAGS_CORE=$(SDL_LIB) -ldl
+LFLAGS_CORE=$(SDL_LIB) -ldl -lrt
 LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image
 ifneq ($(SDLFE_WITHOUT_SDL_GFX),1)
 LFLAGS_SDLFE+=-lSDL_gfx
