@@ -201,7 +201,7 @@ JSON_Object *json_parse_alloc(char *json_data)
 									i++;
 								}
 								wdprintf(V_DEBUG, "json", "String length = %d\n", i - start);
-								if (i - start > 0) {
+								if (i - start >= 0) {
 									key_value = malloc(i - start + 1);
 									if (key_value) {
 										int j, k;
@@ -216,9 +216,9 @@ JSON_Object *json_parse_alloc(char *json_data)
 											current_key->type = STRING;
 											current_key->key_value_str = key_value;
 										}
-										i++; /* Skip closing " character */
 										s = STATE_SEARCH_VALUE;
 									}
+									i++; /* Skip closing " character */
 								}
 								break;
 							}
