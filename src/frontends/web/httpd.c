@@ -33,6 +33,7 @@
 #include "net.h"
 #include "debug.h"
 #include "dir.h"
+#include "trackinfo.h"
 
 /*
  * 500 Internal Server Error
@@ -641,7 +642,7 @@ void httpd_send_websocket_broadcast(char *str)
 	queue_push(&queue, str);
 }
 
-#define MSG_MAX_LEN 512
+#define MSG_MAX_LEN 1024
 
 void gmu_http_playlist_get_info(Connection *c)
 {
@@ -663,6 +664,22 @@ void gmu_http_playlist_get_item(int id, Connection *c)
 	             "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
 	             id, tmp_title ? tmp_title : "??", 0);
 	if (tmp_title) free(tmp_title);
+	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
+}
+
+void gmu_http_get_current_trackinfo(Connection *c)
+{
+	TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
+	char msg[MSG_MAX_LEN];
+	int  r = snprintf(msg, MSG_MAX_LEN,
+	                  "{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", \"album\": \"%s\", \"date\": \"%s\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+	                  trackinfo_get_artist(ti),
+	                  trackinfo_get_title(ti),
+	                  trackinfo_get_album(ti),
+	                  trackinfo_get_date(ti),
+	                  trackinfo_get_length_minutes(ti),
+	                  trackinfo_get_length_seconds(ti),
+	                  0);
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
@@ -715,7 +732,46 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 
 static void gmu_http_handle_websocket_message(char *message, Connection *c)
 {
-	if (strcmp(message, "next") == 0) {
+	JSON_Object *json = json_parse_alloc(message);
+	if (!json_object_has_parse_error(json)) { /* Valid JSON data received */
+		/* Analyze command in JSON data */
+		char *cmd = json_get_string_value_for_key(json, "cmd");
+		if (cmd) {
+			wdprintf(V_DEBUG, "httpd", "Got command (via JSON data): '%s'\n", cmd);
+			if (strcmp(cmd, "play") == 0) {
+				int item = (int)json_get_number_value_for_key(json, "item");
+				if (item > 0) {
+					gmu_core_play_pl_item(item);
+				} else {
+					gmu_core_play();
+				}
+			} else if (strcmp(cmd, "pause") == 0) {
+				gmu_core_pause();
+			} else if (strcmp(cmd, "next") == 0) {
+				gmu_core_next();
+			} else if (strcmp(cmd, "prev") == 0) {
+				gmu_core_previous();
+			} else if (strcmp(cmd, "stop") == 0) {
+				gmu_core_stop();
+			} else if (strcmp(cmd, "trackinfo") == 0) {
+				gmu_http_get_current_trackinfo(c);
+			} else if (strcmp(cmd, "playlist_get_item") == 0) {
+				int item = (int)json_get_number_value_for_key(json, "item");
+				if (item >= 0) {
+					wdprintf(V_DEBUG, "httpd", "item=%d\n", item);
+					gmu_http_playlist_get_item(item, c);
+				}
+			} else if (strcmp(cmd, "playlist_get_info") == 0) {
+				gmu_http_playlist_get_info(c);
+			} else if (strcmp(cmd, "dir_read") == 0) {
+				char *dir = json_get_string_value_for_key(json, "dir");
+				if (dir) {
+					gmu_http_read_dir(dir, c);
+				}
+			} else if (strcmp(cmd, "get_current_track") == 0) {
+			}
+		}
+	} else if (strcmp(message, "next") == 0) { /* Otherwise, treat data as legacy commands */
 		gmu_core_next();
 	} else if (strcmp(message, "prev") == 0) {
 		gmu_core_previous();

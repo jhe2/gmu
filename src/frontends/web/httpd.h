@@ -65,4 +65,5 @@ int  connection_file_read_chunk(Connection *c);
 void gmu_http_playlist_get_info(Connection *c);
 void gmu_http_playlist_get_item(int id, Connection *c);
 void gmu_http_send_initial_information(Connection *c);
+void gmu_http_get_current_trackinfo(Connection *c);
 #endif
