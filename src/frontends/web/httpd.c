@@ -112,7 +112,6 @@ static char *get_next_key_value_pair(char *str, char *key, int key_len, char *va
 			if (i < key_len-1 && ch != ':' && ch != '=' && ch != '\r' && ch != '\n') key[i++] = ch;
 		}
 		key[i] = '\0';
-		//wdprintf(V_DEBUG, "httpd", "key=[%s]\n", key);
 
 		/* extract value */
 		i = 0;
@@ -125,7 +124,6 @@ static char *get_next_key_value_pair(char *str, char *key, int key_len, char *va
 		}
 		value[i] = '\0';
 	}
-	//wdprintf(V_DEBUG, "httpd", "value=[%s]\n", value);
 	return str+sc+1;
 }
 
@@ -867,19 +865,11 @@ static void loop(int listen_fd)
 				/* Read CHUNK_SIZE bytes from file and send data to socket & update remaining bytes counter */
 				connection_file_read_chunk(&(connection[conn_num]));
 			} else if (connection[conn_num].state == WEBSOCKET_OPEN) {
-				/*char str[256];
-				static int i = 0, t = 0;*/
-				/* If data for sending through websocket have been fetched
-				 * from the queue, send the data to all open WebSocket connections */
+				/* If data for sending through websocket has been fetched
+				 * from the broadcast queue, send the data to all open WebSocket connections */
 				if (websocket_msg) {
 					websocket_send_string(&(connection[conn_num]), websocket_msg);
 				}
-				/*if (i == 1000) {
-					snprintf(str, 255, "{ \"cmd\": \"time\", \"time\" : %d }", t++);
-					websocket_send_string(&(connection[conn_num]), str);
-					i = 0;
-				}
-				i++;*/
 			}
 			if (FD_ISSET(rfd, &readfds)) { /* Data received on connection socket */
 				char msgbuf[MAXLEN+1];
@@ -930,10 +920,6 @@ static void loop(int listen_fd)
 				if (request_header_complete)
 					process_command(rfd, &(connection[conn_num]));
 			} else { /* no data received */
-				/* Just testing ... */
-				//if (connection_is_valid(&(connection[conn_num])) && connection[conn_num].state == WEBSOCKET_OPEN)
-					//websocket_send_string(&(connection[conn_num]), "baz");
-	
 				if (connection_is_valid(&(connection[conn_num])) &&
 					connection_is_timed_out(&(connection[conn_num])) &&
 					connection[conn_num].state != WEBSOCKET_OPEN) { /* close idle connection */
