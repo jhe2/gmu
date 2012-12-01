@@ -10,6 +10,7 @@
 #ifndef GMU_HTTPD_H
 #define GMU_HTTPD_H
 #include <stdio.h>
+#include "../../ringbuffer.h"
 
 #define bool int
 #define true  1
@@ -38,6 +39,7 @@ typedef struct Connection {
 	int             total_size, remaining_bytes_to_send;
 	ConnectionState state;
 	char           *http_request_header;
+	RingBuffer      rb_receive;
 } Connection;
 
 typedef enum HTTPCommand {

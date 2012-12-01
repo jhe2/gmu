@@ -31,6 +31,7 @@
 #include "json.h"
 #include "websocket.h"
 #include "net.h"
+#include "ringbuffer.h"
 #include "debug.h"
 #include "dir.h"
 #include "trackinfo.h"
@@ -153,6 +154,7 @@ int connection_init(Connection *c, int fd)
 	c->state = HTTP_NEW;
 	c->fd = fd;
 	c->http_request_header = NULL;
+	ringbuffer_init(&(c->rb_receive), 131072);
 	return 1;
 }
 
@@ -173,6 +175,7 @@ void connection_close(Connection *c)
 		free(c->http_request_header);
 		c->http_request_header = NULL;
 	}
+	ringbuffer_free(&(c->rb_receive));
 	memset(c, 0, sizeof(Connection));
 }
 
@@ -814,6 +817,7 @@ static void loop(int listen_fd)
 {
 	fd_set the_state;
 	int    maxfd;
+	int    rb_ok = 1;
 
 	FD_ZERO(&the_state);
 	FD_SET(listen_fd, &the_state);
@@ -832,7 +836,7 @@ static void loop(int listen_fd)
 		tv.tv_sec  = 0;
 		tv.tv_usec = 1000;
 
-		readfds = the_state; /* select() aendert readfds */
+		readfds = the_state; /* select() changes readfds */
 		ret = select(maxfd + 1, &readfds, NULL, NULL, &tv);
 		if ((ret == -1) && (errno == EINTR)) {
 			/* A signal has occured; ignore it. */
@@ -903,18 +907,38 @@ static void loop(int listen_fd)
 							request_header_complete = 1;
 						}
 					} else {
-						char *unmasked_message = NULL;
-						wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", rfd);
-						unmasked_message = websocket_unmask_message_alloc(msgbuf, MAXLEN);
-						connection_reset_timeout(&(connection[conn_num]));
+						char tmp_buf[16];
+						int  size = 0;
 
-						if (unmasked_message) {
-							gmu_http_handle_websocket_message(unmasked_message, &(connection[conn_num]));
-							/*char str[1000];
-							snprintf(str, 999, "{ \"cmd\": \"echo\", \"message\" : \"%s\" }", unmasked_message);
-							websocket_send_string(&(connection[conn_num]), str);*/
+						wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", rfd);
+						if (msgbuflen > 0) {
+							rb_ok = ringbuffer_write(&(connection[conn_num].rb_receive), msgbuf, msgbuflen);
+							if (!rb_ok) wdprintf(V_WARNING, "httpd", "WARNING: Cannot write to ring buffer. Ring buffer full.\n", rfd);
 						}
-						if (unmasked_message) free(unmasked_message);
+						ringbuffer_set_unread_pos(&(connection[conn_num].rb_receive));
+						if (ringbuffer_read(&(connection[conn_num].rb_receive), tmp_buf, 10)) {
+							size = websocket_calculate_packet_size(tmp_buf);
+							wdprintf(V_DEBUG, "httpd", "Size of websocket message: %d bytes\n", size);
+							ringbuffer_unread(&(connection[conn_num].rb_receive));
+						}
+						if (ringbuffer_get_fill(&(connection[conn_num].rb_receive)) >= size && size > 0) {
+							char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
+							char *payload;
+							if (wspacket) {
+								ringbuffer_read(&(connection[conn_num].rb_receive), wspacket, size);
+								wspacket[size] = '\0';
+								payload = websocket_unmask_message_alloc(wspacket, size);
+								wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
+								gmu_http_handle_websocket_message(payload, &(connection[conn_num]));
+								free(wspacket);
+							}
+						} else if (size > 0) {
+							wdprintf(V_DEBUG,
+							         "httpd", "Not enough data available. Need %d bytes, but only %d avail.\n",
+							         size, ringbuffer_get_fill(&(connection[conn_num].rb_receive)));
+							ringbuffer_unread(&(connection[conn_num].rb_receive));
+						}
+						connection_reset_timeout(&(connection[conn_num]));
 					}
 				}
 				if (request_header_complete)
