@@ -770,6 +770,16 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 					gmu_http_read_dir(dir, c);
 				}
 			} else if (strcmp(cmd, "get_current_track") == 0) {
+			} else if (strcmp(cmd, "playlist_add") == 0) {
+				char *path = json_get_string_value_for_key(json, "path");
+				char *type = json_get_string_value_for_key(json, "type");
+				if (path) {
+					if (type && strcmp(type, "file") == 0) {
+						gmu_core_playlist_add_file(path);
+					} else {
+						gmu_core_playlist_add_dir(path);
+					}
+				}
 			}
 		}
 	} else if (strcmp(message, "next") == 0) { /* Otherwise, treat data as legacy commands */
