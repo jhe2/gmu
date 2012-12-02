@@ -846,13 +846,22 @@ static void loop(int listen_fd)
 
 		/* Check TCP listen port for incoming connections... */
 		if (FD_ISSET(listen_fd, &readfds)) {
+			int con_num;
 			rfd = tcp_server_client_init(listen_fd);
-			if (rfd >= 0) {
-				FD_SET(rfd, &the_state); /* add new client */
-				if (rfd > maxfd) maxfd = rfd;
-				//connection_counter++;
-				connection_init(&(connection[rfd-listen_fd-1]), rfd);
-				wdprintf(V_DEBUG, "httpd", "Connection count: ++\n");
+			con_num = rfd-listen_fd-1;
+			if (con_num < MAX_CONNECTIONS) {
+				if (rfd >= 0) {
+					FD_SET(rfd, &the_state); /* add new client */
+					if (rfd > maxfd) maxfd = rfd;
+					//connection_counter++;
+					connection_init(&(connection[con_num]), rfd);
+					wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: ++\n", con_num);
+				}
+			} else {
+				wdprintf(V_WARNING, "httpd",
+				         "Connection limit reached of %d. Cannot accept incoming connection %d.\n",
+				         MAX_CONNECTIONS, con_num);
+				close(rfd);
 			}
 		}
 
