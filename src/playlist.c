@@ -201,23 +201,24 @@ static int internal_playlist_add_dir(Playlist *pl, char *directory)
 typedef struct _thread_params {
 	Playlist *pl;
 	char     *directory;
-	void     (*finished_callback)(void);
+	void     (*finished_callback)(int pl_len);
 } _thread_params;
 
 static void *thread_add_dir(void *udata)
 {
 	struct _thread_params *tp = (struct _thread_params *)udata;
+	int                    prev_len = playlist_get_length(tp->pl);
 
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread created.\n");
 	internal_playlist_add_dir(tp->pl, tp->directory);
 	free(tp->directory);
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread finished.\n");
 	recursive_directory_add_in_progress = 0;
-	if (tp->finished_callback) (tp->finished_callback)();
+	if (tp->finished_callback) (tp->finished_callback)(prev_len);
 	return NULL;
 }
 
-int playlist_add_dir(Playlist *pl, char *directory, void (*finished_callback)(void))
+int playlist_add_dir(Playlist *pl, char *directory, void (*finished_callback)(int pl_len))
 {
 	static pthread_t       thread;
 	static _thread_params  tp;

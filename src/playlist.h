@@ -77,7 +77,7 @@ PlayMode playlist_cycle_play_mode(Playlist *pl);
 int      playlist_toggle_random_mode(Playlist *pl);
 void     playlist_reset_random(Playlist *pl);
 int      playlist_get_played(Entry *entry);
-int      playlist_add_dir(Playlist *pl, char *directory, void (*finished_callback)(void));
+int      playlist_add_dir(Playlist *pl, char *directory, void (*finished_callback)(int pl_len));
 int      playlist_get_current_position(Playlist *pl);
 int      playlist_entry_get_queue_pos(Entry *entry);
 int      playlist_entry_enqueue(Playlist *pl, Entry *entry);
