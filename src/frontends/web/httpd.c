@@ -917,36 +917,42 @@ static void loop(int listen_fd)
 						}
 					} else {
 						char tmp_buf[16];
-						int  size = 0;
+						int  size = 0, loop = 1;
 
 						wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", rfd);
 						if (msgbuflen > 0) {
 							rb_ok = ringbuffer_write(&(connection[conn_num].rb_receive), msgbuf, msgbuflen);
 							if (!rb_ok) wdprintf(V_WARNING, "httpd", "WARNING: Cannot write to ring buffer. Ring buffer full.\n", rfd);
 						}
-						ringbuffer_set_unread_pos(&(connection[conn_num].rb_receive));
-						if (ringbuffer_read(&(connection[conn_num].rb_receive), tmp_buf, 10)) {
-							size = websocket_calculate_packet_size(tmp_buf);
-							wdprintf(V_DEBUG, "httpd", "Size of websocket message: %d bytes\n", size);
-							ringbuffer_unread(&(connection[conn_num].rb_receive));
-						}
-						if (ringbuffer_get_fill(&(connection[conn_num].rb_receive)) >= size && size > 0) {
-							char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
-							char *payload;
-							if (wspacket) {
-								ringbuffer_read(&(connection[conn_num].rb_receive), wspacket, size);
-								wspacket[size] = '\0';
-								payload = websocket_unmask_message_alloc(wspacket, size);
-								wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
-								gmu_http_handle_websocket_message(payload, &(connection[conn_num]));
-								free(wspacket);
+						
+						do {
+							ringbuffer_set_unread_pos(&(connection[conn_num].rb_receive));
+							if (ringbuffer_read(&(connection[conn_num].rb_receive), tmp_buf, 10)) {
+								size = websocket_calculate_packet_size(tmp_buf);
+								wdprintf(V_DEBUG, "httpd", "Size of websocket message: %d bytes\n", size);
+								ringbuffer_unread(&(connection[conn_num].rb_receive));
 							}
-						} else if (size > 0) {
-							wdprintf(V_DEBUG,
-							         "httpd", "Not enough data available. Need %d bytes, but only %d avail.\n",
-							         size, ringbuffer_get_fill(&(connection[conn_num].rb_receive)));
-							ringbuffer_unread(&(connection[conn_num].rb_receive));
-						}
+							if (ringbuffer_get_fill(&(connection[conn_num].rb_receive)) >= size && size > 0) {
+								char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
+								char *payload;
+								if (wspacket) {
+									ringbuffer_read(&(connection[conn_num].rb_receive), wspacket, size);
+									wspacket[size] = '\0';
+									payload = websocket_unmask_message_alloc(wspacket, size);
+									wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
+									gmu_http_handle_websocket_message(payload, &(connection[conn_num]));
+									free(wspacket);
+								}
+							} else if (size > 0) {
+								wdprintf(V_DEBUG,
+										 "httpd", "Not enough data available. Need %d bytes, but only %d avail.\n",
+										 size, ringbuffer_get_fill(&(connection[conn_num].rb_receive)));
+								ringbuffer_unread(&(connection[conn_num].rb_receive));
+								loop = 0;
+							} else {
+								loop = 0;
+							}
+						} while (loop);
 						connection_reset_timeout(&(connection[conn_num]));
 					}
 				}
