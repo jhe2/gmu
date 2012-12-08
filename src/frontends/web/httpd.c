@@ -740,8 +740,9 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 		if (cmd) {
 			wdprintf(V_DEBUG, "httpd", "Got command (via JSON data): '%s'\n", cmd);
 			if (strcmp(cmd, "play") == 0) {
-				int item = (int)json_get_number_value_for_key(json, "item");
-				if (item > 0) {
+				JSON_Key_Type type = json_get_type_for_key(json, "item");
+				int           item = (int)json_get_number_value_for_key(json, "item");
+				if (type == NUMBER && item >= 0) {
 					gmu_core_play_pl_item(item);
 				} else {
 					gmu_core_play();
