@@ -364,3 +364,15 @@ char *json_get_first_key_string(JSON_Object *object)
 {
 	return object->first_key->key_name;
 }
+
+JSON_Key_Type json_get_type_for_key(JSON_Object *object, char *key)
+{
+	JSON_Key_Type res = EMPTY;
+	if (object) {
+		JSON_Key *k = json_get_key_object_for_key(object, key);
+		if (k && k->key_name && strcmp(k->key_name, key) == 0) {
+			res = k->type;
+		}
+	}
+	return res;
+}

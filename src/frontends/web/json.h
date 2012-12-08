@@ -39,16 +39,17 @@ struct _JSON_Object {
 	int          parse_error;
 };
 
-JSON_Object *json_object_new(JSON_Object *parent);
-JSON_Object *json_parse_alloc(char *json_data);
-int          json_object_has_parse_error(JSON_Object *jo);
-void         json_keys_free(JSON_Key *first_key);
-void         json_object_free(JSON_Object *object);
-void         json_object_attach_key(JSON_Object *object, JSON_Key *key);
-JSON_Key    *json_key_new(void);
-char        *json_string_escape_alloc(char *src);
-JSON_Key    *json_get_key_object_for_key(JSON_Object *object, char *key);
-char        *json_get_string_value_for_key(JSON_Object *object, char *key);
-double       json_get_number_value_for_key(JSON_Object *object, char *key);
-char        *json_get_first_key_string(JSON_Object *object);
+JSON_Object  *json_object_new(JSON_Object *parent);
+JSON_Object  *json_parse_alloc(char *json_data);
+int           json_object_has_parse_error(JSON_Object *jo);
+void          json_keys_free(JSON_Key *first_key);
+void          json_object_free(JSON_Object *object);
+void          json_object_attach_key(JSON_Object *object, JSON_Key *key);
+JSON_Key     *json_key_new(void);
+char         *json_string_escape_alloc(char *src);
+JSON_Key     *json_get_key_object_for_key(JSON_Object *object, char *key);
+char         *json_get_string_value_for_key(JSON_Object *object, char *key);
+double        json_get_number_value_for_key(JSON_Object *object, char *key);
+char         *json_get_first_key_string(JSON_Object *object);
+JSON_Key_Type json_get_type_for_key(JSON_Object *object, char *key);
 #endif
