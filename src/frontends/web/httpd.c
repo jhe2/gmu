@@ -782,6 +782,8 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				}
 			} else if (strcmp(cmd, "playlist_clear") == 0) {
 				gmu_core_playlist_clear();
+			} else if (strcmp(cmd, "playlist_playmode_cycle") == 0) {
+				gmu_core_playlist_cycle_play_mode();
 			}
 		}
 	} else if (strcmp(message, "next") == 0) { /* Otherwise, treat data as legacy commands */
