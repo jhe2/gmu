@@ -780,6 +780,8 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 						gmu_core_playlist_add_dir(path);
 					}
 				}
+			} else if (strcmp(cmd, "playlist_clear") == 0) {
+				gmu_core_playlist_clear();
 			}
 		}
 	} else if (strcmp(message, "next") == 0) { /* Otherwise, treat data as legacy commands */
