@@ -380,28 +380,10 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 	Update                           update = UPDATE_NONE;
 	static struct _pb_delete_params  pdp;
 	static char                      buf[128];
-	char                            *notice_msg = NULL;
 
 	switch (user_key_action) {
 		case PL_TOGGLE_RANDOM:
-			switch (gmu_core_playlist_cycle_play_mode()) {
-				case PM_CONTINUE:
-					notice_msg = "PLAYMODE: CONTINUE";
-					break;
-				case PM_RANDOM:
-					notice_msg = "PLAYMODE: RANDOM";
-					break;
-				case PM_RANDOM_REPEAT:
-					notice_msg = "PLAYMODE: RANDOM+REPEAT";
-					break;
-				case PM_REPEAT_1:
-					notice_msg = "PLAYMODE: REPEAT TRACK";
-					break;
-				case PM_REPEAT_ALL:
-					notice_msg = "PLAYMODE: REPEAT ALL";
-					break;
-			}
-			player_display_set_notice_message(notice_msg, NOTICE_DELAY);
+			gmu_core_playlist_cycle_play_mode();
 			break;
 		case PL_PLAY_ITEM:
 			gmu_core_play_pl_item(pl_browser_get_selection(pb));
@@ -1471,6 +1453,29 @@ static int event_callback(GmuEvent event, int param)
 		case GMU_BUFFERING_FAILED:
 			player_display_set_playback_symbol_blinking(0);
 			break;
+		case GMU_PLAYMODE_CHANGE: {
+			char *notice_msg = NULL;
+			switch (gmu_core_playlist_get_play_mode()) {
+				case PM_CONTINUE:
+					notice_msg = "PLAYMODE: CONTINUE";
+					break;
+				case PM_RANDOM:
+					notice_msg = "PLAYMODE: RANDOM";
+					break;
+				case PM_RANDOM_REPEAT:
+					notice_msg = "PLAYMODE: RANDOM+REPEAT";
+					break;
+				case PM_REPEAT_1:
+					notice_msg = "PLAYMODE: REPEAT TRACK";
+					break;
+				case PM_REPEAT_ALL:
+					notice_msg = "PLAYMODE: REPEAT ALL";
+					break;
+			}
+			if (notice_msg)
+				player_display_set_notice_message(notice_msg, NOTICE_DELAY);
+			break;
+		}
 		default:
 			break;
 	}
