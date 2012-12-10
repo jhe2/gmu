@@ -93,6 +93,13 @@ static int event_callback(GmuEvent event, int param)
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
+		case GMU_PLAYMODE_CHANGE: {
+			r = snprintf(msg, MSG_MAX_LEN,
+			             "{ \"cmd\": \"playmode_info\", \"mode\" : %d }",
+			             gmu_core_playlist_get_play_mode());
+			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
+			break;
+		}
 		default:
 			break;
 	}

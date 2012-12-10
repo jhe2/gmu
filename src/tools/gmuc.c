@@ -48,7 +48,7 @@
 typedef enum { STATE_WEBSOCKET_HANDSHAKE, STATE_CONNECTION_ESTABLISHED, STATE_WEBSOCKET_HANDSHAKE_FAILED } State;
 
 static char cur_artist[128], cur_title[128], cur_status[32];
-static int  cur_time;
+static int  cur_time, cur_playmode;
 
 static int resized = 0;
 
@@ -182,7 +182,7 @@ static void cmd_playback_time_change(UI *ui, JSON_Object *json)
 {
 	int t = (int)json_get_number_value_for_key(json, "time");
 	cur_time = t;
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time);
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
 static void cmd_trackinfo(UI *ui, JSON_Object *json)
@@ -191,8 +191,8 @@ static void cmd_trackinfo(UI *ui, JSON_Object *json)
 	strncpy(cur_artist, jv, 127);
 	jv = json_get_string_value_for_key(json, "title");
 	strncpy(cur_title, jv, 127);
-	strncpy(cur_status, "playing", 127);
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time);
+	strncpy(cur_status, "playing", 31);
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
 static void cmd_playlist_change(UI *ui, JSON_Object *json, int sock)
@@ -274,6 +274,11 @@ static void cmd_dir_read(UI *ui, JSON_Object *json)
 		}
 		ui_refresh_active_window(ui);
 	}
+}
+
+static void cmd_playmode_info(UI *ui, JSON_Object *json)
+{
+	cur_playmode = (int)json_get_number_value_for_key(json, "mode");
 }
 
 int main(int argc, char **argv)
@@ -730,6 +735,7 @@ int main(int argc, char **argv)
 														cmd_playback_time_change(&ui, json);
 													} else if (strcmp(cmd, "hello") == 0) {
 														websocket_send_str(sock, "{\"cmd\":\"trackinfo\"}", 1);
+														websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_get_info\"}", 1);
 														listwidget_clear_all_rows(ui.lw_fb);
 														if (!cur_dir) {
 															websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
@@ -747,6 +753,8 @@ int main(int argc, char **argv)
 														cmd_playlist_item(&ui, json, sock);
 													} else if (strcmp(cmd, "dir_read") == 0) {
 														cmd_dir_read(&ui, json);
+													} else if (strcmp(cmd, "playmode_info") == 0) {
+														cmd_playmode_info(&ui, json);
 													}
 													if (screen_update) ui_refresh_active_window(&ui);
 													ui_cursor_text_input(&ui, input);

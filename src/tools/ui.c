@@ -23,6 +23,7 @@
 #include "ui.h"
 #include "window.h"
 #include "listwidget.h"
+#include "../playlist.h"
 
 static FooterButtons fb_pl[] = {
 	{ "F1",  "Help",     FUNC_HELP,        KEY_F(1) },
@@ -96,9 +97,11 @@ void ui_init(UI *ui)
 	ui->fb_visible = fb_pl;
 }
 
-void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status, int cur_time)
+void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, 
+                    char *cur_status, int cur_time, int playmode)
 {
 	if (ui->win_header) {
+		char pm1 = ' ', pm2 = ' ';
 		int min = 0, sec = 0;
 		wattron(ui->win_header->win, A_BOLD);
 		mvwprintw(ui->win_header->win, 0, 0, "Gmu");
@@ -109,7 +112,24 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status,
 		        cur_artist != NULL ? " - " : "", cur_title, cur_status);
 		min = (cur_time / 1000) / 60;
 		sec = (cur_time / 1000) - min * 60;
-		mvwprintw(ui->win_header->win, 0, ui->cols-7, " %3d:%02d", min, sec);
+		switch (playmode) {
+			case PM_CONTINUE:
+				pm1 = 'C'; pm2 = ' ';
+				break;
+			case PM_REPEAT_ALL:
+				pm1 = 'C'; pm2 = 'R';
+				break;
+			case PM_REPEAT_1:
+				pm1 = 'C'; pm2 = '1';
+				break;
+			case PM_RANDOM:
+				pm1 = 'R'; pm2 = ' ';
+				break;
+			case PM_RANDOM_REPEAT:
+				pm1 = 'R'; pm2 = 'R';
+				break;
+		}
+		mvwprintw(ui->win_header->win, 0, ui->cols-10, "%c%c %3d:%02d", pm1, pm2, min, sec);
 		window_refresh(ui->win_header);
 	}
 }
@@ -167,7 +187,7 @@ void ui_draw(UI *ui)
 	clear();
 	refresh();
 
-	ui_draw_header(ui, NULL, NULL, NULL, 0);
+	ui_draw_header(ui, NULL, NULL, NULL, 0, 0);
 	ui_draw_footer(ui);
 
 	ui_refresh_active_window(ui);

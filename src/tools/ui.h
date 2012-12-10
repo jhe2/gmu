@@ -42,7 +42,7 @@ typedef struct UI {
 } UI;
 
 void ui_init(UI *ui);
-void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status, int cur_time);
+void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status, int cur_time, int playmode);
 void ui_refresh_active_window(UI *ui);
 void ui_draw_footer(UI *ui);
 void ui_draw(UI *ui);

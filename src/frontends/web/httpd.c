@@ -684,6 +684,15 @@ void gmu_http_get_current_trackinfo(Connection *c)
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
+void gmu_http_playmode_get_info(Connection *c)
+{
+	char msg[MSG_MAX_LEN];
+	int  r = snprintf(msg, MSG_MAX_LEN,
+	                  "{ \"cmd\": \"playmode_info\", \"mode\" : %d }",
+	                  gmu_core_playlist_get_play_mode());
+	if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
+}
+
 void gmu_http_send_initial_information(Connection *c)
 {
 	char msg[MSG_MAX_LEN];
@@ -785,6 +794,8 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				gmu_core_playlist_clear();
 			} else if (strcmp(cmd, "playlist_playmode_cycle") == 0) {
 				gmu_core_playlist_cycle_play_mode();
+			} else if (strcmp(cmd, "playlist_playmode_get_info") == 0) {
+				gmu_http_playmode_get_info(c);
 			}
 		}
 	} else if (strcmp(message, "next") == 0) { /* Otherwise, treat data as legacy commands */
