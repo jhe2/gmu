@@ -129,7 +129,7 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 				pm1 = 'R'; pm2 = 'R';
 				break;
 		}
-		mvwprintw(ui->win_header->win, 0, ui->cols-10, "%c%c %3d:%02d", pm1, pm2, min, sec);
+		mvwprintw(ui->win_header->win, 0, ui->cols-9, "%c%c %3d:%02d", pm1, pm2, min, sec);
 		window_refresh(ui->win_header);
 	}
 }
