@@ -389,11 +389,12 @@ int gmu_core_playlist_insert_file_after(Entry *entry, char *filename_with_path)
 
 int gmu_core_playlist_add_file(char *filename_with_path)
 {
-	int res;
+	int res, len;
 	playlist_get_lock(&pl);
+	len = playlist_get_length(&pl);
 	res = playlist_add_file(&pl, filename_with_path);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
 	return res;
 }
 
