@@ -374,6 +374,7 @@ int main(int argc, char **argv)
 					int            r = 1, connected = 1;
 					State          state = STATE_WEBSOCKET_HANDSHAKE;
 					char           str2[1024], *key;
+					wchar_t        wchars[256];
 					char          *str = "GET /gmu HTTP/1.1\r\n"
 						"Host: %s\r\n"
 						"Upgrade: websocket\r\n"
@@ -382,6 +383,7 @@ int main(int argc, char **argv)
 						"Sec-WebSocket-Version: 13\r\n\r\n";
 
 					network_error = 0;
+					wchars[0] = L'\0';
 
 					key = websocket_client_generate_sec_websocket_key_alloc();
 					if (key) {
@@ -413,12 +415,10 @@ int main(int argc, char **argv)
 						}
 
 						if (FD_ISSET(fileno(stdin), &readfds)) {
-							char           buf[1024];
-							static wchar_t wchars[256];
-							wint_t         ch;
-							int            res;
+							char   buf[1024];
+							wint_t ch;
+							int    res;
 
-							wchars[0] = '\0';
 							memset(buf, 0, 1024);
 							wdprintf(V_DEBUG, "gmuc", "Text was entered!\n");
 							res = wget_wch(stdscr, &ch);
