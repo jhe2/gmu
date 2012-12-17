@@ -99,7 +99,7 @@ int websocket_send_str(int sock, char *str, int mask)
 			if (mask) msg = mask_message_alloc(str, len, mask_key);
 			memset(buf, 0, len);
 			wdprintf(V_DEBUG, "websocket", "websocket_send_string(): len=%d str='%s' %d|%d\n", len, str, len >> 8, len & 0xFF);
-			wdprintf(V_DEBUG, "websocket", "mask=%d mask_key=%c%c%c%c masked_str='%s'\n", mask, mask_key[0], mask_key[1], mask_key[2], mask_key[3], msg);
+			wdprintf(V_DEBUG, "websocket", "mask=%d masked_str='%s'\n", mask, msg);
 			if (len <= 125) {
 				if (mask) {
 					snprintf(buf, len+10, "%c%c%c%c%c%c", 0x80+0x01, len+0x80,
