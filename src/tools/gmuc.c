@@ -205,8 +205,7 @@ static void cmd_playlist_change(UI *ui, JSON_Object *json, int sock)
 	listwidget_set_length(ui->lw_pl, length);
 	if (length > 0 && changed_at >= 0) {
 		char str[64];
-		snprintf(str, 63, "playlist_get_item:%d", changed_at);
-		wprintw(ui->win_cmd->win, "Sending request: playlist_get_item:%d\n", changed_at);
+		snprintf(str, 63, "{\"cmd\":\"playlist_get_item\", \"item\":%d}", changed_at);
 		if (!websocket_send_str(sock, str, 1))
 			wprintw(ui->win_cmd->win, "FAILED sending message over socket!\n");
 		else
@@ -228,7 +227,7 @@ static void cmd_playlist_item(UI *ui, JSON_Object *json, int sock)
 		    pos < ui->lw_pl->first_visible_row + ui->lw_pl->win->height-2)
 			ui_refresh_active_window(ui);
 		if (pos+1 < listwidget_get_rows(ui->lw_pl)) {
-			snprintf(str, 127, "playlist_get_item:%d", pos+1);
+			snprintf(str, 127, "{\"cmd\":\"playlist_get_item\", \"item\":%d}", pos+1);
 			websocket_send_str(sock, str, 1);
 		}
 	}
@@ -431,22 +430,22 @@ int main(int argc, char **argv)
 														char *str = NULL;
 														switch (cmd) {
 															case PLAY:
-																str = "play";
+																str = "{\"cmd\":\"play\"}";
 																break;
 															case PAUSE:
-																str = "pause";
+																str = "{\"cmd\":\"pause\"}";
 																break;
 															case NEXT:
-																str = "next";
+																str = "{\"cmd\":\"next\"}";
 																break;
 															case PREVIOUS:
-																str = "prev";
+																str = "{\"cmd\":\"prev\"}";
 																break;
 															case STOP:
-																str = "stop";
+																str = "{\"cmd\":\"stop\"}";
 																break;
 															case FILES:
-																str = "dir_read:/";
+																str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
 																break;
 															case RAW:
 																str = params;
@@ -475,7 +474,7 @@ int main(int argc, char **argv)
 											char str[128];
 											switch (ui.active_win) {
 												case WIN_PL:
-													snprintf(str, 127, "play:%d", listwidget_get_selection(ui.lw_pl));
+													snprintf(str, 127, "{\"cmd\":\"play\", \"item\":%d}", listwidget_get_selection(ui.lw_pl));
 													websocket_send_str(sock, str, 1);
 													break;
 												case WIN_FB: {
@@ -491,7 +490,7 @@ int main(int argc, char **argv)
 														listwidget_clear_all_rows(ui.lw_fb);
 														ui_refresh_active_window(&ui);
 														if (cur_dir) {
-															snprintf(tmp, 255, "dir_read:%s", cur_dir);
+															snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
 															websocket_send_str(sock, tmp, 1);
 														}
 													} else { /* Add file */
@@ -747,7 +746,7 @@ int main(int argc, char **argv)
 																websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
 															} else {
 																char tmp[256];
-																snprintf(tmp, 255, "dir_read:%s", cur_dir);
+																snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
 																websocket_send_str(sock, tmp, 1);
 															}
 														} else {
