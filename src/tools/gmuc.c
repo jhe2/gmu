@@ -413,11 +413,12 @@ int main(int argc, char **argv)
 						}
 
 						if (FD_ISSET(fileno(stdin), &readfds)) {
-							char       buf[1024];
-							wchar_t    wchars[256];
-							wint_t     ch;
-							int        res;
+							char           buf[1024];
+							static wchar_t wchars[256];
+							wint_t         ch;
+							int            res;
 
+							wchars[0] = '\0';
 							memset(buf, 0, 1024);
 							wdprintf(V_DEBUG, "gmuc", "Text was entered!\n");
 							res = wget_wch(stdscr, &ch);
