@@ -233,13 +233,23 @@ static void cmd_playlist_item(UI *ui, JSON_Object *json, int sock)
 	}
 }
 
-static void cmd_dir_read(UI *ui, JSON_Object *json)
+/* Returns a pointer to a newly allocated string containing the 
+ * actually read directory */
+static char *cmd_dir_read(UI *ui, JSON_Object *json)
 {
 	int   i;
 	JSON_Key *jk = json_get_key_object_for_key(json, "data");
 	JSON_Object *jo = jk ? jk->key_value_object : NULL;
-	char *tmp = NULL;
-	
+	char *tmp = json_get_string_value_for_key(json, "path");
+	char *cur_dir = NULL;
+
+	if (tmp) {
+		int size = strlen(tmp)+1;
+		cur_dir = malloc(size);
+		memcpy(cur_dir, tmp, size);
+	}
+	tmp = NULL;
+
 	if (jo) tmp = json_get_first_key_string(jo);
 	int start = -1;
 	if (tmp) start = atoi(tmp);
@@ -273,6 +283,7 @@ static void cmd_dir_read(UI *ui, JSON_Object *json)
 		}
 		ui_refresh_active_window(ui);
 	}
+	return cur_dir;
 }
 
 static void cmd_playmode_info(UI *ui, JSON_Object *json)
@@ -762,7 +773,8 @@ int main(int argc, char **argv)
 													} else if (strcmp(cmd, "playlist_item") == 0) {
 														cmd_playlist_item(&ui, json, sock);
 													} else if (strcmp(cmd, "dir_read") == 0) {
-														cmd_dir_read(&ui, json);
+														if (cur_dir) free(cur_dir);
+														cur_dir = cmd_dir_read(&ui, json);
 													} else if (strcmp(cmd, "playmode_info") == 0) {
 														cmd_playmode_info(&ui, json);
 													}
