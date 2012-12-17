@@ -828,39 +828,6 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				gmu_http_playmode_get_info(c);
 			}
 		}
-	} else if (strcmp(message, "next") == 0) { /* Otherwise, treat data as legacy commands */
-		gmu_core_next();
-	} else if (strcmp(message, "prev") == 0) {
-		gmu_core_previous();
-	} else if (strcmp(message, "stop") == 0) {
-		gmu_core_stop();
-	} else if (strcmp(message, "pause") == 0) {
-		gmu_core_pause();
-	} else if (strcmp(message, "play") == 0) {
-		gmu_core_play();
-	} else if (strncmp(message, "play:", 5) == 0) {
-		char *itm = message+5;
-		int   item = -1;
-		if (itm) item = atoi(itm);
-		if (item >= 0) {
-			gmu_core_play_pl_item(item);
-		}
-	} else if (strncmp(message, "playlist_get_item:", 18) == 0) {
-		char *itm = message+18;
-		int   item = -1;
-		if (itm) item = atoi(itm);
-		if (item >= 0) {
-			wdprintf(V_DEBUG, "httpd", "item=%d\n", item);
-			gmu_http_playlist_get_item(item, c);
-		}
-	} else if (strcmp(message, "playlist_get_info") == 0) {
-		wdprintf(V_DEBUG, "httpd", "playlist_info requested!\n");
-		gmu_http_playlist_get_info(c);
-	} else if (strncmp(message, "dir_read:", 9) == 0) {
-		char *itm = message+9;
-		
-		wdprintf(V_DEBUG, "httpd", "dir_read requested (dir=[%s])!\n", itm);
-		gmu_http_read_dir(itm, c);
 	}
 }
 
