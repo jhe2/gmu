@@ -734,15 +734,26 @@ int main(int argc, char **argv)
 													} else if (strcmp(cmd, "playback_time") == 0) {
 														cmd_playback_time_change(&ui, json);
 													} else if (strcmp(cmd, "hello") == 0) {
-														websocket_send_str(sock, "{\"cmd\":\"trackinfo\"}", 1);
-														websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_get_info\"}", 1);
-														listwidget_clear_all_rows(ui.lw_fb);
-														if (!cur_dir) {
-															websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
+														char tmp[256];
+														snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
+														websocket_send_str(sock, tmp, 1);
+													} else if (strcmp(cmd, "login") == 0) {
+														char *res = json_get_string_value_for_key(json, "res");
+														if (res && strcmp(res, "success") == 0) {
+															websocket_send_str(sock, "{\"cmd\":\"trackinfo\"}", 1);
+															websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_get_info\"}", 1);
+															listwidget_clear_all_rows(ui.lw_fb);
+															if (!cur_dir) {
+																websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
+															} else {
+																char tmp[256];
+																snprintf(tmp, 255, "dir_read:%s", cur_dir);
+																websocket_send_str(sock, tmp, 1);
+															}
 														} else {
-															char tmp[256];
-															snprintf(tmp, 255, "dir_read:%s", cur_dir);
-															websocket_send_str(sock, tmp, 1);
+															wprintw(ui.win_cmd->win, "Login failed! Check password\n");
+															ui.active_win = WIN_CMD;
+															screen_update = 1;
 														}
 													} else if (strcmp(cmd, "playlist_info") == 0) {
 														wprintw(ui.win_cmd->win, "Playlist info received!\n");

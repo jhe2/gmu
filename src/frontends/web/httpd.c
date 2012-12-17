@@ -35,6 +35,9 @@
 #include "debug.h"
 #include "dir.h"
 #include "trackinfo.h"
+#include "wejpconfig.h"
+
+#define PASSWORD_MIN_LENGTH 9
 
 /*
  * 500 Internal Server Error
@@ -147,13 +150,25 @@ static sighandler_t my_signal(int sig_nr, sighandler_t signalhandler)
 	return alt_sig.sa_handler;
 }
 
+static void websocket_send_string(Connection *c, char *str)
+{	
+	if (str) {
+		websocket_send_str(c->fd, str, 0);
+		connection_reset_timeout(c);
+	}
+}
+
 int connection_init(Connection *c, int fd)
 {
+	ConfigFile *cf = gmu_core_get_config();
 	memset(c, 0, sizeof(Connection));
 	c->connection_time = time(NULL);
 	c->state = HTTP_NEW;
 	c->fd = fd;
 	c->http_request_header = NULL;
+	c->password_ref = NULL;
+	if (cf) c->password_ref = cfg_get_key_value(*cf, "gmuhttp.Password");
+	c->authentication_okay = 0;
 	ringbuffer_init(&(c->rb_receive), 131072);
 	return 1;
 }
@@ -203,6 +218,11 @@ void connection_set_state(Connection *c, ConnectionState s)
 ConnectionState connection_get_state(Connection *c)
 {
 	return c->state;
+}
+
+int connection_is_authenticated(Connection *c)
+{
+	return c->authentication_okay;
 }
 
 int connection_file_is_open(Connection *c)
@@ -273,6 +293,20 @@ int connection_file_read_chunk(Connection *c)
 	return 0;
 }
 
+int connection_authenticate(Connection *c, char *password)
+{
+	if (password && c->password_ref &&
+	    strlen(password) > PASSWORD_MIN_LENGTH &&
+	    strcmp(password, c->password_ref) == 0) {
+		c->authentication_okay = 1;
+		websocket_send_string(c, "{\"cmd\":\"login\",\"res\":\"success\"}");
+	} else {
+		c->authentication_okay = 0;
+		websocket_send_string(c, "{\"cmd\":\"login\",\"res\":\"failure\"}");
+	}
+	return c->authentication_okay;
+}
+
 static void send_http_header(int soc, char *code,
                              int length, time_t *pftime,
                              const char *content_type)
@@ -310,14 +344,6 @@ static void send_http_header(int soc, char *code,
 	snprintf(msg, 254, "Content-Type: %s\r\n", content_type);
 	net_send_buf(soc, msg);
 	net_send_buf(soc, "\r\n");
-}
-
-static void websocket_send_string(Connection *c, char *str)
-{	
-	if (str) {
-		websocket_send_str(c->fd, str, 0);
-		connection_reset_timeout(c);
-	}
 }
 
 static void loop(int listen_fd);
@@ -746,7 +772,11 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 	if (!json_object_has_parse_error(json)) { /* Valid JSON data received */
 		/* Analyze command in JSON data */
 		char *cmd = json_get_string_value_for_key(json, "cmd");
-		if (cmd) {
+		if (cmd && strcmp(cmd, "login") == 0) {
+			char *password = json_get_string_value_for_key(json, "password");
+			if (!connection_authenticate(c, password))
+				connection_close(c);
+		} else if (cmd && connection_is_authenticated(c)) {
 			wdprintf(V_DEBUG, "httpd", "Got command (via JSON data): '%s'\n", cmd);
 			if (strcmp(cmd, "play") == 0) {
 				JSON_Key_Type type = json_get_type_for_key(json, "item");
@@ -907,7 +937,8 @@ static void loop(int listen_fd)
 				/* If data for sending through websocket has been fetched
 				 * from the broadcast queue, send the data to all open WebSocket connections */
 				if (websocket_msg) {
-					websocket_send_string(&(connection[conn_num]), websocket_msg);
+					if (connection_is_authenticated(&(connection[conn_num])))
+						websocket_send_string(&(connection[conn_num]), websocket_msg);
 				}
 			}
 			if (FD_ISSET(rfd, &readfds)) { /* Data received on connection socket */

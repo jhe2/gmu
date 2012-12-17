@@ -40,6 +40,8 @@ typedef struct Connection {
 	ConnectionState state;
 	char           *http_request_header;
 	RingBuffer      rb_receive;
+	char           *password_ref;
+	int             authentication_okay;
 } Connection;
 
 typedef enum HTTPCommand {
@@ -53,6 +55,8 @@ void  httpd_send_websocket_broadcast(char *str);
 int  connection_init(Connection *c, int fd);
 void connection_reset_timeout(Connection *c);
 int  connection_is_valid(Connection *c);
+int  connection_is_authenticated(Connection *c);
+int  connection_authenticate(Connection *c, char *password);
 void connection_close(Connection *c);
 void connection_free_request_header(Connection *c);
 int  connection_is_timed_out(Connection *c);
