@@ -982,6 +982,7 @@ static void loop(int listen_fd)
 									wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
 									gmu_http_handle_websocket_message(payload, &(connection[conn_num]));
 									free(wspacket);
+									size = 0;
 								}
 							} else if (size > 0) {
 								wdprintf(V_DEBUG,
