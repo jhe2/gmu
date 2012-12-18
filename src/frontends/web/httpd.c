@@ -38,6 +38,7 @@
 #include "wejpconfig.h"
 
 #define PASSWORD_MIN_LENGTH 9
+#define INDEX_FILE "gmu.html"
 
 /*
  * 500 Internal Server Error
@@ -442,10 +443,10 @@ static int tcp_server_read(int fd, char buf[], int *buflen)
 	return res;
 }
 
-static int is_valid_ressource(char *str)
+static int is_valid_resource(char *str)
 {
 	int res = 1, i, len = 0;
-	/* Ressource strings MUST NOT contain substrings containing ".." */
+	/* Resource strings MUST NOT contain substrings containing ".." */
 	if (str) {
 		len = strlen(str);
 		for (i = 0; i < len; i++) {
@@ -501,7 +502,7 @@ static void http_response_not_implemented(int fd)
 
 static int process_command(int rfd, Connection *c)
 {
-	char *command = NULL, *ressource = NULL, *http_version = NULL, *options = NULL;
+	char *command = NULL, *resource = NULL, *http_version = NULL, *options = NULL;
 	char *host = NULL, websocket_key[32] = "";
 
 	if (c->http_request_header) {
@@ -522,8 +523,8 @@ static int process_command(int rfd, Connection *c)
 					str[i] = '\0'; i++;
 					for (; str[i] == ' ' || str[i] == '\t'; i++);
 					switch (state) {
-						case 1: /* ressource */
-							ressource = str+i;
+						case 1: /* resource */
+							resource = str+i;
 							break;
 						case 2: /* http version */
 							http_version = str+i; /* e.g. "HTTP/1.1" */
@@ -549,9 +550,9 @@ static int process_command(int rfd, Connection *c)
 				str[i] = '\0';
 		}
 		if (command) wdprintf(V_DEBUG, "httpd", "%04d Command: [%s]\n", rfd, command);
-		if (ressource) {
-			wdprintf(V_DEBUG, "httpd", "%04d Ressource: [%s]\n", rfd, ressource);
-			wdprintf(V_DEBUG, "httpd", "%04d Mime type: %s\n", rfd, get_mime_type(ressource));
+		if (resource) {
+			wdprintf(V_DEBUG, "httpd", "%04d Resource: [%s]\n", rfd, resource);
+			wdprintf(V_DEBUG, "httpd", "%04d Mime type: %s\n", rfd, get_mime_type(resource));
 		}
 		if (http_version) wdprintf(V_DEBUG, "httpd", "%04d http_version: [%s]\n", rfd, http_version);
 		if (options) {
@@ -586,7 +587,7 @@ static int process_command(int rfd, Connection *c)
 			}
 		}
 
-		if (is_valid_ressource(ressource)) {
+		if (is_valid_resource(resource)) {
 			int head_only = 0;
 			switch (get_command(command)) {
 				case HEAD:
@@ -626,14 +627,14 @@ static int process_command(int rfd, Connection *c)
 						} else if (!connection_file_is_open(c)) { // ?? open file (if not open already) ??
 							char filename[512];
 							memset(filename, 0, 512);
-							snprintf(filename, 511, "%s/htdocs%s", webserver_root, ressource);
+							snprintf(filename, 511, "%s/htdocs%s", webserver_root, resource);
 							file_okay = connection_file_open(c, filename);
 							if (file_okay) {
 								if (!head_only) connection_set_state(c, HTTP_BUSY);
 								send_http_header(rfd, "200",
 												 connection_get_number_of_bytes_to_send(c),
 												 NULL,
-												 get_mime_type(ressource));
+												 get_mime_type(resource));
 								if (head_only) connection_file_close(c);
 							} else { /* 404 */
 								http_response_not_found(rfd, head_only);
@@ -651,7 +652,7 @@ static int process_command(int rfd, Connection *c)
 					http_response_bad_request(rfd, 0);
 					break;
 			}
-		} else { /* Invalid ressource string */
+		} else { /* Invalid resource string */
 			http_response_not_found(rfd, 0);
 		}
 
