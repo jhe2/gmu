@@ -81,7 +81,7 @@ static char *mime_type[] = {
 
 static char *get_mime_type(char *url)
 {
-	char *ext, *res = "application/octet-stream";
+	char *ext, *res = "text/html";
 	ext = strrchr(url, '.');
 	if (ext) {
 		int i;
@@ -629,6 +629,10 @@ static int process_command(int rfd, Connection *c)
 							memset(filename, 0, 512);
 							snprintf(filename, 511, "%s/htdocs%s", webserver_root, resource);
 							file_okay = connection_file_open(c, filename);
+							if (!file_okay) {
+								snprintf(filename, 511, "%s/htdocs%s/%s", webserver_root, resource, INDEX_FILE);
+								file_okay = connection_file_open(c, filename);
+							}
 							if (file_okay) {
 								if (!head_only) connection_set_state(c, HTTP_BUSY);
 								send_http_header(rfd, "200",
