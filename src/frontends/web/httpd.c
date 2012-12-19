@@ -297,7 +297,7 @@ int connection_file_read_chunk(Connection *c)
 int connection_authenticate(Connection *c, char *password)
 {
 	if (password && c->password_ref &&
-	    strlen(password) > PASSWORD_MIN_LENGTH &&
+	    strlen(password) >= PASSWORD_MIN_LENGTH &&
 	    strcmp(password, c->password_ref) == 0) {
 		c->authentication_okay = 1;
 		websocket_send_string(c, "{\"cmd\":\"login\",\"res\":\"success\"}");
