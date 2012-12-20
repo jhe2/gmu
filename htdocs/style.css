@@ -258,3 +258,18 @@ div.tabmenu {
 	height:10px;
 	width:1px;
 }
+
+#loginbox {
+	background-color:#333;
+	border:1px solid #666;
+	padding:10px;
+	position:absolute;
+	top:40%; left:40%;
+	width:20%;
+	height:20%;
+	text-align:center;
+}
+
+#loginbox h2 {
+	margin:2px;
+}

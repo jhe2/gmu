@@ -623,7 +623,6 @@ static int process_command(int rfd, Connection *c)
 							/* 3) Set flags in connection struct to WebSocket */
 							connection_set_state(c, WEBSOCKET_OPEN);
 							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
-							gmu_http_send_initial_information(c);
 						} else if (!connection_file_is_open(c)) { // ?? open file (if not open already) ??
 							char filename[512];
 							memset(filename, 0, 512);
@@ -797,6 +796,8 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 			char *password = json_get_string_value_for_key(json, "password");
 			if (!connection_authenticate(c, password))
 				connection_close(c);
+			else
+				gmu_http_send_initial_information(c);
 		} else if (cmd && connection_is_authenticated(c)) {
 			wdprintf(V_DEBUG, "httpd", "Got command (via JSON data): '%s'\n", cmd);
 			if (strcmp(cmd, "play") == 0) {

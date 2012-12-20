@@ -51,6 +51,12 @@ function Connection()
 				var jmsg = JSON.parse(msg.data);
 
 				switch (jmsg['cmd']) {
+					case 'hello':
+						break;
+					case 'login':
+						if (jmsg['res'] == 'success')
+							loginbox_display(0);
+						break;
 					case 'time':
 						write_to_time_display(jmsg['time']);
 						break;
@@ -101,7 +107,7 @@ function Connection()
 							for (i = 0; i <= visible_pl_line_count; i++) {
 								pos = jmsg['position']+1+i;
 								if (pos < pl.length && !pl[pos]) {
-									c.do_send("playlist_get_item:"+pos);
+									c.do_send('{"cmd":"playlist_get_item","item":'+pos+'}');
 									break;
 								} else if (pos >= pl.length) {
 									break;
@@ -123,6 +129,11 @@ function Connection()
 	{
 		//write_to_screen("SENT: " + message);
 		if (this.socket) this.socket.send(message);
+	}
+
+	this.login = function login(password)
+	{
+		con.do_send('{"cmd":"login","password":"'+password+'"}');
 	}
 }
 
@@ -185,7 +196,7 @@ function add_row(table_id, col1, col2, col3, bg)
 
 function play(id)
 {
-	con.do_send("play:"+id);
+	con.do_send('{"cmd":"play","item":'+id+'}');
 }
 
 function pl_set_number_of_items(items)
@@ -252,7 +263,7 @@ function handle_playlist_scroll()
 				j++;
 			} while (j <= visible_pl_line_count);
 			if (first_visible_pl_line+i < pl.length)
-				con.do_send("playlist_get_item:"+(first_visible_pl_line+i));
+				con.do_send('{"cmd":"playlist_get_item","item":'+(first_visible_pl_line+i)+'}');
 		}
 	}
 	//write_to_screen("fvl="+first_visible_pl_line+" scrolltop="+document.getElementById('plscrollbar').scrollTop);
@@ -268,27 +279,27 @@ function handle_mouse_scroll_event(e)
 
 function handle_btn_next(e)
 {
-	con.do_send('next');
+	con.do_send('{"cmd":"next"}');
 }
 
 function handle_btn_prev(e)
 {
-	con.do_send('prev');
+	con.do_send('{"cmd":"prev"}');
 }
 
 function handle_btn_play(e)
 {
-	con.do_send('play');
+	con.do_send('{"cmd":"play"}');
 }
 
 function handle_btn_pause(e)
 {
-	con.do_send('pause');
+	con.do_send('{"cmd":"pause"}');
 }
 
 function handle_btn_stop(e)
 {
-	con.do_send('stop');
+	con.do_send('{"cmd":"stop"}');
 }
 
 function handle_tab_select_fb(e)
@@ -324,6 +335,20 @@ function handle_keypress(e)
 	}
 }
 
+function loginbox_display(show)
+{
+	if (show) d = 'block'; else d = 'none';
+	document.getElementById('loginbox').style.display = d;
+}
+
+function handle_login(e)
+{
+	e.preventDefault();
+	passwd = document.getElementById('password').value;
+	con.login(passwd);
+	return false;
+}
+
 function init()
 {
 	con = new Connection();
@@ -340,8 +365,9 @@ function init()
 	add_event_handler('tfb',         'click',  handle_tab_select_fb);
 	add_event_handler('tpl',         'click',  handle_tab_select_pl);
 	add_event_handler('tlo',         'click',  handle_tab_select_log);
+	add_event_handler('btn-login',   'click',  handle_login);
 	init_pl_table();
-	con.start("ws://" + document.location.host + "/foobar");
+	con.start("ws://" + document.location.host + "/gmu");
 	window.onresize = function(event) {
 		init_pl_table();
 		handle_playlist_scroll();
