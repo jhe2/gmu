@@ -30,8 +30,8 @@ static FooterButtons fb_pl[] = {
 	{ "F2",  "Window",   FUNC_NEXT_WINDOW, KEY_F(2) },
 	{ "F3",  "Search",   FUNC_SEARCH,      KEY_F(3) },
 	{ "F5",  "Prev",     FUNC_PREVIOUS,    KEY_F(5) },
-	{ "F6",  "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(6) },
-	{ "F7",  "Stop",     FUNC_STOP,        KEY_F(7) },
+	{ "F6",  "Stop",     FUNC_STOP,        KEY_F(6) },
+	{ "F7",  "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7) },
 	{ "F8",  "Next",     FUNC_NEXT,        KEY_F(8) },
 	{ "F9",  "P.Mode",   FUNC_PLAYMODE,    KEY_F(9) },
 	{ "F10", "Clear",    FUNC_PL_CLEAR,    KEY_F(10) },
@@ -43,8 +43,8 @@ static FooterButtons fb_fb[] = {
 	{ "F2", "Window",   FUNC_NEXT_WINDOW, KEY_F(2) },
 	{ "F3", "Add",      FUNC_FB_ADD,      KEY_F(3) },
 	{ "F5", "Prev",     FUNC_PREVIOUS,    KEY_F(5) },
-	{ "F6", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(6) },
-	{ "F7", "Stop",     FUNC_STOP,        KEY_F(7) },
+	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6) },
+	{ "F7", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7) },
 	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8) },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
@@ -53,8 +53,8 @@ static FooterButtons fb_ti[] = {
 	{ "F1", "Help",     FUNC_HELP,        KEY_F(1) },
 	{ "F2", "Window",   FUNC_NEXT_WINDOW, KEY_F(2) },
 	{ "F5", "Prev",     FUNC_PREVIOUS,    KEY_F(5) },
-	{ "F6", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(6) },
-	{ "F7", "Stop",     FUNC_STOP,        KEY_F(7) },
+	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6) },
+	{ "F7", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7) },
 	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8) },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
@@ -63,8 +63,8 @@ static FooterButtons fb_cmd[] = {
 	{ "F1", "Help",     FUNC_HELP,        KEY_F(1) },
 	{ "F2", "Window",   FUNC_NEXT_WINDOW, KEY_F(2) },
 	{ "F5", "Prev",     FUNC_PREVIOUS,    KEY_F(5) },
-	{ "F6", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(6) },
-	{ "F7", "Stop",     FUNC_STOP,        KEY_F(7) },
+	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6) },
+	{ "F7", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7) },
 	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8) },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
