@@ -311,12 +311,12 @@ int connection_authenticate(Connection *c, char *password)
 }
 
 static void send_http_header(int soc, char *code,
-                             int length, time_t *pftime,
+                             int length, time_t *time_modified,
                              const char *content_type)
 {
 	char       msg[255] = {0};
-	//struct tm *ptm = NULL, *pftm = NULL;
-	//time_t     stime;
+	struct tm *ptm = NULL;
+	time_t     stime;
 	char      *code_text = "";
 	int        i;
 
@@ -328,22 +328,22 @@ static void send_http_header(int soc, char *code,
 	}
 	snprintf(msg, 254, "HTTP/1.1 %s %s\r\n", code, code_text);
 	net_send_buf(soc, msg);
-	/*stime = time(NULL);
+	stime = time(NULL);
 	ptm = gmtime(&stime);
 	strftime(msg, 255, "Date: %a, %d %b %Y %H:%M:%S %Z\r\n", ptm);
-	send_buf(soc, msg);*/
+	net_send_buf(soc, msg);
 	net_send_buf(soc, "Server: Gmu http server\r\n");
 
-	/*if (pftime != NULL) {
-		pftm = gmtime(pftime);
-		strftime(msg, 255, "Last-Modified: %a, %d %b %Y %H:%M:%S %Z\r\n", pftm);
-		send_buf(soc, msg);
-	}*/
+	if (time_modified != NULL) {
+		struct tm *tm_modified = gmtime(time_modified);
+		strftime(msg, 255, "Last-Modified: %a, %d %b %Y %H:%M:%S %Z\r\n", tm_modified);
+		net_send_buf(soc, msg);
+	}
 
 	net_send_buf(soc, "Accept-Ranges: none\r\n");
 	snprintf(msg, 254, "Content-Length: %d\r\n", length);
 	net_send_buf(soc, msg);
-	//send_buf(soc, "Connection: close\r\n");
+	/*send_buf(soc, "Connection: close\r\n");*/
 	snprintf(msg, 254, "Content-Type: %s\r\n", content_type);
 	net_send_buf(soc, msg);
 	net_send_buf(soc, "\r\n");
@@ -635,10 +635,16 @@ static int process_command(int rfd, Connection *c)
 								file_okay = connection_file_open(c, filename);
 							}
 							if (file_okay) {
+								char time_str[26] = "";
+								struct stat st;
+								if (stat(filename, &st) == 0) {
+									ctime_r(&(st.st_ctime), time_str);
+									printf("CREATION TIME: %s\n", time_str);
+								}
 								if (!head_only) connection_set_state(c, HTTP_BUSY);
 								send_http_header(rfd, "200",
 												 connection_get_number_of_bytes_to_send(c),
-												 NULL,
+												 &(st.st_ctime),
 												 get_mime_type(resource));
 								if (head_only) connection_file_close(c);
 							} else { /* 404 */
