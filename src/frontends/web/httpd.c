@@ -270,11 +270,11 @@ int connection_file_read_chunk(Connection *c)
 			int size = CHUNK_SIZE;
 			if (c->remaining_bytes_to_send < CHUNK_SIZE) size = c->remaining_bytes_to_send;
 			wdprintf(V_DEBUG, "httpd", "Connection %d: Reading chunk of data: %d bytes\n", c->fd, size);
-			// read CHUNK_SIZE bytes from file
+			/* read CHUNK_SIZE bytes from file */
 			fread(blob, size, 1, c->local_file);
-			// write bytes to socket
+			/* write bytes to socket */
 			net_send_block(c->fd, (unsigned char *)blob, size);
-			// decrement remaining bytes counter
+			/* decrement remaining bytes counter */
 			c->remaining_bytes_to_send -= size;
 			c->connection_time = time(NULL);
 		} else {
@@ -282,7 +282,8 @@ int connection_file_read_chunk(Connection *c)
 			if (c->local_file) fclose(c->local_file);
 			c->local_file = NULL;
 		}
-		// if eof, set connection state to HTTP_IDLE and close file, set local_file to NULL
+		/* If eof, set connection state to HTTP_IDLE and close file, 
+		 * set local_file to NULL */
 		if (c->local_file && feof(c->local_file)) {
 			fclose(c->local_file);
 			c->local_file = NULL;
