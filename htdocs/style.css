@@ -193,7 +193,7 @@ ul.tabmenu {
 	cursor:default;
 }
 
-ul.tabmenu li.active {
+ul.tabmenu li.act {
 	font-size:11px;
 	text-align:center;
 	display:inline;
@@ -210,7 +210,7 @@ ul.tabmenu li.active {
 	margin-right:5px;
 }
 
-ul.tabmenu li.inactive {
+ul.tabmenu li.ina {
 	font-size:11px;
 	text-align:center;
 	display:inline;

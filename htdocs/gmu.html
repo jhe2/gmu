@@ -35,15 +35,15 @@
 
 			<div class="tabmenu">
 				<ul class="tabmenu">
-					<li class="inactive" name="tabitem" id="tfb">File Browser</li>
-					<li class="active"   name="tabitem" id="tpl">Playlist</li>
-					<li class="inactive" name="tabitem" id="tlo">Log</li>
+					<li class="ina tabitem" id="tfb">File Browser</li>
+					<li class="act tabitem" id="tpl">Playlist</li>
+					<li class="ina tabitem" id="tlo">Log</li>
 				</ul>
 			</div>
-			<div class="tab" name="tab" id="fb" style="display:none; overflow:auto;">
+			<div class="tab" id="fb" style="display:none; overflow:auto;">
 				<p id="filebrowser">FILE BROWSER</p>
 			</div>
-			<div class="tab" name="tab" id="pl" style="overflow:hidden;">
+			<div class="tab" id="pl" style="overflow:hidden;">
 				<div style="overflow:hidden;">
 					<table id="playlisttable" class="list"></table>
 					<div id="plscrollbar">
@@ -51,7 +51,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="tab" name="tab" id="lo" style="display:none; overflow:auto;">
+			<div class="tab" id="lo" style="display:none; overflow:auto;">
 				<input id="text" type="text" /><button onclick="do_send(document.getElementById('text').value);" id="send">Send</button>
 				<div id="log">
 					Log

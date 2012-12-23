@@ -164,13 +164,14 @@ function set_trackinfo(artist, title, album)
 
 function select_tab(tab_id)
 {
-	elem = document.getElementsByName('tab');
+	elem = document.getElementsByClassName('tab');
 	for (i = 0; i < elem.length; i++)
 		elem[i].style.display = "none";
-	elem = document.getElementsByName('tabitem');
+	elem = document.getElementsByClassName('tabitem');
 	for (i = 0; i < elem.length; i++)
-		elem[i].className = "inactive";
-	document.getElementById('t'+tab_id).className = "active";
+		elem[i].className = elem[i].className.replace("act", "ina");
+	t = document.getElementById('t'+tab_id);
+	t.className = t.className.replace("ina", "act");
 	document.getElementById(tab_id).style.display = "block";
 	selected_tab = tab_id;
 }
