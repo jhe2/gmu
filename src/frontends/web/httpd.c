@@ -349,7 +349,7 @@ static void send_http_header(int soc, char *code,
 	net_send_buf(soc, "\r\n");
 }
 
-static void loop(int listen_fd);
+static void webserver_main_loop(int listen_fd);
 static int  tcp_server_init(int port);
 
 void *httpd_run_server(void *data)
@@ -360,7 +360,7 @@ void *httpd_run_server(void *data)
 	if (wr) strncpy(webserver_root, wr, 255); else webserver_root[0] = '\0';
 	queue_init(&queue);
 	wdprintf(V_INFO, "httpd", "Starting server on port %d.\n", port);
-	loop(tcp_server_init(port));
+	webserver_main_loop(tcp_server_init(port));
 	return NULL;
 }
 
@@ -877,7 +877,7 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
  * listen_fd is the socket file descriptor where the server is 
  * listening for client connections.
  */
-static void loop(int listen_fd)
+static void webserver_main_loop(int listen_fd)
 {
 	fd_set the_state;
 	int    maxfd;
