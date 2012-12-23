@@ -608,6 +608,11 @@ int main(int argc, char **argv)
 											websocket_send_str(sock, "{\"cmd\":\"play\"}", 1);
 										}
 										break;
+									case FUNC_PLAY_PAUSE:
+										if (state == STATE_CONNECTION_ESTABLISHED) {
+											websocket_send_str(sock, "{\"cmd\":\"play_pause\"}", 1);
+										}
+										break;
 									case FUNC_PLAYMODE:
 										if (state == STATE_CONNECTION_ESTABLISHED) {
 											websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_cycle\"}", 1);
