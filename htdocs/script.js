@@ -52,6 +52,7 @@ function Connection()
 
 				switch (jmsg['cmd']) {
 					case 'hello':
+						loginbox_display(1);
 						break;
 					case 'login':
 						if (jmsg['res'] == 'success') {
