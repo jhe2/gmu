@@ -810,6 +810,8 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				}
 			} else if (strcmp(cmd, "pause") == 0) {
 				gmu_core_pause();
+			} else if (strcmp(cmd, "play_pause") == 0) {
+				gmu_core_play_pause();
 			} else if (strcmp(cmd, "next") == 0) {
 				gmu_core_next();
 			} else if (strcmp(cmd, "prev") == 0) {
