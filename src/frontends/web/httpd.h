@@ -23,9 +23,9 @@
 #define MAX_CONNECTIONS              (100)
 #define CONNECTION_TYPE_HTTP         (1)
 #define CONNECTION_TYPE_WEBSOCKET    (2)
-#define CONNECTION_TIMEOUT_HTTP      (5)
+#define CONNECTION_TIMEOUT_HTTP      (10)
 #define CONNECTION_TIMEOUT_WEBSOCKET (30)
-#define CHUNK_SIZE (4000)
+#define CHUNK_SIZE (1300)
 
 typedef enum ConnectionState {
 	HTTP_NEW, HTTP_IDLE, HTTP_BUSY, HTTP_CLOSED,
