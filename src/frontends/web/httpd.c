@@ -122,7 +122,6 @@ static char *get_next_key_value_pair(char *str, char *key, int key_len, char *va
 		/* extract value */
 		i = 0;
 		while (str[sc] == ' ' || str[sc] == '\t') sc++; /* skip spaces after ":" */
-		//if (ch != '\r' && ch != '\n') value[i++] = ch;
 		ch = ' ';
 		while (ch != '\r' && ch != '\n' && ch != '\0') {
 			ch = str[sc++];
@@ -133,7 +132,6 @@ static char *get_next_key_value_pair(char *str, char *key, int key_len, char *va
 	return str+sc+1;
 }
 
-//static int connection_counter = 0;
 static Connection connection[MAX_CONNECTIONS];
 
 static int server_running = 0;
@@ -153,7 +151,7 @@ static sighandler_t my_signal(int sig_nr, sighandler_t signalhandler)
 }
 
 static void websocket_send_string(Connection *c, char *str)
-{	
+{
 	if (str) {
 		websocket_send_str(c->fd, str, 0);
 		connection_reset_timeout(c);
@@ -919,7 +917,6 @@ static void webserver_main_loop(int listen_fd)
 					if (rfd >= 0) {
 						FD_SET(rfd, &the_state); /* add new client */
 						if (rfd > maxfd) maxfd = rfd;
-						//connection_counter++;
 						connection_init(&(connection[con_num]), rfd);
 						wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: ++\n", con_num);
 					}
@@ -961,11 +958,9 @@ static void webserver_main_loop(int listen_fd)
 				/* Read message from client */
 				msgbuf[MAXLEN] = '\0';
 				msgbuflen = sizeof(msgbuf);
-				//memset(msgbuf, 0, MAXLEN);
 				ret = tcp_server_read(rfd, msgbuf, &msgbuflen);
 				if (ret == ERROR) {
 					FD_CLR(rfd, &the_state); /* remove dead client */
-					//connection_counter--;
 					wdprintf(V_DEBUG, "httpd", "Connection count: --\n");
 				} else {
 					int len = msgbuflen;
@@ -1037,7 +1032,6 @@ static void webserver_main_loop(int listen_fd)
 					FD_CLR(rfd, &the_state);
 					close(rfd);
 					connection_close(&(connection[conn_num]));
-					//connection_counter--;
 					wdprintf(V_DEBUG, "httpd", "Connection count: -- (idle)\n");
 				}
 			}
