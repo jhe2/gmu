@@ -57,6 +57,7 @@ function Connection()
 						if (jmsg['res'] == 'success') {
 							loginbox_display(0);
 							con.do_send('{"cmd":"trackinfo"}');
+							con.do_send('{"cmd":"playlist_playmode_get_info"}');
 						}
 						break;
 					case 'time':
