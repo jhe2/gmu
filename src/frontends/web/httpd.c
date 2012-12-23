@@ -268,8 +268,8 @@ int connection_file_read_chunk(Connection *c)
 		char blob[CHUNK_SIZE];
 		if (c->fd && c->local_file && c->remaining_bytes_to_send > 0) {
 			int size = CHUNK_SIZE;
-			wdprintf(V_DEBUG, "httpd", "Connection: Reading chunk of data...\n");
 			if (c->remaining_bytes_to_send < CHUNK_SIZE) size = c->remaining_bytes_to_send;
+			wdprintf(V_DEBUG, "httpd", "Connection %d: Reading chunk of data: %d bytes\n", c->fd, size);
 			// read CHUNK_SIZE bytes from file
 			fread(blob, size, 1, c->local_file);
 			// write bytes to socket
