@@ -115,6 +115,11 @@ function Connection()
 							}
 						}
 						break;
+					case 'playback_time':
+						min = parseInt((jmsg['time'] / 1000) / 60);
+						sec = parseInt((jmsg['time'] / 1000) - min * 60);
+						write_to_time_display(min + ':' + (sec < 10 ? '0' : '') + sec);
+						break;
 					default:
 						if (msg.data != undefined) write_to_screen('msg='+msg.data);
 						break;
