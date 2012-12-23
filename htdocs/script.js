@@ -23,7 +23,7 @@ function Connection()
 	this.socket = null;
 	this.disconnected = true;
 	this.start = function start(websocketServerLocation)
-	{	
+	{
 		if (typeof WebSocket != 'undefined')
 			this.socket = new WebSocket(websocketServerLocation);
 		else if (typeof MozWebSocket != 'undefined')
@@ -57,8 +57,8 @@ function Connection()
 					case 'login':
 						if (jmsg['res'] == 'success') {
 							loginbox_display(0);
-							con.do_send('{"cmd":"trackinfo"}');
-							con.do_send('{"cmd":"playlist_playmode_get_info"}');
+							c.do_send('{"cmd":"trackinfo"}');
+							c.do_send('{"cmd":"playlist_playmode_get_info"}');
 						}
 						break;
 					case 'time':
@@ -136,13 +136,12 @@ function Connection()
 
 	this.do_send = function do_send(message)
 	{
-		//write_to_screen("SENT: " + message);
 		if (this.socket) this.socket.send(message);
 	}
 
 	this.login = function login(password)
 	{
-		con.do_send('{"cmd":"login","password":"'+password+'"}');
+		c.do_send('{"cmd":"login","password":"'+password+'"}');
 	}
 }
 
@@ -222,7 +221,6 @@ function init_pl_table()
 	var pl = document.getElementById('pl');
 	var plt = document.getElementById("playlisttable");
 	var height = pl.clientHeight;
-	//write_to_time_display("height="+height);
 	pl_item_height = plt.clientHeight;
 	visible_pl_line_count = parseInt(height / pl_item_height) + 1;
 	for (i = 0; i < visible_pl_line_count; i++)
@@ -276,13 +274,13 @@ function handle_playlist_scroll()
 				con.do_send('{"cmd":"playlist_get_item","item":'+(first_visible_pl_line+i)+'}');
 		}
 	}
-	//write_to_screen("fvl="+first_visible_pl_line+" scrolltop="+document.getElementById('plscrollbar').scrollTop);
 }
 
 function handle_mouse_scroll_event(e)
 {
 	var evt = window.event || e; // equalize event object
-	var delta = evt.detail ? evt.detail * (-120) : evt.wheelDelta; // delta returns +120 when wheel is scrolled up, -120 when scrolled down
+	// delta returns +120 when wheel is scrolled up, -120 when scrolled down
+	var delta = evt.detail ? evt.detail * (-120) : evt.wheelDelta;
 	dir = (delta <= -120) ? 1 : -1;
 	pl_scroll_n_rows(dir);
 }
@@ -362,7 +360,8 @@ function handle_login(e)
 function init()
 {
 	con = new Connection();
-	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel"; // FF doesn't recognize mousewheel as of FF3.x
+	// FF doesn't recognize mousewheel as of FF3.x
+	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel";
 
 	document.onkeydown = handle_keypress;
 	add_event_handler('pl',          mwevt,    handle_mouse_scroll_event);
