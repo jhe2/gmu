@@ -635,16 +635,13 @@ static int process_command(int rfd, Connection *c)
 								file_okay = connection_file_open(c, filename);
 							}
 							if (file_okay) {
-								char time_str[26] = "";
+								int         time_ok = 0;
 								struct stat st;
-								if (stat(filename, &st) == 0) {
-									ctime_r(&(st.st_ctime), time_str);
-									printf("CREATION TIME: %s\n", time_str);
-								}
+								if (stat(filename, &st) == 0) time_ok = 1;
 								if (!head_only) connection_set_state(c, HTTP_BUSY);
 								send_http_header(rfd, "200",
 												 connection_get_number_of_bytes_to_send(c),
-												 &(st.st_ctime),
+												 time_ok ? &(st.st_ctime) : NULL,
 												 get_mime_type(resource));
 								if (head_only) connection_file_close(c);
 							} else { /* 404 */
