@@ -54,8 +54,10 @@ function Connection()
 					case 'hello':
 						break;
 					case 'login':
-						if (jmsg['res'] == 'success')
+						if (jmsg['res'] == 'success') {
 							loginbox_display(0);
+							con.do_send('{"cmd":"trackinfo"}');
+						}
 						break;
 					case 'time':
 						write_to_time_display(jmsg['time']);
