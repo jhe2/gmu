@@ -700,6 +700,11 @@ void gmu_http_playlist_get_item(int id, Connection *c)
 	             "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
 	             id, tmp_title ? tmp_title : "??", 0);
 	if (tmp_title) free(tmp_title);
+	if (r > 0 && !charset_is_valid_utf8_string(msg)) {
+		r = snprintf(msg, MSG_MAX_LEN,
+		             "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"(Invalid UTF-8)\", \"length\": %d }",
+		             id, 0);
+	}
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
