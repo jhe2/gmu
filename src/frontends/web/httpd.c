@@ -36,6 +36,7 @@
 #include "dir.h"
 #include "trackinfo.h"
 #include "wejpconfig.h"
+#include "charset.h"
 
 #define PASSWORD_MIN_LENGTH 9
 #define INDEX_FILE "gmu.html"
@@ -712,6 +713,13 @@ void gmu_http_get_current_trackinfo(Connection *c)
 	                  trackinfo_get_length_minutes(ti),
 	                  trackinfo_get_length_seconds(ti),
 	                  0);
+	if (r > 0 && !charset_is_valid_utf8_string(msg)) {
+		snprintf(msg, MSG_MAX_LEN,
+		         "{ \"cmd\": \"trackinfo\", \"artist\": \"(Invalid UTF-8)\", \"title\": \"(Invalid UTF-8)\", \"album\": \"(Invalid UTF-8)\", \"date\": \"(Invalid UTF-8)\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+		         trackinfo_get_length_minutes(ti),
+	             trackinfo_get_length_seconds(ti),
+	             0);
+	}
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
