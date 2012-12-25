@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: m3u.c  Created: 061018
  *
@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include "m3u.h"
 #include "debug.h"
+#include "charset.h"
 
 int m3u_open_file(M3u *m3u, char *filename)
 {
@@ -91,9 +92,15 @@ int m3u_read_next_item(M3u *m3u)
 			for (i = 8; i < 255 && buf[i] != ','; i++);
 			if (i < 255) { /* ok, we found a , that delimits length and title */
 				char *rn = NULL;
+				char  tmp_filename[256];
 				strncpy(mini_buffer, buf+8, i-8);
 				m3u->current_item_length = atoi(mini_buffer);
-				strncpy(m3u->current_item_title, buf+i+1, 255-i);
+				strncpy(tmp_filename, buf+i+1, 255-i);
+				if (charset_is_valid_utf8_string(tmp_filename))
+					strncpy(m3u->current_item_title, tmp_filename, 255);
+				else
+					charset_iso8859_1_to_utf8(m3u->current_item_title, tmp_filename, 255);
+
 				if ((rn = strrchr(m3u->current_item_title, '\n')) != NULL)
 					*rn = '\0';
 				if ((rn = strrchr(m3u->current_item_title, '\r')) != NULL)
