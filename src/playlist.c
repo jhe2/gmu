@@ -148,9 +148,15 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 		} else {
 			char *filename = strrchr(filename_with_path, '/')+1;
 			if (filename) {
-				char *buf = charset_filename_convert_alloc(filename);
+				char buf[256];
+				if (charset_is_valid_utf8_string(filename)) {
+					strncpy(buf, filename, 255);
+				} else {
+					if (!charset_iso8859_1_to_utf8(buf, filename, 255)) {
+						wdprintf(V_WARNING, "playlist", "ERROR: Failed to convert filename text to UTF-8.\n");
+					}
+				}
 				result = playlist_add_item(pl, filename_with_path, buf);
-				free(buf);
 			}
 		}
 	}
