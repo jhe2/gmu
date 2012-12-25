@@ -650,7 +650,6 @@ static int process_command(int rfd, Connection *c)
 								http_response_not_found(rfd, head_only);
 							}
 						}
-						free(host);
 					} else {
 						http_response_bad_request(rfd, head_only);
 					}
@@ -667,6 +666,7 @@ static int process_command(int rfd, Connection *c)
 			http_response_not_found(rfd, 0);
 		}
 
+		if (host) free(host);
 		if (str) free(str);
 		connection_free_request_header(c);
 	}
