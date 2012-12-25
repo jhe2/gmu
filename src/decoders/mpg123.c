@@ -161,6 +161,7 @@ static int mpg123_play_file(char *mpeg_file)
 		wdprintf(V_INFO, "mpg123", "Opening %s...\n", mpeg_file);
 		trackinfo_clear(&ti);
 		id3_read_tag(mpeg_file, &ti, "MP3");
+		trackinfo_set_updated(&ti);
 		/*strncpy(ti->file_name, mpeg_file, SIZE_FILE_NAME-1);*/
 
 		if (r) { /* Always use stream reader */
