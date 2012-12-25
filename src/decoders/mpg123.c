@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
  *
  * File: mpg123.c  Created: 090606
  *
@@ -24,6 +24,7 @@
 #include "../reader.h"
 #include "../wejpconfig.h"
 #include "../debug.h"
+#include "../charset.h"
 
 static mpg123_handle *player;
 static int            init = 0;
@@ -66,12 +67,16 @@ static int decode_data(char *target, int max_size)
 						wdprintf(V_DEBUG, "mpg123", "metadata: [%s]\n", metastr);
 						stream_title = strstr(metastr, "StreamTitle='");
 						if (stream_title && strlen(stream_title) > 13) {
-							char *tmp;
+							char *tmp, stitle_utf8[256];
 							stream_title += 13;
 							tmp = strstr(stream_title, "';");
 							if (tmp) tmp[0]  = '\0';
-							wdprintf(V_DEBUG, "mpg123", "stream_title=[%s]\n", stream_title);
-							trackinfo_set_title(&ti, stream_title);
+							if (charset_is_valid_utf8_string(stream_title))
+								strncpy(stitle_utf8, stream_title, 255);
+							else
+								charset_iso8859_1_to_utf8(stitle_utf8, stream_title, 255);
+							wdprintf(V_DEBUG, "mpg123", "stream_title=[%s]\n", stitle_utf8);
+							trackinfo_set_title(&ti, stitle_utf8);
 							trackinfo_set_updated(&ti);
 						}
 						free(metastr);
