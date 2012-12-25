@@ -18,6 +18,7 @@
 #include <string.h>
 #include "trackinfo.h"
 #include "charset.h"
+#include "debug.h"
 
 void trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
                    char *tracknr, long bitrate, int samplerate, int channels)
@@ -238,12 +239,15 @@ int trackinfo_load_lyrics_from_file(TrackInfo *ti, char *file_name)
 			read_counter = strlen(buffer);*/
 		}
 		fclose(file);
-		/* Try to convert UTF-8 to ISO-8859-1. If it fails, assume it is ISO-8859-1 already: */
-		if (!charset_utf8_to_iso8859_1(ti->lyrics, buffer, SIZE_LYRICS-1)) {
+		if (charset_is_valid_utf8_string(buffer)) {
 			strncpy(ti->lyrics, buffer, SIZE_LYRICS-1);
-			printf("(looks like ISO-8859-1) ");
-		} else {
-			printf("(looks like UTF-8) ");
+			wdprintf(V_DEBUG, "trackinfo", "Lyrics text looks like it is UTF-8 encoded.\n");
+		} else { /* Try to convert ISO-8859-1 to UTF-8. */
+			wdprintf(V_DEBUG, "trackinfo", "Lyrics text looks like it is ISO-8859-1 encoded.\n");
+			if (!charset_iso8859_1_to_utf8(ti->lyrics, buffer, SIZE_LYRICS-1)) {
+				wdprintf(V_WARNING, "trackinfo", "ERROR: Failed to convert lyrics text to UTF-8.\n");
+				snprintf(ti->lyrics, SIZE_LYRICS-1, "[Text file file with unknown encoding found.]");
+			}
 		}
 		ti->has_lyrics = 1;
 	} else {
