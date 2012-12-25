@@ -136,7 +136,14 @@ function Connection()
 
 	this.do_send = function do_send(message)
 	{
-		if (this.socket) this.socket.send(message);
+		if (this.socket) {
+			try {
+				this.socket.send(message);
+			} catch (e) {
+				this.disconnected = true;
+			}
+		
+		}
 	}
 
 	this.login = function login(password)
