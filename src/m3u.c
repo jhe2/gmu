@@ -125,7 +125,10 @@ int m3u_read_next_item(M3u *m3u)
 				*rn = '\0';
 			if (strlen(m3u->current_item_filename) > 0)
 				result = 1;
-			strncpy(m3u->current_item_title, m3u->current_item_filename, 255);
+			if (charset_is_valid_utf8_string(m3u->current_item_filename))
+				strncpy(m3u->current_item_title, m3u->current_item_filename, 255);
+			else
+				charset_iso8859_1_to_utf8(m3u->current_item_title, m3u->current_item_filename, 255);
 		}
 	}
 
