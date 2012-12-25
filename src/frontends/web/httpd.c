@@ -563,7 +563,11 @@ static int process_command(int rfd, Connection *c)
 				opts = get_next_key_value_pair(opts, key, 128, value, 256);
 				if (key[0]) {
 					wdprintf(V_DEBUG, "httpd", "key=[%s] value=[%s]\n", key, value);
-					if (strcasecmp(key, "Host") == 0) host = value; // not good, we need to copy the string!
+					if (strcasecmp(key, "Host") == 0 && value[0]) {
+						int len = strlen(value);
+						host = malloc(len+1);
+						if (host) memcpy(host, value, len+1);
+					}
 					if (strcasecmp(key, "Upgrade") == 0 && strcasecmp(value, "websocket") == 0)
 						websocket_upgrade = 1;
 					if (strcasecmp(key, "Connection") == 0 && strcasestr(value, "Upgrade"))
@@ -646,6 +650,7 @@ static int process_command(int rfd, Connection *c)
 								http_response_not_found(rfd, head_only);
 							}
 						}
+						free(host);
 					} else {
 						http_response_bad_request(rfd, head_only);
 					}
