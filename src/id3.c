@@ -342,7 +342,13 @@ int id3_read_tag(const char *filename, TrackInfo *ti, const char *file_type)
 
 		filename_without_path = charset_filename_convert_alloc(filename_without_path);
 		trackinfo_clear(ti);
-		strncpy(ti->title, filename_without_path, SIZE_TITLE-1);
+		if (charset_is_valid_utf8_string(filename_without_path)) {
+			strncpy(ti->title, filename_without_path, SIZE_TITLE-1);
+		} else {
+			if (!charset_iso8859_1_to_utf8(ti->title, filename_without_path, SIZE_TITLE-1)) {
+				wdprintf(V_WARNING, "id3", "ERROR: Failed to convert filename text to UTF-8.\n");
+			}
+		}
 		free(filename_without_path);
 		strncpy(ti->file_type, "MP3", SIZE_FILE_TYPE-1);
 		if (!(result = id3_read_id3v2(file, ti, file_type)))
