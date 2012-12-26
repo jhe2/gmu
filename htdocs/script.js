@@ -88,6 +88,7 @@ function Connection()
 					case 'playlist_change':
 						t = document.getElementById("playlisttable");
 						rows = jmsg['length'];
+						pl_set_number_of_items(jmsg['changed_at_position']);
 						pl_set_number_of_items(rows);
 						document.getElementById('tpl').innerHTML = 'Playlist ('+rows+')';
 						toggle_state = false;
