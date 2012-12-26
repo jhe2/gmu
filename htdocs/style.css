@@ -266,7 +266,7 @@ div.tabmenu {
 	position:absolute;
 	top:40%; left:40%;
 	width:20%;
-	height:20%;
+	height:100px;
 	text-align:center;
 }
 
