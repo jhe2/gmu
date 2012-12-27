@@ -116,8 +116,7 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 		}
 		if (result) {
 			entry->filename[255] = '\0';
-			strncpy(entry->name, name, 63);
-			entry->name[63] = '\0';
+			playlist_entry_set_name(entry, name);
 			entry->queue_pos = 0;
 			entry->next_in_queue = NULL;
 			pl->length++;
@@ -142,8 +141,11 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 	if (strncmp(filetype, "M3U", 3) != 0) {
 		if (file_player_read_tags(filename_with_path, filetype, &ti)) {
-			char temp[80];
-			trackinfo_get_full_title(&ti, temp, 79);
+			char temp[256];
+			trackinfo_get_full_title(&ti, temp, 255);
+			if (!charset_is_valid_utf8_string(temp)) {
+				wdprintf(V_WARNING, "playlist", "WARNING: Failed to create a valid UTF-8 title string. :(\n");
+			}
 			result = playlist_add_item(pl, filename_with_path, temp);
 		} else {
 			char *filename = strrchr(filename_with_path, '/')+1;
@@ -260,7 +262,8 @@ int playlist_insert_item_after(Playlist *pl, Entry *entry, char *file, char *nam
 		new_entry = malloc(sizeof(Entry));
 		if (new_entry) {
 			strncpy(new_entry->filename, file, 255);
-			strncpy(new_entry->name, name, 63);
+			new_entry->filename[255] = '\0';
+			playlist_entry_set_name(new_entry, name);
 			new_entry->played = 0;
 			new_entry->next_in_queue = NULL;
 			new_entry->prev = entry;
@@ -650,4 +653,17 @@ Entry *playlist_get_entry(Playlist *pl, int item)
 		}
 	}
 	return entry;
+}
+
+
+int playlist_entry_set_name(Entry *entry, char *name)
+{
+	int res = 0;
+	if (entry) {
+		strncpy(entry->name, name, PL_ENTRY_NAME_MAX_LENGTH-1);
+		entry->name[PL_ENTRY_NAME_MAX_LENGTH-1] = '\0';
+		charset_fix_broken_utf8_string(entry->name);
+		res = 1;
+	}
+	return res;
 }

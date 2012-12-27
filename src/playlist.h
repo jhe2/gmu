@@ -22,11 +22,13 @@ typedef enum PlayMode {
 
 typedef struct _Entry Entry;
 
+#define PL_ENTRY_NAME_MAX_LENGTH 64
+
 struct _Entry
 {
 	Entry *next, *prev;
 	char   filename[256];
-	char   name[64];
+	char   name[PL_ENTRY_NAME_MAX_LENGTH];
 	short  played;
 	int    queue_pos;
 	Entry *next_in_queue;
@@ -55,6 +57,7 @@ int      playlist_add_file(Playlist *pl, char *filename_with_path);
 int      playlist_insert_item_after(Playlist *pl, Entry *entry, char *file, char *name);
 int      playlist_insert_file_after(Playlist *pl, Entry *entry, char *filename_with_path);
 char    *playlist_get_name(Playlist *pl, int item);
+int      playlist_entry_set_name(Entry *entry, char *name);
 char    *playlist_get_filename(Playlist *pl, int item);
 int      playlist_get_length(Playlist *pl);
 int      playlist_next(Playlist *pl);
