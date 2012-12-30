@@ -289,6 +289,7 @@ static char *cmd_dir_read(UI *ui, JSON_Object *json)
 static void cmd_playmode_info(UI *ui, JSON_Object *json)
 {
 	cur_playmode = (int)json_get_number_value_for_key(json, "mode");
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
 int main(int argc, char **argv)
@@ -759,6 +760,7 @@ int main(int argc, char **argv)
 															case 2: str = "||"; break; /* paused */
 														}
 														strncpy(cur_status, str, 31);
+														ui_draw_header(&ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 													} else if (strcmp(cmd, "hello") == 0) {
 														char tmp[256];
 														snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
