@@ -753,7 +753,7 @@ void gmu_http_send_initial_information(Connection *c)
 	r = snprintf(msg, MSG_MAX_LEN,
 	             "{ \"cmd\": \"playback_state\", \"state\" : %d }",
 	             gmu_core_get_status());
-	if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
+	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
 #define MAX_LEN 32768
