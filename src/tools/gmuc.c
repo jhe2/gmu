@@ -191,7 +191,6 @@ static void cmd_trackinfo(UI *ui, JSON_Object *json)
 	strncpy(cur_artist, jv, 127);
 	jv = json_get_string_value_for_key(json, "title");
 	strncpy(cur_title, jv, 127);
-	strncpy(cur_status, "  ", 31);
 	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
