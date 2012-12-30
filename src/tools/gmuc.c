@@ -191,7 +191,7 @@ static void cmd_trackinfo(UI *ui, JSON_Object *json)
 	strncpy(cur_artist, jv, 127);
 	jv = json_get_string_value_for_key(json, "title");
 	strncpy(cur_title, jv, 127);
-	strncpy(cur_status, "playing", 31);
+	strncpy(cur_status, "  ", 31);
 	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
@@ -749,6 +749,16 @@ int main(int argc, char **argv)
 														cmd_trackinfo(&ui, json);
 													} else if (strcmp(cmd, "playback_time") == 0) {
 														cmd_playback_time_change(&ui, json);
+													} else if (strcmp(cmd, "playback_state") == 0) {
+														int state = json_get_number_value_for_key(json, "state");
+														char *str;
+														switch (state) {
+															default:
+															case 0: str = "  "; break; /* stopped */
+															case 1: str = "> "; break; /* play */
+															case 2: str = "||"; break; /* paused */
+														}
+														strncpy(cur_status, str, 31);
 													} else if (strcmp(cmd, "hello") == 0) {
 														char tmp[256];
 														snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
