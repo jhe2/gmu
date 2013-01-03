@@ -233,20 +233,20 @@ div.tabmenu {
 	width:100%;
 }
 
-#playlisttable {
+#playlisttable, #filebrowsertable {
 	table-layout:fixed;
 	position:absolute;
 	top:0; left:0; right:0px;
 	width:100%;
 }
 
-#playlisttable tr,td {
+#playlisttable tr,td, #filebrowsertable tr,td {
 	border:0;
 	margin:0;
 	padding:0;
 }
 
-#plscrollbar {
+#plscrollbar, #fbscrollbar {
 	overflow-y:auto;
 	overflow-x:hidden;
 	width:10px;
@@ -254,7 +254,7 @@ div.tabmenu {
 	top:0; right:0; bottom:0;
 }
 
-#plscrolldummy {
+#plscrolldummy, #fbscrolldummy {
 	height:10px;
 	width:1px;
 }

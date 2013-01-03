@@ -8,12 +8,12 @@
  * Description: HTTP/Websocket frontend
  */
 
-var visible_pl_line_count = 0, first_visible_pl_line = 0;
-var pl_item_height = 1;
 var pl = [];
+var dir;
 var selected_tab = 'pl';
 
 var con = null;
+var plt, fbt;
 
 window.onload = function() { init(); }
 
@@ -59,6 +59,9 @@ function Connection()
 							loginbox_display(0);
 							c.do_send('{"cmd":"trackinfo"}');
 							c.do_send('{"cmd":"playlist_playmode_get_info"}');
+							cur_dir = '/';
+							dir = undefined;
+							c.do_send('{"cmd":"dir_read","dir":"' + cur_dir + '"}');
 						}
 						break;
 					case 'time':
@@ -101,29 +104,29 @@ function Connection()
 						break;
 					case 'playlist_item':
 						pl[jmsg['position']] = jmsg['title'];
-						t = document.getElementById("playlisttable");
-						r = t.rows[jmsg['position']-first_visible_pl_line];
-						if (r) {
-							r.childNodes[0].innerHTML = jmsg['position'];
-							r.childNodes[1].innerHTML = "<a href=\"javascript:play("+jmsg['position']+");\">" + 
-										"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> " +
-										jmsg['title'] + "</a>";
-							r.childNodes[2].innerHTML = '?';
-							for (i = 0; i <= visible_pl_line_count; i++) {
-								pos = jmsg['position']+1+i;
-								if (pos < pl.length && !pl[pos]) {
-									c.do_send('{"cmd":"playlist_get_item","item":'+pos+'}');
-									break;
-								} else if (pos >= pl.length) {
-									break;
-								}
-							}
-						}
+						if (jmsg['position']-plt.first_visible_line >= 0)
+							plt.set_row_data(jmsg['position']-plt.first_visible_line);
 						break;
 					case 'playback_time':
 						min = parseInt((jmsg['time'] / 1000) / 60);
 						sec = parseInt((jmsg['time'] / 1000) - min * 60);
 						write_to_time_display(min + ':' + (sec < 10 ? '0' : '') + sec);
+						break;
+					case 'dir_read':
+						if (jmsg['res'] == 'ok') {
+							cur_dir = jmsg['path'];
+							dir = jmsg['data'];
+							for (i = 0; dir[i]; i++) {
+								fb[i] = dir[i]['name'];
+								write_to_screen('file'+i+'='+dir[i]['name']);
+							}
+							fbt.set_length(0);
+							fbt.set_length(i);
+							for (i = 0; i <= fbt.visible_line_count; i++) {
+								fbt.set_row_data(i);
+							}
+							handle_fb_scroll();
+						}
 						break;
 					default:
 						if (msg.data != undefined) write_to_screen('msg='+msg.data);
@@ -150,6 +153,93 @@ function Connection()
 	this.login = function login(password)
 	{
 		c.do_send('{"cmd":"login","password":"'+password+'"}');
+	}
+}
+
+function GmuList()
+{
+	gl = this;
+	this.baz = null;
+	this.visible_line_count = 0;
+	this.first_visible_line = 0;
+	this.item_height = 1;
+	this.table_elem_id = undefined;
+	this.scrollbar_elem_id = undefined;
+	this.func_get_data = undefined;
+	this.func_item_construct = undefined;
+	this.length = 0;
+	this.table_elem = undefined;
+
+	this.init = function(div_elem_id, table_elem_id, scrollbar_elem_id, scrolldummy_elem_id,
+	                     func_get_data, func_item_construct, func_need_data)
+	{
+		this.table_elem_id = table_elem_id;
+		this.scrollbar_elem_id = scrollbar_elem_id;
+		this.scrolldummy_elem_id = scrolldummy_elem_id;
+		this.func_get_data = func_get_data;
+		this.func_item_construct = func_item_construct;
+		this.func_need_data = func_need_data;
+		this.table_elem = document.getElementById(table_elem_id);
+		this.table_elem.innerHTML = '';
+		add_row(table_elem_id, '?', '?', '?', '#111');
+		select_tab(div_elem_id);
+		var div_elem = document.getElementById(div_elem_id);
+		var height = div_elem.clientHeight;
+		this.item_height = this.table_elem.clientHeight;
+		this.visible_line_count = parseInt(height / this.item_height) + 1;
+		for (i = 0; i < this.visible_line_count; i++)
+			add_row(table_elem_id, '', '?', '', '#111');
+	}
+
+	/* ros is the number of the visible row -> first visible row=0 */
+	this.set_row_data = function(row)
+	{
+		if ((r = this.table_elem.rows[row])) {
+			for (col = 0; col < 3; col++) {
+				r.childNodes[col].innerHTML = (this.func_item_construct !== undefined) ?
+				                              this.func_item_construct(this.first_visible_line+row, col) : '';
+			}
+		}
+	}
+
+	this.handle_scroll = function()
+	{
+		this.first_visible_line = parseInt(document.getElementById(this.scrollbar_elem_id).scrollTop / this.item_height);
+		for (i = 0; i <= this.visible_line_count; i++) {
+			if (this.func_need_data === undefined || !this.func_need_data(this.first_visible_line+i)) {
+				this.set_row_data(i);
+			} else {
+				var j = i;
+				do {
+					if (this.func_need_data !== undefined && this.func_need_data(this.first_visible_line+j) && 
+					    (r = this.table_elem.rows[j])) {
+						if (this.first_visible_line+j+1 < this.length) {
+							r.childNodes[0].innerHTML = this.first_visible_line+j+1;
+							r.childNodes[1].innerHTML = '?';
+							r.childNodes[2].innerHTML = '?';
+						} else {
+							r.childNodes[0].innerHTML = '';
+							r.childNodes[1].innerHTML = '';
+							r.childNodes[2].innerHTML = '';
+						}
+					}
+					j++;
+				} while (j <= this.visible_line_count);
+				if (this.first_visible_line+i < this.length && this.func_get_data !== undefined)
+					this.func_get_data(this.first_visible_line+i);
+			}
+		}
+	}
+
+	this.scroll_n_rows = function(n)
+	{
+		document.getElementById(this.scrollbar_elem_id).scrollTop += (20 * n);
+	}
+
+	this.set_length = function(items)
+	{
+		this.length = items;
+		document.getElementById(this.scrolldummy_elem_id).style.height = "" + (items*this.item_height) + "px";
 	}
 }
 
@@ -219,20 +309,7 @@ function play(id)
 function pl_set_number_of_items(items)
 {
 	pl.length = rows;
-	document.getElementById("plscrolldummy").style.height = "" + (items*pl_item_height) + "px";
-}
-
-function init_pl_table()
-{
-	document.getElementById("playlisttable").innerHTML = '';
-	add_row("playlisttable", '?', '?', '?', '#111');
-	var pl = document.getElementById('pl');
-	var plt = document.getElementById("playlisttable");
-	var height = pl.clientHeight;
-	pl_item_height = plt.clientHeight;
-	visible_pl_line_count = parseInt(height / pl_item_height) + 1;
-	for (i = 0; i < visible_pl_line_count; i++)
-		add_row("playlisttable", '', '?', '', '#111');
+	plt.set_length(items);
 }
 
 function add_event_handler(elem_id, event, event_handler)
@@ -244,44 +321,14 @@ function add_event_handler(elem_id, event, event_handler)
 		elem.addEventListener(event, event_handler, false);
 }
 
-function pl_scroll_n_rows(n)
-{
-	document.getElementById('plscrollbar').scrollTop += (20 * n);
-}
-
 function handle_playlist_scroll()
 {
-	first_visible_pl_line = parseInt(document.getElementById('plscrollbar').scrollTop / pl_item_height);
-	t = document.getElementById("playlisttable");
-	for (i = 0; i <= visible_pl_line_count; i++) {
-		if (pl[first_visible_pl_line+i]) {
-			if ((r = t.rows[i])) {
-				r.childNodes[0].innerHTML = first_visible_pl_line+i;
-				r.childNodes[1].innerHTML = "<a href=\"javascript:play("+(first_visible_pl_line+i)+");\">" + 
-							"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> " +
-							pl[first_visible_pl_line+i] + "</a>";
-				r.childNodes[2].innerHTML = '?';
-			}
-		} else {
-			var j = i;
-			do {
-				if (!pl[first_visible_pl_line+j] && (r = t.rows[j])) {
-					if (first_visible_pl_line+j+1 < pl.length) {
-						r.childNodes[0].innerHTML = first_visible_pl_line+j+1;
-						r.childNodes[1].innerHTML = '?';
-						r.childNodes[2].innerHTML = '?';
-					} else {
-						r.childNodes[0].innerHTML = '';
-						r.childNodes[1].innerHTML = '';
-						r.childNodes[2].innerHTML = '';
-					}
-				}
-				j++;
-			} while (j <= visible_pl_line_count);
-			if (first_visible_pl_line+i < pl.length)
-				con.do_send('{"cmd":"playlist_get_item","item":'+(first_visible_pl_line+i)+'}');
-		}
-	}
+	plt.handle_scroll();
+}
+
+function handle_fb_scroll()
+{
+	fbt.handle_scroll();
 }
 
 function handle_mouse_scroll_event(e)
@@ -289,8 +336,15 @@ function handle_mouse_scroll_event(e)
 	var evt = window.event || e; // equalize event object
 	// delta returns +120 when wheel is scrolled up, -120 when scrolled down
 	var delta = evt.detail ? evt.detail * (-120) : evt.wheelDelta;
-	dir = (delta <= -120) ? 1 : -1;
-	pl_scroll_n_rows(dir);
+	direction = (delta <= -120) ? 1 : -1;
+	switch (selected_tab) {
+		case 'pl':
+			plt.scroll_n_rows(direction);
+			break;
+		case 'fb':
+			fbt.scroll_n_rows(direction);
+			break;
+	}
 }
 
 function handle_btn_next(e)
@@ -342,9 +396,15 @@ function handle_keypress(e)
 	switch (selected_tab) {
 		case 'pl':
 			if (e.keyCode == 40)      // Cursor down
-				pl_scroll_n_rows(1);
+				plt.scroll_n_rows(1);
 			else if (e.keyCode == 38) // Cursor up
-				pl_scroll_n_rows(-1);
+				plt.scroll_n_rows(-1);
+			break;
+		case 'fb':
+			if (e.keyCode == 40)      // Cursor down
+				fbt.scroll_n_rows(1);
+			else if (e.keyCode == 38) // Cursor up
+				fbt.scroll_n_rows(-1);
 			break;
 		default:
 			break;
@@ -365,28 +425,112 @@ function handle_login(e)
 	return false;
 }
 
+function pl_item_row_construct(item, col)
+{
+	var res;
+	switch (col) {
+		default:
+		case 0:
+			res = item;
+			break;
+		case 1:
+			res = "<a href=\"javascript:play("+item+");\">"+
+				"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> "+
+				pl[item]+"</a>";
+			break;
+		case 2:
+			res = '';
+			break;
+	}
+	return res;
+}
+
+function pl_need_data(row)
+{
+	return pl[row] === undefined;
+}
+
+function fb_item_row_construct(item, col)
+{
+	var res;
+	switch (col) {
+		default:
+		case 0:
+			if (dir[item] !== undefined)
+				res = dir[item]['is_dir'] ? '[DIR]' : parseInt(dir[item]['size'] / 1024);
+			else
+				res = '';
+			break;
+		case 1:
+			if (dir[item] !== undefined)
+				res = dir[item]['is_dir'] ?
+				      "<a href=\"javascript:open_dir('"+cur_dir+'/'+dir[item]['name']+"');\">" + dir[item]['name'] + "</a>" :
+				      "<a href=\"javascript:add_file('"+cur_dir+'/'+dir[item]['name']+"');\">" + dir[item]['name'] + "</a>";
+			else
+				res = '';
+			break;
+		case 2:
+			res = '';
+			break;
+	}
+	return res;
+}
+
+function open_dir(path)
+{
+	c.do_send('{"cmd":"dir_read","dir":"' + path + '"}');
+}
+
 function init()
 {
 	con = new Connection();
+	plt = new GmuList();
+	plt.init('pl', 'playlisttable', 'plscrollbar', 'plscrolldummy',
+	         function(item)
+	         {
+				 con.do_send('{"cmd":"playlist_get_item","item":'+item+'}');
+	         },
+	         pl_item_row_construct,
+	         pl_need_data
+	);
+
+	fbt = new GmuList();
+	fbt.init('fb', 'filebrowsertable', 'fbscrollbar', 'fbscrolldummy',
+	         undefined,
+	         fb_item_row_construct
+	);
 	// FF doesn't recognize mousewheel as of FF3.x
 	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel";
 
 	document.onkeydown = handle_keypress;
 	add_event_handler('pl',          mwevt,    handle_mouse_scroll_event);
+	add_event_handler('fb',          mwevt,    handle_mouse_scroll_event);
 	add_event_handler('btn-next',    'click',  handle_btn_next);
 	add_event_handler('btn-prev',    'click',  handle_btn_prev);
 	add_event_handler('btn-play',    'click',  handle_btn_play);
 	add_event_handler('btn-pause',   'click',  handle_btn_pause);
 	add_event_handler('btn-stop',    'click',  handle_btn_stop);
 	add_event_handler('plscrollbar', 'scroll', handle_playlist_scroll);
+	add_event_handler('fbscrollbar', 'scroll', handle_fb_scroll);
 	add_event_handler('tfb',         'click',  handle_tab_select_fb);
 	add_event_handler('tpl',         'click',  handle_tab_select_pl);
 	add_event_handler('tlo',         'click',  handle_tab_select_log);
 	add_event_handler('btn-login',   'click',  handle_login);
-	init_pl_table();
 	con.start("ws://" + document.location.host + "/gmu");
 	window.onresize = function(event) {
-		init_pl_table();
+		plt.init('pl', 'playlisttable', 'plscrollbar', 'plscrolldummy',
+			 function(item)
+			 {
+				con.do_send('{"cmd":"playlist_get_item","item":'+item+'}');
+			 },
+			 pl_item_row_construct,
+			 pl_need_data
+		);
+		fbt.init('fb', 'filebrowsertable', 'fbscrollbar', 'fbscrolldummy',
+			undefined,
+			fb_item_row_construct
+		);
 		handle_playlist_scroll();
+		handle_fb_scroll();
 	}
 }
