@@ -246,57 +246,51 @@ char *dir_get_path(Dir *dir)
  * new directory */
 char *dir_get_new_dir_alloc(char *current_dir, char *new_dir)
 {
-	char *new_dir_full = NULL;
+	char *new_dir_full = NULL, *new_dir_temp;
 	if (current_dir && new_dir) {
 		int len = 0, len_new_dir, len_current_dir;
 		
 		len_new_dir = strlen(new_dir);
 		len_current_dir = strlen(current_dir);
 		if (new_dir[0] != '/') { /* no absolute path given */
-			len = len_current_dir + len_new_dir + 2; /* maxmimum length possibly needed */
+			len = len_current_dir + len_new_dir + 1; /* maxmimum length possibly needed */
 		} else { /* absolute path given */
-			len = len_new_dir + 2;
+			len = len_new_dir + 1;
 		}
 		wdprintf(V_DEBUG, "dir", "len total=%d len cur=%d len new=%d\n", len, len_current_dir, len_new_dir);
 		if (len > 0) {
-			int i;
-			new_dir_full = malloc(len);
-			if (new_dir_full) {
+			new_dir_full = malloc(len+1);
+			new_dir_temp = malloc(len+1);
+			if (new_dir_full && new_dir_temp) {
+				int s, t;
 				if (new_dir[0] != '/') { /* no absolute path given */
-					int j;
-					memcpy(new_dir_full, current_dir, len_current_dir+1);
-					if (new_dir_full[len_current_dir-1] != '/') {
-						new_dir_full[len_current_dir] = '/';
-						new_dir_full[len_current_dir+1] = '\0';
-						len_current_dir++;
-					} else {
-						new_dir_full[len_current_dir] = '\0';
-					}
-					j = strlen(new_dir_full) - 1;
-					for (i = 0; i < len_new_dir; i++) {
-						if (new_dir[i] == '.' && i < len_new_dir-1 && new_dir[i+1] == '.' &&
-							(new_dir[i+2] == '\0' || new_dir[i+2] == '/') &&
-							((i > 1 && new_dir[i-1] == '/') || i == 0)) {
-							/* Remove last directory from full path */
-							while (j > 1 && new_dir_full[j-1] != '/') j--;
-							if (j > 0) j--;
-							new_dir_full[j] = '\0';
-							i++;
-						} else if (new_dir[0] == '.' && new_dir[1] == '\0') {
-							/* do nothing */
-						} else { /* Concatenate character */
-							new_dir_full[j+1] = new_dir[i];
-							new_dir_full[j+2] = '\0';
-							j++;
-						}
-					}
+					memcpy(new_dir_temp, current_dir, len_current_dir);
+					memcpy(new_dir_temp+len_current_dir, new_dir, len_new_dir+1);
 				} else { /* absolute path given */
-					int size = strlen(new_dir);
-					if (size > 0) {
-						memcpy(new_dir_full, new_dir, size);
-						new_dir_full[size] = '\0';
-					}
+					memcpy(new_dir_temp, new_dir, len_new_dir+1);
 				}
+				/* At this point new_dir_temp contains an absolute, but 
+				 * possibly unsafe and unneccessarily long path (could 
+				 * contain "..") */
+				wdprintf(V_DEBUG, "dir", "path='%s'\n", new_dir_temp);
+				/* Convert path such that it has the shortest possible
+				 * form of an absolute path */
+				for (s = 0, t = 0; s < len; s++) {
+					if (new_dir_temp[s]    == '/' && s < len-3 && 
+					    new_dir_temp[s+1]  == '.' && new_dir_temp[s+2] == '.' &&
+					    (new_dir_temp[s+3] == '/' || new_dir_temp[s+3] == '\0')) {
+						s += 2;
+						/* Remove last directory from full path */
+						while (t > 1 && new_dir_full[t-1] != '/') t--;
+						if (t > 0) t--;
+						continue;
+					}
+					/* Concatenate character */
+					new_dir_full[t] = new_dir_temp[s];
+					new_dir_full[t+1] = '\0';
+					t++;
+				}
+
 				/* Attach / at the end, if missing */
 				{
 					int size = strlen(new_dir_full);
@@ -306,6 +300,7 @@ char *dir_get_new_dir_alloc(char *current_dir, char *new_dir)
 					}
 				}
 			}
+			free(new_dir_temp);
 		}
 	}
 	return new_dir_full;
