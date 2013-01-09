@@ -775,10 +775,14 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 	if (dir_read(&dir, directory, 1)) {
 		int i = 0, num_files = dir_get_number_of_files(&dir);
 		while (i < num_files) {
-			char res[MAX_LEN], *jpath;
+			char res[MAX_LEN], *jpath = NULL, *spath;
 			int  pos;
 
-			jpath = json_string_escape_alloc(directory);
+			spath = dir_get_new_dir_alloc("/", directory);
+			if (spath) {
+				jpath = json_string_escape_alloc(spath);
+				free(spath);
+			}
 			if (jpath) {
 				snprintf(res, MAX_LEN, "{ \"cmd\": \"dir_read\", \"res\": \"ok\", \"path\": \"%s\", \"data\": {", jpath);
 				free(jpath);

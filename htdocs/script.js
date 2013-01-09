@@ -464,8 +464,8 @@ function fb_item_row_construct(item, col)
 		case 1:
 			if (dir[item] !== undefined)
 				res = dir[item]['is_dir'] ?
-				      "<a href=\"javascript:open_dir('"+cur_dir+'/'+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>" :
-				      "<a href=\"javascript:add_file('"+cur_dir+'/'+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>";
+				      "<a href=\"javascript:open_dir('"+cur_dir+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>" :
+				      "<a href=\"javascript:add_file('"+cur_dir+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>";
 			else
 				res = '';
 			break;
