@@ -248,7 +248,7 @@ function write_to_screen(message)
 	var output = document.getElementById('log');
 	var pre = document.createElement("p");
 	pre.style.wordWrap = "break-word";
-	pre.innerHTML = message;
+	pre.innerHTML = html_entity_encode(message);
 	output.appendChild(pre);
 }
 
@@ -263,9 +263,9 @@ function write_to_time_display(message)
 
 function set_trackinfo(artist, title, album)
 {
-	document.getElementById('ti-artist').innerHTML = artist;
-	document.getElementById('ti-title').innerHTML  = title;
-	document.getElementById('ti-album').innerHTML  = album;
+	document.getElementById('ti-artist').innerHTML = html_entity_encode(artist);
+	document.getElementById('ti-title').innerHTML  = html_entity_encode(title);
+	document.getElementById('ti-album').innerHTML  = html_entity_encode(album);
 }
 
 function select_tab(tab_id)
@@ -436,7 +436,7 @@ function pl_item_row_construct(item, col)
 		case 1:
 			res = "<a href=\"javascript:play("+item+");\">"+
 				"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> "+
-				pl[item]+"</a>";
+				html_entity_encode(pl[item])+"</a>";
 			break;
 		case 2:
 			res = '';
@@ -464,8 +464,8 @@ function fb_item_row_construct(item, col)
 		case 1:
 			if (dir[item] !== undefined)
 				res = dir[item]['is_dir'] ?
-				      "<a href=\"javascript:open_dir('"+cur_dir+'/'+dir[item]['name']+"');\">" + dir[item]['name'] + "</a>" :
-				      "<a href=\"javascript:add_file('"+cur_dir+'/'+dir[item]['name']+"');\">" + dir[item]['name'] + "</a>";
+				      "<a href=\"javascript:open_dir('"+cur_dir+'/'+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>" :
+				      "<a href=\"javascript:add_file('"+cur_dir+'/'+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>";
 			else
 				res = '';
 			break;
@@ -479,6 +479,16 @@ function fb_item_row_construct(item, col)
 function open_dir(path)
 {
 	c.do_send('{"cmd":"dir_read","dir":"' + path + '"}');
+}
+
+function html_entity_encode(str)
+{
+	var str = str.replace(/\&/g,'&amp;');
+	str = str.replace(/</g,'&lt;');
+	str = str.replace(/>/g,'&gt;');
+	str = str.replace(/\'/g,'&#039;');
+	str = str.replace(/\"/g,'&quot;');
+	return str;
 }
 
 function init()
