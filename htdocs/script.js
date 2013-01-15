@@ -481,6 +481,16 @@ function open_dir(path)
 	c.do_send('{"cmd":"dir_read","dir":"' + path + '"}');
 }
 
+function add_file(path)
+{
+	c.do_send('{"cmd":"playlist_add","path":"' + path + '","type":"file"}');
+}
+
+function add_dir(path)
+{
+	c.do_send('{"cmd":"playlist_add","path":"' + path + '","type":"dir"}');
+}
+
 function html_entity_encode(str)
 {
 	var str = str.replace(/\&/g,'&amp;');
