@@ -435,8 +435,7 @@ function pl_item_row_construct(item, col)
 			break;
 		case 1:
 			res = "<a href=\"javascript:play("+item+");\">"+
-				"<img src=\"music.png\" width=\"16\" height=\"16\" alt=\"\" border=\"0\" /> "+
-				html_entity_encode(pl[item])+"</a>";
+			      html_entity_encode(pl[item])+"</a>";
 			break;
 		case 2:
 			res = '';
