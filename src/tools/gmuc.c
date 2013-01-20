@@ -800,10 +800,7 @@ int main(int argc, char **argv)
 												}
 											} else {
 												wprintw(ui.win_cmd->win, "ERROR: Invalid JSON data received.\n");
-												endwin();
-												wdprintf_set_verbosity(V_DEBUG);
 												json = json_parse_alloc(payload);
-												wdprintf(V_ERROR, "gmuc", "ERROR: Invalid JSON data received.\n");exit(1);
 												network_error = 1;
 											}
 											json_object_free(json);
