@@ -251,7 +251,7 @@ div.tabmenu {
 	overflow-x:hidden;
 	width:10px;
 	position:absolute;
-	top:0; right:0; bottom:0;
+	top:0; right:0; bottom:10px;
 }
 
 #plscrolldummy, #fbscrolldummy {
@@ -272,4 +272,15 @@ div.tabmenu {
 
 #loginbox h2 {
 	margin:2px;
+}
+
+.controls {
+	width:100%;
+	height:35px;
+}
+
+table, tr, td {
+	border:0;
+	padding:0;
+	margin:0;
 }

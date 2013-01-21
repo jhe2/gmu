@@ -183,6 +183,7 @@ function GmuList()
 		this.table_elem.innerHTML = '';
 		add_row(table_elem_id, '?', '?', '?', '#111');
 		select_tab(div_elem_id);
+		div_elem_id = div_elem_id + 'x';
 		var div_elem = document.getElementById(div_elem_id);
 		var height = div_elem.clientHeight;
 		this.item_height = this.table_elem.clientHeight;
@@ -372,6 +373,11 @@ function handle_btn_stop(e)
 	con.do_send('{"cmd":"stop"}');
 }
 
+function handle_btn_clear(e)
+{
+	con.do_send('{"cmd":"playlist_clear"}');
+}
+
 function handle_tab_select_fb(e)
 {
 	var evt = window.event || e;
@@ -535,6 +541,7 @@ function init()
 	add_event_handler('tpl',         'click',  handle_tab_select_pl);
 	add_event_handler('tlo',         'click',  handle_tab_select_log);
 	add_event_handler('btn-login',   'click',  handle_login);
+	add_event_handler('btn-pl-clear','click',  handle_btn_clear);
 	con.start("ws://" + document.location.host + "/gmu");
 	window.onresize = function(event) {
 		plt.init('pl', 'playlisttable', 'plscrollbar', 'plscrolldummy',

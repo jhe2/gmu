@@ -41,8 +41,8 @@
 					<li class="ina tabitem" id="tlo">Log</li>
 				</ul>
 			</div>
-			<div class="tab" id="fb" style="display:none; overflow:auto;">
-				<div style="overflow:hidden;">
+			<div class="tab" id="fb" style="display:none; overflow:hidden;">
+				<div id="fbx" style="overflow:hidden; height:100%;">
 					<table id="filebrowsertable" class="list"></table>
 					<div id="fbscrollbar">
 						<div id="fbscrolldummy"> </div>
@@ -50,12 +50,23 @@
 				</div>
 			</div>
 			<div class="tab" id="pl" style="overflow:hidden;">
-				<div style="overflow:hidden;">
-					<table id="playlisttable" class="list"></table>
-					<div id="plscrollbar">
-						<div id="plscrolldummy"> </div>
-					</div>
-				</div>
+				<table style="width:100%; height:100%; margin:0; padding:0; cell-spacing:0; border:0;">
+					<tr><td style="height:35px;">
+						<div class="controls">
+							<div id="btn-pl-clear" class="button">Clear</div>
+						</div>
+					</td></tr>
+					<tr><td style="height:100%;">
+						<div id="plx" style="overflow:hidden; width:100%; height:100%; border:0; margin:0; padding:0;">
+							<div style="position:relative; height:100%; overflow:hidden;">
+								<table id="playlisttable" class="list"></table>
+								<div id="plscrollbar">
+									<div id="plscrolldummy"> </div>
+								</div>
+							</div>
+						</div>
+					</td></tr>
+				</table>
 			</div>
 			<div class="tab" id="lo" style="display:none; overflow:auto;">
 				<div id="log">
