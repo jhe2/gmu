@@ -297,15 +297,26 @@ int playlist_insert_file_after(Playlist *pl, Entry *entry, char *filename_with_p
 	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 	if (strncmp(filetype, "M3U", 3) != 0) {
 		if (file_player_read_tags(filename_with_path, filetype, &ti)) {
-			char temp[80];
-			trackinfo_get_full_title(&ti, temp, 79);
-			result = playlist_insert_item_after(pl, entry, filename_with_path, temp);
+			char temp[256];
+			trackinfo_get_full_title(&ti, temp, 255);
+			if (!charset_is_valid_utf8_string(temp)) {
+				wdprintf(V_WARNING, "playlist", "WARNING: Failed to create a valid UTF-8 title string. :(\n");
+			} else {
+				result = playlist_insert_item_after(pl, entry, filename_with_path, temp);
+			}
 		} else {
 			char *filename = strrchr(filename_with_path, '/')+1;
 			if (filename) {
-				char *buf = charset_filename_convert_alloc(filename);
+				char buf[256];
+				if (charset_is_valid_utf8_string(filename)) {
+					strncpy(buf, filename, 255);
+				} else {
+					if (!charset_iso8859_1_to_utf8(buf, filename, 255)) {
+						wdprintf(V_WARNING, "playlist", "ERROR: Failed to convert filename text to UTF-8.\n");
+						snprintf(buf, 255, "[Filename with unsupported encoding]");
+					}
+				}
 				result = playlist_insert_item_after(pl, entry, filename_with_path, buf);
-				free(buf);
 			}
 		}
 	}
