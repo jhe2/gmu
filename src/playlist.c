@@ -145,8 +145,9 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 			trackinfo_get_full_title(&ti, temp, 255);
 			if (!charset_is_valid_utf8_string(temp)) {
 				wdprintf(V_WARNING, "playlist", "WARNING: Failed to create a valid UTF-8 title string. :(\n");
+			} else {
+				result = playlist_add_item(pl, filename_with_path, temp);
 			}
-			result = playlist_add_item(pl, filename_with_path, temp);
 		} else {
 			char *filename = strrchr(filename_with_path, '/')+1;
 			if (filename) {
