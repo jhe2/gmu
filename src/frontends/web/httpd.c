@@ -892,7 +892,7 @@ static void webserver_main_loop(int listen_fd)
 {
 	fd_set the_state;
 	int    maxfd;
-	int    rb_ok = 1;
+	int    rb_ok = 1, i;
 
 	FD_ZERO(&the_state);
 	FD_SET(listen_fd, &the_state);
@@ -1052,6 +1052,8 @@ static void webserver_main_loop(int listen_fd)
 		if (websocket_msg) free(websocket_msg);
 	}
 	queue_free(&queue);
+	for (i = 0; i < MAX_CONNECTIONS; i++)
+		connection_close(&(connection[i]));
 }
 
 void httpd_stop_server(void)
