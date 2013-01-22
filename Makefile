@@ -14,7 +14,7 @@
 # for details.
 #
 Q?=@
-STATIC=0
+STATIC?=0
 TARGET?=unknown
 include $(TARGET).mk
 
@@ -39,7 +39,7 @@ ifeq (0,$(STATIC))
 FRONTEND_PLUGIN_LOADER_FUNCTION=gmu_register_frontend
 DECODER_PLUGIN_LOADER_FUNCTION=gmu_register_decoder
 CFLAGS+=-DSTATIC=0
-PLUGIN_CFLAGS=-shared -o $@ -fpic
+PLUGIN_CFLAGS=-shared -o $@ -fpic $(COPTS)
 GENERATED_HEADERFILES_STATIC=
 PLUGIN_OBJECTFILES=
 else
@@ -47,7 +47,7 @@ else
 FRONTEND_PLUGIN_LOADER_FUNCTION=f`echo $@|md5sum|cut -d ' ' -f 1`
 DECODER_PLUGIN_LOADER_FUNCTION=f`echo $@|md5sum|cut -d ' ' -f 1`
 CFLAGS+=-DSTATIC=1
-PLUGIN_CFLAGS=-c -fPIC
+PLUGIN_CFLAGS=-c -fPIC $(COPTS)
 GENERATED_HEADER_FILES_STATIC=$(TEMP_HEADER_FILES)
 PLUGIN_OBJECTFILES+=$(DECODERS_TO_BUILD)
 LFLAGS+=$(LFLAGS_SDLFE)
@@ -55,6 +55,7 @@ endif
 
 # Frontend configs
 PLUGIN_FE_SDL_OBJECTFILES=sdl.o kam.o skin.o textrenderer.o question.o filebrowser.o plbrowser.o about.o textbrowser.o coverimg.o coverviewer.o plmanager.o playerdisplay.o gmuwidget.o png.o jpeg.o bmp.o inputconfig.o help.o
+PLUGIN_FE_HTTP_OBJECTFILES=gmuhttp.o sha1.o base64.o httpd.o queue.o json.o websocket.o net.o
 
 # Decoder configs
 DEC_vorbis_LFLAGS=-lvorbisidec
@@ -93,6 +94,10 @@ projname=gmu-$(shell awk '/define VERSION_NUMBER/ { print $$3 }' src/core.h )
 	$(Q)$(CC) -fPIC $(CFLAGS) -c -o $@ $<
 
 %.o: src/frontends/sdl/%.c $(GENERATED_HEADER_FILES_STATIC)
+	@echo -e "Compiling \033[1m$<\033[0m"
+	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION)
+
+%.o: src/frontends/web/%.c $(GENERATED_HEADER_FILES_STATIC)
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION)
 
@@ -202,9 +207,9 @@ frontends/gmusrv.so: src/frontends/gmusrv.c
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $<
 
-frontends/gmuhttp.so: src/frontends/web/gmuhttp.c sha1.o base64.o httpd.o queue.o json.o websocket.o net.o
+frontends/gmuhttp.so: $(PLUGIN_FE_HTTP_OBJECTFILES)
 	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread sha1.o base64.o httpd.o queue.o json.o websocket.o net.o
+	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $(LFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread sha1.o base64.o httpd.o queue.o json.o websocket.o net.o
 
 tmp-felist.h:
 	@echo -e "Creating file \033[1mtmp-felist.h\033[0m"

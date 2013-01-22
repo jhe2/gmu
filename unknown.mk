@@ -21,8 +21,8 @@ FRONTENDS_TO_BUILD?=frontends/sdl.so frontends/gmuhttp.so
 else
 # static build
 DECODERS_TO_BUILD=vorbis.o flac.o mpg123.o mikmod.o speex.o
-FRONTENDS_TO_BUILD=sdl.o
-PLUGIN_OBJECTFILES+=$(PLUGIN_FE_SDL_OBJECTFILES) 
+FRONTENDS_TO_BUILD=sdl.o gmuhttp.o
+PLUGIN_OBJECTFILES+=$(PLUGIN_FE_SDL_OBJECTFILES) $(PLUGIN_FE_HTTP_OBJECTFILES)
 endif
 
 CC?=gcc
@@ -34,7 +34,7 @@ SDL_CFLAGS=$(shell sdl-config --cflags)
 MIKMOD_LIB=$(shell libmikmod-config --libs)
 MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
 
-COPTS?=-O0 -funroll-all-loops -finline-functions -ffast-math -fno-short-enums -g
+COPTS?=-O0 -fno-short-enums -g
 CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H
 LFLAGS=-I/usr/local/include -L/usr/local/lib -Wl,-export-dynamic
 DISTFILES=$(COMMON_DISTBIN_FILES) gmuinput.unknown.conf gmu.sh
