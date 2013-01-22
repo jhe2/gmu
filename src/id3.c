@@ -167,7 +167,7 @@ static void set_lyrics(TrackInfo *ti, char *str, int str_size, Charset charset)
 		if (charset == UTF_16 || charset == UTF_16_BOM) i++;
 		i++;
 		/*wdprintf(V_DEBUG, "id3", "i=%d str_size=%d str=%s\n", i, str_size, str);*/
-		set_data(ti, LYRICS, str+i, str_size, charset);
+		set_data(ti, LYRICS, str+i, str_size-i, charset);
 		ti->has_lyrics = 1;
 	}
 }
@@ -310,7 +310,7 @@ int id3_read_id3v2(FILE *file, TrackInfo *ti, const char *file_type)
 								} else if (strncmp(frame_id, "APIC", 4) == 0) {
 									set_cover_art(ti, frame_data+1, fsize-1, charset);
 								} else if (strncmp(frame_id, "USLT", 4) == 0) {
-									set_lyrics(ti, frame_data+4, fsize-1, charset);
+									set_lyrics(ti, frame_data+4, fsize-4, charset);
 								}
 								free(frame_data);
 							} else {
