@@ -157,6 +157,7 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 				} else {
 					if (!charset_iso8859_1_to_utf8(buf, filename, 255)) {
 						wdprintf(V_WARNING, "playlist", "ERROR: Failed to convert filename text to UTF-8.\n");
+						snprintf(buf, 255, "[Filename with unsupported encoding]");
 					}
 				}
 				result = playlist_add_item(pl, filename_with_path, buf);
