@@ -83,6 +83,22 @@ static int         fullscreen = 0;
 static int         auto_select_cur_item = 1;
 static int         screen_max_width = 0, screen_max_height = 0, screen_max_depth = 0;
 
+static SDL_Surface *gmu_icon;
+
+static void gmu_load_icon(void)
+{
+	Uint32 colorkey;
+
+	gmu_icon = SDL_LoadBMP("gmu.bmp");
+	if (gmu_icon) {
+		colorkey = SDL_MapRGB(gmu_icon->format, 255, 0, 255);
+		SDL_SetColorKey(gmu_icon, SDL_SRCCOLORKEY, colorkey);
+		SDL_WM_SetIcon(gmu_icon, NULL);
+	} else {
+		wdprintf(V_WARNING, "sdl_frontend", "Window icon (gmu.bmp) not found or broken.\n");
+	}
+}
+
 static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
 	SDL_Surface         *display = NULL;
@@ -126,21 +142,7 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 			height = screen_max_height;
 		}
 
-		/* Window icon */
-		{
-			Uint32       colorkey;
-			SDL_Surface *image;
-
-			image = SDL_LoadBMP("gmu.bmp");
-			if (image) {
-				colorkey = SDL_MapRGB(image->format, 255, 0, 255);
-				SDL_SetColorKey(image, SDL_SRCCOLORKEY, colorkey);              
-				SDL_WM_SetIcon(image, NULL);
-			} else {
-				wdprintf(V_WARNING, "sdl_frontend", "Window icon (gmu.bmp) not found or broken.\n");
-			}
-		}
-
+		gmu_load_icon();
 		display = SDL_SetVideoMode(width, height, screen_max_depth,
 #ifndef SDLFE_NO_HWACCEL
 								   SDL_HWSURFACE | SDL_HWACCEL |
@@ -1407,6 +1409,7 @@ static void shut_down(void)
 		wdprintf(V_ERROR, "sdl_frontend", "ERROR stopping thread.\n");
 	wdprintf(V_DEBUG, "sdl_frontend", "Closing SDL video subsystem...\n");
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
+	if (gmu_icon) SDL_FreeSurface(gmu_icon);
 	wdprintf(V_INFO, "sdl_frontend", "All done.\n");
 }
 
