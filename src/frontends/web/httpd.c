@@ -817,7 +817,7 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 static void gmu_http_handle_websocket_message(char *message, Connection *c)
 {
 	JSON_Object *json = json_parse_alloc(message);
-	if (!json_object_has_parse_error(json)) { /* Valid JSON data received */
+	if (json && !json_object_has_parse_error(json)) { /* Valid JSON data received */
 		/* Analyze command in JSON data */
 		char *cmd = json_get_string_value_for_key(json, "cmd");
 		if (cmd && strcmp(cmd, "login") == 0) {
@@ -881,6 +881,7 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 			}
 		}
 	}
+	json_object_free(json);
 }
 
 /* 
@@ -1017,8 +1018,11 @@ static void webserver_main_loop(int listen_fd)
 									ringbuffer_read(&(connection[conn_num].rb_receive), wspacket, size);
 									wspacket[size] = '\0';
 									payload = websocket_unmask_message_alloc(wspacket, size);
-									wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
-									gmu_http_handle_websocket_message(payload, &(connection[conn_num]));
+									if (payload) {
+										wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
+										gmu_http_handle_websocket_message(payload, &(connection[conn_num]));
+										free(payload);
+									}
 									free(wspacket);
 									size = 0;
 								}
