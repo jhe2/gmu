@@ -304,89 +304,53 @@ static int get_bitrate(void)
 
 static int get_meta_data_int(GmuMetaDataType gmdt, int for_current_file)
 {
-	int result = 0;
-	if (for_current_file) {
-		switch (gmdt) {
-			case GMU_META_IMAGE_DATA_SIZE:
-				result = trackinfo_get_image_data_size(&ti);
-				break;
-			case GMU_META_IS_UPDATED:
-				result = trackinfo_is_updated(&ti);
-				break;
-			default:
-				break;
-		}
-	} else {
-		switch (gmdt) {
-			case GMU_META_IMAGE_DATA_SIZE:
-				result = trackinfo_get_image_data_size(&ti);
-				break;
-			case GMU_META_IS_UPDATED:
-				result = trackinfo_is_updated(&ti);
-				break;
-			default:
-				break;
-		}
+	int        result = 0;
+	TrackInfo *t = &ti_metaonly;
+
+	if (for_current_file) t = &ti;
+	switch (gmdt) {
+		case GMU_META_IMAGE_DATA_SIZE:
+			result = trackinfo_get_image_data_size(t);
+			break;
+		case GMU_META_IS_UPDATED:
+			result = trackinfo_is_updated(t);
+			break;
+		default:
+			break;
 	}
 	return result;
 }
 
 static const char *get_meta_data(GmuMetaDataType gmdt, int for_current_file)
 {
-	char *result = NULL;
+	char      *result = NULL;
+	TrackInfo *t = &ti_metaonly;
 
-	if (for_current_file) {
-		switch (gmdt) {
-			case GMU_META_ARTIST:
-				result = trackinfo_get_artist(&ti);
-				break;
-			case GMU_META_TITLE:
-				result = trackinfo_get_title(&ti);
-				break;
-			case GMU_META_ALBUM:
-				result = trackinfo_get_album(&ti);
-				break;
-			case GMU_META_TRACKNR:
-				result = trackinfo_get_tracknr(&ti);
-				break;
-			case GMU_META_DATE:
-				result = trackinfo_get_date(&ti);
-				break;
-			case GMU_META_IMAGE_DATA:
-				result = trackinfo_get_image_data(&ti);
-				break;
-			case GMU_META_IMAGE_MIME_TYPE:
-				result = trackinfo_get_image_mime_type(&ti);
-				break;
-			default:
-				break;
-		}
-	} else {
-		switch (gmdt) {
-			case GMU_META_ARTIST:
-				result = trackinfo_get_artist(&ti_metaonly);
-				break;
-			case GMU_META_TITLE:
-				result = trackinfo_get_title(&ti_metaonly);
-				break;
-			case GMU_META_ALBUM:
-				result = trackinfo_get_album(&ti_metaonly);
-				break;
-			case GMU_META_TRACKNR:
-				result = trackinfo_get_tracknr(&ti_metaonly);
-				break;
-			case GMU_META_DATE:
-				result = trackinfo_get_date(&ti_metaonly);
-				break;
-			case GMU_META_IMAGE_DATA:
-				result = trackinfo_get_image_data(&ti_metaonly);
-				break;
-			case GMU_META_IMAGE_MIME_TYPE:
-				result = trackinfo_get_image_mime_type(&ti_metaonly);
-				break;
-			default:
-				break;
-		}
+	if (for_current_file) t = &ti;
+	switch (gmdt) {
+		case GMU_META_ARTIST:
+			result = trackinfo_get_artist(t);
+			break;
+		case GMU_META_TITLE:
+			result = trackinfo_get_title(t);
+			break;
+		case GMU_META_ALBUM:
+			result = trackinfo_get_album(t);
+			break;
+		case GMU_META_TRACKNR:
+			result = trackinfo_get_tracknr(t);
+			break;
+		case GMU_META_DATE:
+			result = trackinfo_get_date(t);
+			break;
+		case GMU_META_IMAGE_DATA:
+			result = trackinfo_get_image_data(t);
+			break;
+		case GMU_META_IMAGE_MIME_TYPE:
+			result = trackinfo_get_image_mime_type(t);
+			break;
+		default:
+			break;
 	}
 	return result;
 }
