@@ -291,6 +291,13 @@ static void cmd_playmode_info(UI *ui, JSON_Object *json)
 	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
+static int quit = 0;
+
+static void sig_handler(int sig)
+{
+	quit = 1;
+}
+
 int main(int argc, char **argv)
 {
 	int                sock, res = EXIT_FAILURE;
@@ -301,6 +308,9 @@ int main(int argc, char **argv)
 	ConfigFile         config;
 	char              *password, *host;
 	char               config_file_path[256], *homedir;
+
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, sig_handler);
 
 	cfg_init_config_file_struct(&config);
 	cfg_add_key(&config, "Host", "127.0.0.1");
@@ -335,7 +345,7 @@ int main(int argc, char **argv)
 	wdprintf_set_verbosity(V_SILENT);
 
 	if (argc >= 1) {
-		int   quit = 0, network_error = 0;
+		int   network_error = 0;
 		UI    ui;
 		char *cur_dir = NULL;
 
