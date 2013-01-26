@@ -48,6 +48,11 @@ typedef enum HTTPCommand {
 	GET, HEAD, POST, UNKNOWN
 } HTTPCommand;
 
+typedef struct HTTPD_Init_Params {
+	int   local_only;
+	char *webserver_root;
+} HTTPD_Init_Params;
+
 void *httpd_run_server(void *webserver_root);
 void  httpd_stop_server(void);
 void  httpd_send_websocket_broadcast(char *str);

@@ -15,6 +15,7 @@
  */
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <pthread.h>
 #include "../../core.h"
 #include "../../trackinfo.h"
@@ -37,10 +38,19 @@ static void server_stop(void)
 
 static int init(void)
 {
-	int   res = 0;
-	char *webserver_root = gmu_core_get_base_dir();
+	int                res = 0;
+	HTTPD_Init_Params *ip;
+	ConfigFile        *config = gmu_core_get_config();
+	char              *kval = NULL;
 
-	if (pthread_create(&fe_thread, NULL, httpd_run_server, webserver_root) == 0)
+	ip = malloc(sizeof(HTTPD_Init_Params));
+	ip->local_only = 1;
+	if (config) kval = cfg_get_key_value(*config, "gmuhttp.Listen");
+	ip->webserver_root = gmu_core_get_base_dir();
+	if (kval && strcmp(kval, "All") == 0)
+		ip->local_only = 0;
+
+	if (pthread_create(&fe_thread, NULL, httpd_run_server, ip) == 0)
 		res = 1;
 	return res;
 }

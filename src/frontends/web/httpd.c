@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <signal.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -353,17 +354,28 @@ static void send_http_header(int soc, char *code,
 }
 
 static void webserver_main_loop(int listen_fd);
-static int  tcp_server_init(int port);
+static int  tcp_server_init(int port, int local_only);
 
 void *httpd_run_server(void *data)
 {
-	int   port = SERVER_PORT;
-	char *wr = (char *)data;
+	int                port = SERVER_PORT, local_only = 1;
+	HTTPD_Init_Params *ip = (HTTPD_Init_Params *)data;
 
-	if (wr) strncpy(webserver_root, wr, 255); else webserver_root[0] = '\0';
+	if (ip && ip->webserver_root)
+		strncpy(webserver_root, ip->webserver_root, 255);
+	else
+		webserver_root[0] = '\0';
+	if (ip) 
+		local_only = ip->local_only;
+	else
+		wdprintf(V_WARNING, "httpd", "Warning: Init params missing!\n");
 	queue_init(&queue);
 	wdprintf(V_INFO, "httpd", "Starting server on port %d.\n", port);
-	webserver_main_loop(tcp_server_init(port));
+	wdprintf(V_INFO, "httpd", "Listening on %s.\n",
+	         local_only ? "LOCAL interface only" : "ALL available interfaces");
+	wdprintf(V_INFO, "httpd", "Webserver root directory: %s\n", webserver_root);
+	if (ip) free(ip);
+	webserver_main_loop(tcp_server_init(port, local_only));
 	return NULL;
 }
 
@@ -376,10 +388,9 @@ void *httpd_run_server(void *data)
  * Open server listen port 'port'
  * Returns socket fd
  */
-static int tcp_server_init(int port)
+static int tcp_server_init(int port, int local_only)
 {
 	int                listen_fd, ret, yes = 1;
-	struct sockaddr_in sock;
 
 	listen_fd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -387,12 +398,19 @@ static int tcp_server_init(int port)
 		/* Avoid "Address already in use" error: */
 		ret = setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 		if (ret >= 0) {
-			memset((char *) &sock, 0, sizeof(sock));
-			sock.sin_family = AF_INET;
-			sock.sin_addr.s_addr = htonl(INADDR_ANY);
-			sock.sin_port = htons(port);
+			char   port_str[6];
+			struct addrinfo hints, *res;
 
-			ret = bind(listen_fd, (struct sockaddr *) &sock, sizeof(sock));
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_UNSPEC;  /* use IPv4 or IPv6, whichever */
+			hints.ai_socktype = SOCK_STREAM;
+			if (!local_only) hints.ai_flags = AI_PASSIVE;  /* fill in my IP for me */
+			snprintf(port_str, 6, "%d", port);
+			getaddrinfo(local_only ? "127.0.0.1" : NULL, port_str, &hints, &res);
+
+			listen_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+			ret = bind(listen_fd, res->ai_addr, res->ai_addrlen);
+
 			if (ret == 0) {
 				ret = listen(listen_fd, 5);
 				if (ret < 0) listen_fd = ERROR;
