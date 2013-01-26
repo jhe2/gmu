@@ -8,7 +8,7 @@
  * Description: HTTP/Websocket frontend
  */
 
-var pl = [];
+var pl = [], fb_dir = [];
 var dir;
 var selected_tab = 'pl';
 
@@ -116,12 +116,17 @@ function Connection()
 						if (jmsg['res'] == 'ok') {
 							cur_dir = jmsg['path'];
 							dir = jmsg['data'];
-							for (i = 0; dir[i]; i++) {
-								fb[i] = dir[i]['name'];
-								write_to_screen('file'+i+'='+dir[i]['name']);
+							for (var i in dir) {
+								if (i >= 0) {
+									if (i == 0) {
+										fbt.clear();
+										fb_dir = [];
+									}
+									fb_dir[i] = dir[i];
+									write_to_screen('file'+i+'='+dir[i]['name']);
+								}
 							}
-							fbt.set_length(0);
-							fbt.set_length(i);
+							fbt.set_length(fb_dir.length);
 							for (i = 0; i <= fbt.visible_line_count; i++) {
 								fbt.set_row_data(i);
 							}
@@ -237,9 +242,15 @@ function GmuList()
 		document.getElementById(this.scrollbar_elem_id).scrollTop += (20 * n);
 	}
 
+	this.clear = function()
+	{
+		this.length = 0;
+		document.getElementById(this.scrolldummy_elem_id).style.height = "0px";
+	}
+
 	this.set_length = function(items)
 	{
-		this.length = items;
+		if (items > this.length) this.length = items;
 		document.getElementById(this.scrolldummy_elem_id).style.height = "" + (items*this.item_height) + "px";
 	}
 }
@@ -461,16 +472,16 @@ function fb_item_row_construct(item, col)
 	switch (col) {
 		default:
 		case 0:
-			if (dir[item] !== undefined)
-				res = dir[item]['is_dir'] ? '[DIR]' : parseInt(dir[item]['size'] / 1024);
+			if (fb_dir[item] !== undefined)
+				res = fb_dir[item]['is_dir'] ? '[DIR]' : parseInt(fb_dir[item]['size'] / 1024);
 			else
 				res = '';
 			break;
 		case 1:
-			if (dir[item] !== undefined)
-				res = dir[item]['is_dir'] ?
-				      "<a href=\"javascript:open_dir('"+cur_dir+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>" :
-				      "<a href=\"javascript:add_file('"+cur_dir+dir[item]['name']+"');\">" + html_entity_encode(dir[item]['name']) + "</a>";
+			if (fb_dir[item] !== undefined)
+				res = fb_dir[item]['is_dir'] ?
+				      "<a href=\"javascript:open_dir('"+cur_dir+fb_dir[item]['name']+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>" :
+				      "<a href=\"javascript:add_file('"+cur_dir+fb_dir[item]['name']+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>";
 			else
 				res = '';
 			break;
