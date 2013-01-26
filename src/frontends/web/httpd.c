@@ -153,9 +153,12 @@ static sighandler_t my_signal(int sig_nr, sighandler_t signalhandler)
 static int websocket_send_string(Connection *c, char *str)
 {
 	int res = 0;
-	if (str) {
+	if (str && c->fd) {
 		res = websocket_send_str(c->fd, str, 0);
-		connection_reset_timeout(c);
+		if (!res)
+			connection_close(c);
+		else
+			connection_reset_timeout(c);
 	}
 	return res;
 }
