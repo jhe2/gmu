@@ -52,6 +52,8 @@ static int init(void)
 
 	if (pthread_create(&fe_thread, NULL, httpd_run_server, ip) == 0)
 		res = 1;
+	else if (ip)
+		free(ip);
 	return res;
 }
 
