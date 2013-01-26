@@ -478,10 +478,13 @@ function fb_item_row_construct(item, col)
 				res = '';
 			break;
 		case 1:
-			if (fb_dir[item] !== undefined)
+			if (fb_dir[item] !== undefined) {
+				var path = cur_dir+fb_dir[item]['name'];
+				var path_masc = path.replace(/'/g, "\\'");
 				res = fb_dir[item]['is_dir'] ?
-				      "<a href=\"javascript:open_dir('"+cur_dir+fb_dir[item]['name']+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>" :
-				      "<a href=\"javascript:add_file('"+cur_dir+fb_dir[item]['name']+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>";
+				      "<a href=\"javascript:open_dir('"+path_masc+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>" :
+				      "<a href=\"javascript:add_file('"+path_masc+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>";
+				}
 			else
 				res = '';
 			break;
