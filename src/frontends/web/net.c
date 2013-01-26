@@ -16,6 +16,8 @@
 
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
+#include <errno.h>
 #include "net.h"
 
 /*
@@ -25,15 +27,31 @@
 int net_send_block(int sock, unsigned char *buf, int size)
 {
 	unsigned char *r = buf;
-	int            len = 0;
+	int            len = 0, res = 1, rv;
+	struct pollfd  ufds[1];
 
 	while (size > 0) {
-		if ((len = send(sock, r, size, 0)) == -1)
-			return 0;
-		size -= len;
-		r += len;
+		ufds[0].fd = sock;
+		ufds[0].events = POLLOUT;
+		rv = poll(ufds, 1, 1000);
+		
+		if (rv > 0 && ufds[0].revents & POLLOUT) {
+			len = send(sock, r, size, 0);
+			if (len == -1) {
+				if (errno != EWOULDBLOCK && errno != EAGAIN) {
+					res = 0;
+					break;
+				}
+			} else {
+				size -= len;
+				r += len;
+			}
+		} else if (rv == -1) {
+			res = 0;
+			break;
+		}
 	}
-	return 1;
+	return res;
 }
 
 /*

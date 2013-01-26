@@ -150,12 +150,14 @@ static sighandler_t my_signal(int sig_nr, sighandler_t signalhandler)
 	return alt_sig.sa_handler;
 }
 
-static void websocket_send_string(Connection *c, char *str)
+static int websocket_send_string(Connection *c, char *str)
 {
+	int res = 0;
 	if (str) {
-		websocket_send_str(c->fd, str, 0);
+		res = websocket_send_str(c->fd, str, 0);
 		connection_reset_timeout(c);
 	}
+	return res;
 }
 
 int connection_init(Connection *c, int fd)
@@ -803,7 +805,10 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 				}
 				snprintf(res+pos, MAX_LEN-pos, "\"-1\": \"END\" } }");
 				wdprintf(V_DEBUG, "httpd", "dir_read result: [%s] size=%d\n", res, pos);
-				websocket_send_string(c, res);
+				if (!charset_is_valid_utf8_string(res))
+					wdprintf(V_DEBUG, "httpd", "Invalid UTF-8 found!!\n", res);
+				else if (!websocket_send_string(c, res))
+					wdprintf(V_DEBUG, "httpd", "Sending websocket message failed! :(\n");
 			} else {
 				websocket_send_string(c, "{ \"cmd\": \"dir_read\", \"res\" : \"error\", \"msg\" : \"Unable to read directory\" }");
 			}
