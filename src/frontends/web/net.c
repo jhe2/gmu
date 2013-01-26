@@ -27,28 +27,29 @@
 int net_send_block(int sock, unsigned char *buf, int size)
 {
 	unsigned char *r = buf;
-	int            len = 0, res = 1, rv;
-	struct pollfd  ufds[1];
+	int            len = 0, res = 1;
 
 	while (size > 0) {
-		ufds[0].fd = sock;
-		ufds[0].events = POLLOUT;
-		rv = poll(ufds, 1, 1000);
-		
-		if (rv > 0 && ufds[0].revents & POLLOUT) {
-			len = send(sock, r, size, 0);
-			if (len == -1) {
-				if (errno != EWOULDBLOCK && errno != EAGAIN) {
+		len = send(sock, r, size, 0);
+		if (len == -1) {
+			if (errno == EWOULDBLOCK || errno == EAGAIN) {
+				struct pollfd ufds[1];
+				int           rv;
+
+				ufds[0].fd = sock;
+				ufds[0].events = POLLOUT;
+				rv = poll(ufds, 1, 1000);
+				if (rv == -1) {
 					res = 0;
 					break;
 				}
 			} else {
-				size -= len;
-				r += len;
-			}
-		} else if (rv == -1) {
-			res = 0;
-			break;
+				res = 0;
+				break;
+			} 
+		} else {
+			size -= len;
+			r += len;
 		}
 	}
 	return res;
