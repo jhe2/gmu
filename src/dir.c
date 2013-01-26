@@ -24,6 +24,7 @@
 #include "dir.h"
 #include "util.h"
 #include "debug.h"
+#include "charset.h"
 
 static const char **dir_extensions = NULL;
 static int          show_directories;
@@ -171,8 +172,11 @@ void dir_free(Dir *dir)
 
 char *dir_get_filename(Dir *dir, int i)
 {
+	char *str = (i < (dir->files) ? dir->filename[i] : NULL);
 	/*return (i < (dir->files) ? dir->ep[i]->d_name : NULL);*/
-	return (i < (dir->files) ? dir->filename[i] : NULL);
+	if (str && !charset_is_valid_utf8_string(str))
+		wdprintf(V_WARNING, "dir", "Invalid UTF-8 filename found: [%s]\n", str);
+	return str;
 }
 
 char *dir_get_filename_with_full_path_alloc(Dir *dir, int i)
