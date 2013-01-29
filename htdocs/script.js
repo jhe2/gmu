@@ -232,7 +232,7 @@ function GmuList()
 					j++;
 				} while (j <= this.visible_line_count);
 				if (this.first_visible_line+i < this.length && this.func_get_data !== undefined)
-					this.func_get_data(this.first_visible_line+i);
+					this.func_get_data(this.first_visible_line+i+1);
 			}
 		}
 	}
@@ -250,7 +250,7 @@ function GmuList()
 
 	this.set_length = function(items)
 	{
-		if (items > this.length) this.length = items;
+		this.length = items;
 		document.getElementById(this.scrolldummy_elem_id).style.height = "" + (items*this.item_height) + "px";
 	}
 }
@@ -527,7 +527,7 @@ function init()
 	plt.init('pl', 'playlisttable', 'plscrollbar', 'plscrolldummy',
 	         function(item)
 	         {
-				 con.do_send('{"cmd":"playlist_get_item","item":'+item+'}');
+				 con.do_send('{"cmd":"playlist_get_item","item":'+(item-1)+'}');
 	         },
 	         pl_item_row_construct,
 	         pl_need_data
@@ -561,7 +561,7 @@ function init()
 		plt.init('pl', 'playlisttable', 'plscrollbar', 'plscrolldummy',
 			 function(item)
 			 {
-				con.do_send('{"cmd":"playlist_get_item","item":'+item+'}');
+				con.do_send('{"cmd":"playlist_get_item","item":'+(item-1)+'}');
 			 },
 			 pl_item_row_construct,
 			 pl_need_data
