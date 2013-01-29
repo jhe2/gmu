@@ -448,7 +448,7 @@ function pl_item_row_construct(item, col)
 	switch (col) {
 		default:
 		case 0:
-			res = item;
+			res = item+1;
 			break;
 		case 1:
 			res = "<a href=\"javascript:play("+item+");\">"+
