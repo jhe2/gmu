@@ -823,7 +823,6 @@ int main(int argc, char **argv)
 												}
 											} else {
 												wprintw(ui.win_cmd->win, "ERROR: Invalid JSON data received.\n");
-												json = json_parse_alloc(payload);
 												network_error = 1;
 											}
 											json_object_free(json);
