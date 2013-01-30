@@ -202,6 +202,8 @@ static void cmd_playlist_change(UI *ui, JSON_Object *json, int sock)
 	wprintw(ui->win_cmd->win, "Length=%d Pos=%d\n", length, changed_at);
 	if (length < 0) length = 0;
 	listwidget_set_length(ui->lw_pl, length);
+	if (listwidget_get_selection(ui->lw_pl) > changed_at)
+		listwidget_set_cursor(ui->lw_pl, changed_at);
 	if (length > 0 && changed_at >= 0) {
 		char str[64];
 		snprintf(str, 63, "{\"cmd\":\"playlist_get_item\", \"item\":%d}", changed_at);
