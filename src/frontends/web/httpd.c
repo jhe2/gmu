@@ -904,6 +904,9 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				gmu_core_playlist_cycle_play_mode();
 			} else if (strcmp(cmd, "playlist_playmode_get_info") == 0) {
 				gmu_http_playmode_get_info(c);
+			} else if (strcmp(cmd, "playlist_item_delete") == 0) {
+				int item = (int)json_get_number_value_for_key(json, "item");
+				if (item >= 0) gmu_core_playlist_item_delete(item);
 			}
 		}
 	}
