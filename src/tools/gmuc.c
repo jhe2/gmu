@@ -196,12 +196,16 @@ static void cmd_trackinfo(UI *ui, JSON_Object *json)
 
 static void cmd_playlist_change(UI *ui, JSON_Object *json, int sock)
 {
-	int length     = (int)json_get_number_value_for_key(json, "length");
-	int changed_at = (int)json_get_number_value_for_key(json, "changed_at_position");
+	char title[64];
+	int  length     = (int)json_get_number_value_for_key(json, "length");
+	int  changed_at = (int)json_get_number_value_for_key(json, "changed_at_position");
 	wprintw(ui->win_cmd->win, "Playlist has been changed!\n");
 	wprintw(ui->win_cmd->win, "Length=%d Pos=%d\n", length, changed_at);
 	if (length < 0) length = 0;
 	listwidget_set_length(ui->lw_pl, length);
+	snprintf(title, 64, "Playlist (%d)", length);
+	window_update_title(ui->lw_pl->win, title);
+	ui_refresh_active_window(ui);
 	if (listwidget_get_selection(ui->lw_pl) > changed_at)
 		listwidget_set_cursor(ui->lw_pl, changed_at);
 	if (length > 0 && changed_at >= 0) {

@@ -37,16 +37,10 @@ Window *window_create(int height, int width, int starty, int startx, char *title
 				scrollok(win->win_outer, 1);
 				idlok(win->win_outer, 1); /* enable hardware scrolling (if available) */
 				win->win = derwin(win->win_outer, height-2, width-2, 1, 1);
-				int len = strlen(title);
 				box(win->win_outer, 0, 0); /* 0, 0 gives default characters 
 											* for the vertical and horizontal
 											* lines                           */
-				mvwprintw(win->win_outer, 0, 1, " %s ", title);
-				win->title = malloc(len+1);
-				if (win->title) {
-					strncpy(win->title, title, len);
-					win->title[len] = '\0';
-				}
+				window_update_title(win, title);
 				if (win->win) {
 					scrollok(win->win, 1);
 					idlok(win->win, 1); /* enable hardware scrolling (if available) */
@@ -59,6 +53,19 @@ Window *window_create(int height, int width, int starty, int startx, char *title
 		}
 	}
 	return win;
+}
+
+int window_update_title(Window *win, char *title)
+{
+	int len = strlen(title), res = 0;
+	win->title = realloc(win->title, len+1);
+	if (win->title) {
+		strncpy(win->title, title, len);
+		win->title[len] = '\0';
+		mvwprintw(win->win_outer, 0, 1, " %s ", win->title);
+		res = 1;
+	}
+	return res;
 }
 
 void window_resize(Window *win, int height, int width)

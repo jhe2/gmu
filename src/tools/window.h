@@ -25,6 +25,7 @@ typedef struct Window
 } Window;
 
 Window *window_create(int height, int width, int starty, int startx, char *title);
+int     window_update_title(Window *win, char *title);
 void    window_resize(Window *win, int height, int width);
 int     window_get_width(Window *win);
 int     window_get_height(Window *win);
