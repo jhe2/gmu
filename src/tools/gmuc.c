@@ -297,6 +297,29 @@ static void cmd_playmode_info(UI *ui, JSON_Object *json)
 	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
+static int cmd_login(UI *ui, JSON_Object *json, int sock, char *cur_dir)
+{
+	int   screen_update = 0;
+	char *res = json_get_string_value_for_key(json, "res");
+	if (res && strcmp(res, "success") == 0) {
+		websocket_send_str(sock, "{\"cmd\":\"trackinfo\"}", 1);
+		websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_get_info\"}", 1);
+		listwidget_clear_all_rows(ui->lw_fb);
+		if (!cur_dir) {
+			websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
+		} else {
+			char tmp[256];
+			snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
+			websocket_send_str(sock, tmp, 1);
+		}
+	} else {
+		wprintw(ui->win_cmd->win, "Login failed! Check password\n");
+		ui->active_win = WIN_CMD;
+		screen_update = 1;
+	}
+	return screen_update;
+}
+
 static int quit = 0;
 
 static void sig_handler(int sig)
@@ -781,23 +804,7 @@ int main(int argc, char **argv)
 														snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
 														websocket_send_str(sock, tmp, 1);
 													} else if (strcmp(cmd, "login") == 0) {
-														char *res = json_get_string_value_for_key(json, "res");
-														if (res && strcmp(res, "success") == 0) {
-															websocket_send_str(sock, "{\"cmd\":\"trackinfo\"}", 1);
-															websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_get_info\"}", 1);
-															listwidget_clear_all_rows(ui.lw_fb);
-															if (!cur_dir) {
-																websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
-															} else {
-																char tmp[256];
-																snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
-																websocket_send_str(sock, tmp, 1);
-															}
-														} else {
-															wprintw(ui.win_cmd->win, "Login failed! Check password\n");
-															ui.active_win = WIN_CMD;
-															screen_update = 1;
-														}
+														screen_update = cmd_login(&ui, json, sock, cur_dir);
 													} else if (strcmp(cmd, "playlist_info") == 0) {
 														wprintw(ui.win_cmd->win, "Playlist info received!\n");
 													} else if (strcmp(cmd, "playlist_change") == 0) {
