@@ -334,6 +334,90 @@ static void cmd_playback_state(UI *ui, JSON_Object *json)
 	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
+static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *password, char *cur_dir, char *input)
+{
+	char tmp_buf[16];
+	int  size, loop = 1;
+	int  network_error = 0;
+	do {
+		size = 0;
+		/* 0. set unread pos on ringbuffer */
+		ringbuffer_set_unread_pos(rb);
+		/* 1. read a few bytes from the ringbuffer (Websocket flags+packet size) */
+		if (ringbuffer_read(rb, tmp_buf, 10)) {
+			/* 2. Check wether the required packet size is available in the ringbuffer */
+			size = websocket_calculate_packet_size(tmp_buf);
+			ringbuffer_unread(rb);
+		}
+		/* 3. If so, read the whole packet from the ringbuffer and process it, 
+		 *    then startover at step 0. If not, unread the already read bytes 
+		 *    from the ringbuffer and leave inner loop so the ringbuffer can fill more */
+		if (ringbuffer_get_fill(rb) >= size && size > 0) {
+			char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
+			char *payload;
+			if (wspacket) {
+				JSON_Object *json;
+				ringbuffer_read(rb, wspacket, size);
+				wspacket[size] = '\0';
+				payload = websocket_get_payload(wspacket);
+				json = json_parse_alloc(payload);
+				if (!json_object_has_parse_error(json)) {
+					char *cmd = json_get_string_value_for_key(json, "cmd");
+					if (cmd) {
+						int screen_update = 0;
+						wprintw(ui->win_cmd->win, "Got command: %s\n", cmd);
+						//ui_refresh_active_window(&ui);
+						if (strcmp(cmd, "trackinfo") == 0) {
+							cmd_trackinfo(ui, json);
+						} else if (strcmp(cmd, "playback_time") == 0) {
+							cmd_playback_time_change(ui, json);
+						} else if (strcmp(cmd, "playback_state") == 0) {
+							cmd_playback_state(ui, json);
+						} else if (strcmp(cmd, "hello") == 0) {
+							char tmp[256];
+							snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
+							websocket_send_str(sock, tmp, 1);
+						} else if (strcmp(cmd, "login") == 0) {
+							screen_update = cmd_login(ui, json, sock, cur_dir);
+						} else if (strcmp(cmd, "playlist_info") == 0) {
+							wprintw(ui->win_cmd->win, "Playlist info received!\n");
+						} else if (strcmp(cmd, "playlist_change") == 0) {
+							cmd_playlist_change(ui, json, sock);
+							screen_update = 1;
+						} else if (strcmp(cmd, "playlist_item") == 0) {
+							cmd_playlist_item(ui, json, sock);
+						} else if (strcmp(cmd, "dir_read") == 0) {
+							if (cur_dir) free(cur_dir);
+							cur_dir = cmd_dir_read(ui, json);
+						} else if (strcmp(cmd, "playmode_info") == 0) {
+							cmd_playmode_info(ui, json);
+						}
+						if (screen_update) ui_refresh_active_window(ui);
+						ui_cursor_text_input(ui, input);
+					}
+				} else {
+					wprintw(ui->win_cmd->win, "ERROR: Invalid JSON data received.\n");
+					network_error = 1;
+				}
+				json_object_free(json);
+				free(wspacket);
+			} else {
+				loop = 0;
+			}
+		} else if (size > 0) {
+			wprintw(ui->win_cmd->win,
+					"Not enough data available. Need %d bytes, but only %d avail.\n",
+					size, ringbuffer_get_fill(rb));
+			ringbuffer_unread(rb);
+			loop = 0;
+		} else {
+			loop = 0;
+			if (size == -1) network_error = 1;
+		}
+	} while (loop && !network_error);
+	return network_error;
+}
+
 static int quit = 0;
 
 static void sig_handler(int sig)
@@ -766,86 +850,7 @@ int main(int argc, char **argv)
 								break;
 							}
 							case STATE_CONNECTION_ESTABLISHED: {
-								char tmp_buf[16];
-								int  size, loop = 1;
-								do {
-									size = 0;
-									// 0. set unread pos on ringbuffer
-									ringbuffer_set_unread_pos(&rb);
-									// 1. read a few bytes from the ringbuffer (Websocket flags+packet size)
-									if (ringbuffer_read(&rb, tmp_buf, 10)) {
-										// 2. Check wether the required packet size is available in the ringbuffer
-										size = websocket_calculate_packet_size(tmp_buf);
-										ringbuffer_unread(&rb);
-									}
-									// 3. If so, read the whole packet from the ringbuffer and process it, then startover at step 0.
-									// 4. If not, unread the already read bytes from the ringbuffer and leave inner loop so the ringbuffer can fill more 
-									if (ringbuffer_get_fill(&rb) >= size && size > 0) {
-										char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
-										char *payload;
-										if (wspacket) {
-											JSON_Object *json;
-											ringbuffer_read(&rb, wspacket, size);
-											wspacket[size] = '\0';
-											payload = websocket_get_payload(wspacket);
-											//wprintw(ui.win_cmd->win, "Payload data=[%s]\n", payload);
-											json = json_parse_alloc(payload);
-											if (!json_object_has_parse_error(json)) {
-												char *cmd = json_get_string_value_for_key(json, "cmd");
-												wdprintf(V_INFO, "gmuc", "Valid JSON object found.\n");
-												if (cmd) {
-													int screen_update = 0;
-													wdprintf(V_INFO, "gmuc", "Got command: %s\n", cmd);
-													wprintw(ui.win_cmd->win, "Got command: %s\n", cmd);
-													//ui_refresh_active_window(&ui);
-													if (strcmp(cmd, "trackinfo") == 0) {
-														cmd_trackinfo(&ui, json);
-													} else if (strcmp(cmd, "playback_time") == 0) {
-														cmd_playback_time_change(&ui, json);
-													} else if (strcmp(cmd, "playback_state") == 0) {
-														cmd_playback_state(&ui, json);
-													} else if (strcmp(cmd, "hello") == 0) {
-														char tmp[256];
-														snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
-														websocket_send_str(sock, tmp, 1);
-													} else if (strcmp(cmd, "login") == 0) {
-														screen_update = cmd_login(&ui, json, sock, cur_dir);
-													} else if (strcmp(cmd, "playlist_info") == 0) {
-														wprintw(ui.win_cmd->win, "Playlist info received!\n");
-													} else if (strcmp(cmd, "playlist_change") == 0) {
-														cmd_playlist_change(&ui, json, sock);
-														screen_update = 1;
-													} else if (strcmp(cmd, "playlist_item") == 0) {
-														cmd_playlist_item(&ui, json, sock);
-													} else if (strcmp(cmd, "dir_read") == 0) {
-														if (cur_dir) free(cur_dir);
-														cur_dir = cmd_dir_read(&ui, json);
-													} else if (strcmp(cmd, "playmode_info") == 0) {
-														cmd_playmode_info(&ui, json);
-													}
-													if (screen_update) ui_refresh_active_window(&ui);
-													ui_cursor_text_input(&ui, input);
-												}
-											} else {
-												wprintw(ui.win_cmd->win, "ERROR: Invalid JSON data received.\n");
-												network_error = 1;
-											}
-											json_object_free(json);
-											free(wspacket);
-										} else {
-											loop = 0;
-										}
-									} else if (size > 0) {
-										wprintw(ui.win_cmd->win,
-										        "Not enough data available. Need %d bytes, but only %d avail.\n",
-										        size, ringbuffer_get_fill(&rb));
-										ringbuffer_unread(&rb);
-										loop = 0;
-									} else {
-										loop = 0;
-										if (size == -1) network_error = 1;
-									}
-								} while (loop && !network_error);
+								network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, cur_dir, input);
 								break;
 							}
 							case STATE_WEBSOCKET_HANDSHAKE_FAILED:
