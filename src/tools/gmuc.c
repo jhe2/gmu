@@ -334,7 +334,7 @@ static void cmd_playback_state(UI *ui, JSON_Object *json)
 	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
 }
 
-static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *password, char *cur_dir, char *input)
+static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *password, char **cur_dir, char *input)
 {
 	char tmp_buf[16];
 	int  size, loop = 1;
@@ -378,7 +378,7 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 							snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
 							websocket_send_str(sock, tmp, 1);
 						} else if (strcmp(cmd, "login") == 0) {
-							screen_update = cmd_login(ui, json, sock, cur_dir);
+							screen_update = cmd_login(ui, json, sock, *cur_dir);
 						} else if (strcmp(cmd, "playlist_info") == 0) {
 							wprintw(ui->win_cmd->win, "Playlist info received!\n");
 						} else if (strcmp(cmd, "playlist_change") == 0) {
@@ -387,8 +387,8 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 						} else if (strcmp(cmd, "playlist_item") == 0) {
 							cmd_playlist_item(ui, json, sock);
 						} else if (strcmp(cmd, "dir_read") == 0) {
-							if (cur_dir) free(cur_dir);
-							cur_dir = cmd_dir_read(ui, json);
+							if (*cur_dir) free(*cur_dir);
+							*cur_dir = cmd_dir_read(ui, json);
 						} else if (strcmp(cmd, "playmode_info") == 0) {
 							cmd_playmode_info(ui, json);
 						}
@@ -857,7 +857,7 @@ int main(int argc, char **argv)
 								break;
 							}
 							case STATE_CONNECTION_ESTABLISHED: {
-								network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, cur_dir, input);
+								network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, &cur_dir, input);
 								break;
 							}
 							case STATE_WEBSOCKET_HANDSHAKE_FAILED:
