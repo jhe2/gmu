@@ -22,19 +22,18 @@ typedef struct _ListCell ListCell;
 
 struct _ListCell {
 	char      text[LW_MAX_TEXT_LENGTH+1];
-	ListCell *next_row, *prev_row;
 	ListCell *next_column;
 };
 
 typedef struct ListWidget {
-	Window   *win;
-	int       cols; /* Number of columns */
-	int      *col_width; /* Ptr to array of int with each column's width */
-	int       cursor_pos; /* Currently selected row */
-	ListCell *first, *last;
-	int       rows; /* Row counter */
-	int       first_visible_row;
-	int       pos_marker;
+	Window    *win;
+	int        cols; /* Number of columns */
+	int       *col_width; /* Ptr to array of int with each column's width */
+	int        cursor_pos; /* Currently selected row */
+	ListCell **rows_ref;
+	int        rows; /* Row counter */
+	int        first_visible_row;
+	int        pos_marker;
 } ListWidget;
 
 ListWidget *listwidget_new(int cols, char *title, int x, int y, int width, int height);

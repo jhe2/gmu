@@ -22,14 +22,20 @@
 #include "window.h"
 #include "listwidget.h"
 
+static int internal_listwidget_set_length(ListWidget *lw, int rows)
+{
+	lw->rows_ref = realloc(lw->rows_ref, sizeof(ListCell *) * rows);
+	if (lw->rows_ref) lw->rows = rows; else lw->rows = 0;
+	return lw->rows_ref ? 1 : 0;
+}
+
 ListWidget *listwidget_new(int cols, char *title, int y, int x, int height, int width)
 {
 	ListWidget *lw = malloc(sizeof(ListWidget));
 	if (lw) {
 		lw->cols = cols;
 		lw->rows = 0;
-		lw->first = NULL;
-		lw->last = NULL;
+		lw->rows_ref = NULL;
 		lw->cursor_pos = -1;
 		lw->first_visible_row = 0;
 		lw->pos_marker = 0;
@@ -62,48 +68,39 @@ int listwidget_get_rows(ListWidget *lw)
 char *listwidget_get_row_data(ListWidget *lw, int row, int col)
 {
 	int i;
-	ListCell *crow = lw->first;
-	for (i = 0; i < row && crow; i++) {
-		crow = crow->next_row;
-	}
+	ListCell *crow = lw->rows_ref[row];
 	for (i = 0; i < col && crow; i++) {
 		crow = crow->next_column;
 	}
 	return crow ? crow->text : NULL;
 }
 
+static void internal_free_row_memory(ListWidget *lw, ListCell *lc)
+{
+	int i;
+	for (i = 0; i < lw->cols; i++) {
+		ListCell *tmp = lc ? lc->next_column : NULL;
+		free(lc);
+		lc = tmp;
+	}
+}
+
 int listwidget_delete_row(ListWidget *lw, int row)
 {
 	int res = 1, i;
-	ListCell *pr = NULL, *cr = lw->first, *nr = NULL;
-	for (i = 0; i < row && cr; i++) {
-		pr = cr;
-		cr = cr->next_row;
-	}
-	if (cr) {
-		ListCell *ccol = cr, *ncol;
-		nr = cr->next_row;
-		while (ccol) {
-			ncol = ccol->next_column;
-			free(ccol);
-			ccol = ncol;
-		}
-		lw->rows--;
-	}
-	if (pr) pr->next_row = nr; else lw->first = nr;
-	if (nr) nr->prev_row = pr;
+	internal_free_row_memory(lw, lw->rows_ref[row]);
+	for (i = row; i < lw->rows-1; i++)
+		lw->rows_ref[i] = lw->rows_ref[i+1];
+
+	lw->rows--;
+	lw->rows_ref = realloc(lw->rows_ref, sizeof(ListCell *) * lw->rows);
 	return res;
 }
 
 static ListCell *new_cell(void)
 {
 	ListCell *lc = malloc(sizeof(ListCell));
-	if (lc) {
-		lc->next_row = NULL;
-		lc->prev_row = NULL;
-		lc->next_column = NULL;
-		lc->text[0] = '\0';
-	}
+	if (lc) memset(lc, 0, sizeof(ListCell));
 	return lc;
 }
 
@@ -126,16 +123,12 @@ int listwidget_add_row(ListWidget *lw)
 	int res = 0;
 	ListCell *lr = new_row(lw->cols);
 	if (lr) {
-		if (!lw->first) {
-			lw->first = lr;
-			lw->cursor_pos = 0;
+		if (internal_listwidget_set_length(lw, lw->rows+1)) {
+			lw->rows_ref[lw->rows-1] = lr;
 		} else {
-			lw->last->next_row = lr;
+			internal_free_row_memory(lw, lr);
 		}
-		lr->prev_row = lw->last;
-		lr->next_row = NULL;
-		lw->last = lr;
-		lw->rows++;
+		if (lw->cursor_pos < 0) lw->cursor_pos = 0;
 		res = 1;
 	}
 	return res ? lw->rows : -1;
@@ -150,9 +143,7 @@ int listwidget_set_cell_data(ListWidget *lw, int row, int col, char *str)
 {
 	int i, res = 0;
 	if (row < lw->rows) {
-		ListCell *rowc = lw->first;
-		for (i = 0; i < row && rowc; i++)
-			rowc = rowc->next_row;
+		ListCell *rowc = lw->rows_ref[row];
 		if (rowc) {
 			ListCell *colc = rowc;
 			for (i = 0; i < col && colc; i++)
@@ -176,13 +167,10 @@ int listwidget_clear_all_rows(ListWidget *lw)
 int listwidget_draw(ListWidget *lw)
 {
 	int       row, col, new_pos;
-	ListCell *lc = lw->first;
+	ListCell *lc = lw->rows_ref ? lw->rows_ref[0] : NULL;
 
-	for (row = 0; row < lw->first_visible_row && lc; row++) {
-		lc = lc->next_row;
-	}
-	for (row = lw->first_visible_row; row - lw->first_visible_row < lw->win->height && lc; row++) {
-		ListCell *lrc = lc;
+	for (row = lw->first_visible_row; row - lw->first_visible_row < lw->win->height && row < lw->rows; row++) {
+		ListCell *lrc = lw->rows_ref[row];
 		int       col_pos = 0;
 		if (row == lw->cursor_pos) wattron(lw->win->win, A_BOLD);
 		for (col = 0; col < lw->cols && lrc; col++) {
@@ -200,7 +188,7 @@ int listwidget_draw(ListWidget *lw)
 			lrc = lrc->next_column;
 		}
 		if (row == lw->cursor_pos) wattroff(lw->win->win, A_BOLD);
-		lc = lc->next_row;
+		lc++;
 	}
 	for (; row < lw->win->height; row++) {
 		wmove(lw->win->win, row, 0);
@@ -269,29 +257,36 @@ void listwidget_resize(ListWidget *lw, int height, int width)
 
 int listwidget_set_length(ListWidget *lw, int rows)
 {
-	if (rows > lw->rows) {
-		int i, rowcnt = lw->rows;
-		for (i = 0; i < rows - rowcnt; i++) {
-			listwidget_add_row(lw);
-		}
-	} else {
-		int i, rowcnt = lw->rows;
-		for (i = rows; i < rowcnt; i++) {
-			listwidget_delete_row(lw, rows);
+	int old_length = lw->rows;
+	if (rows < old_length) {
+		int i;
+		for (i = old_length-1; i >= rows; i--) {
+			listwidget_delete_row(lw, i);
 		}
 	}
-	if (lw->cursor_pos > rows-1) {
+	if (internal_listwidget_set_length(lw, rows)) {
+		if (rows > old_length) {
+			int i;
+			for (i = old_length; i < rows; i++) {
+				ListCell *lr = new_row(lw->cols);
+				lw->rows_ref[i] = lr;
+			}
+		}
+	}
+	if (rows > 0 && lw->cursor_pos < 0) {
+		lw->cursor_pos = 0;
+	} else if (lw->cursor_pos > rows-1) {
 		lw->cursor_pos = rows-1;
 		if (lw->cursor_pos < 0) lw->cursor_pos = 0;
 		lw->first_visible_row = lw->cursor_pos;
 	}
-	lw->rows = rows;
 	return 0;
 }
 
 int listwidget_free(ListWidget *lw)
 {
 	listwidget_set_length(lw, 0);
+	if (lw->rows_ref) free(lw->rows_ref);
 	if (lw->col_width) free(lw->col_width);
 	window_destroy(lw->win);
 	free(lw);
