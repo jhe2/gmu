@@ -35,6 +35,7 @@ static FooterButtons fb_pl[] = {
 	{ "F8",  "Next",     FUNC_NEXT,        KEY_F(8) },
 	{ "F9",  "P.Mode",   FUNC_PLAYMODE,    KEY_F(9) },
 	{ "F10", "Clear",    FUNC_PL_CLEAR,    KEY_F(10) },
+	{ "Del", "Remove",   FUNC_PL_DEL_ITEM, KEY_DC },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
 

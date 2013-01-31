@@ -760,6 +760,13 @@ int main(int argc, char **argv)
 											websocket_send_str(sock, "{\"cmd\":\"playlist_clear\"}", 1);
 										}
 										break;
+									case FUNC_PL_DEL_ITEM: {
+										char str[128];
+										snprintf(str, 127, "{\"cmd\":\"playlist_item_delete\",\"item\":%d}", 
+										         listwidget_get_selection(ui.lw_pl));
+										websocket_send_str(sock, str, 1);
+										break;
+									}
 									default:
 										break;
 								}
