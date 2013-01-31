@@ -91,12 +91,13 @@ function Connection()
 					case 'playlist_change':
 						t = document.getElementById("playlisttable");
 						rows = jmsg['length'];
-						pl_set_number_of_items(jmsg['changed_at_position']);
 						pl_set_number_of_items(rows);
+						for (var i = jmsg['changed_at_position']; i < rows; i++)
+							pl[i] = undefined;
 						document.getElementById('tpl').innerHTML = 'Playlist ('+rows+')';
 						toggle_state = false;
 						current_length = t.rows.length;
-						for (id = 0; r = t.rows[id]; id++) {
+						for (id = 0; (r = t.rows[id]); id++) {
 							r.childNodes[1].innerHTML = '!';
 							r.childNodes[2].innerHTML = '?';
 						}
