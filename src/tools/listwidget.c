@@ -166,8 +166,7 @@ int listwidget_clear_all_rows(ListWidget *lw)
 
 int listwidget_draw(ListWidget *lw)
 {
-	int       row, col, new_pos;
-	ListCell *lc = lw->rows_ref ? lw->rows_ref[0] : NULL;
+	int row, col, new_pos;
 
 	for (row = lw->first_visible_row; row - lw->first_visible_row < lw->win->height && row < lw->rows; row++) {
 		ListCell *lrc = lw->rows_ref[row];
@@ -188,10 +187,10 @@ int listwidget_draw(ListWidget *lw)
 			lrc = lrc->next_column;
 		}
 		if (row == lw->cursor_pos) wattroff(lw->win->win, A_BOLD);
-		lc++;
 	}
-	for (; row < lw->win->height; row++) {
-		wmove(lw->win->win, row, 0);
+	/* Blank remaining rows (if any) */
+	for (; row - lw->first_visible_row < lw->win->height; row++) {
+		wmove(lw->win->win, row - lw->first_visible_row, 0);
 		wclrtoeol(lw->win->win);
 	}
 
@@ -278,7 +277,6 @@ int listwidget_set_length(ListWidget *lw, int rows)
 	} else if (lw->cursor_pos > rows-1) {
 		lw->cursor_pos = rows-1;
 		if (lw->cursor_pos < 0) lw->cursor_pos = 0;
-		lw->first_visible_row = lw->cursor_pos;
 	}
 	return 0;
 }
