@@ -39,6 +39,9 @@
 #include "wejpconfig.h"
 #include "charset.h"
 
+#define OKAY 0
+#define ERROR (-1)
+
 #define PASSWORD_MIN_LENGTH 9
 #define INDEX_FILE "gmu.html"
 
@@ -358,7 +361,7 @@ static int  tcp_server_init(int port, int local_only);
 
 void *httpd_run_server(void *data)
 {
-	int                port = SERVER_PORT, local_only = 1;
+	int                port = SERVER_PORT, local_only = 1, fd;
 	HTTPD_Init_Params *ip = (HTTPD_Init_Params *)data;
 
 	if (ip && ip->webserver_root)
@@ -375,14 +378,15 @@ void *httpd_run_server(void *data)
 	         local_only ? "LOCAL interface only" : "ALL available interfaces");
 	wdprintf(V_INFO, "httpd", "Webserver root directory: %s\n", webserver_root);
 	if (ip) free(ip);
-	webserver_main_loop(tcp_server_init(port, local_only));
+	fd = tcp_server_init(port, local_only);
+	if (fd != ERROR)
+		webserver_main_loop(fd);
+	else
+		wdprintf(V_ERROR, "httpd", "Unable to listen on port %d.\n", port);
 	return NULL;
 }
 
 #define MAXLEN 4096
-
-#define OKAY 0
-#define ERROR (-1)
 
 /*
  * Open server listen port 'port'
@@ -970,7 +974,7 @@ static void webserver_main_loop(int listen_fd)
 					close(rfd);
 				}
 			} else {
-				wdprintf(V_WARNING, "httpd", "ERROR: Could not accept client connection.");
+				wdprintf(V_WARNING, "httpd", "ERROR: Could not accept client connection.\n");
 			}
 		}
 
