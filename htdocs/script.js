@@ -319,6 +319,11 @@ function play(id)
 	con.do_send('{"cmd":"play","item":'+id+'}');
 }
 
+function remove(id)
+{
+	con.do_send('{"cmd":"playlist_item_delete","item":'+id+'}');
+}
+
 function pl_set_number_of_items(items)
 {
 	pl.length = rows;
@@ -456,7 +461,7 @@ function pl_item_row_construct(item, col)
 			      html_entity_encode(pl[item])+"</a>";
 			break;
 		case 2:
-			res = '';
+			res = "<a title=\"Remove item\" class=\"icon\" href=\"javascript:remove("+item+");\">&#10007;</a>";
 			break;
 	}
 	return res;

@@ -284,3 +284,12 @@ table, tr, td {
 	padding:0;
 	margin:0;
 }
+
+.icon {
+	color:white;
+}
+
+.icon:hover {
+	color:white;
+	text-decoration:none;
+}
