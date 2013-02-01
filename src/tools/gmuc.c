@@ -438,6 +438,7 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
+	signal(SIGPIPE, SIG_IGN);
 
 	cfg_init_config_file_struct(&config);
 	cfg_add_key(&config, "Host", "127.0.0.1");
