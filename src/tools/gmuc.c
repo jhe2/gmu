@@ -840,8 +840,9 @@ int main(int argc, char **argv)
 									//wdprintf(V_DEBUG, "gmuc", "Server reply (size:%d)=[%s]\n", size, buffer);
 								} else {
 									wdprintf(V_DEBUG, "gmuc", "Server reply with size %d :|\n", size);
-									wprintw(ui.win_cmd->win, "Network Error: Data size = %d\n", size);
+									wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
 									if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
+									ui_draw_header(&ui, "Gmu Network Error", strerror(errno), cur_status, cur_time, cur_playmode);
 									network_error = 1;
 								}
 								if (size > 0) r = ringbuffer_write(&rb, buffer, size);
@@ -858,7 +859,8 @@ int main(int argc, char **argv)
 								break;
 							}
 							case STATE_CONNECTION_ESTABLISHED: {
-								network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, &cur_dir, input);
+								if (!network_error)
+									network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, &cur_dir, input);
 								break;
 							}
 							case STATE_WEBSOCKET_HANDSHAKE_FAILED:
