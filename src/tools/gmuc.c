@@ -112,7 +112,6 @@ static int parse_input_alloc(char *input, Command *cmd, char **params)
 							*params = malloc(len_params+1);
 							if (*params) {
 								memcpy(*params, parameters, len_params+1);
-								//endwin(); printf("params=[%s]\n", params); exit(0);
 							}
 						} else {
 							params = NULL;
@@ -159,7 +158,6 @@ static State do_websocket_handshake(RingBuffer *rb, State state)
 			} else {
 				ringbuffer_unread(rb);
 				data_available = 0;
-				//printf("Not enough data available...\n");
 				break;
 			}
 		}
@@ -830,15 +828,10 @@ int main(int argc, char **argv)
 							}
 						}
 						if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
-							//wprintw(ui.win_cmd->win, "Data received on socket: ");
 							if (r) {
-								//printf("Trying to read from server...\n");
 								memset(buffer, 0, BUF); // we don't need that later
 								size = recv(sock, buffer, BUF-1, 0);
-								if (size > 0) {
-									//wprintw(ui.win_cmd->win, "%d bytes:[%s]\n", size, buffer);
-									//wdprintf(V_DEBUG, "gmuc", "Server reply (size:%d)=[%s]\n", size, buffer);
-								} else {
+								if (size <= 0) {
 									wdprintf(V_DEBUG, "gmuc", "Server reply with size %d :|\n", size);
 									wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
 									if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
@@ -852,7 +845,7 @@ int main(int argc, char **argv)
 								wdprintf(V_DEBUG, "gmuc", "Can't read more from socket, ringbuffer full!\n");
 							}
 						}
-						//printf("Ringbuffer write %sokay.\n", r ? "" : "not ");
+
 						switch (state) {
 							case STATE_WEBSOCKET_HANDSHAKE: {
 								state = do_websocket_handshake(&rb, state);
