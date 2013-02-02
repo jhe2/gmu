@@ -78,19 +78,3 @@ int nethelper_tcp_connect_to_host(char *hostname, int port, int flags)
 	}
 	return fd;
 }
-#if 0
-int main(int argc, char *argv[])
-{
-	if (argc == 3) {
-		int port = atoi(argv[2]);
-		int fd = nethelper_tcp_connect_to_host(argv[1], port, 0);
-		if (fd > 0) {
-			printf("Success!! fd = %d\n", fd);
-			close(fd);
-		} else {
-			printf("FAILURE! :(\n");
-		}
-	}
-	return 0;
-}
-#endif
