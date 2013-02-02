@@ -41,6 +41,7 @@
 #include "window.h"
 #include "listwidget.h"
 #include "ui.h"
+#include "../nethelper.h"
 
 #define BUF 1024
 #define PORT 4680
@@ -429,7 +430,6 @@ int main(int argc, char **argv)
 	char              *buffer = malloc(BUF);
 	ssize_t            size;
 	struct sockaddr_in address;
-	const int          y = 1;
 	ConfigFile         config;
 	char              *password, *host;
 	char               config_file_path[256], *homedir;
@@ -488,387 +488,373 @@ int main(int argc, char **argv)
 		ui_cursor_text_input(&ui, NULL);
 
 		while (!quit) {
-			if (buffer && (sock = socket(AF_INET, SOCK_STREAM, 0)) > 0) {
+			if (!buffer) {
+				wdprintf(V_ERROR, "gmuc", "ERROR: Unable to allocate memory.\n");
+				quit = 1;
+			} else if ((sock = nethelper_tcp_connect_to_host(host, PORT, 0)) > 0) {
 				struct timeval tv;
-				tv.tv_sec = 2;
-				tv.tv_usec = 0;
-				if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof tv)) {
-					//wdprintf(V_INFO, "reader", "setsockopt: %s\n", strerror(errno));
+				fd_set         readfds, errorfds;
+				char          *input = NULL;
+				int            cpos = 0;
+				RingBuffer     rb;
+				int            r = 1, connected = 1;
+				State          state = STATE_WEBSOCKET_HANDSHAKE;
+				char           str2[1024], *key;
+				wchar_t        wchars[256];
+				char          *str = "GET /gmu HTTP/1.1\r\n"
+					"Host: %s\r\n"
+					"Upgrade: websocket\r\n"
+					"Connection: Upgrade\r\n"
+					"Sec-WebSocket-Key: %s\r\n"
+					"Sec-WebSocket-Version: 13\r\n\r\n";
+
+				network_error = 0;
+				wchars[0] = L'\0';
+
+				key = websocket_client_generate_sec_websocket_key_alloc();
+				if (key) {
+					snprintf(str2, 1023, str, inet_ntoa(address.sin_addr), key);
+					wdprintf(V_DEBUG, "gmuc", "request:%s\n", str2);
+					send(sock, str2, strlen(str2), 0);
+					free(key);
+				} else {
+					wdprintf(V_ERROR, "gmuc", "ERROR: Out of memory!\n");
 				}
-				setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int));
-				address.sin_family = AF_INET;
-				inet_aton(host, &address.sin_addr);
-				address.sin_port = htons(PORT);
+				wdprintf(V_DEBUG, "gmuc", "Connected to server (%s).\n", inet_ntoa(address.sin_addr));
 
-				wdprintf(V_INFO, "gmuc", "Connecting to server (%s).\n", inet_ntoa(address.sin_addr));
-				if (connect(sock, (struct sockaddr *)&address, sizeof(address)) == 0) {
-					struct timeval tv;
-					fd_set         readfds, errorfds;
-					char          *input = NULL;
-					int            cpos = 0;
-					RingBuffer     rb;
-					int            r = 1, connected = 1;
-					State          state = STATE_WEBSOCKET_HANDSHAKE;
-					char           str2[1024], *key;
-					wchar_t        wchars[256];
-					char          *str = "GET /gmu HTTP/1.1\r\n"
-						"Host: %s\r\n"
-						"Upgrade: websocket\r\n"
-						"Connection: Upgrade\r\n"
-						"Sec-WebSocket-Key: %s\r\n"
-						"Sec-WebSocket-Version: 13\r\n\r\n";
-
-					network_error = 0;
-					wchars[0] = L'\0';
-
-					key = websocket_client_generate_sec_websocket_key_alloc();
-					if (key) {
-						snprintf(str2, 1023, str, inet_ntoa(address.sin_addr), key);
-						wdprintf(V_DEBUG, "gmuc", "request:%s\n", str2);
-						send(sock, str2, strlen(str2), 0);
-						free(key);
-					} else {
-						wdprintf(V_ERROR, "gmuc", "ERROR: Out of memory!\n");
-					}
-					wdprintf(V_DEBUG, "gmuc", "Connected to server (%s).\n", inet_ntoa(address.sin_addr));
-
-					ringbuffer_init(&rb, 65536);
-					while (!quit && connected && !network_error) {
+				ringbuffer_init(&rb, 65536);
+				while (!quit && connected && !network_error) {
+					FD_ZERO(&readfds);
+					FD_ZERO(&errorfds);
+					FD_SET(fileno(stdin), &readfds);
+					FD_SET(sock, &readfds);
+					tv.tv_sec = 1;
+					tv.tv_usec = 500000;
+					if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
+						/*printf("ERROR in select(): %s\n", strerror(errno));*/
 						FD_ZERO(&readfds);
-						FD_ZERO(&errorfds);
-						FD_SET(fileno(stdin), &readfds);
-						FD_SET(sock, &readfds);
-						tv.tv_sec = 1;
-						tv.tv_usec = 500000;
-						if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
-							/*printf("ERROR in select(): %s\n", strerror(errno));*/
-							FD_ZERO(&readfds);
-						}
+					}
 
-						if (resized) {
-							resized = 0;
-							ui_resize(&ui);
-						}
+					if (resized) {
+						resized = 0;
+						ui_resize(&ui);
+					}
 
-						if (FD_ISSET(fileno(stdin), &readfds)) {
-							char   buf[1024];
-							wint_t ch;
-							int    res;
+					if (FD_ISSET(fileno(stdin), &readfds)) {
+						char   buf[1024];
+						wint_t ch;
+						int    res;
 
-							memset(buf, 0, 1024);
-							wdprintf(V_DEBUG, "gmuc", "Text was entered!\n");
-							res = wget_wch(stdscr, &ch);
-							if (res == OK) {
-								ui_refresh_active_window(&ui);
+						memset(buf, 0, 1024);
+						wdprintf(V_DEBUG, "gmuc", "Text was entered!\n");
+						res = wget_wch(stdscr, &ch);
+						if (res == OK) {
+							ui_refresh_active_window(&ui);
 
-								switch (ch) {
-									case '\n': {
-										int len = wcstombs(NULL, wchars, 0);
-										if (len > 0) {
-											input = wchars_to_utf8_str_realloc(input, wchars);
-											if (input) {
-												Command cmd = NO_COMMAND;
-												char   *params = NULL;
-
-												if (len > 0) {
-													wprintw(ui.win_cmd->win, "%s\n", input);
-													cpos = 0;
-													parse_input_alloc(input, &cmd, &params);
-													if (state == STATE_CONNECTION_ESTABLISHED) {
-														char *str = NULL;
-														switch (cmd) {
-															case PLAY:
-																str = "{\"cmd\":\"play\"}";
-																break;
-															case PAUSE:
-																str = "{\"cmd\":\"pause\"}";
-																break;
-															case NEXT:
-																str = "{\"cmd\":\"next\"}";
-																break;
-															case PREVIOUS:
-																str = "{\"cmd\":\"prev\"}";
-																break;
-															case STOP:
-																str = "{\"cmd\":\"stop\"}";
-																break;
-															case FILES:
-																str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
-																break;
-															case RAW:
-																str = params;
-															default:
-																break;
-														}
-														if (str) websocket_send_str(sock, str, 1);
-													} else {
-														wdprintf(V_INFO, "gmuc", "Connection not established. Cannot send command.\n");
-													}
-												}
-												wprintw(ui.win_cmd->win, "Command translates to %d", cmd);
-												if (params) {
-													wprintw(ui.win_cmd->win, " with parameters '%s'", params);
-													free(params);
-												}
-												wprintw(ui.win_cmd->win, ".\n", cmd);
-												free(input);
-												input = NULL;
-												ui_cursor_text_input(&ui, NULL);
-											} else {
-												wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
-											}
-											wchars[0] = L'\0';
-										} else { /* No string has been entered -> Execute command depending on active window */
-											char str[128];
-											switch (ui.active_win) {
-												case WIN_PL:
-													snprintf(str, 127, "{\"cmd\":\"play\", \"item\":%d}", listwidget_get_selection(ui.lw_pl));
-													websocket_send_str(sock, str, 1);
-													break;
-												case WIN_FB: {
-													char tmp[256], *prev_cur_dir = cur_dir;
-													int  sel_row = listwidget_get_selection(ui.lw_fb);
-													char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
-													if (ftype && strcmp(ftype, "[DIR]") == 0) {
-														cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
-																	 listwidget_get_row_data(ui.lw_fb, sel_row, 1));
-														free(prev_cur_dir);
-														wprintw(ui.win_cmd->win, "Selected dir: %s/%d\n", listwidget_get_row_data(ui.lw_fb, sel_row, 1), sel_row);
-														wprintw(ui.win_cmd->win, "Full path: %s\n", cur_dir);
-														listwidget_clear_all_rows(ui.lw_fb);
-														ui_refresh_active_window(&ui);
-														if (cur_dir) {
-															snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
-															websocket_send_str(sock, tmp, 1);
-														}
-													} else { /* Add file */
-														/* TODO */
-													}
-													break;
-												}
-												default:
-													break;
-											}
-										}
-										ui_refresh_active_window(&ui);
-										ui_cursor_text_input(&ui, NULL);
-										window_refresh(ui.win_footer);
-										break;
-									}
-									/*case 'q':
-										quit = 1;
-										break;*/
-									case KEY_BACKSPACE:
-									case '\b':
-									case KEY_DC:
-									case 127: {
-										if (cpos > 0) {
-											wchars[cpos-1] = L'\0';
-											cpos--;
-										}
+							switch (ch) {
+								case '\n': {
+									int len = wcstombs(NULL, wchars, 0);
+									if (len > 0) {
 										input = wchars_to_utf8_str_realloc(input, wchars);
 										if (input) {
-											ui_refresh_active_window(&ui);
-											ui_cursor_text_input(&ui, input);
+											Command cmd = NO_COMMAND;
+											char   *params = NULL;
+
+											if (len > 0) {
+												wprintw(ui.win_cmd->win, "%s\n", input);
+												cpos = 0;
+												parse_input_alloc(input, &cmd, &params);
+												if (state == STATE_CONNECTION_ESTABLISHED) {
+													char *str = NULL;
+													switch (cmd) {
+														case PLAY:
+															str = "{\"cmd\":\"play\"}";
+															break;
+														case PAUSE:
+															str = "{\"cmd\":\"pause\"}";
+															break;
+														case NEXT:
+															str = "{\"cmd\":\"next\"}";
+															break;
+														case PREVIOUS:
+															str = "{\"cmd\":\"prev\"}";
+															break;
+														case STOP:
+															str = "{\"cmd\":\"stop\"}";
+															break;
+														case FILES:
+															str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
+															break;
+														case RAW:
+															str = params;
+														default:
+															break;
+													}
+													if (str) websocket_send_str(sock, str, 1);
+												} else {
+													wdprintf(V_INFO, "gmuc", "Connection not established. Cannot send command.\n");
+												}
+											}
+											wprintw(ui.win_cmd->win, "Command translates to %d", cmd);
+											if (params) {
+												wprintw(ui.win_cmd->win, " with parameters '%s'", params);
+												free(params);
+											}
+											wprintw(ui.win_cmd->win, ".\n", cmd);
+											free(input);
+											input = NULL;
+											ui_cursor_text_input(&ui, NULL);
 										} else {
 											wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
 										}
-										window_refresh(ui.win_footer);
-										break;
-									}
-									case KEY_RESIZE:
-										break;
-									default: {
-										wchars[cpos] = ch;
-										wchars[cpos+1] = L'\0';
-										cpos++;
-										input = wchars_to_utf8_str_realloc(input, wchars);
-										ui_cursor_text_input(&ui, input);
-										window_refresh(ui.win_footer);
-										break;
-									}
-								}
-							} else if (res == KEY_CODE_YES) { /* Handle function and cursor keys here */
-								int i;
-								Function func = FUNC_NONE;
-								for (i = 0; ui.fb_visible && ui.fb_visible[i].button_name; i++) {
-									if (ui.fb_visible[i].key == ch) {
-										func = ui.fb_visible[i].func;
-										break;
-									}
-								}
-								switch (func) {
-									case FUNC_NEXT_WINDOW:
-										ui_active_win_next(&ui);
-										break;
-									case FUNC_FB_ADD: {
-										char  cmd[256];
-										int   sel_row = listwidget_get_selection(ui.lw_fb);
-										char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
-										char *file = listwidget_get_row_data(ui.lw_fb, sel_row, 1);
-										char *type = strcmp(ftype, "[DIR]") == 0 ? "dir" : "file";
-										char *cur_dir_esc = json_string_escape_alloc(cur_dir);
-										char *file_esc = json_string_escape_alloc(file);
-										if (cur_dir_esc && file_esc) {
-											snprintf(cmd, 255, 
-													 "{\"cmd\":\"playlist_add\",\"path\":\"%s/%s\",\"type\":\"%s\"}",
-													 cur_dir_esc, file_esc, type);
-											websocket_send_str(sock, cmd, 1);
-										}
-										free(cur_dir_esc);
-										free(file_esc);
-										break;
-									}
-									case FUNC_PREVIOUS:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"prev\"}", 1);
-										}
-										break;
-									case FUNC_NEXT:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"next\"}", 1);
-										}
-										break;
-									case FUNC_STOP:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"stop\"}", 1);
-										}
-										break;
-									case FUNC_PAUSE:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"pause\"}", 1);
-										}
-										break;
-									case FUNC_PLAY:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"play\"}", 1);
-										}
-										break;
-									case FUNC_PLAY_PAUSE:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"play_pause\"}", 1);
-										}
-										break;
-									case FUNC_PLAYMODE:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_cycle\"}", 1);
-										}
-										break;
-									case FUNC_PL_CLEAR:
-										if (state == STATE_CONNECTION_ESTABLISHED) {
-											websocket_send_str(sock, "{\"cmd\":\"playlist_clear\"}", 1);
-										}
-										break;
-									case FUNC_PL_DEL_ITEM: {
+										wchars[0] = L'\0';
+									} else { /* No string has been entered -> Execute command depending on active window */
 										char str[128];
-										snprintf(str, 127, "{\"cmd\":\"playlist_item_delete\",\"item\":%d}", 
-										         listwidget_get_selection(ui.lw_pl));
-										websocket_send_str(sock, str, 1);
-										break;
+										switch (ui.active_win) {
+											case WIN_PL:
+												snprintf(str, 127, "{\"cmd\":\"play\", \"item\":%d}", listwidget_get_selection(ui.lw_pl));
+												websocket_send_str(sock, str, 1);
+												break;
+											case WIN_FB: {
+												char tmp[256], *prev_cur_dir = cur_dir;
+												int  sel_row = listwidget_get_selection(ui.lw_fb);
+												char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
+												if (ftype && strcmp(ftype, "[DIR]") == 0) {
+													cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
+																 listwidget_get_row_data(ui.lw_fb, sel_row, 1));
+													free(prev_cur_dir);
+													wprintw(ui.win_cmd->win, "Selected dir: %s/%d\n", listwidget_get_row_data(ui.lw_fb, sel_row, 1), sel_row);
+													wprintw(ui.win_cmd->win, "Full path: %s\n", cur_dir);
+													listwidget_clear_all_rows(ui.lw_fb);
+													ui_refresh_active_window(&ui);
+													if (cur_dir) {
+														snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
+														websocket_send_str(sock, tmp, 1);
+													}
+												} else { /* Add file */
+													/* TODO */
+												}
+												break;
+											}
+											default:
+												break;
+										}
 									}
-									default:
-										break;
+									ui_refresh_active_window(&ui);
+									ui_cursor_text_input(&ui, NULL);
+									window_refresh(ui.win_footer);
+									break;
 								}
+								/*case 'q':
+									quit = 1;
+									break;*/
+								case KEY_BACKSPACE:
+								case '\b':
+								case KEY_DC:
+								case 127: {
+									if (cpos > 0) {
+										wchars[cpos-1] = L'\0';
+										cpos--;
+									}
+									input = wchars_to_utf8_str_realloc(input, wchars);
+									if (input) {
+										ui_refresh_active_window(&ui);
+										ui_cursor_text_input(&ui, input);
+									} else {
+										wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
+									}
+									window_refresh(ui.win_footer);
+									break;
+								}
+								case KEY_RESIZE:
+									break;
+								default: {
+									wchars[cpos] = ch;
+									wchars[cpos+1] = L'\0';
+									cpos++;
+									input = wchars_to_utf8_str_realloc(input, wchars);
+									ui_cursor_text_input(&ui, input);
+									window_refresh(ui.win_footer);
+									break;
+								}
+							}
+						} else if (res == KEY_CODE_YES) { /* Handle function and cursor keys here */
+							int i;
+							Function func = FUNC_NONE;
+							for (i = 0; ui.fb_visible && ui.fb_visible[i].button_name; i++) {
+								if (ui.fb_visible[i].key == ch) {
+									func = ui.fb_visible[i].func;
+									break;
+								}
+							}
+							switch (func) {
+								case FUNC_NEXT_WINDOW:
+									ui_active_win_next(&ui);
+									break;
+								case FUNC_FB_ADD: {
+									char  cmd[256];
+									int   sel_row = listwidget_get_selection(ui.lw_fb);
+									char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
+									char *file = listwidget_get_row_data(ui.lw_fb, sel_row, 1);
+									char *type = strcmp(ftype, "[DIR]") == 0 ? "dir" : "file";
+									char *cur_dir_esc = json_string_escape_alloc(cur_dir);
+									char *file_esc = json_string_escape_alloc(file);
+									if (cur_dir_esc && file_esc) {
+										snprintf(cmd, 255, 
+												 "{\"cmd\":\"playlist_add\",\"path\":\"%s/%s\",\"type\":\"%s\"}",
+												 cur_dir_esc, file_esc, type);
+										websocket_send_str(sock, cmd, 1);
+									}
+									free(cur_dir_esc);
+									free(file_esc);
+									break;
+								}
+								case FUNC_PREVIOUS:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"prev\"}", 1);
+									}
+									break;
+								case FUNC_NEXT:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"next\"}", 1);
+									}
+									break;
+								case FUNC_STOP:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"stop\"}", 1);
+									}
+									break;
+								case FUNC_PAUSE:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"pause\"}", 1);
+									}
+									break;
+								case FUNC_PLAY:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"play\"}", 1);
+									}
+									break;
+								case FUNC_PLAY_PAUSE:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"play_pause\"}", 1);
+									}
+									break;
+								case FUNC_PLAYMODE:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_cycle\"}", 1);
+									}
+									break;
+								case FUNC_PL_CLEAR:
+									if (state == STATE_CONNECTION_ESTABLISHED) {
+										websocket_send_str(sock, "{\"cmd\":\"playlist_clear\"}", 1);
+									}
+									break;
+								case FUNC_PL_DEL_ITEM: {
+									char str[128];
+									snprintf(str, 127, "{\"cmd\":\"playlist_item_delete\",\"item\":%d}", 
+											 listwidget_get_selection(ui.lw_pl));
+									websocket_send_str(sock, str, 1);
+									break;
+								}
+								default:
+									break;
+							}
 
-								switch (ch) {
-									case KEY_DOWN:
-										switch(ui.active_win) {
-											case WIN_PL:
-												listwidget_move_cursor(ui.lw_pl, 1);
-												break;
-											case WIN_FB:
-												listwidget_move_cursor(ui.lw_fb, 1);
-												break;
-											default:
-												break;
-										}
-										break;
-									case KEY_UP:
-										switch(ui.active_win) {
-											case WIN_PL:
-												listwidget_move_cursor(ui.lw_pl, -1);
-												break;
-											case WIN_FB:
-												listwidget_move_cursor(ui.lw_fb, -1);
-												break;
-											default:
-												break;
-										}
-										break;
-									case KEY_NPAGE:
-										switch(ui.active_win) {
-											case WIN_PL:
-												listwidget_move_cursor(ui.lw_pl, ui.lw_pl->win->height-2);
-												break;
-											case WIN_FB:
-												listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
-												break;
-											default:
-												break;
-										}
-										break;
-									case KEY_PPAGE:
-										switch(ui.active_win) {
-											case WIN_PL:
-												listwidget_move_cursor(ui.lw_pl, -(ui.lw_pl->win->height-2));
-												break;
-											case WIN_FB:
-												listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
-												break;
-											default:
-												break;
-										}
-										break;
-								}
-								ui_refresh_active_window(&ui);
-								ui_cursor_text_input(&ui, input);
-								window_refresh(ui.win_footer);
-							} else {
-								wprintw(ui.win_cmd->win, "ERROR\n");
+							switch (ch) {
+								case KEY_DOWN:
+									switch(ui.active_win) {
+										case WIN_PL:
+											listwidget_move_cursor(ui.lw_pl, 1);
+											break;
+										case WIN_FB:
+											listwidget_move_cursor(ui.lw_fb, 1);
+											break;
+										default:
+											break;
+									}
+									break;
+								case KEY_UP:
+									switch(ui.active_win) {
+										case WIN_PL:
+											listwidget_move_cursor(ui.lw_pl, -1);
+											break;
+										case WIN_FB:
+											listwidget_move_cursor(ui.lw_fb, -1);
+											break;
+										default:
+											break;
+									}
+									break;
+								case KEY_NPAGE:
+									switch(ui.active_win) {
+										case WIN_PL:
+											listwidget_move_cursor(ui.lw_pl, ui.lw_pl->win->height-2);
+											break;
+										case WIN_FB:
+											listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
+											break;
+										default:
+											break;
+									}
+									break;
+								case KEY_PPAGE:
+									switch(ui.active_win) {
+										case WIN_PL:
+											listwidget_move_cursor(ui.lw_pl, -(ui.lw_pl->win->height-2));
+											break;
+										case WIN_FB:
+											listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
+											break;
+										default:
+											break;
+									}
+									break;
 							}
-						}
-						if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
-							if (r) {
-								memset(buffer, 0, BUF); // we don't need that later
-								size = recv(sock, buffer, BUF-1, 0);
-								if (size <= 0) {
-									wdprintf(V_DEBUG, "gmuc", "Server reply with size %d :|\n", size);
-									wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
-									if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
-									ui_draw_header(&ui, "Gmu Network Error", strerror(errno), cur_status, cur_time, cur_playmode);
-									network_error = 1;
-								}
-								if (size > 0) r = ringbuffer_write(&rb, buffer, size);
-								if (!r) wprintw(ui.win_cmd->win, "Write failed, ringbuffer full!\n");
-							} else {
-								wprintw(ui.win_cmd->win, "Can't read more from socket, ringbuffer full!\n");
-								wdprintf(V_DEBUG, "gmuc", "Can't read more from socket, ringbuffer full!\n");
-							}
-						}
-
-						switch (state) {
-							case STATE_WEBSOCKET_HANDSHAKE: {
-								state = do_websocket_handshake(&rb, state);
-								break;
-							}
-							case STATE_CONNECTION_ESTABLISHED: {
-								if (!network_error)
-									network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, &cur_dir, input);
-								break;
-							}
-							case STATE_WEBSOCKET_HANDSHAKE_FAILED:
-								wdprintf(V_ERROR, "gmuc", "Websocket handshake failed!\n");
-								network_error = 1;
-								connected = 0;
-								break;
+							ui_refresh_active_window(&ui);
+							ui_cursor_text_input(&ui, input);
+							window_refresh(ui.win_footer);
+						} else {
+							wprintw(ui.win_cmd->win, "ERROR\n");
 						}
 					}
-					if (input) free(input);
-					ringbuffer_free(&rb);
-				} else {
-					wdprintf(V_ERROR, "gmuc", "Failed to connect: %s\n", strerror(errno));
-					network_error = 1;
+					if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
+						if (r) {
+							memset(buffer, 0, BUF); // we don't need that later
+							size = recv(sock, buffer, BUF-1, 0);
+							if (size <= 0) {
+								wdprintf(V_DEBUG, "gmuc", "Server reply with size %d :|\n", size);
+								wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
+								if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
+								ui_draw_header(&ui, "Gmu Network Error", strerror(errno), cur_status, cur_time, cur_playmode);
+								network_error = 1;
+							}
+							if (size > 0) r = ringbuffer_write(&rb, buffer, size);
+							if (!r) wprintw(ui.win_cmd->win, "Write failed, ringbuffer full!\n");
+						} else {
+							wprintw(ui.win_cmd->win, "Can't read more from socket, ringbuffer full!\n");
+							wdprintf(V_DEBUG, "gmuc", "Can't read more from socket, ringbuffer full!\n");
+						}
+					}
+
+					switch (state) {
+						case STATE_WEBSOCKET_HANDSHAKE: {
+							state = do_websocket_handshake(&rb, state);
+							break;
+						}
+						case STATE_CONNECTION_ESTABLISHED: {
+							if (!network_error)
+								network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, &cur_dir, input);
+							break;
+						}
+						case STATE_WEBSOCKET_HANDSHAKE_FAILED:
+							wdprintf(V_ERROR, "gmuc", "Websocket handshake failed!\n");
+							network_error = 1;
+							connected = 0;
+							break;
+					}
 				}
+				if (input) free(input);
+				ringbuffer_free(&rb);
 				close(sock);
 				res = EXIT_SUCCESS;
 			}

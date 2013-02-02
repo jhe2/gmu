@@ -159,9 +159,9 @@ gmu-cli: src/tools/gmu-cli.c wejpconfig.o
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) -o gmu-cli src/tools/gmu-cli.c wejpconfig.o
 
-gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net.o json.o dir.o wejpconfig.o ui.o charset.o
+gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net.o json.o dir.o wejpconfig.o ui.o charset.o nethelper.o
 	@echo -e "Linking \033[1mgmuc\033[0m"
-	$(Q)$(CC) $(CFLAGS) -o gmuc gmuc.o wejpconfig.o websocket.o base64.o debug.o ringbuffer.o net.o json.o window.o listwidget.o dir.o ui.o charset.o -lncursesw
+	$(Q)$(CC) $(CFLAGS) -o gmuc gmuc.o wejpconfig.o websocket.o base64.o debug.o ringbuffer.o net.o json.o window.o listwidget.o dir.o ui.o charset.o nethelper.o -lncursesw
 
 %.o: src/tools/%.c
 	@echo -e "Compiling \033[1m$<\033[0m"
