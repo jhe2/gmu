@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playlist.c  Created: 060930
  *
@@ -351,7 +351,8 @@ PlayMode playlist_get_play_mode(Playlist *pl)
 
 void playlist_set_play_mode(Playlist *pl, PlayMode mode)
 {
-	pl->play_mode = mode;
+	if (mode >= PM_CONTINUE && mode <= PM_RANDOM_REPEAT)
+		pl->play_mode = mode;
 }
 
 PlayMode playlist_cycle_play_mode(Playlist *pl)
