@@ -413,6 +413,14 @@ PlayMode gmu_core_playlist_cycle_play_mode(void)
 	return res;
 }
 
+void gmu_core_playlist_set_play_mode(PlayMode pm)
+{
+	playlist_get_lock(&pl);
+	playlist_set_play_mode(&pl, pm);
+	playlist_release_lock(&pl);
+	event_queue_push(&event_queue, GMU_PLAYMODE_CHANGE);
+}
+
 int gmu_core_playlist_entry_enqueue(Entry *entry)
 {
 	int res;

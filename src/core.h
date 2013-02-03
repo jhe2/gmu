@@ -63,6 +63,7 @@ int              gmu_core_playlist_insert_file_after(Entry *entry, char *filenam
 int              gmu_core_playlist_add_file(char *filename_with_path);
 char            *gmu_core_playlist_get_entry_filename(Entry *entry);
 PlayMode         gmu_core_playlist_cycle_play_mode(void);
+void             gmu_core_playlist_set_play_mode(PlayMode pm);
 int              gmu_core_playlist_entry_enqueue(Entry *entry);
 int              gmu_core_playlist_get_current_position(void);
 void             gmu_core_playlist_clear(void);
