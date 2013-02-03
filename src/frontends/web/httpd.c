@@ -844,6 +844,11 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 	dir_free(&dir);
 }
 
+static void gmu_http_ping(Connection *c)
+{
+	websocket_send_string(c, "{\"cmd\":\"pong\"}");
+}
+
 static void gmu_http_handle_websocket_message(char *message, Connection *c)
 {
 	JSON_Object *json = json_parse_alloc(message);
@@ -911,6 +916,8 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 			} else if (strcmp(cmd, "playlist_item_delete") == 0) {
 				int item = (int)json_get_number_value_for_key(json, "item");
 				if (item >= 0) gmu_core_playlist_item_delete(item);
+			} else if (strcmp(cmd, "ping") == 0) {
+				gmu_http_ping(c);
 			}
 		}
 	}
