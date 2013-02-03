@@ -409,16 +409,18 @@ PlayMode gmu_core_playlist_cycle_play_mode(void)
 	playlist_get_lock(&pl);
 	res = playlist_cycle_play_mode(&pl);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYMODE_CHANGE);
+	event_queue_push_with_parameter(&event_queue, GMU_PLAYMODE_CHANGE, res);
 	return res;
 }
 
 void gmu_core_playlist_set_play_mode(PlayMode pm)
 {
+	int res;
 	playlist_get_lock(&pl);
-	playlist_set_play_mode(&pl, pm);
+	res = playlist_set_play_mode(&pl, pm);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYMODE_CHANGE);
+	if (res)
+		event_queue_push_with_parameter(&event_queue, GMU_PLAYMODE_CHANGE, pm);
 }
 
 int gmu_core_playlist_entry_enqueue(Entry *entry)
