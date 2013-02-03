@@ -75,7 +75,7 @@ Entry   *playlist_item_delete(Playlist *pl, int item);
 char    *playlist_get_entry_name(Playlist *pl, Entry *entry);
 char    *playlist_get_entry_filename(Playlist *pl, Entry *entry);
 PlayMode playlist_get_play_mode(Playlist *pl);
-void     playlist_set_play_mode(Playlist *pl, PlayMode mode);
+int      playlist_set_play_mode(Playlist *pl, PlayMode mode);
 PlayMode playlist_cycle_play_mode(Playlist *pl);
 int      playlist_toggle_random_mode(Playlist *pl);
 void     playlist_reset_random(Playlist *pl);

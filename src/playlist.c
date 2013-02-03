@@ -349,10 +349,14 @@ PlayMode playlist_get_play_mode(Playlist *pl)
 	return pl->play_mode;
 }
 
-void playlist_set_play_mode(Playlist *pl, PlayMode mode)
+int playlist_set_play_mode(Playlist *pl, PlayMode mode)
 {
-	if (mode >= PM_CONTINUE && mode <= PM_RANDOM_REPEAT)
+	int res = 0;
+	if (mode >= PM_CONTINUE && mode <= PM_RANDOM_REPEAT) {
 		pl->play_mode = mode;
+		res = 1;
+	}
+	return res;
 }
 
 PlayMode playlist_cycle_play_mode(Playlist *pl)
