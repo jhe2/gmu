@@ -76,7 +76,7 @@ static int event_callback(GmuEvent event, int param)
 			tmp_album  = json_string_escape_alloc(trackinfo_get_album(ti));
 			r = snprintf(msg, MSG_MAX_LEN,
 			             "{ \"cmd\": \"trackinfo\", \"title\" : \"%s\", \"artist\" : \"%s\", \"album\" : \"%s\" }",
-			             tmp_title, tmp_artist, tmp_album);
+			             tmp_title ? tmp_title : "", tmp_artist ? tmp_artist : "", tmp_album ? tmp_album : "");
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			if (tmp_title)  free(tmp_title);
 			if (tmp_artist) free(tmp_artist);
