@@ -573,8 +573,8 @@ function fb_item_row_construct(item, col)
 				var path = cur_dir+fb_dir[item]['name'];
 				var path_mask = path.replace(/'/g, "\\'");
 				res = fb_dir[item]['is_dir'] ?
-				      "<a href=\"javascript:open_dir('"+path_mask+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>" :
-				      "<a href=\"javascript:add_file('"+path_mask+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>";
+				      "<a href=\"javascript:add_dir('"+path_mask+"');\"><strong title='Add this directory to playlist'>+</strong></a> <a href=\"javascript:open_dir('"+path_mask+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>" :
+				      "<a href=\"javascript:add_file('"+path_mask+"');\"><strong title='Add this file to playlist'>+</strong> " + html_entity_encode(fb_dir[item]['name']) + "</a>";
 				}
 			else
 				res = '';
