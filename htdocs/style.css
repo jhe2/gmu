@@ -147,6 +147,7 @@ a:hover {
 	float:left;
 	text-align:center;
 	margin-left:2px;
+	cursor:pointer;
 }
 
 .button-pressed {
