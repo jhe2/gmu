@@ -471,7 +471,10 @@ function handle_btn_playmode(e)
 				mode = 1;
 			break;
 		case brept:
-			mode = 2;
+			if (playmode == 2)
+				mode = 0;
+			else
+				mode = 2;
 			break;
 	}
 	con.do_send('{"cmd":"playlist_playmode_set","mode":'+mode+'}');
