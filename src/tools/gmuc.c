@@ -364,8 +364,6 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 					char *cmd = json_get_string_value_for_key(json, "cmd");
 					if (cmd) {
 						int screen_update = 0;
-						wprintw(ui->win_cmd->win, "Got command: %s\n", cmd);
-						//ui_refresh_active_window(&ui);
 						if (strcmp(cmd, "trackinfo") == 0) {
 							cmd_trackinfo(ui, json);
 						} else if (strcmp(cmd, "playback_time") == 0) {
