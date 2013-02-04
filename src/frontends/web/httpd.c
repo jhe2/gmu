@@ -382,7 +382,7 @@ void *httpd_run_server(void *data)
 	if (fd != ERROR)
 		webserver_main_loop(fd);
 	else
-		wdprintf(V_ERROR, "httpd", "Unable to listen on port %d.\n", port);
+		wdprintf(V_ERROR, "httpd", "Unable to listen on port %d: %s\n", port, strerror(errno));
 	return NULL;
 }
 
@@ -742,12 +742,16 @@ void gmu_http_get_current_trackinfo(Connection *c)
 {
 	TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
 	char msg[MSG_MAX_LEN];
+	char *ti_artist = trackinfo_get_artist(ti);
+	char *ti_title  = trackinfo_get_title(ti);
+	char *ti_album  = trackinfo_get_album(ti);
+	char *ti_date   = trackinfo_get_date(ti);
 	int  r = snprintf(msg, MSG_MAX_LEN,
 	                  "{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", \"album\": \"%s\", \"date\": \"%s\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
-	                  trackinfo_get_artist(ti),
-	                  trackinfo_get_title(ti),
-	                  trackinfo_get_album(ti),
-	                  trackinfo_get_date(ti),
+	                  ti_artist ? ti_artist : "",
+	                  ti_title ? ti_title : "",
+	                  ti_album ? ti_album : "",
+	                  ti_date ? ti_date : "",
 	                  trackinfo_get_length_minutes(ti),
 	                  trackinfo_get_length_seconds(ti),
 	                  0);
