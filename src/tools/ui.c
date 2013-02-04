@@ -109,9 +109,10 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 		wclrtoeol(ui->win_header->win);
 		wattroff(ui->win_header->win, A_BOLD);
 		wprintw(ui->win_header->win, " %s %s%s%s",
-		        cur_status, 
+		        cur_status != NULL ? cur_status : "", 
 		        cur_artist != NULL ? cur_artist : "", 
-		        cur_artist && cur_artist[0] != '\0' ? " - " : "", cur_title);
+		        cur_artist && cur_artist[0] != '\0' ? " - " : "",
+		        cur_title != NULL ? cur_title : "");
 		min = (cur_time / 1000) / 60;
 		sec = (cur_time / 1000) - min * 60;
 		switch (playmode) {
