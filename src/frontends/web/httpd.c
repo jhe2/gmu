@@ -911,6 +911,9 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				gmu_core_playlist_clear();
 			} else if (strcmp(cmd, "playlist_playmode_cycle") == 0) {
 				gmu_core_playlist_cycle_play_mode();
+			} else if (strcmp(cmd, "playlist_playmode_set") == 0) {
+				int pm = (int)json_get_number_value_for_key(json, "mode");
+				gmu_core_playlist_set_play_mode(pm);
 			} else if (strcmp(cmd, "playlist_playmode_get_info") == 0) {
 				gmu_http_playmode_get_info(c);
 			} else if (strcmp(cmd, "playlist_item_delete") == 0) {

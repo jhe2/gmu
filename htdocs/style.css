@@ -294,3 +294,20 @@ table, tr, td {
 	color:white;
 	text-decoration:none;
 }
+
+.playmode {
+	background-color:#444;
+	border:1px solid #666;
+	height:34px;
+	width:220px;
+	margin-left:5px;
+	float:left;
+}
+
+.playmode .button {
+	height:20px;
+}
+
+.playmode .button-pressed {
+	height:20px;
+}

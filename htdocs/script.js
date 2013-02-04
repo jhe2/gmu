@@ -14,6 +14,7 @@ var selected_tab = 'pl';
 
 var con = null;
 var plt, fbt;
+var playmode = 0;
 
 window.onload = function() { init(); }
 
@@ -132,6 +133,42 @@ function Connection()
 								fbt.set_row_data(i);
 							}
 							handle_fb_scroll();
+						}
+						break;
+					case 'playmode_info':
+						playmode = jmsg['mode'];
+						switch (jmsg['mode']) {
+							default:
+							case 0: // Continue
+								document.getElementById("btn-pm-continue").className = "button-pressed";
+								document.getElementById("btn-pm-random").className = "button";
+								document.getElementById("btn-pm-repeat").className = "button";
+								document.getElementById("btn-pm-repeat-track").className = "button";
+								break;
+							case 1: // Repeat All
+								document.getElementById("btn-pm-continue").className = "button";
+								document.getElementById("btn-pm-random").className = "button";
+								document.getElementById("btn-pm-repeat").className = "button-pressed";
+								document.getElementById("btn-pm-repeat-track").className = "button";
+								break;
+							case 2: // Repeat Track
+								document.getElementById("btn-pm-continue").className = "button";
+								document.getElementById("btn-pm-random").className = "button";
+								document.getElementById("btn-pm-repeat").className = "button";
+								document.getElementById("btn-pm-repeat-track").className = "button-pressed";
+								break;
+							case 3: // Random
+								document.getElementById("btn-pm-continue").className = "button";
+								document.getElementById("btn-pm-random").className = "button-pressed";
+								document.getElementById("btn-pm-repeat").className = "button";
+								document.getElementById("btn-pm-repeat-track").className = "button";
+								break;
+							case 4: // Random+Repeat
+								document.getElementById("btn-pm-continue").className = "button";
+								document.getElementById("btn-pm-random").className = "button-pressed";
+								document.getElementById("btn-pm-repeat").className = "button-pressed";
+								document.getElementById("btn-pm-repeat-track").className = "button";
+								break;
 						}
 						break;
 					default:
@@ -395,6 +432,51 @@ function handle_btn_clear(e)
 	con.do_send('{"cmd":"playlist_clear"}');
 }
 
+function handle_btn_playmode(e)
+{
+	if (!e) var e = window.event;
+	if (e.target)
+		telem = e.target;
+	else if (e.srcElement)
+		telem = e.srcElement;
+	if (telem.nodeType == 3) // Defeat Safari bug
+		telem = telem.parentNode;
+	bcont = document.getElementById('btn-pm-continue');
+	brand = document.getElementById('btn-pm-random');
+	brepa = document.getElementById('btn-pm-repeat');
+	brept = document.getElementById('btn-pm-repeat-track');
+	switch (telem) {
+		default:
+		case bcont:
+			mode = 0;
+			break;
+		case brand:
+			if (playmode == 1)      // repeat
+				mode = 4;
+			else if (playmode == 3) // random
+				mode = 0;
+			else if (playmode == 4) // random+repeat
+				mode = 1;
+			else
+				mode = 3;
+			break;
+		case brepa:
+			if (playmode == 3)
+				mode = 4;
+			else if (playmode == 1)
+				mode = 0;
+			else if (playmode == 4)
+				mode = 3;
+			else
+				mode = 1;
+			break;
+		case brept:
+			mode = 2;
+			break;
+	}
+	con.do_send('{"cmd":"playlist_playmode_set","mode":'+mode+'}');
+}
+
 function handle_tab_select_fb(e)
 {
 	var evt = window.event || e;
@@ -562,6 +644,10 @@ function init()
 	add_event_handler('tlo',         'click',  handle_tab_select_log);
 	add_event_handler('btn-login',   'click',  handle_login);
 	add_event_handler('btn-pl-clear','click',  handle_btn_clear);
+	add_event_handler('btn-pm-continue','click',      handle_btn_playmode);
+	add_event_handler('btn-pm-random','click',        handle_btn_playmode);
+	add_event_handler('btn-pm-repeat','click',        handle_btn_playmode);
+	add_event_handler('btn-pm-repeat-track','click',  handle_btn_playmode);
 	con.start("ws://" + document.location.host + "/gmu");
 	window.onresize = function(event) {
 		plt.init('pl', 'playlisttable', 'plscrollbar', 'plscrolldummy',
