@@ -607,37 +607,6 @@ int main(int argc, char **argv)
 											wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
 										}
 										wchars[0] = L'\0';
-									} else { /* No string has been entered -> Execute command depending on active window */
-										char str[128];
-										switch (ui.active_win) {
-											case WIN_PL:
-												snprintf(str, 127, "{\"cmd\":\"play\", \"item\":%d}", listwidget_get_selection(ui.lw_pl));
-												websocket_send_str(sock, str, 1);
-												break;
-											case WIN_FB: {
-												char tmp[256], *prev_cur_dir = cur_dir;
-												int  sel_row = listwidget_get_selection(ui.lw_fb);
-												char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
-												if (ftype && strcmp(ftype, "[DIR]") == 0) {
-													cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
-																 listwidget_get_row_data(ui.lw_fb, sel_row, 1));
-													free(prev_cur_dir);
-													wprintw(ui.win_cmd->win, "Selected dir: %s/%d\n", listwidget_get_row_data(ui.lw_fb, sel_row, 1), sel_row);
-													wprintw(ui.win_cmd->win, "Full path: %s\n", cur_dir);
-													listwidget_clear_all_rows(ui.lw_fb);
-													ui_refresh_active_window(&ui);
-													if (cur_dir) {
-														snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
-														websocket_send_str(sock, tmp, 1);
-													}
-												} else { /* Add file */
-													/* TODO */
-												}
-												break;
-											}
-											default:
-												break;
-										}
 									}
 									ui_refresh_active_window(&ui);
 									ui_cursor_text_input(&ui, NULL);
@@ -806,7 +775,39 @@ int main(int argc, char **argv)
 										default:
 											break;
 									}
+								case '\n': {
+									char str[128];
+									switch (ui.active_win) {
+										case WIN_PL:
+											snprintf(str, 127, "{\"cmd\":\"play\", \"item\":%d}", listwidget_get_selection(ui.lw_pl));
+											websocket_send_str(sock, str, 1);
+											break;
+										case WIN_FB: {
+											char tmp[256], *prev_cur_dir = cur_dir;
+											int  sel_row = listwidget_get_selection(ui.lw_fb);
+											char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
+											if (ftype && strcmp(ftype, "[DIR]") == 0) {
+												cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
+															 listwidget_get_row_data(ui.lw_fb, sel_row, 1));
+												free(prev_cur_dir);
+												wprintw(ui.win_cmd->win, "Selected dir: %s/%d\n", listwidget_get_row_data(ui.lw_fb, sel_row, 1), sel_row);
+												wprintw(ui.win_cmd->win, "Full path: %s\n", cur_dir);
+												listwidget_clear_all_rows(ui.lw_fb);
+												ui_refresh_active_window(&ui);
+												if (cur_dir) {
+													snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
+													websocket_send_str(sock, tmp, 1);
+												}
+											} else { /* Add file */
+												/* TODO */
+											}
+											break;
+										}
+										default:
+											break;
+									}
 									break;
+								}
 							}
 							ui_refresh_active_window(&ui);
 							ui_cursor_text_input(&ui, input);
