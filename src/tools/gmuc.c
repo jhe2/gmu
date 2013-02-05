@@ -546,12 +546,13 @@ int main(int argc, char **argv)
 						memset(buf, 0, 1024);
 						wdprintf(V_DEBUG, "gmuc", "Text was entered!\n");
 						res = wget_wch(stdscr, &ch);
-						if (res == OK) {
+						if (res == OK && ui.text_input_enabled) {
 							ui_refresh_active_window(&ui);
-
 							switch (ch) {
 								case '\n': {
 									int len = wcstombs(NULL, wchars, 0);
+									ui_enable_text_input(&ui, 0);
+									ui_draw_footer(&ui);
 									if (len > 0) {
 										input = wchars_to_utf8_str_realloc(input, wchars);
 										if (input) {
@@ -643,9 +644,6 @@ int main(int argc, char **argv)
 									window_refresh(ui.win_footer);
 									break;
 								}
-								/*case 'q':
-									quit = 1;
-									break;*/
 								case KEY_BACKSPACE:
 								case '\b':
 								case KEY_DC:
@@ -676,7 +674,7 @@ int main(int argc, char **argv)
 									break;
 								}
 							}
-						} else if (res == KEY_CODE_YES) { /* Handle function and cursor keys here */
+						} else if (res == OK || res == KEY_CODE_YES) {
 							int i;
 							Function func = FUNC_NONE;
 							for (i = 0; ui.fb_visible && ui.fb_visible[i].button_name; i++) {
@@ -754,6 +752,8 @@ int main(int argc, char **argv)
 									websocket_send_str(sock, str, 1);
 									break;
 								}
+								case FUNC_TEXT_INPUT:
+									ui_enable_text_input(&ui, 1);
 								default:
 									break;
 							}

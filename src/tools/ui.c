@@ -36,6 +36,7 @@ static FooterButtons fb_pl[] = {
 	{ "F9",  "P.Mode",   FUNC_PLAYMODE,    KEY_F(9) },
 	{ "F10", "Clear",    FUNC_PL_CLEAR,    KEY_F(10) },
 	{ "Del", "Remove",   FUNC_PL_DEL_ITEM, KEY_DC },
+	{ "/", "Command",    FUNC_TEXT_INPUT,  '/' },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
 
@@ -47,6 +48,7 @@ static FooterButtons fb_fb[] = {
 	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6) },
 	{ "F7", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7) },
 	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8) },
+	{ "/", "Command",   FUNC_TEXT_INPUT,  '/' },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
 
@@ -57,6 +59,7 @@ static FooterButtons fb_ti[] = {
 	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6) },
 	{ "F7", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7) },
 	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8) },
+	{ "/", "Command",   FUNC_TEXT_INPUT,  '/' },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
 
@@ -67,6 +70,7 @@ static FooterButtons fb_cmd[] = {
 	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6) },
 	{ "F7", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7) },
 	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8) },
+	{ "/", "Command",   FUNC_TEXT_INPUT,  '/' },
 	{ NULL, NULL, FUNC_NONE, 0 }
 };
 
@@ -79,15 +83,15 @@ void ui_init(UI *ui)
 	noecho();
 	keypad(stdscr, TRUE);
 	getmaxyx(stdscr, ui->rows, ui->cols);
-	ui->win_cmd    = window_create(ui->rows-3, ui->cols, 1, 0, "Command window");
-	ui->win_ti     = window_create(ui->rows-3, ui->cols, 1, 0, "Track information");
+	ui->win_cmd    = window_create(ui->rows-2, ui->cols, 1, 0, "Command window");
+	ui->win_ti     = window_create(ui->rows-2, ui->cols, 1, 0, "Track information");
 	ui->win_header = window_create(1, ui->cols, 0, 0, NULL);
-	ui->win_footer = window_create(2, ui->cols, ui->rows-2, 0, NULL);
+	ui->win_footer = window_create(1, ui->cols, ui->rows-1, 0, NULL);
 	ui->active_win = WIN_PL;
-	ui->lw_fb      = listwidget_new(2, "File Browser", 1, 0, ui->rows-3, ui->cols);
+	ui->lw_fb      = listwidget_new(2, "File Browser", 1, 0, ui->rows-2, ui->cols);
 	listwidget_set_col_width(ui->lw_fb, 0, 6);
 	listwidget_set_col_width(ui->lw_fb, 1, -1);
-	ui->lw_pl      = listwidget_new(3, "Playlist", 1, 0, ui->rows-3, ui->cols);
+	ui->lw_pl      = listwidget_new(3, "Playlist", 1, 0, ui->rows-2, ui->cols);
 	listwidget_set_col_width(ui->lw_pl, 0, 6);
 	listwidget_set_col_width(ui->lw_pl, 1, -1);
 	listwidget_set_col_width(ui->lw_pl, 2, 6);
@@ -96,6 +100,7 @@ void ui_init(UI *ui)
 	ui->fb_ti = fb_ti;
 	ui->fb_cmd = fb_cmd;
 	ui->fb_visible = fb_pl;
+	ui->text_input_enabled = 0;
 }
 
 void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, 
@@ -177,7 +182,7 @@ void ui_draw_footer(UI *ui)
 	if (ui->win_footer) {
 		int i;
 		getmaxyx(stdscr, ui->rows, ui->cols);
-		wmove(ui->win_footer->win, 1, 0);
+		wmove(ui->win_footer->win, 0, 0);
 		for (i = 0; ui->fb_visible && ui->fb_visible[i].button_name; i++)
 			ui_draw_footer_button(ui, ui->fb_visible[i].button_name, ui->fb_visible[i].button_desc);
 		wclrtoeol(ui->win_footer->win);
@@ -199,10 +204,17 @@ void ui_draw(UI *ui)
 
 void ui_cursor_text_input(UI *ui, char *str)
 {
-	wmove(ui->win_footer->win, 0, 0);
-	wclrtoeol(ui->win_footer->win);
-	wprintw(ui->win_footer->win, ">%s", str ? str : "");
-	wrefresh(ui->win_footer->win);
+	if (ui->text_input_enabled) {
+		wmove(ui->win_footer->win, 0, 0);
+		wclrtoeol(ui->win_footer->win);
+		wprintw(ui->win_footer->win, ">%s", str ? str : "");
+		wrefresh(ui->win_footer->win);
+	}
+}
+
+void ui_enable_text_input(UI *ui, int enable)
+{
+	ui->text_input_enabled = enable;
 }
 
 void ui_resize(UI *ui)
@@ -211,10 +223,10 @@ void ui_resize(UI *ui)
 	endwin();
 	doupdate();
 	getmaxyx(stdscr, ui->rows, ui->cols);
-	window_resize(ui->win_cmd, ui->rows-3, ui->cols);
-	listwidget_resize(ui->lw_pl, ui->rows-3, ui->cols);
-	listwidget_resize(ui->lw_fb, ui->rows-3, ui->cols);
-	mvwin(ui->win_footer->win, ui->rows-2, 0);
+	window_resize(ui->win_cmd, ui->rows-2, ui->cols);
+	listwidget_resize(ui->lw_pl, ui->rows-2, ui->cols);
+	listwidget_resize(ui->lw_fb, ui->rows-2, ui->cols);
+	mvwin(ui->win_footer->win, ui->rows-1, 0);
 	ui_draw(ui);
 	if (ui->win_cmd && ui->win_cmd->win)
 		wprintw(ui->win_cmd->win, "new size: %d x %d\n", ui->cols, ui->rows);
