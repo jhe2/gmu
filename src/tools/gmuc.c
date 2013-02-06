@@ -484,6 +484,7 @@ int main(int argc, char **argv)
 		ui_init(&ui);
 		ui_draw(&ui);
 		ui_cursor_text_input(&ui, NULL);
+		ui_enable_text_input(&ui, 0);
 
 		while (!quit) {
 			if (!buffer) {

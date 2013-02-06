@@ -215,6 +215,7 @@ void ui_cursor_text_input(UI *ui, char *str)
 void ui_enable_text_input(UI *ui, int enable)
 {
 	ui->text_input_enabled = enable;
+	curs_set(enable);
 }
 
 void ui_resize(UI *ui)
