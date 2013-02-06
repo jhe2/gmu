@@ -74,6 +74,7 @@ int nethelper_tcp_connect_to_host(char *hostname, int port, int flags)
 				}
 				break;
 			}
+			freeaddrinfo(servinfo);
 		}
 	}
 	return fd;
