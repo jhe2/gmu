@@ -478,8 +478,7 @@ int main(int argc, char **argv)
 		sigemptyset(&act.sa_mask);
 		act.sa_flags = SA_RESTART;
 		act.sa_handler = sig_handler_sigwinch;
-		if (sigaction(SIGWINCH, &act, NULL) < 0)
-			wdprintf(V_ERROR, "gmuc", "ERROR: Cannot setup SIGWINCH handler\n");
+		sigaction(SIGWINCH, &act, NULL);
 
 		ui_init(&ui);
 		ui_draw(&ui);
@@ -488,7 +487,6 @@ int main(int argc, char **argv)
 
 		while (!quit) {
 			if (!buffer) {
-				wdprintf(V_ERROR, "gmuc", "ERROR: Unable to allocate memory.\n");
 				quit = 1;
 			} else if ((sock = nethelper_tcp_connect_to_host(host, PORT, 0)) > 0) {
 				struct timeval tv;
@@ -516,10 +514,7 @@ int main(int argc, char **argv)
 					wdprintf(V_DEBUG, "gmuc", "request:%s\n", str2);
 					send(sock, str2, strlen(str2), 0);
 					free(key);
-				} else {
-					wdprintf(V_ERROR, "gmuc", "ERROR: Out of memory!\n");
 				}
-				wdprintf(V_DEBUG, "gmuc", "Connected to server (%s).\n", inet_ntoa(address.sin_addr));
 
 				ringbuffer_init(&rb, 65536);
 				while (!quit && connected && !network_error) {
@@ -530,7 +525,7 @@ int main(int argc, char **argv)
 					tv.tv_sec = 1;
 					tv.tv_usec = 500000;
 					if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
-						/*printf("ERROR in select(): %s\n", strerror(errno));*/
+						/* ERROR in select() */
 						FD_ZERO(&readfds);
 					}
 
@@ -545,7 +540,6 @@ int main(int argc, char **argv)
 						int    res;
 
 						memset(buf, 0, 1024);
-						wdprintf(V_DEBUG, "gmuc", "Text was entered!\n");
 						res = wget_wch(stdscr, &ch);
 						if (res == OK && ui.text_input_enabled) {
 							ui_refresh_active_window(&ui);
@@ -826,7 +820,6 @@ int main(int argc, char **argv)
 							memset(buffer, 0, BUF); // we don't need that later
 							size = recv(sock, buffer, BUF-1, 0);
 							if (size <= 0) {
-								wdprintf(V_DEBUG, "gmuc", "Server reply with size %d :|\n", size);
 								wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
 								if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
 								ui_draw_header(&ui, "Gmu Network Error", strerror(errno), cur_status, cur_time, cur_playmode);
@@ -836,7 +829,6 @@ int main(int argc, char **argv)
 							if (!r) wprintw(ui.win_cmd->win, "Write failed, ringbuffer full!\n");
 						} else {
 							wprintw(ui.win_cmd->win, "Can't read more from socket, ringbuffer full!\n");
-							wdprintf(V_DEBUG, "gmuc", "Can't read more from socket, ringbuffer full!\n");
 						}
 					}
 
@@ -851,7 +843,6 @@ int main(int argc, char **argv)
 							break;
 						}
 						case STATE_WEBSOCKET_HANDSHAKE_FAILED:
-							wdprintf(V_ERROR, "gmuc", "Websocket handshake failed!\n");
 							network_error = 1;
 							connected = 0;
 							break;
