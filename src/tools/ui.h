@@ -30,6 +30,7 @@ typedef struct FooterButtons {
 	char    *button_name, *button_desc;
 	Function func;
 	wint_t   key;
+	int      keycode;
 } FooterButtons;
 
 typedef struct UI {

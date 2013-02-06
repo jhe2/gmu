@@ -649,7 +649,9 @@ int main(int argc, char **argv)
 							Function func = FUNC_NONE;
 							for (i = 0; ui.fb_visible && ui.fb_visible[i].button_name; i++) {
 								if (ui.fb_visible[i].key == ch) {
-									func = ui.fb_visible[i].func;
+									if ((res == KEY_CODE_YES && ui.fb_visible[i].keycode) ||
+									    (res != KEY_CODE_YES && !ui.fb_visible[i].keycode))
+										func = ui.fb_visible[i].func;
 									break;
 								}
 							}
@@ -724,6 +726,7 @@ int main(int argc, char **argv)
 								}
 								case FUNC_TEXT_INPUT:
 									ui_enable_text_input(&ui, 1);
+									break;
 								default:
 									break;
 							}
@@ -776,6 +779,7 @@ int main(int argc, char **argv)
 										default:
 											break;
 									}
+									break;
 								case '\n': {
 									char str[128];
 									switch (ui.active_win) {
