@@ -585,7 +585,14 @@ int main(int argc, char **argv)
 														case ADD:
 															str = malloc(320);
 															if (str) {
-																snprintf(str, 320, "{\"cmd\":\"playlist_add\",\"path\":\"%s\",\"type\":\"file\"}", params);
+																char *params_esc = json_string_escape_alloc(params);
+																if (params_esc) {
+																	if (snprintf(str, 320, "{\"cmd\":\"playlist_add\",\"path\":\"%s\",\"type\":\"file\"}", params_esc) == 320) {
+																		free(str);
+																		str = NULL;
+																	}
+																	free(params_esc);
+																}
 																free_str = 1;
 															}
 															break;
