@@ -65,6 +65,7 @@ typedef enum Command {
 	PREVIOUS,
 	STOP,
 	FILES,
+	ADD,
 	RAW, /* Sends raw data as command to thr server (which has to be supplied as parameter) */
 	NO_COMMAND
 } Command;
@@ -76,6 +77,7 @@ static char *cmd_arr[] = {
 	"previous",
 	"stop",
 	"files",
+	"add",
 	"raw",
 	NULL
 };
@@ -560,6 +562,7 @@ int main(int argc, char **argv)
 												parse_input_alloc(input, &cmd, &params);
 												if (state == STATE_CONNECTION_ESTABLISHED) {
 													char *str = NULL;
+													int   free_str = 0;
 													switch (cmd) {
 														case PLAY:
 															str = "{\"cmd\":\"play\"}";
@@ -579,12 +582,20 @@ int main(int argc, char **argv)
 														case FILES:
 															str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
 															break;
+														case ADD:
+															str = malloc(320);
+															if (str) {
+																snprintf(str, 320, "{\"cmd\":\"playlist_add\",\"path\":\"%s\",\"type\":\"file\"}", params);
+																free_str = 1;
+															}
+															break;
 														case RAW:
 															str = params;
 														default:
 															break;
 													}
 													if (str) websocket_send_str(sock, str, 1);
+													if (free_str) free(str);
 												} else {
 													wdprintf(V_INFO, "gmuc", "Connection not established. Cannot send command.\n");
 												}
