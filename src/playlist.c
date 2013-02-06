@@ -149,8 +149,9 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 				result = playlist_add_item(pl, filename_with_path, temp);
 			}
 		} else {
-			char *filename = strrchr(filename_with_path, '/')+1;
+			char *filename = strrchr(filename_with_path, '/');
 			if (filename) {
+				filename = filename + 1;
 				char buf[256];
 				if (charset_is_valid_utf8_string(filename)) {
 					strncpy(buf, filename, 255);
