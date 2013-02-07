@@ -183,6 +183,9 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 
 	if (*gd->get_meta_data) {
 		memcpy(&ti_tmp, ti, sizeof(TrackInfo));
+		trackinfo_set_artist(&ti_tmp, "");
+		trackinfo_set_title(&ti_tmp, "");
+		trackinfo_set_album(&ti_tmp, "");
 		if ((*gd->get_meta_data)(GMU_META_ARTIST, 1))
 			strncpy_charset_conv(ti_tmp.artist,  (*gd->get_meta_data)(GMU_META_ARTIST, 1), SIZE_ARTIST-1, 0, charset);
 		if ((*gd->get_meta_data)(GMU_META_TITLE, 1))
