@@ -94,9 +94,29 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 	int    len = (skin_textarea_get_characters_per_line((Skin *)pb->skin) > 63 ? 
 	              63 : skin_textarea_get_characters_per_line((Skin *)pb->skin));
 	int    selected_entry_drawn = 0;
+	char  *mode;
 
-	snprintf(buf, 63, "Playlist (%d %s)", gmu_core_playlist_get_length(),
-	         gmu_core_playlist_get_length() != 1 ? "entries" : "entry");
+	switch (gmu_core_playlist_get_play_mode()) {
+		default:
+		case PM_CONTINUE:
+			mode = "continue";
+			break;
+		case PM_REPEAT_ALL:
+			mode = "repeat all";
+			break;
+		case PM_REPEAT_1:
+			mode = "repeat track";
+			break;
+		case PM_RANDOM:
+			mode = "random";
+			break;
+		case PM_RANDOM_REPEAT:
+			mode = "random+repeat";
+			break;
+	}
+
+	snprintf(buf, 63, "Playlist (%d %s, mode: %s)", gmu_core_playlist_get_length(),
+	         gmu_core_playlist_get_length() != 1 ? "entries" : "entry", mode);
 	skin_draw_header_text((Skin *)pb->skin, buf, sdl_target);
 
 	if (pb->first_visible_entry == NULL || pb->offset == 0) {

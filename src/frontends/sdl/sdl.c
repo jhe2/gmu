@@ -1108,7 +1108,7 @@ static void run_player(char *skin_name, char *decoders_str)
 		}
 
 		if (event.type == SDL_USEREVENT) {
-			if (update_event == GMU_TRACKINFO_CHANGE) {
+			if (update_event == GMU_TRACKINFO_CHANGE || update_event == GMU_PLAYMODE_CHANGE) {
 				update = UPDATE_ALL;
 				update_event = GMU_NO_EVENT;
 			}
@@ -1401,6 +1401,7 @@ static int event_callback(GmuEvent event, int param)
 			}
 			if (notice_msg)
 				player_display_set_notice_message(notice_msg, NOTICE_DELAY);
+			update_event = event;
 			break;
 		}
 		default:
