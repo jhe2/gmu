@@ -32,7 +32,7 @@ static FooterButtons fb_pl[] = {
 	{ "F5",  "Prev",     FUNC_PREVIOUS,    KEY_F(5), 1 },
 	{ "F6",  "Stop",     FUNC_STOP,        KEY_F(6), 1 },
 	{ "F7",  "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7), 1 },
-	{ "F8",  "Next",     FUNC_NEXT,        KEY_F(8), 0 },
+	{ "F8",  "Next",     FUNC_NEXT,        KEY_F(8), 1 },
 	{ "F9",  "P.Mode",   FUNC_PLAYMODE,    KEY_F(9), 1 },
 	{ "F10", "Clear",    FUNC_PL_CLEAR,    KEY_F(10), 1 },
 	{ "Del", "Remove",   FUNC_PL_DEL_ITEM, KEY_DC, 1 },
@@ -47,7 +47,7 @@ static FooterButtons fb_fb[] = {
 	{ "F5", "Prev",     FUNC_PREVIOUS,    KEY_F(5), 1 },
 	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6), 1 },
 	{ "F7", "Pl/Pause", FUNC_PLAY_PAUSE,  KEY_F(7), 1 },
-	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8), 0 },
+	{ "F8", "Next",     FUNC_NEXT,        KEY_F(8), 1 },
 	{ "/", "Command",   FUNC_TEXT_INPUT,  '/', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
