@@ -31,7 +31,6 @@
 
 #include FILE_HW_H
 #include "../../wejpconfig.h"
-#include "../../m3u.h"
 #include "../../pbstatus.h"
 
 #include "textrenderer.h"
@@ -746,21 +745,6 @@ static void run_player(char *skin_name, char *decoders_str)
 		if (gmu_core_playlist_get_length() > 0) {
 			if (view != HELP) view = PLAYLIST;
 			update = UPDATE_ALL;
-		} else {
-			if (strncmp(cfg_get_key_value(*config, "RememberLastPlaylist"), "yes", 3) == 0) {
-				char temp[256];
-				snprintf(temp, 255, "%s/playlist.m3u", base_dir);
-				gmu_core_add_m3u_contents_to_playlist(temp);
-				if (gmu_core_playlist_get_length() > 0) {
-					view = PLAYLIST;
-					if (strncmp(cfg_get_key_value(*config, "AutoPlayOnProgramStart"), "yes", 3) == 0) {
-						if (play_next(ti, &cv)) {
-							if (auto_select_cur_item)
-								pl_browser_set_selection(&pb, gmu_core_playlist_get_current_position());
-						}
-					}
-				}
-			}
 		}
 	}
 
@@ -1262,57 +1246,10 @@ static void run_player(char *skin_name, char *decoders_str)
 
 static void *start_player(void *arg)
 {
-	int             /*i,*/ start = 1, setup = 0;
+	int             start = 1, setup = 0;
 	char            skin_name[128] = "";
 
 	if (!getcwd(base_dir, 255)) start = 0;
-
-	/*for (i = 1; argv[i]; i++) {
-		if (argv[i][0] == '-') {
-			switch (argv[i][1]) {
-				case '-':
-				case 'h':
-					print_cmd_help(argv[0]);
-					start = 0;
-					break;
-				case 's':
-					if (argc >= i+2) {
-						strncpy(skin_name, argv[i+1], 127);
-						skin_name[127] = '\0';
-						i++;
-					} else {
-						printf("Invalid usage of -s: Skin name required.\n");
-						start = 0;
-					}
-					break;
-				case 'c':
-					start = 0;
-					setup = 1;
-					break;
-				default:
-					printf("gmu: Unknown parameter (-%c). Try -h for help.\n", argv[i][1]);
-					start = 0;
-					break;
-			}
-		} else {
-			char  filetype[16] = "(none)";
-			char *filename = strrchr(argv[i], '/');
-			char *tmp;
-
-			if (filename == NULL) 
-				filename = argv[i];
-			else
-				filename++;
-			tmp = get_file_extension(filename);
-			if (tmp != NULL)
-				strtoupper(filetype, tmp, 15);
-			if (strcmp(filetype, "M3U") == 0) {
-				gmu_core_add_m3u_contents_to_playlist(argv[i]);
-			} else {
-				gmu_core_playlist_add_item(gmu_core_get_playlist(), argv[i], filename);
-			}
-		}
-	}*/
 
 	if (start || setup) {
 		if (skin_name[0] == '\0') {
