@@ -267,39 +267,26 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 				}
 				update = UPDATE_ALL;
 			} else {
-				char  filetype[16] = "(none)";
 				char *sel_file = file_browser_get_selected_file(fb);
-				char *tmp = sel_file ? get_file_extension(sel_file) : NULL;
-				if (tmp != NULL) strtoupper(filetype, tmp, 15);
 				if (sel_file) {
 					path = file_browser_get_selected_file_full_path_alloc(fb);
 					if (path) {
-						if (strcmp(filetype, "M3U") == 0) {
-							wdprintf(V_INFO, "sdl_frontend", "M3U detected.\n");
-							gmu_core_add_m3u_contents_to_playlist(path);
-							player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
-						} else if (strcmp(filetype, "PLS") == 0) {
-							wdprintf(V_INFO, "sdl_frontend", "PLS detected.\n");
-							gmu_core_add_pls_contents_to_playlist(path);
-							player_display_set_notice_message("PLS ADDED TO PLAYLIST", NOTICE_DELAY);
-						} else {
-							if (user_key_action == FB_INSERT_FILE_INTO_PL) { /* insert item */
-								Entry *sel_entry = gmu_core_playlist_get_first();
-								int    i;
+						if (user_key_action == FB_INSERT_FILE_INTO_PL) { /* insert item */
+							Entry *sel_entry = gmu_core_playlist_get_first();
+							int    i;
 
-								wdprintf(V_DEBUG, "sdl_frontend", "Inserting entry after %d...\n", pl_browser_get_selection(pb));
-								for (i = 0;
-									 i < gmu_core_playlist_get_length() && i != pl_browser_get_selection(pb);
-									 i++) {
-									sel_entry = gmu_core_playlist_get_next(sel_entry);
-								}
-								gmu_core_playlist_insert_file_after(sel_entry, path);
-								pl_brower_move_selection_down(pb);
-								player_display_set_notice_message("ITEM INSERTED IN PLAYLIST", NOTICE_DELAY);
-							} else { /* add item */
-								gmu_core_playlist_add_file(path);
-								player_display_set_notice_message("ITEM ADDED TO PLAYLIST", NOTICE_DELAY);
+							wdprintf(V_DEBUG, "sdl_frontend", "Inserting entry after %d...\n", pl_browser_get_selection(pb));
+							for (i = 0;
+								 i < gmu_core_playlist_get_length() && i != pl_browser_get_selection(pb);
+								 i++) {
+								sel_entry = gmu_core_playlist_get_next(sel_entry);
 							}
+							gmu_core_playlist_insert_file_after(sel_entry, path);
+							pl_brower_move_selection_down(pb);
+							player_display_set_notice_message("ITEM INSERTED IN PLAYLIST", NOTICE_DELAY);
+						} else { /* add item */
+							gmu_core_playlist_add_file(path);
+							player_display_set_notice_message("ITEM ADDED TO PLAYLIST", NOTICE_DELAY);
 						}
 						free(path);
 					}
