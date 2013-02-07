@@ -70,50 +70,56 @@ static void init_sdl(void)
 	wdprintf(V_DEBUG, "gmu", "SDL init done.\n");
 }
 
-static void add_m3u_contents_to_playlist(Playlist *pl, char *filename)
+static int add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 {
 	M3u m3u;
+	int res = 0;
 	if (m3u_open_file(&m3u, filename)) {
 		int len;
-		playlist_get_lock(pl);
 		len = playlist_get_length(pl);
 		while (m3u_read_next_item(&m3u)) {
 			playlist_add_item(pl,
 			                  m3u_current_item_get_full_path(&m3u),
 			                  m3u_current_item_get_title(&m3u));
 		}
-		playlist_release_lock(pl);
 		m3u_close_file(&m3u);
 		event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
+		res = 1;
 	}
+	return res;
 }
 
 void gmu_core_add_m3u_contents_to_playlist(char *filename)
 {
+	playlist_get_lock(&pl);
 	add_m3u_contents_to_playlist(&pl, filename);
+	playlist_release_lock(&pl);
 }
 
-static void add_pls_contents_to_playlist(Playlist *pl, char *filename)
+static int add_pls_contents_to_playlist(Playlist *pl, char *filename)
 {
 	PLS pls;
+	int res = 0;
 	if (pls_open_file(&pls, filename)) {
 		int len;
-		playlist_get_lock(pl);
 		len = playlist_get_length(pl);
 		while (pls_read_next_item(&pls)) {
 		   playlist_add_item(pl,
 		                     pls_current_item_get_full_path(&pls),
 		                     pls_current_item_get_title(&pls));
 		}
-		playlist_release_lock(pl);
 		pls_close_file(&pls);
 		event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
+		res = 1;
 	}
+	return res;
 }
 
 void gmu_core_add_pls_contents_to_playlist(char *filename)
 {
+	playlist_get_lock(&pl);
 	add_pls_contents_to_playlist(&pl, filename);
+	playlist_release_lock(&pl);
 }
 
 static int play_next(Playlist *pl, TrackInfo *ti, int skip_current)
@@ -389,10 +395,20 @@ int gmu_core_playlist_insert_file_after(Entry *entry, char *filename_with_path)
 
 int gmu_core_playlist_add_file(char *filename_with_path)
 {
-	int res, len;
+	int   res, len;
+	char  filetype[16] = "(none)";
+	char *tmp = filename_with_path ? get_file_extension(filename_with_path) : NULL;
+	if (tmp != NULL) strtoupper(filetype, tmp, 15);
+	filetype[15] = '\0';
 	playlist_get_lock(&pl);
 	len = playlist_get_length(&pl);
-	res = playlist_add_file(&pl, filename_with_path);
+	if (strcmp(filetype, "M3U") == 0) {
+		res = add_m3u_contents_to_playlist(&pl, filename_with_path);
+	} else if (strcmp(filetype, "PLS") == 0) {
+		res = add_pls_contents_to_playlist(&pl, filename_with_path);
+	} else {
+		res = playlist_add_file(&pl, filename_with_path);
+	}
 	playlist_release_lock(&pl);
 	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
 	return res;
