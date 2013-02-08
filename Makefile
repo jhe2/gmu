@@ -71,7 +71,7 @@ endif
 
 TEMP_HEADER_FILES=tmp-felist.h tmp-declist.h
 
-all: $(BINARY) decoders frontends gmu-cli
+all: $(BINARY) decoders frontends gmuc
 	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
 
 decoders: $(DECODERS_TO_BUILD)
@@ -151,7 +151,7 @@ install: $(DISTFILES)
 	$(Q)cp gmu.png $(DESTDIR)$(PREFIX)/share/pixmaps/gmu.png
 
 clean:
-	$(Q)-rm -rf *.o $(BINARY) decoders/*.so frontends/*.so
+	$(Q)-rm -rf *.o $(BINARY) gmuc decoders/*.so frontends/*.so
 	$(Q)-rm -f $(TEMP_HEADER_FILES)
 	@echo -e "\033[1mAll clean.\033[0m"
 
