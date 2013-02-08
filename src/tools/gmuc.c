@@ -32,6 +32,7 @@
 #endif
 #include <curses.h>
 #include <signal.h>
+#include <wctype.h>
 #include "../wejpconfig.h"
 #include "../ringbuffer.h"
 #include "../debug.h"
