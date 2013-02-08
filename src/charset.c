@@ -132,7 +132,7 @@ void charset_filename_set(Charset charset)
 
 char *charset_filename_convert_alloc(const char *filename)
 {
-	char *buf;
+	char *buf = NULL;
 	int   len = filename ? strlen(filename) : 0;
 	if (len > 0) buf = malloc(len+1);
 	if (buf) {
