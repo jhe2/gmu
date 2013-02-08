@@ -140,8 +140,6 @@ static Connection connection[MAX_CONNECTIONS];
 
 static int server_running = 0;
 
-typedef void (*sighandler_t)(int);
-
 static sighandler_t my_signal(int sig_nr, sighandler_t signalhandler)
 {
 	struct sigaction neu_sig, alt_sig;
