@@ -24,5 +24,5 @@ CC=$(PNDSDK)/bin/arm-none-linux-gnueabi-gcc
 STRIP=$(PNDSDK)/bin/arm-none-linux-gnueabi-strip
 COPTS?=-O3 -mtune=cortex-a8 -ffast-math -march=armv7-a -mfpu=neon -mfloat-abi=softfp
 CFLAGS=-fno-strict-aliasing -fomit-frame-pointer $(SDL_CFLAGS) -I$(PNDSDK)/usr/include/ncursesw -I$(PNDSDK)/usr/include
-LFLAGS=-L$(PNDSDK)/usr/lib -lts -lpng -ljpeg -lpthread -lm -ldl -lz -lgcc -Wl,-export-dynamic
+LFLAGS=-s -L$(PNDSDK)/usr/lib -lts -lpng -ljpeg -lpthread -lm -ldl -lz -lgcc -Wl,-export-dynamic
 DISTFILES=$(COMMON_DISTBIN_FILES) gmu.pandora.conf gmu-pandora.sh gmuinput.pandora.conf
