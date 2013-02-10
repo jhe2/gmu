@@ -26,7 +26,6 @@
 #include "../playlist.h"
 
 static FooterButtons fb_pl[] = {
-	{ "F1",  "Help",     FUNC_HELP,        KEY_F(1), 1 },
 	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "F3",  "Search",   FUNC_SEARCH,      KEY_F(3), 1 },
 	{ "F5",  "Prev",     FUNC_PREVIOUS,    KEY_F(5), 1 },
@@ -41,7 +40,6 @@ static FooterButtons fb_pl[] = {
 };
 
 static FooterButtons fb_fb[] = {
-	{ "F1", "Help",     FUNC_HELP,        KEY_F(1), 1 },
 	{ "Tab", "Window",  FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "F3", "Add",      FUNC_FB_ADD,      KEY_F(3), 1 },
 	{ "F5", "Prev",     FUNC_PREVIOUS,    KEY_F(5), 1 },
@@ -53,7 +51,6 @@ static FooterButtons fb_fb[] = {
 };
 
 static FooterButtons fb_ti[] = {
-	{ "F1", "Help",     FUNC_HELP,        KEY_F(1), 1 },
 	{ "Tab", "Window",  FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "F5", "Prev",     FUNC_PREVIOUS,    KEY_F(5), 1 },
 	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6), 1 },
@@ -64,7 +61,6 @@ static FooterButtons fb_ti[] = {
 };
 
 static FooterButtons fb_cmd[] = {
-	{ "F1", "Help",     FUNC_HELP,        KEY_F(1), 1 },
 	{ "Tab", "Window",  FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "F5", "Prev",     FUNC_PREVIOUS,    KEY_F(5), 1 },
 	{ "F6", "Stop",     FUNC_STOP,        KEY_F(6), 1 },
