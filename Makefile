@@ -135,6 +135,7 @@ install: $(DISTFILES)
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/themes
 	$(Q)cp $(BINARY) $(DESTDIR)$(PREFIX)/bin
 	$(Q)-cp gmu-cli $(DESTDIR)$(PREFIX)/bin/gmu-cli
+	$(Q)-cp gmuc $(DESTDIR)$(PREFIX)/bin/gmuc
 	$(Q)cp README.txt $(DESTDIR)$(PREFIX)/share/gmu/README.txt
 	$(Q)cp -R frontends/* $(DESTDIR)$(PREFIX)/share/gmu/frontends
 	$(Q)cp -R decoders/* $(DESTDIR)$(PREFIX)/share/gmu/decoders
