@@ -42,9 +42,10 @@ typedef struct UI {
 	WindowType     active_win;
 	WINDOW        *rootwin;
 	int            text_input_enabled;
+	int            color;
 } UI;
 
-void ui_init(UI *ui);
+void ui_init(UI *ui, int color);
 void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status, int cur_time, int playmode);
 void ui_refresh_active_window(UI *ui);
 void ui_draw_footer(UI *ui);
@@ -55,4 +56,5 @@ void ui_resize(UI *ui);
 void ui_set_footer_buttons(UI *ui);
 void ui_active_win_next(UI *ui);
 void ui_free(UI *ui);
+int  ui_has_color(UI *ui);
 #endif

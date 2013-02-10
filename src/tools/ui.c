@@ -74,11 +74,22 @@ static FooterButtons fb_cmd[] = {
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
-void ui_init(UI *ui)
+void ui_init(UI *ui, int color)
 {
+	ui->color = color;
 	setlocale(LC_CTYPE, ""); /* Set system locale (which hopefully is a UTF-8 locale) */
 	ui->rootwin = initscr();
-	//start_color();
+	if (ui->color) {
+		if (has_colors()) {
+			start_color();
+			init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+			init_pair(2, COLOR_GREEN, COLOR_BLACK);
+			init_pair(3, COLOR_BLUE, COLOR_BLACK);
+			init_pair(4, COLOR_WHITE, COLOR_BLACK);
+		} else {
+			ui->color = 0;
+		}
+	}
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
@@ -110,9 +121,10 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 		char pm1 = ' ', pm2 = ' ';
 		int min = 0, sec = 0;
 		wattron(ui->win_header->win, A_BOLD);
+		if (ui->color) wattron(ui->win_header->win, COLOR_PAIR(1));
 		mvwprintw(ui->win_header->win, 0, 0, "Gmu");
+		if (ui->color) wattroff(ui->win_header->win, COLOR_PAIR(1));
 		wclrtoeol(ui->win_header->win);
-		wattroff(ui->win_header->win, A_BOLD);
 		wprintw(ui->win_header->win, " %s %s%s%s",
 		        cur_status != NULL ? cur_status : "", 
 		        cur_artist != NULL ? cur_artist : "", 
@@ -138,22 +150,24 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 				break;
 		}
 		mvwprintw(ui->win_header->win, 0, ui->cols-11, "[%c%c] %3d:%02d", pm1, pm2, min, sec);
+		wattroff(ui->win_header->win, A_BOLD);
 		window_refresh(ui->win_header);
 	}
 }
 
 static void ui_draw_footer_button(UI *ui, char *key, char *name)
 {
-	char btn_str[8] = "       ";
-	int  len = strlen(name);
-	if (len > 7) len = 7;
+	if (ui->color) wattron(ui->win_footer->win, COLOR_PAIR(2));
 	wattron(ui->win_footer->win, A_BOLD);
 	wprintw(ui->win_footer->win, key);
 	wattroff(ui->win_footer->win, A_BOLD);
-	wattron(ui->win_footer->win, A_REVERSE);
-	memcpy(btn_str, name, len);
-	wprintw(ui->win_footer->win, "%s", btn_str);
-	wattroff(ui->win_footer->win, A_REVERSE);
+	if (ui->color) wattroff(ui->win_footer->win, COLOR_PAIR(2));
+	if (ui->color) wattron(ui->win_footer->win, COLOR_PAIR(4));
+	wprintw(ui->win_footer->win, ":");
+	wattron(ui->win_footer->win, A_BOLD);
+	wprintw(ui->win_footer->win, "%s ", name);
+	wattroff(ui->win_footer->win, A_BOLD);
+	if (ui->color) wattron(ui->win_footer->win, COLOR_PAIR(4));
 }
 
 void ui_refresh_active_window(UI *ui)
@@ -266,4 +280,9 @@ void ui_free(UI *ui)
 	listwidget_free(ui->lw_pl);
 	listwidget_free(ui->lw_fb);
 	endwin();
+}
+
+int ui_has_color(UI *ui)
+{
+	return ui->color;
 }

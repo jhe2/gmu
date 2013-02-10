@@ -442,6 +442,7 @@ int main(int argc, char **argv)
 	cfg_init_config_file_struct(&config);
 	cfg_add_key(&config, "Host", "127.0.0.1");
 	cfg_add_key(&config, "Password", "stupidpassword");
+	cfg_add_key(&config, "Color", "yes");
 
 	homedir = getenv("HOME");
 	if (homedir) {
@@ -472,9 +473,9 @@ int main(int argc, char **argv)
 	wdprintf_set_verbosity(V_SILENT);
 
 	if (argc >= 1) {
-		int   network_error = 0;
+		int   network_error = 0, color = 0;
 		UI    ui;
-		char *cur_dir = NULL;
+		char *cur_dir = NULL, *tmp;
 
 		/* Setup SIGWINCH */
 		struct sigaction act;
@@ -483,7 +484,9 @@ int main(int argc, char **argv)
 		act.sa_handler = sig_handler_sigwinch;
 		sigaction(SIGWINCH, &act, NULL);
 
-		ui_init(&ui);
+		tmp = cfg_get_key_value(config, "Color");
+		if (tmp && strcmp(tmp, "yes") == 0) color = 1;
+		ui_init(&ui, color);
 		ui_draw(&ui);
 		ui_cursor_text_input(&ui, NULL);
 		ui_enable_text_input(&ui, 0);
