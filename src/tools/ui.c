@@ -263,7 +263,12 @@ void ui_set_footer_buttons(UI *ui)
 void ui_active_win_next(UI *ui)
 {
 	ui->active_win++;
-	if (ui->active_win > WIN_TI) ui->active_win = WIN_CMD;
+	if (ui->active_win > WIN_TI)
+#ifdef DEBUG
+		ui->active_win = WIN_CMD;
+#else
+		ui->active_win = WIN_PL;
+#endif
 	ui_set_footer_buttons(ui);
 }
 
