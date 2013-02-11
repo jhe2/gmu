@@ -85,7 +85,7 @@ static const char *text_help =
 "Once there is at least one file in the playlist\n"
 "you can start playback by pressing** %s**.\n\n"
 "Have fun with the Gmu Music Player.\n"
-"/wejp"
+"/wej"
 ;
 
 void help_init(TextBrowser *tb_help, Skin *skin, KeyActionMapping *kam)
