@@ -1,8 +1,8 @@
 The Gmu Music Player
 
-Version 0.8.0
+Version 0.9.0
 
-Copyright (c) 2006-2011 Johannes Heimansberg
+Copyright (c) 2006-2013 Johannes 'wej' Heimansberg
 http://wejp.k.vu/projects/gmu/
 
 Gmu is a music player for portable handheld consoles. It comes
@@ -36,7 +36,8 @@ Table of contents
 5.1 Log bot
 5.2 Gmu CLI
 6.  IR remote control plugin (LIRC)
-7.  Libraries used by Gmu
+7.  HTTP frontend
+8.  Libraries used by Gmu
 
 
 1. Installation
@@ -70,7 +71,7 @@ The Ben NanoNote come with Gmu preinstalled. If you use an older
 Firmware image or want to upgrade Gmu, you can use opkg to do that.
 To install Gmu with opkg run:
 
-opkg install gmu_0.8.0-1_xburst.ipk
+opkg install gmu_0.9.0-1_xburst.ipk
 
 Once Gmu has been installed on the NanoNote, you can run it by
 executing 'gmu'.
@@ -103,6 +104,15 @@ the target platform for the decoder plugins to work.
 
 2.2 Usage
 ---------
+
+Gmu supports multiple frontends. This section describes the
+SDL frontend.
+Other frontends include the log frontend, which does nothing 
+but log played files to a text file, the LIRC frontend, which 
+can be used to control Gmu with a IR remote control with the 
+help of LIRC and the gmuhttp frontend, which exposes a 
+WebSocket-based interface that can be accessed through
+a web browser, as well as through the gmuc Gmu command line client.
 
 2.2.1 The Screen
 
@@ -802,7 +812,7 @@ equal to 25 seconds.
 5.2 Gmu CLI
 -----------
 
-Gmu now comes with a (still very basic) command line interface program.
+Gmu comes with a (still very basic) command line interface program.
 It allows you to control some basic functions of Gmu through the command
 line. It works locally as well as over a TCP network.
 The binary of the cli program is called gmu-cli it uses its own 
@@ -810,7 +820,7 @@ configuration file located in ~/.config/gmu/gmu-cli.conf
 There you can define the host on which the Gmu main program is running as
 well as the password to be used for authentication. This obviously must
 match the password configured in Gmu's configuration file (gmusrv.Password).
-Gmu listens on TCP port 4680. If you do not want to use gmu-cli at all, 
+Gmu listens on TCP port 4681. If you do not want to use gmu-cli at all, 
 you can remove Gmu plugin in frontends/gmusrv.so.
 
 gmu-cli is controlled by one letter commands. To get a list of available
@@ -820,6 +830,9 @@ $ ./gmu-cli h
 
 For this to work gmu-cli needs to be able to contact Gmu, so make sure it
 has been configured correctly.
+
+ATTENTION: The gmusrv frontend is considered deprecated and will be
+removed in future versions of Gmu in favor of the new gmuhttp frontend.
 
 
 6. IR remote control plugin (LIRC)
@@ -844,8 +857,28 @@ end
 Gmu supports the following functions to be controlled by IR remote
 control: toggle_play_pause, next, prev, stop, volume_up, volume_down.
 
+7. HTTP frontend
+----------------
 
-7. Libraries used by Gmu
+Gmu includes an http plugin that features a small web server with web
+socket support. The web server listens on port 4680 and is configured
+to listen on the loop back interface only, by default. You can change
+the configuration so that it listens on all interfaces, though.
+All config options for this plugin start with the prefix "gmuhttp.".
+To use this frontend with a web browser, you need a modern web browser
+with WebSocket support. As of this writing, both Firefox 18 and 
+Chromium/Chrome 24 support WebSocket and have been tested with Gmu.
+Other browser might or might not support WebSocket yet. 
+Internet Explorer 9 is known to not support WebSocket yet.
+The http frontend can also be accessed through the ncurses-based gmuc 
+Gmu command line interface.
+In any case, to use this frontend, you need a password, which can be
+set through the gmuhttp.Password config file option.
+gmuc has its own config file (usually located in ~/.config/gmu/ ), 
+which contains the Gmu host information as well as the password.
+
+
+8. Libraries used by Gmu
 ------------------------
 
 See "libs/information" directory for further details.
