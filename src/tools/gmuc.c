@@ -425,6 +425,12 @@ static void sig_handler(int sig)
 	quit = 1;
 }
 
+static void gmuc_help(char *str)
+{
+	printf("Usage: %s [-c /path/to/config.file] [-h]\n", str);
+	exit(0);
+}
+
 int main(int argc, char **argv)
 {
 	int                sock, res = EXIT_FAILURE;
@@ -433,7 +439,7 @@ int main(int argc, char **argv)
 	struct sockaddr_in address;
 	ConfigFile         config;
 	char              *password, *host;
-	char               config_file_path[256], *homedir;
+	char               config_file_path[256] = "", *homedir;
 
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
@@ -444,9 +450,35 @@ int main(int argc, char **argv)
 	cfg_add_key(&config, "Password", "stupidpassword");
 	cfg_add_key(&config, "Color", "yes");
 
+	if (argc > 1) {
+		if (strlen(argv[1]) == 2) { /* One char parameter */
+			switch (argv[1][1]) {
+				case 'h':
+					gmuc_help(argv[0]);
+					break;
+				case 'c':
+					if (argc < 3) {
+						gmuc_help(argv[0]);
+					} else {
+						int len = strlen(argv[2]);
+						if (len > 255) {
+							printf("ERROR: Path too long.\n");
+							exit(1);
+						} else {
+							strncpy(config_file_path, argv[2], len);
+						}
+					}
+					break;
+			}
+		} else {
+			gmuc_help(argv[0]);
+		}
+	}
+
 	homedir = getenv("HOME");
-	if (homedir) {
-		snprintf(config_file_path, 255, "%s/.config/gmu/gmuc.conf", homedir);
+	if (homedir || config_file_path[0] != '\0') {
+		if (config_file_path[0] == '\0')
+			snprintf(config_file_path, 255, "%s/.config/gmu/gmuc.conf", homedir);
 		if (cfg_read_config_file(&config, config_file_path) != 0) {
 			char tmp[256];
 			wdprintf(V_INFO, "gmuc", "No config file found. Creating a config file at %s. Please edit that file and try again.\n", config_file_path);
