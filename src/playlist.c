@@ -385,6 +385,9 @@ int playlist_entry_delete(Playlist *pl, Entry *entry)
 {
 	int result = 1;
 	if (entry != NULL && pl->length > 0) {
+		if (pl->current == entry) { /* We try to remove the currently playing entry */
+			pl->current = entry->prev;
+		}
 		if (entry->prev == NULL && entry->next == NULL) { /* remove last remaining entry */
 			pl->first = NULL;
 			pl->last = NULL;
