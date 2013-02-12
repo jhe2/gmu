@@ -446,7 +446,7 @@ int main(int argc, char **argv)
 
 	homedir = getenv("HOME");
 	if (homedir) {
-		snprintf(config_file_path, 255, "%s/.config/gmu/gmu-cli.conf", homedir);
+		snprintf(config_file_path, 255, "%s/.config/gmu/gmuc.conf", homedir);
 		if (cfg_read_config_file(&config, config_file_path) != 0) {
 			char tmp[256];
 			wdprintf(V_INFO, "gmuc", "No config file found. Creating a config file at %s. Please edit that file and try again.\n", config_file_path);
