@@ -336,7 +336,6 @@ void gmu_core_playlist_reset_random(void)
 	playlist_get_lock(&pl);
 	playlist_reset_random(&pl);
 	playlist_release_lock(&pl);
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 }
 
 PlayMode gmu_core_playlist_get_play_mode(void)
