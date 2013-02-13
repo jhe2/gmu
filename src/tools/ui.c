@@ -257,6 +257,8 @@ void ui_resize(UI *ui)
 	doupdate();
 	getmaxyx(stdscr, ui->rows, ui->cols);
 	window_resize(ui->win_cmd, ui->rows-2, ui->cols);
+	window_resize(ui->win_ti, ui->rows-2, ui->cols);
+	ui_prepare_trackinfo_win(ui);
 	listwidget_resize(ui->lw_pl, ui->rows-2, ui->cols);
 	listwidget_resize(ui->lw_fb, ui->rows-2, ui->cols);
 	mvwin(ui->win_footer->win, ui->rows-1, 0);
