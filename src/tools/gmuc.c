@@ -189,11 +189,15 @@ static void cmd_playback_time_change(UI *ui, JSON_Object *json)
 
 static void cmd_trackinfo(UI *ui, JSON_Object *json)
 {
-	char *jv = json_get_string_value_for_key(json, "artist");
-	strncpy(cur_artist, jv, 127);
-	jv = json_get_string_value_for_key(json, "title");
-	strncpy(cur_title, jv, 127);
+	char *artist = json_get_string_value_for_key(json, "artist");
+	char *title  = json_get_string_value_for_key(json, "title");
+	char *album  = json_get_string_value_for_key(json, "album");
+	char *date   = json_get_string_value_for_key(json, "date");
+	strncpy(cur_artist, artist, 127);
+	strncpy(cur_title, title, 127);
 	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
+	ui_update_trackinfo(ui, title, artist, album, date);
+	ui_refresh_active_window(ui);
 }
 
 static void cmd_playlist_change(UI *ui, JSON_Object *json, int sock)

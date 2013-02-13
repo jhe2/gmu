@@ -50,6 +50,7 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status,
 void ui_refresh_active_window(UI *ui);
 void ui_draw_footer(UI *ui);
 void ui_draw(UI *ui);
+void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *date);
 void ui_cursor_text_input(UI *ui, char *str);
 void ui_enable_text_input(UI *ui, int enable);
 void ui_resize(UI *ui);

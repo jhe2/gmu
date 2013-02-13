@@ -69,6 +69,28 @@ static FooterButtons fb_cmd[] = {
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
+static void ui_prepare_trackinfo_win(UI *ui)
+{
+	wattron(ui->win_ti->win, A_BOLD);
+	mvwprintw(ui->win_ti->win, 0, 0, "Title:");
+	mvwprintw(ui->win_ti->win, 2, 0, "Artist:");
+	mvwprintw(ui->win_ti->win, 4, 0, "Album:");
+	mvwprintw(ui->win_ti->win, 6, 0, "Date:");
+	wattroff(ui->win_ti->win, A_BOLD);
+}
+
+void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *date)
+{
+	mvwprintw(ui->win_ti->win, 1, 0, title ? title : " ");
+	wclrtoeol(ui->win_ti->win);
+	mvwprintw(ui->win_ti->win, 3, 0, artist ? artist : " ");
+	wclrtoeol(ui->win_ti->win);
+	mvwprintw(ui->win_ti->win, 5, 0, album ? album : " ");
+	wclrtoeol(ui->win_ti->win);
+	mvwprintw(ui->win_ti->win, 7, 0, date ? date : " ");
+	wclrtoeol(ui->win_ti->win);
+}
+
 void ui_init(UI *ui, int color)
 {
 	ui->color = color;
@@ -107,6 +129,7 @@ void ui_init(UI *ui, int color)
 	ui->fb_cmd = fb_cmd;
 	ui->fb_visible = fb_pl;
 	ui->text_input_enabled = 0;
+	ui_prepare_trackinfo_win(ui);
 }
 
 void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, 
