@@ -1240,6 +1240,8 @@ static void run_player(char *skin_name, char *decoders_str)
 		file_browser_free(&fb);
 		cover_viewer_free(&cv);
 		skin_free(&skin);
+	} else {
+		gmu_core_quit();
 	}
 }
 
