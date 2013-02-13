@@ -267,7 +267,6 @@ static char *cmd_dir_read(UI *ui, JSON_Object *json)
 			JSON_Object *j_file;
 			char tmp[16];
 			snprintf(tmp, 15, "%d", i);
-			wprintw(ui->win_cmd->win, "[%s]", tmp);
 			if (!jo) wprintw(ui->win_cmd->win, "ERROR: No object.\n");
 			JSON_Key *jk = json_get_key_object_for_key(jo, tmp);
 			j_file = jk ? jk->key_value_object : NULL;
@@ -276,7 +275,6 @@ static char *cmd_dir_read(UI *ui, JSON_Object *json)
 				int   is_dir = json_get_number_value_for_key(j_file, "is_dir");
 				int   fsize  = json_get_number_value_for_key(j_file, "size");
 				if (!jv) break;
-				wprintw(ui->win_cmd->win, "FILE:%s\n", jv);
 				listwidget_add_row(ui->lw_fb);
 				listwidget_set_cell_data(ui->lw_fb, i, 1, jv);
 				if (!is_dir)
