@@ -746,9 +746,8 @@ static void run_player(char *skin_name, char *decoders_str)
 			if (view != HELP) view = PLAYLIST;
 			update = UPDATE_ALL;
 		}
+		initialized = 1;
 	}
-
-	initialized = 1;
 
 	while (SDL_WaitEvent(&event) && quit == DONT_QUIT) {
 		switch (event.type) {
