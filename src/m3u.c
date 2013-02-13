@@ -97,7 +97,6 @@ int m3u_read_next_item(M3u *m3u)
 				m3u->current_item_length = atoi(mini_buffer);
 				strncpy(tmp_filename, buf+i+1, 255-i);
 				if (charset_is_valid_utf8_string(tmp_filename)) {
-					wdprintf(V_DEBUG, "m3u", "Valid UTF-8 string found!\n");
 					strncpy(m3u->current_item_title, tmp_filename, 255);
 				} else {
 					wdprintf(V_DEBUG, "m3u", "Invalid UTF-8 string found! Trying to interpret as ISO-8859-1...\n");
