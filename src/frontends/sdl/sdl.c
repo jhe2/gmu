@@ -98,6 +98,15 @@ static void gmu_load_icon(void)
 	}
 }
 
+static void input_device_config(void)
+{
+	char tmp[256], *inputconf = NULL;
+	inputconf = cfg_get_key_value(*config, "InputConfigFile");
+	if (!inputconf) inputconf = "gmuinput.conf";
+	snprintf(tmp, 255, "%s/%s", gmu_core_get_config_dir(), inputconf);
+	input_config_init(tmp);
+}
+
 static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
 	SDL_Surface         *display = NULL;
@@ -625,15 +634,6 @@ static void run_player(char *skin_name, char *decoders_str)
 	KeyActionMapping kam[LAST_ACTION];
 	int              user_key_action = -1;
 	TrackInfo       *ti = gmu_core_get_current_trackinfo_ref();
-
-	/* Input device configuration */
-	{
-		char tmp[256], *inputconf = NULL;
-		inputconf = cfg_get_key_value(*config, "InputConfigFile");
-		if (!inputconf) inputconf = "gmuinput.conf";
-		snprintf(tmp, 255, "%s/%s", gmu_core_get_config_dir(), inputconf);
-		input_config_init(tmp);
-	}
 
 	{
 		char *val;
@@ -1312,6 +1312,7 @@ static int init(void)
 	if (val) h = atoi(val);
 	val = cfg_get_key_value(*config, "SDL_frontend.Fullscreen");
 	if (val && strncmp(val, "yes", 3) == 0) fullscreen = 1;
+	input_device_config();
 	ds = init_sdl(input_config_has_joystick(), w, h, fullscreen);
 	if (!ds) {
 		wdprintf(V_ERROR, "sdl_frontend", "ERROR: Display surface uninitialized.\n");
