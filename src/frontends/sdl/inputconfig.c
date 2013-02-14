@@ -45,7 +45,7 @@ int input_config_init(char *inputconf_file)
 	cfg_init_config_file_struct(&inputconf);
 	if (cfg_read_config_file(&inputconf, inputconf_file) == 0) {
 		char key[128];
-		int  e, j;
+		int  e, j, ja;
 		/* Load keyboard configuration ... */
 		sprintf(key, "Button-0");
 		for (e = 0; cfg_is_key_available(inputconf, key) && e < MAX_BUTTONS; e++) {
@@ -110,6 +110,39 @@ int input_config_init(char *inputconf_file)
 					hw_button_name[j][namelen] = '\0';
 					hw_button_val[j] = val_int;
 					/*printf("%03d: '%s' = %d\n", j, hw_button_name[j], hw_button_val[j]);*/
+				} else { /* out of memory */
+					wdprintf(V_ERROR, "inputconfig", "ERROR: Out of memory!\n");
+					break;
+				}
+			}
+		}
+		if (j > 0) j--;
+
+		/* Load joystick axis configuration... */
+		sprintf(key, "JoyAxis-0");
+		for (ja = j; cfg_is_key_available(inputconf, key) && j < MAX_BUTTONS; ja++) {
+			char *val, *name;
+			int   val_int, namelen;
+
+			snprintf(key, 127, "JoyAxis-%d", ja-j);
+			val = cfg_get_key_value(inputconf, key);
+			if (val) {
+				/* split val into keycode and name */
+				val_int = atoi(val);
+				name = val;
+
+				number_of_buttons++;
+				while (*name != '\0' && *name++ != ',');
+				namelen = strlen(name);
+				hw_button_name[ja] = malloc(namelen+1);
+				hw_button_type[ja] = INPUT_JOYSTICK;
+				if (hw_button_name[ja]) {
+					has_joystick = 1;
+					strncpy(hw_button_name[ja], name, namelen);
+					hw_button_name[ja][namelen] = '\0';
+					hw_button_val[ja] = val_int;
+					hw_button_method[ja] = ACTIVATE_JOYAXIS_MOVE;
+					/*printf("%03d: '%s' = %d\n", ja, hw_button_name[ja], hw_button_val[ja]);*/
 				} else { /* out of memory */
 					wdprintf(V_ERROR, "inputconfig", "ERROR: Out of memory!\n");
 					break;

@@ -28,6 +28,7 @@ void key_action_mapping_init(KeyActionMapping *kam)
 		kam[i].button_name[0] = '\0';
 		kam[i].button         = -1;
 		kam[i].modifier       = 0;
+		kam[i].method         = 0;
 	}
 
 	kam[FB_DIR_UP].scope =                   FILE_BROWSER;

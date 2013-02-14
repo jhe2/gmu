@@ -25,7 +25,7 @@
 #define MAX_BUTTONS 256
 
 typedef enum InputType { INPUT_KEYBOARD, INPUT_JOYSTICK } InputType;
-typedef enum ActivateMethod { ACTIVATE_PRESS, ACTIVATE_RELEASE } ActivateMethod;
+typedef enum ActivateMethod { ACTIVATE_PRESS, ACTIVATE_RELEASE, ACTIVATE_JOYAXIS_MOVE } ActivateMethod;
 
 int   input_config_init(char *inputconf_file);
 char *input_config_get_button_name(int val, InputType type);

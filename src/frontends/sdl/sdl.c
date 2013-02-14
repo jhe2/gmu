@@ -58,6 +58,8 @@
 
 #define SCREEN_UPDATE_TIMER_ELAPSED 42
 
+#define JOYSTICK_THRESHOLD 3200
+
 static ConfigFile  *config = NULL;
 Skin                skin;
 static View         view, old_view;
@@ -790,9 +792,26 @@ static void run_player(char *skin_name, char *decoders_str)
 			case SDL_JOYBUTTONDOWN:
 				button_repeat_timer = 5;
 				break;
-			case SDL_JOYAXISMOTION:
+			case SDL_JOYAXISMOTION: {
+				static int last = 0;
+				int        joy_axis_dir = 0;
+
 				/*wdprintf(V_DEBUG, "sdl_frontend", "Joy axis motion: %d (axis %d)\n", event.jaxis.value, event.jaxis.axis);*/
+				if (event.jaxis.value >= JOYSTICK_THRESHOLD && joy_axis_dir <= 0) {
+					joy_axis_dir =  1;
+				} else if (event.jaxis.value <= -JOYSTICK_THRESHOLD && joy_axis_dir >= 0) {
+					joy_axis_dir = -1;
+				} else if (event.jaxis.value > -JOYSTICK_THRESHOLD && event.jaxis.value < JOYSTICK_THRESHOLD) {
+					joy_axis_dir = 0;
+					button_repeat_timer = -1;
+				}
+				if (joy_axis_dir == last)
+					continue; /* Eat the event */
+				else
+					button_repeat_timer = 5;
+				last = joy_axis_dir;
 				break;
+			}
 			case SDL_JOYHATMOTION:
 				wdprintf(V_DEBUG, "sdl_frontend", "Joy Hat motion\n");
 				break;
@@ -822,6 +841,7 @@ static void run_player(char *skin_name, char *decoders_str)
 
 		if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN ||
 		    event.type == SDL_KEYUP   || event.type == SDL_JOYBUTTONUP   ||
+		    event.type == SDL_JOYAXISMOTION ||
 		    (button_repeat_timer == 0 && user_key_action > 0)) {
 			ActivateMethod amethod = ACTIVATE_PRESS;
 
@@ -830,6 +850,21 @@ static void run_player(char *skin_name, char *decoders_str)
 				case SDL_KEYDOWN:       button = event.key.keysym.sym; break;
 				case SDL_JOYBUTTONUP:	amethod = ACTIVATE_RELEASE;
 				case SDL_JOYBUTTONDOWN: button = event.jbutton.button; break;
+				case SDL_JOYAXISMOTION: {
+					int joy_axis_dir = 0;
+					amethod = ACTIVATE_JOYAXIS_MOVE;
+					if (event.jaxis.value >= JOYSTICK_THRESHOLD && joy_axis_dir <= 0) {
+						joy_axis_dir =  1;
+						button = (event.jaxis.axis+1) * joy_axis_dir;
+					} else if (event.jaxis.value <= -JOYSTICK_THRESHOLD && joy_axis_dir >= 0) {
+						joy_axis_dir = -1;
+						button = (event.jaxis.axis+1) * joy_axis_dir;
+					} else if (event.jaxis.value > -JOYSTICK_THRESHOLD && event.jaxis.value < JOYSTICK_THRESHOLD) {
+						joy_axis_dir = 0;
+						button = 0;
+					}
+					break;
+				}
 				default: break;
 			}
 
