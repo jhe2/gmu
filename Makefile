@@ -180,10 +180,6 @@ decoders/wavpack.so: src/decoders/wavpack.c util.o
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) -Isrc/ -c -o $@ $<
 
-frontends/httpserv.so: src/frontends/httpserv.c util.o
-	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) -Wall -pedantic $(PLUGIN_CFLAGS) -O2 $< util.o
-
 frontends/sdl.so: $(PLUGIN_FE_SDL_OBJECTFILES)
 	@echo -e "Linking \033[1m$@\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_SDL_OBJECTFILES)
