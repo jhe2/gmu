@@ -834,6 +834,31 @@ has been configured correctly.
 ATTENTION: The gmusrv frontend is considered deprecated and will be
 removed in future versions of Gmu in favor of the new gmuhttp frontend.
 
+5.2.1 gmuc
+
+gmuc is a new ncurses based interface for Gmu. It works over the network,
+so it can be used to control Gmu running on another computer. The UI
+should be pretty self-explanatory, as it is closely modeled aroud Gmu's
+SDL interface. The keys can/will differ from the SDL interface, though.
+The actual key bindings are shown on the last line in the terminal.
+The most imporant ones are:
+
+Global:
+q - Quit gmuc
+n - Play next track
+b - Play previous track
+p - Play/Pause
+s - Stop playback
+Tab - Switch to next window
+
+In playlist:
+Del - Remove selected track
+c - Clear entire playlist
+m - Change play mode
+
+In file browser:
+a - Add file or directory to playlist
+ENTER - Change directory
 
 6. IR remote control plugin (LIRC)
 ----------------------------------
@@ -883,14 +908,15 @@ which contains the Gmu host information as well as the password.
 
 See "libs/information" directory for further details.
 
-- SDL >=1.2.14
-- SDL_image >=1.2.4
-- SDL_gfx >=2.0.13
-- tremor >=1.0.0
-- libmikmod >=3.1.11
-- libmpg123 >=1.8.1
-- libmpcdec >=1.2.6
-- libFLAC >=1.2.1
-- WavPack 4.4.0
-- speex >= 1.2_rc1
+- SDL >=1.2.14 (mandatory)
+- SDL_image >=1.2.4 (required by SDL_frontend)
+- SDL_gfx >=2.0.13 (optional for SDL_frontend)
+- tremor >=1.0.0 (optional, required by Vorbis decoder)
+- libmikmod >=3.1.11 (optional, required by Module decoder)
+- libmpg123 >=1.8.1 (optional, required by MPEG decoder)
+- libmpcdec >=1.2.6 (optional, required by Musepack decoder)
+- libFLAC >=1.2.1 (optional, required by FLAC decoder)
+- WavPack 4.4.0 (optional, included, required by WavPack decoder)
+- speex >= 1.2_rc1 (optional, required by speex decoder)
 - libjpeg and libpng (used by SDL_image)
+- ncurses 5.9 (used by gmuc)
