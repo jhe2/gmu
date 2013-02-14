@@ -145,6 +145,8 @@ install: $(DISTFILES)
 	$(Q)cp -R frontends/* $(DESTDIR)$(PREFIX)/share/gmu/frontends
 	$(Q)cp -R decoders/* $(DESTDIR)$(PREFIX)/share/gmu/decoders
 	$(Q)cp -R themes/* $(DESTDIR)$(PREFIX)/share/gmu/themes
+	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/htdocs
+	$(Q)cp -R htdocs/* $(DESTDIR)$(PREFIX)/share/gmu/htdocs
 	$(Q)cp *.conf $(DESTDIR)$(PREFIX)/etc/gmu
 	$(Q)cp *.keymap $(DESTDIR)$(PREFIX)/etc/gmu
 	$(Q)echo "#!/bin/sh">$(DESTDIR)$(PREFIX)/bin/gmu
