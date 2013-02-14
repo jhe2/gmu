@@ -35,6 +35,7 @@ Table of contents
 5.  Config file
 5.1 Log bot
 5.2 Gmu CLI
+5.3 gmuc Gmu Ncurses interface
 6.  IR remote control plugin (LIRC)
 7.  HTTP frontend
 8.  Libraries used by Gmu
@@ -834,7 +835,9 @@ has been configured correctly.
 ATTENTION: The gmusrv frontend is considered deprecated and will be
 removed in future versions of Gmu in favor of the new gmuhttp frontend.
 
-5.2.1 gmuc
+
+5.3 gmuc Gmu Ncurses interface
+------------------------------
 
 gmuc is a new ncurses based interface for Gmu. It works over the network,
 so it can be used to control Gmu running on another computer. The UI
