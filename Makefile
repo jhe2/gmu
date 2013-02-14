@@ -69,9 +69,12 @@ ifeq (1,$(STATIC))
 LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(basename $(i))_LFLAGS))
 endif
 
+TOOLS_TO_BUILD?=gmuc
+DISTBIN_DEPS?=default_distbin
+
 TEMP_HEADER_FILES=tmp-felist.h tmp-declist.h
 
-all: $(BINARY) decoders frontends gmuc
+all: $(BINARY) decoders frontends $(TOOLS_TO_BUILD)
 	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
 
 decoders: $(DECODERS_TO_BUILD)
@@ -111,7 +114,9 @@ dist: $(ALLFILES)
 	$(Q)tar chfz $(projname).tar.gz $(projname)
 	$(Q)-rm -rf $(projname)
 
-distbin: $(DISTFILES)
+distbin: $(DISTBIN_DEPS)
+
+default_distbin: $(DISTFILES)
 	@echo -e "Creating \033[1m$(projname)-$(TARGET).zip\033[0m"
 	$(Q)-rm -rf $(projname)-$(TARGET)
 	$(Q)-rm -rf $(projname)-$(TARGET).zip
