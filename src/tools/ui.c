@@ -34,7 +34,8 @@ static FooterButtons fb_pl[] = {
 	{ "m",   "P.Mode",   FUNC_PLAYMODE,    'm', 0 },
 	{ "c",   "Clear",    FUNC_PL_CLEAR,    'c', 0 },
 	{ "Del", "Remove",   FUNC_PL_DEL_ITEM, KEY_DC, 1 },
-	{ "/", "Command",    FUNC_TEXT_INPUT,  '/', 0 },
+	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
+	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -46,16 +47,18 @@ static FooterButtons fb_fb[] = {
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
+	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
 static FooterButtons fb_ti[] = {
-	{ "Tab", "Window",  FUNC_NEXT_WINDOW, '\t', 0 },
+	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "b",   "Prev",     FUNC_PREVIOUS,    'b', 0 },
 	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
+	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -66,6 +69,7 @@ static FooterButtons fb_cmd[] = {
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
+	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 

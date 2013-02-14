@@ -777,6 +777,8 @@ int main(int argc, char **argv)
 								case FUNC_TEXT_INPUT:
 									ui_enable_text_input(&ui, 1);
 									break;
+								case FUNC_QUIT:
+									quit = 1;
 								default:
 									break;
 							}

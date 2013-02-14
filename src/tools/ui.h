@@ -23,7 +23,7 @@
 typedef enum { FUNC_NONE, FUNC_HELP, FUNC_NEXT_WINDOW, FUNC_PLAY, FUNC_PAUSE, 
                FUNC_PLAY_PAUSE, FUNC_STOP, FUNC_NEXT, FUNC_PREVIOUS,
                FUNC_PLAYMODE, FUNC_PL_CLEAR, FUNC_PL_DEL_ITEM, FUNC_SEARCH,
-               FUNC_FB_ADD, FUNC_TEXT_INPUT
+               FUNC_FB_ADD, FUNC_TEXT_INPUT, FUNC_QUIT
 } Function;
 
 typedef struct FooterButtons {
