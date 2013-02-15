@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: core.c  Created: 081115
  *
@@ -661,7 +661,7 @@ char *gmu_core_get_config_dir(void)
 static void print_cmd_help(char *prog_name)
 {
 	printf("Gmu Music Player " VERSION_NUMBER "\n");
-	printf("Copyright (c) 2006-2011 Johannes Heimansberg\n");
+	printf("Copyright (c) 2006-2013 Johannes Heimansberg\n");
 	printf("http://wejp.k.vu/projects/gmu/\n");
 	printf("\nUsage:\n%s [-h] [-r] [-v V] [-c file.conf] [-s theme_name] [music_file.ext] [...]\n", prog_name);
 	printf("-h : Print this help\n");
