@@ -83,7 +83,7 @@ void playlist_clear(Playlist *pl)
 int playlist_add_item(Playlist *pl, char *file, char *name)
 {
 	int    result = 1;
-	Entry *entry;
+	Entry *entry = NULL;
 
 	if (pl->length < PLAYLIST_MAX_LENGTH) {
 		if (pl->first == NULL) { /* playlist empty */
@@ -101,25 +101,29 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 				pl->last = entry;
 			}
 		}
-		entry->played = 0;
-		entry->next = NULL;
-		if (file[0] != '/' && strncmp(file, "http://", 7) != 0) {
-			char path[256];
-			if (getcwd(path, 253)) { /* do we still need this? */
-				snprintf(entry->filename, 255, "%s/%s", path, file);
+		if (entry) {
+			entry->played = 0;
+			entry->next = NULL;
+			if (file[0] != '/' && strncmp(file, "http://", 7) != 0) {
+				char path[256];
+				if (getcwd(path, 253)) { /* do we still need this? */
+					snprintf(entry->filename, 255, "%s/%s", path, file);
+				} else {
+					entry->filename[0] = '\0';
+					result = 0;
+				}
 			} else {
-				entry->filename[0] = '\0';
-				result = 0;
+				strncpy(entry->filename, file, 255);
+			}
+			if (result) {
+				entry->filename[255] = '\0';
+				playlist_entry_set_name(entry, name);
+				entry->queue_pos = 0;
+				entry->next_in_queue = NULL;
+				pl->length++;
 			}
 		} else {
-			strncpy(entry->filename, file, 255);
-		}
-		if (result) {
-			entry->filename[255] = '\0';
-			playlist_entry_set_name(entry, name);
-			entry->queue_pos = 0;
-			entry->next_in_queue = NULL;
-			pl->length++;
+			result = 0;
 		}
 	} else {
 		result = 0;
