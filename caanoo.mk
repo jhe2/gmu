@@ -27,7 +27,7 @@ CC=arm-gph-linux-gnueabi-gcc
 STRIP=arm-gph-linux-gnueabi-strip
 COPT=-O3 -Wall -ffast-math -fomit-frame-pointer -I$(CAANOO_SDK)/arm-gph-linux-gnueabi/sys-root/usr/include -D_$(DEVICE)
 CFLAGS=-Os $(SDL_CFLAGS)
-LFLAGS=-L$(CAANOO_SDK)/arm-gph-linux-gnueabi/sys-root/usr/lib $(SDL_LIB) -lpng -ljpeg -lpthread -lm -ldl -lz
+LFLAGS=-L$(CAANOO_SDK)/arm-gph-linux-gnueabi/sys-root/usr/lib $(SDL_LIB) -lpng -ljpeg -lpthread -lm -ldl -lz -Wl,-export-dynamic
 DISTFILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.caanoo gmu-caanoo.gpu COPYING
 
 
