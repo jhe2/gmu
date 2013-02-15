@@ -90,7 +90,8 @@ $(BINARY): $(OBJECTFILES) $(PLUGIN_OBJECTFILES)
 libs.$(TARGET):
 	$(Q)-mkdir -p libs.$(TARGET)
 
-projname=gmu-$(shell awk '/define VERSION_NUMBER/ { print $$3 }' src/core.h )
+ver=$(shell awk '/define VERSION_NUMBER/ { print $$3 }' src/core.h|cut -d '"' -f 2 )
+projname=gmu-${ver}
 
 %.o: src/%.c $(GENERATED_HEADER_FILES_STATIC)
 	@echo -e "Compiling \033[1m$<\033[0m"
