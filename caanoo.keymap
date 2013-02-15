@@ -23,7 +23,7 @@ Lock=Lock
 Unlock=Unlock
 Exit=Mod+Home
 #Help=Mod+VolDown
-Help=Mod+HelpII
+Help=Mod+HelpI
 # Program info mappings:
 ProgramInfo=Mod+A
 ProgramInfoOkay=B
