@@ -33,7 +33,7 @@
 			<license name="GPLv2" url="http://www.gnu.org/licenses/gpl-2.0.html"/>
 		</licenses>
 		<previewpics>
-			<pic src="gmu-screenshot.png"/>
+			<pic src="screenshot-gmu090.png"/>
 		</previewpics>
 		<info name="Readme" type="text/html" src="README.txt"/>
 		<categories>
@@ -67,7 +67,7 @@
 			<license name="GPLv2" url="http://www.gnu.org/licenses/gpl-2.0.html"/>
 		</licenses>
 		<previewpics>
-			<pic src="gmuc.png"/>
+			<pic src="screenshot-gmuc090.png"/>
 		</previewpics>
 		<info name="Gmu Documentation" type="text/html" src="README.txt"/>
 		<categories>
