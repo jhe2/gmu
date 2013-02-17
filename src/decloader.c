@@ -112,28 +112,30 @@ int decloader_load_all(char *directory)
 	dir_init(&dir);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
-		int i;
+		int i, num = dir_get_number_of_files(&dir);
 
-		wdprintf(V_INFO, "decloader", "%d decoders found.\n", dir_get_number_of_files(&dir));
-		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
+		wdprintf(V_INFO, "decloader", "%d decoders found.\n", num-2);
+		for (i = 0; i < num; i++) {
 			GmuDecoder *gd;
 			char        fpath[256];
 
-			snprintf(fpath, 255, "%s/%s", dir_get_path(&dir), dir_get_filename(&dir, i));
-			if ((gd = decloader_load_decoder(fpath))) {
-				wdprintf(V_INFO, "decloader", "Loading %s was successful.\n", dir_get_filename(&dir, i));
-				wdprintf(V_INFO, "decloader", "%s: Name: %s\n", gd->identifier, (*gd->get_name)());
-				if (gd->get_file_extensions) {
-					int len = strlen(extensions);
-					wdprintf(V_INFO, "decloader", "%s: File extensions: %s\n", gd->identifier, (*gd->get_file_extensions)());
-					snprintf(extensions+len, 1023-len, "%s;", (*gd->get_file_extensions)());
+			if (dir_get_flag(&dir, i) == REG_FILE) {
+				snprintf(fpath, 255, "%s/%s", dir_get_path(&dir), dir_get_filename(&dir, i));
+				if ((gd = decloader_load_decoder(fpath))) {
+					wdprintf(V_INFO, "decloader", "Loading %s was successful.\n", dir_get_filename(&dir, i));
+					wdprintf(V_INFO, "decloader", "%s: Name: %s\n", gd->identifier, (*gd->get_name)());
+					if (gd->get_file_extensions) {
+						int len = strlen(extensions);
+						wdprintf(V_INFO, "decloader", "%s: File extensions: %s\n", gd->identifier, (*gd->get_file_extensions)());
+						snprintf(extensions+len, 1023-len, "%s;", (*gd->get_file_extensions)());
+					}
+					dc->gd = gd;
+					dc->next = dc_init_element();
+					dc = dc->next;
+					res++;
+				} else {
+					wdprintf(V_WARNING, "decloader", "Loading %s was unsuccessful.\n", dir_get_filename(&dir, i));
 				}
-				dc->gd = gd;
-				dc->next = dc_init_element();
-				dc = dc->next;
-				res++;
-			} else {
-				wdprintf(V_WARNING, "decloader", "Loading %s was unsuccessful.\n", dir_get_filename(&dir, i));
 			}
 		}
 		dir_free(&dir);

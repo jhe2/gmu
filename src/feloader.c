@@ -148,23 +148,25 @@ int feloader_load_all(char *directory)
 	dir_init(&dir);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
-		int i;
+		int i, num = dir_get_number_of_files(&dir);
 
-		wdprintf(V_INFO, "feloader", "%d frontends found.\n", dir_get_number_of_files(&dir));
-		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
+		wdprintf(V_INFO, "feloader", "%d frontends found.\n", num-2);
+		for (i = 0; i < num; i++) {
 			GmuFrontend *gf;
 			char         fpath[256];
 
-			snprintf(fpath, 255, "%s/%s", dir_get_path(&dir), dir_get_filename(&dir, i));
-			if ((gf = feloader_load_frontend(fpath))) {
-				wdprintf(V_INFO, "feloader", "feloader: Loading %s was successful.\n", dir_get_filename(&dir, i));
-				wdprintf(V_INFO, "feloader", "%s: Name: %s\n", gf->identifier, (*gf->get_name)());
-				fec->gf = gf;
-				fec->next = fec_init_element();
-				fec = fec->next;
-				res++;
-			} else {
-				wdprintf(V_WARNING, "feloader", "feloader: Loading %s was unsuccessful.\n", dir_get_filename(&dir, i));
+			if (dir_get_flag(&dir, i) == REG_FILE) {
+				snprintf(fpath, 255, "%s/%s", dir_get_path(&dir), dir_get_filename(&dir, i));
+				if ((gf = feloader_load_frontend(fpath))) {
+					wdprintf(V_INFO, "feloader", "feloader: Loading %s was successful.\n", dir_get_filename(&dir, i));
+					wdprintf(V_INFO, "feloader", "%s: Name: %s\n", gf->identifier, (*gf->get_name)());
+					fec->gf = gf;
+					fec->next = fec_init_element();
+					fec = fec->next;
+					res++;
+				} else {
+					wdprintf(V_WARNING, "feloader", "feloader: Loading %s was unsuccessful.\n", dir_get_filename(&dir, i));
+				}
 			}
 		}
 		dir_free(&dir);
