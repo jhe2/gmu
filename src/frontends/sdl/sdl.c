@@ -75,7 +75,7 @@ static int          initialized = 0;
 
 static char         base_dir[256];
 
-typedef enum Quit { DONT_QUIT, QUIT_WITH_ERROR, QUIT_WITHOUT_ERROR } Quit;
+typedef enum Quit { DONT_QUIT = 1, QUIT_WITH_ERROR, QUIT_WITHOUT_ERROR } Quit;
 static Quit         quit = DONT_QUIT;
 
 static GmuEvent    update_event = 0;
@@ -656,6 +656,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	}
 	m_init(&m);
 
+	quit = DONT_QUIT;
 	/* Initialize and load button mapping */
 	{
 		char tmp[256], *keymap_file;
@@ -663,14 +664,20 @@ static void run_player(char *skin_name, char *decoders_str)
 		keymap_file = cfg_get_key_value(*config, "KeyMap");
 		if (keymap_file) {
 			snprintf(tmp, 255, "%s/%s", gmu_core_get_config_dir(), keymap_file);
-			if (!key_action_mapping_load_config(kam, tmp))
+			if (!key_action_mapping_load_config(kam, tmp)) {
 				quit = QUIT_WITH_ERROR;
+				wdprintf(V_ERROR, "sdl_frontend", "Error while loading keymap config.\n");
+			}
 		} else {
 			quit = QUIT_WITH_ERROR;
+			wdprintf(V_ERROR, "sdl_frontend", "No keymap file specified.\n");
 		}
 	}
 
-	if (!skin_init(&skin, skin_name)) quit = QUIT_WITH_ERROR;
+	if (!skin_init(&skin, skin_name)) {
+		quit = QUIT_WITH_ERROR;
+		wdprintf(V_ERROR, "sdl_frontend", "skin_init() reported an error.\n");
+	}
 
 	if (quit == DONT_QUIT) {
 		SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, display->w,
