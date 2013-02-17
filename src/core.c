@@ -671,6 +671,7 @@ static void print_cmd_help(char *prog_name)
 	printf("-s theme_name: Use theme \"theme_name\"\n");
 	printf("-v V : Set verbosity level to V, where V is an integer between 0 (silent) and 5 (debug).\n");
 	printf("-p /path/to/feplugin.so : Load the given frontend plugin. Can be used multiple times.\n");
+	printf("-l /path/to/playlistfile.m3u: Load the given playlist file instead of the default playlist.\n");
 	printf("If you append files to the command line\n");
 	printf("they will be added to the playlist\n");
 	printf("and playback is started automatically.\n");
@@ -785,6 +786,7 @@ int main(int argc, char **argv)
 	char        *frontend_plugin_by_cmd_arg[MAX_FRONTEND_PLUGIN_BY_CMD_ARG];
 	int          frontend_plugin_by_cmd_arg_counter = 0;
 	int          pb_time = -1;
+	char        *alt_playlist = NULL;
 
 	for (i = 0; i < MAX_FRONTEND_PLUGIN_BY_CMD_ARG; i++)
 		frontend_plugin_by_cmd_arg[i] = NULL;
@@ -859,6 +861,15 @@ int main(int argc, char **argv)
 						i++;
 					} else {
 						wdprintf(V_ERROR, "gmu", "Invalid usage of -p: Frontend plugin name required.\n");
+						exit(0);
+					}
+					break;
+				case 'l': /* Load given playlist file as Gmu's playlist */
+					if (argc >= i+2) {
+						alt_playlist = argv[i+1];
+						i++;
+					} else {
+						wdprintf(V_ERROR, "gmu", "Invalid usage of -l: Playlist file required.\n");
 						exit(0);
 					}
 					break;
@@ -957,9 +968,15 @@ int main(int argc, char **argv)
 	audio_buffer_init();
 	trackinfo_init(&current_track_ti);
 	playlist_init(&pl);
-	/* Load playlist from playlist.m3u */
-	snprintf(temp, 255, "%s/playlist.m3u", config_dir);
-	add_m3u_contents_to_playlist(&pl, temp);
+	if (alt_playlist) { /* Load user playlist if it has been specified with the -l cmd option */
+		if (!add_m3u_contents_to_playlist(&pl, alt_playlist))
+			if (!add_pls_contents_to_playlist(&pl, alt_playlist))
+				wdprintf(V_WARNING, "gmu", "Unable to load user playlist: %s\n", alt_playlist);
+	} else {
+		/* Load playlist from playlist.m3u */
+		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
+		add_m3u_contents_to_playlist(&pl, temp);
+	}
 	wdprintf(V_INFO, "gmu", "Playlist length: %d items\n", playlist_get_length(&pl));
 
 	init_sdl(); /* Initialize SDL audio */
