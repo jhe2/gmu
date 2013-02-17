@@ -749,9 +749,14 @@ static void run_player(char *skin_name, char *decoders_str)
 			update = UPDATE_ALL;
 		}
 		initialized = 1;
+		wdprintf(V_DEBUG, "sdl_frontend", "Initialization successful.\n");
+	} else {
+		wdprintf(V_WARNING, "sdl_frontend", quit == QUIT_WITHOUT_ERROR ?
+		                                    "Strange. Exit was requested, shutting down." :
+		                                    "An error was detected, shutting down.");
 	}
 
-	while (SDL_WaitEvent(&event) && quit == DONT_QUIT) {
+	while (quit == DONT_QUIT && SDL_WaitEvent(&event)) {
 		switch (event.type) {
 			case SDL_VIDEORESIZE: {
 				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE,
