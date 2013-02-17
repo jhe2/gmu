@@ -863,6 +863,31 @@ In file browser:
 a - Add file or directory to playlist
 ENTER - Change directory
 
+gmuc has its own config file, which is by default located in
+~/.config/gmu/gmuc.conf. Another config file location can be specified
+on the command line through the -c parameter.
+The config file will be created when gmuc is started for the first time.
+It currently contains three keys: Host, Password and Color.
+"Host" and "Password" specify the hostname and password to use for 
+connecting to the Gmu server. Obviously, the password has to match the 
+password set in the main Gmu config file (key: gmuhttp.Password). It 
+has to be at least nine (9) characters long.
+The "Color" option specifies, wether gmuc should use colors for its
+interface.
+To be able to connect to the Gmu http server from another host, gmuhttp
+needs to be configured to not only listen on the local interface (which
+is the default). This can be configured through the config key
+"gmuhttp.Listen" in Gmu's main config file.
+
+To listen on all available network interfaces, set it to "All":
+
+gmuhttp.Listen=All
+
+To listen on the local interface only, set it to "Local":
+
+gmuhttp.Listen=Local
+
+
 6. IR remote control plugin (LIRC)
 ----------------------------------
 
