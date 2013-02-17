@@ -969,8 +969,8 @@ int main(int argc, char **argv)
 	trackinfo_init(&current_track_ti);
 	playlist_init(&pl);
 	if (alt_playlist) { /* Load user playlist if it has been specified with the -l cmd option */
-		if (!add_m3u_contents_to_playlist(&pl, alt_playlist))
-			if (!add_pls_contents_to_playlist(&pl, alt_playlist))
+		if (!add_pls_contents_to_playlist(&pl, alt_playlist))
+			if (!add_m3u_contents_to_playlist(&pl, alt_playlist))
 				wdprintf(V_WARNING, "gmu", "Unable to load user playlist: %s\n", alt_playlist);
 	} else {
 		/* Load playlist from playlist.m3u */
