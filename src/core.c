@@ -867,24 +867,9 @@ int main(int argc, char **argv)
 					exit(0);
 					break;
 			}
-		} /* else {
-			char  filetype[16] = "(none)";
-			char *filename = strrchr(argv[i], '/');
-			char *tmp;
-
-			if (filename == NULL) 
-				filename = argv[i];
-			else
-				filename++;
-			tmp = get_file_extension(filename);
-			if (tmp != NULL)
-				strtoupper(filetype, tmp, 15);
-			if (strcmp(filetype, "M3U") == 0) {
-				add_m3u_contents_to_playlist(gmu_core_get_playlist(), argv[i]);
-			} else {
-				playlist_add_item(gmu_core_get_playlist(), argv[i], filename);
-			}
-		}*/
+		} else {
+			/*printf("FILE:%s (index: %d)\n", argv[i], i);*/
+		}
 	}
 
 	wdprintf_set_verbosity(v);
