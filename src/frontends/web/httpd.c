@@ -392,7 +392,7 @@ void *httpd_run_server(void *data)
  */
 static int tcp_server_init(int port, int local_only)
 {
-	int                listen_fd, ret, yes = 1;
+	int listen_fd, ret, yes = 1;
 
 	listen_fd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -408,10 +408,23 @@ static int tcp_server_init(int port, int local_only)
 			hints.ai_socktype = SOCK_STREAM;
 			if (!local_only) hints.ai_flags = AI_PASSIVE;  /* fill in my IP for me */
 			snprintf(port_str, 6, "%d", port);
-			getaddrinfo(local_only ? "127.0.0.1" : NULL, port_str, &hints, &res);
-
-			listen_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-			ret = bind(listen_fd, res->ai_addr, res->ai_addrlen);
+			ret = getaddrinfo(local_only ? "127.0.0.1" : NULL, port_str, &hints, &res);
+			if (ret != 0) {
+				wdprintf(V_WARNING, "httpd", "WARNING: %s\n", gai_strerror(ret));
+			} else {
+				struct addrinfo *r;
+				for (r = res; r != NULL; r = r->ai_next) {
+					listen_fd = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
+					if (listen_fd != -1) {
+						ret = bind(listen_fd, r->ai_addr, r->ai_addrlen);
+						wdprintf(V_INFO, "httpd", "Socket created successfully. Listening now.\n");
+						break;
+					} else {
+						ret = -1;
+					}
+				}
+				freeaddrinfo(res);
+			}
 
 			if (ret == 0) {
 				ret = listen(listen_fd, 5);
