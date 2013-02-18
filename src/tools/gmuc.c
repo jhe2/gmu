@@ -786,6 +786,7 @@ int main(int argc, char **argv)
 
 							switch (ch) {
 								case KEY_DOWN:
+									flushinp();
 									switch(ui.active_win) {
 										case WIN_PL:
 											listwidget_move_cursor(ui.lw_pl, 1);
@@ -798,6 +799,7 @@ int main(int argc, char **argv)
 									}
 									break;
 								case KEY_UP:
+									flushinp();
 									switch(ui.active_win) {
 										case WIN_PL:
 											listwidget_move_cursor(ui.lw_pl, -1);
@@ -810,6 +812,7 @@ int main(int argc, char **argv)
 									}
 									break;
 								case KEY_NPAGE:
+									flushinp();
 									switch(ui.active_win) {
 										case WIN_PL:
 											listwidget_move_cursor(ui.lw_pl, ui.lw_pl->win->height-2);
@@ -822,6 +825,7 @@ int main(int argc, char **argv)
 									}
 									break;
 								case KEY_PPAGE:
+									flushinp();
 									switch(ui.active_win) {
 										case WIN_PL:
 											listwidget_move_cursor(ui.lw_pl, -(ui.lw_pl->win->height-2));
