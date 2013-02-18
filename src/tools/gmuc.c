@@ -683,6 +683,7 @@ int main(int argc, char **argv)
 									break;
 								}
 								case KEY_RESIZE:
+									flushinp();
 									break;
 								default: {
 									wchars[cpos] = ch;
