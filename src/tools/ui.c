@@ -219,8 +219,13 @@ void ui_draw_footer(UI *ui)
 		int i;
 		getmaxyx(stdscr, ui->rows, ui->cols);
 		wmove(ui->win_footer->win, 0, 0);
-		for (i = 0; ui->fb_visible && ui->fb_visible[i].button_name; i++)
-			ui_draw_footer_button(ui, ui->fb_visible[i].button_name, ui->fb_visible[i].button_desc);
+		for (i = 0; ui->fb_visible && ui->fb_visible[i].button_name; i++) {
+			int __attribute__((unused)) y;
+			int x;
+			getyx(ui->win_footer->win, y, x);
+			if (x < ui->cols-2)
+				ui_draw_footer_button(ui, ui->fb_visible[i].button_name, ui->fb_visible[i].button_desc);
+		}
 		wclrtoeol(ui->win_footer->win);
 	}
 	window_refresh(ui->win_footer);
