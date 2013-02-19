@@ -263,12 +263,16 @@ char *dir_get_new_dir_alloc(char *current_dir, char *new_dir)
 		}
 		wdprintf(V_DEBUG, "dir", "len total=%d len cur=%d len new=%d\n", len, len_current_dir, len_new_dir);
 		if (len > 0) {
-			new_dir_full = malloc(len+1);
-			new_dir_temp = malloc(len+1);
+			new_dir_full = malloc(len+2);
+			new_dir_temp = malloc(len+2);
 			if (new_dir_full && new_dir_temp) {
 				int s, t;
 				if (new_dir[0] != '/') { /* no absolute path given */
 					memcpy(new_dir_temp, current_dir, len_current_dir);
+					if (current_dir[len_current_dir-1] != '/') {
+						new_dir_temp[len_current_dir] = '/';
+						len_current_dir++;
+					}
 					memcpy(new_dir_temp+len_current_dir, new_dir, len_new_dir+1);
 				} else { /* absolute path given */
 					memcpy(new_dir_temp, new_dir, len_new_dir+1);
