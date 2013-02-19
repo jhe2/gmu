@@ -934,6 +934,9 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 			} else if (strcmp(cmd, "playlist_item_delete") == 0) {
 				int item = (int)json_get_number_value_for_key(json, "item");
 				if (item >= 0) gmu_core_playlist_item_delete(item);
+			} else if (strcmp(cmd, "volume_set") == 0) {
+				int vol = (int)json_get_number_value_for_key(json, "volume");
+				if (vol >= 0) gmu_core_set_volume(vol);
 			} else if (strcmp(cmd, "ping") == 0) {
 				gmu_http_ping(c);
 			}
