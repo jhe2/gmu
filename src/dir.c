@@ -272,6 +272,7 @@ char *dir_get_new_dir_alloc(char *current_dir, char *new_dir)
 					if (current_dir[len_current_dir-1] != '/') {
 						new_dir_temp[len_current_dir] = '/';
 						len_current_dir++;
+						len++;
 					}
 					memcpy(new_dir_temp+len_current_dir, new_dir, len_new_dir+1);
 				} else { /* absolute path given */
@@ -292,7 +293,7 @@ char *dir_get_new_dir_alloc(char *current_dir, char *new_dir)
 						while (t > 1 && new_dir_full[t-1] != '/') t--;
 						if (t > 0) t--;
 						continue;
-					} else if (new_dir_temp[s] == '/' && s < len-3 && 
+					} else if (new_dir_temp[s] == '/' && s < len-2 && 
 					    new_dir_temp[s+1]  == '.' &&
 					    (new_dir_temp[s+2] == '/' || new_dir_temp[s+2] == '\0')) {
 						s += 1;
