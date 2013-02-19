@@ -1,6 +1,6 @@
 The Gmu Music Player
 
-Version 0.9.0
+Version 0.9.1
 
 Copyright (c) 2006-2013 Johannes 'wej' Heimansberg
 http://wejp.k.vu/projects/gmu/
@@ -72,7 +72,7 @@ The Ben NanoNote come with Gmu preinstalled. If you use an older
 Firmware image or want to upgrade Gmu, you can use opkg to do that.
 To install Gmu with opkg run:
 
-opkg install gmu_0.9.0-1_xburst.ipk
+opkg install gmu_0.9.1-1_xburst.ipk
 
 Once Gmu has been installed on the NanoNote, you can run it by
 executing 'gmu'.
@@ -853,6 +853,8 @@ b - Play previous track
 p - Play/Pause
 s - Stop playback
 Tab - Switch to next window
++ - Increase volume
+- - Decrease volume
 
 In playlist:
 Del - Remove selected track

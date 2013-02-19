@@ -23,7 +23,8 @@
 typedef enum { FUNC_NONE, FUNC_HELP, FUNC_NEXT_WINDOW, FUNC_PLAY, FUNC_PAUSE, 
                FUNC_PLAY_PAUSE, FUNC_STOP, FUNC_NEXT, FUNC_PREVIOUS,
                FUNC_PLAYMODE, FUNC_PL_CLEAR, FUNC_PL_DEL_ITEM, FUNC_SEARCH,
-               FUNC_FB_ADD, FUNC_TEXT_INPUT, FUNC_QUIT
+               FUNC_FB_ADD, FUNC_TEXT_INPUT, FUNC_VOLUME_UP, FUNC_VOLUME_DOWN,
+               FUNC_QUIT
 } Function;
 
 typedef struct FooterButtons {
@@ -46,7 +47,7 @@ typedef struct UI {
 } UI;
 
 void ui_init(UI *ui, int color);
-void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status, int cur_time, int playmode);
+void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status, int cur_time, int playmode, int volume);
 void ui_refresh_active_window(UI *ui);
 void ui_draw_footer(UI *ui);
 void ui_draw(UI *ui);

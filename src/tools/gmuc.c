@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: gmuc.c  Created: 120920
  *
@@ -50,7 +50,7 @@
 typedef enum { STATE_WEBSOCKET_HANDSHAKE, STATE_CONNECTION_ESTABLISHED, STATE_WEBSOCKET_HANDSHAKE_FAILED } State;
 
 static char cur_artist[128], cur_title[128], cur_status[32];
-static int  cur_time, cur_playmode;
+static int  cur_time, cur_playmode, cur_volume;
 
 static int resized = 0;
 
@@ -184,7 +184,7 @@ static void cmd_playback_time_change(UI *ui, JSON_Object *json)
 {
 	int t = (int)json_get_number_value_for_key(json, "time");
 	cur_time = t;
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
 }
 
 static void cmd_trackinfo(UI *ui, JSON_Object *json)
@@ -195,7 +195,7 @@ static void cmd_trackinfo(UI *ui, JSON_Object *json)
 	char *date   = json_get_string_value_for_key(json, "date");
 	strncpy(cur_artist, artist, 127);
 	strncpy(cur_title, title, 127);
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
 	ui_update_trackinfo(ui, title, artist, album, date);
 	ui_refresh_active_window(ui);
 }
@@ -298,7 +298,13 @@ static char *cmd_dir_read(UI *ui, JSON_Object *json)
 static void cmd_playmode_info(UI *ui, JSON_Object *json)
 {
 	cur_playmode = (int)json_get_number_value_for_key(json, "mode");
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
+}
+
+static void cmd_volume_info(UI *ui, JSON_Object *json)
+{
+	cur_volume = (int)json_get_number_value_for_key(json, "volume");
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
 }
 
 static int cmd_login(UI *ui, JSON_Object *json, int sock, char *cur_dir)
@@ -335,7 +341,7 @@ static void cmd_playback_state(UI *ui, JSON_Object *json)
 		case 2: str = "||"; break; /* paused */
 	}
 	strncpy(cur_status, str, 31);
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode);
+	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
 }
 
 static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *password, char **cur_dir, char *input)
@@ -393,6 +399,8 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 							*cur_dir = cmd_dir_read(ui, json);
 						} else if (strcmp(cmd, "playmode_info") == 0) {
 							cmd_playmode_info(ui, json);
+						} else if (strcmp(cmd, "volume_info") == 0) {
+							cmd_volume_info(ui, json);
 						}
 						if (screen_update) ui_refresh_active_window(ui);
 						ui_cursor_text_input(ui, input);
@@ -778,6 +786,12 @@ int main(int argc, char **argv)
 								case FUNC_TEXT_INPUT:
 									ui_enable_text_input(&ui, 1);
 									break;
+								case FUNC_VOLUME_UP:
+									websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);
+									break;
+								case FUNC_VOLUME_DOWN:
+									websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":-1}", 1);
+									break;
 								case FUNC_QUIT:
 									quit = 1;
 								default:
@@ -885,7 +899,7 @@ int main(int argc, char **argv)
 							if (size <= 0) {
 								wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
 								if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
-								ui_draw_header(&ui, "Gmu Network Error", strerror(errno), cur_status, cur_time, cur_playmode);
+								ui_draw_header(&ui, "Gmu Network Error", strerror(errno), cur_status, cur_time, cur_playmode, cur_volume);
 								network_error = 1;
 							}
 							if (size > 0) r = ringbuffer_write(&rb, buffer, size);

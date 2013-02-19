@@ -796,6 +796,10 @@ void gmu_http_send_initial_information(Connection *c)
 	             "{ \"cmd\": \"playback_state\", \"state\" : %d }",
 	             gmu_core_get_status());
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
+	r = snprintf(msg, MSG_MAX_LEN,
+	             "{ \"cmd\": \"volume_info\", \"volume\" : %d }",
+	             gmu_core_get_volume());
+	if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 }
 
 #define MAX_LEN 32768
@@ -936,7 +940,13 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				if (item >= 0) gmu_core_playlist_item_delete(item);
 			} else if (strcmp(cmd, "volume_set") == 0) {
 				int vol = (int)json_get_number_value_for_key(json, "volume");
-				if (vol >= 0) gmu_core_set_volume(vol);
+				int rel = (int)json_get_number_value_for_key(json, "relative");
+				if (rel != 0) {
+					int cv = gmu_core_get_volume();
+					gmu_core_set_volume(cv+rel);
+				} else if (vol >= 0) {
+					gmu_core_set_volume(vol);
+				}
 			} else if (strcmp(cmd, "ping") == 0) {
 				gmu_http_ping(c);
 			}

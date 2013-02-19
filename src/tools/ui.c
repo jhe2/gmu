@@ -34,6 +34,8 @@ static FooterButtons fb_pl[] = {
 	{ "m",   "P.Mode",   FUNC_PLAYMODE,    'm', 0 },
 	{ "c",   "Clear",    FUNC_PL_CLEAR,    'c', 0 },
 	{ "Del", "Remove",   FUNC_PL_DEL_ITEM, KEY_DC, 1 },
+	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
+	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
@@ -46,6 +48,8 @@ static FooterButtons fb_fb[] = {
 	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
+	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
+	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
@@ -57,6 +61,8 @@ static FooterButtons fb_ti[] = {
 	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
+	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
+	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
@@ -68,6 +74,8 @@ static FooterButtons fb_cmd[] = {
 	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
+	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
+	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
@@ -137,7 +145,7 @@ void ui_init(UI *ui, int color)
 }
 
 void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, 
-                    char *cur_status, int cur_time, int playmode)
+                    char *cur_status, int cur_time, int playmode, int volume)
 {
 	if (ui->win_header) {
 		char pm1 = ' ', pm2 = ' ';
@@ -171,7 +179,7 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 				pm1 = 'R'; pm2 = 'R';
 				break;
 		}
-		mvwprintw(ui->win_header->win, 0, ui->cols-11, "[%c%c] %3d:%02d", pm1, pm2, min, sec);
+		mvwprintw(ui->win_header->win, 0, ui->cols-15, "[%03d|%c%c] %3d:%02d", volume, pm1, pm2, min, sec);
 		wattroff(ui->win_header->win, A_BOLD);
 		window_refresh(ui->win_header);
 	}
@@ -236,7 +244,7 @@ void ui_draw(UI *ui)
 	clear();
 	refresh();
 
-	ui_draw_header(ui, NULL, NULL, NULL, 0, 0);
+	ui_draw_header(ui, NULL, NULL, NULL, 0, 0, 0);
 	ui_draw_footer(ui);
 
 	ui_refresh_active_window(ui);
