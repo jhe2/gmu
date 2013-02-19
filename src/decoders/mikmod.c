@@ -90,6 +90,8 @@ static int open_file(char *filename)
 			free(filename_without_path);
 		}*/
 		res = 1;
+	} else {
+		MikMod_Exit();
 	}
 	return res;
 }
