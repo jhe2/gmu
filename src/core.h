@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: core.h  Created: 081115
  *
@@ -22,7 +22,7 @@
 #include "audio.h"
 #include "eventqueue.h"
 
-#define VERSION_NUMBER "0.9.0"
+#define VERSION_NUMBER "0.9.1"
 
 #define GMU_CORE_HW_VOLUME_MAX 100
 #define GMU_CORE_SW_VOLUME_MAX AUDIO_MAX_SW_VOLUME
