@@ -15,7 +15,7 @@
 #
 
 #DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
-DECODERS_TO_BUILD=decoders/wavpack.so decoders/mpg123.so
+DECODERS_TO_BUILD=decoders/wavpack.so decoders/mpg123.so decoders/vorbis.so
 FRONTENDS_TO_BUILD=frontends/sdl.so
 TOOLS_TO_BUILD=
 DEVICE=Caanoo
