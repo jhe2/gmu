@@ -15,6 +15,9 @@
 #
 
 DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/wavpack.so decoders/mikmod.so decoders/flac.so decoders/speex.so
+ifdef MORE_DECODERS
+DECODERS_TO_BUILD+=$(MORE_DECODERS)
+endif
 FRONTENDS_TO_BUILD=frontends/sdl.so frontends/log.so
 SDL_LIB=-lSDL -lpthread -ldirectfb -ldirect -lfusion -lz
 SDL_CFLAGS=-D_GNU_SOURCE=1 -D_REENTRANT
