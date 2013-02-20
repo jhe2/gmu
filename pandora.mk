@@ -15,7 +15,7 @@
 #
 
 #DECODERS_TO_BUILD=decoders/vorbis.so decoders/musepack.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so
-DECODERS_TO_BUILD=decoders/wavpack.so decoders/mpg123.so decoders/vorbis.so decoders/speex.so decoders/mikmod.so
+DECODERS_TO_BUILD=decoders/wavpack.so decoders/mpg123.so decoders/vorbis.so decoders/speex.so decoders/mikmod.so decoders/flac.so
 FRONTENDS_TO_BUILD=frontends/sdl.so frontends/log.so frontends/gmuhttp.so
 SDL_LIB=-L$(PNDSDK)/usr/lib -lSDL -lpthread
 SDL_CFLAGS=-I$(PNDSDK)/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
