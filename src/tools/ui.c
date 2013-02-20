@@ -93,14 +93,31 @@ static void ui_prepare_trackinfo_win(UI *ui)
 
 void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *date)
 {
-	mvwprintw(ui->win_ti->win, 1, 0, title ? title : " ");
+	wattron(ui->win_ti->win, A_BOLD);
+	mvwprintw(ui->win_ti->win, 0, 0, "Title:\n");
 	wclrtoeol(ui->win_ti->win);
-	mvwprintw(ui->win_ti->win, 3, 0, artist ? artist : " ");
+	wattroff(ui->win_ti->win, A_BOLD);
+	wprintw(ui->win_ti->win, title ? title : " ");
 	wclrtoeol(ui->win_ti->win);
-	mvwprintw(ui->win_ti->win, 5, 0, album ? album : " ");
+	wattron(ui->win_ti->win, A_BOLD);
+	wprintw(ui->win_ti->win, "\nArtist:\n");
 	wclrtoeol(ui->win_ti->win);
-	mvwprintw(ui->win_ti->win, 7, 0, date ? date : " ");
+	wattroff(ui->win_ti->win, A_BOLD);
+	wprintw(ui->win_ti->win, artist ? artist : " ");
 	wclrtoeol(ui->win_ti->win);
+	wattron(ui->win_ti->win, A_BOLD);
+	wprintw(ui->win_ti->win, "\nAlbum:\n");
+	wclrtoeol(ui->win_ti->win);
+	wattroff(ui->win_ti->win, A_BOLD);
+	wprintw(ui->win_ti->win, album ? album : " ");
+	wclrtoeol(ui->win_ti->win);
+	wattron(ui->win_ti->win, A_BOLD);
+	wprintw(ui->win_ti->win, "\nDate:\n");
+	wclrtoeol(ui->win_ti->win);
+	wattroff(ui->win_ti->win, A_BOLD);
+	wprintw(ui->win_ti->win, date ? date : " ");
+	wclrtoeol(ui->win_ti->win);
+	wclrtobot(ui->win_ti->win);
 }
 
 void ui_init(UI *ui, int color)
