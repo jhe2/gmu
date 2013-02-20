@@ -196,7 +196,18 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 				pm1 = 'R'; pm2 = 'R';
 				break;
 		}
-		mvwprintw(ui->win_header->win, 0, ui->cols-15, "[%03d|%c%c] %3d:%02d", volume, pm1, pm2, min, sec);
+		wattroff(ui->win_header->win, A_BOLD);
+		mvwprintw(ui->win_header->win, 0, ui->cols-15, "[");
+		wattron(ui->win_header->win, A_BOLD);
+		wprintw(ui->win_header->win, "%03d", volume);
+		wattroff(ui->win_header->win, A_BOLD);
+		wprintw(ui->win_header->win, "|");
+		wattron(ui->win_header->win, A_BOLD);
+		wprintw(ui->win_header->win, "%c%c", pm1, pm2);
+		wattroff(ui->win_header->win, A_BOLD);
+		wprintw(ui->win_header->win, "] ");
+		wattron(ui->win_header->win, A_BOLD);
+		wprintw(ui->win_header->win, "%3d:%02d", min, sec);
 		wattroff(ui->win_header->win, A_BOLD);
 		window_refresh(ui->win_header);
 	}
