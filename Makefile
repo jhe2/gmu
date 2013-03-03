@@ -64,6 +64,7 @@ DEC_flac_LFLAGS=-lFLAC
 DEC_musepack_LFLAGS=-lmpcdec
 DEC_mikmod_LFLAGS=-lmikmod
 DEC_speex_LFLAGS=-logg -lspeex
+DEC_modplug_LFLAGS=-lmodplug
 
 ifeq (1,$(STATIC))
 LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(basename $(i))_LFLAGS))

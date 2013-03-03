@@ -16,7 +16,7 @@
 
 ifeq (0,$(STATIC))
 # normal build
-DECODERS_TO_BUILD?=decoders/vorbis.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/mikmod.so decoders/speex.so
+DECODERS_TO_BUILD?=decoders/vorbis.so decoders/flac.so decoders/wavpack.so decoders/mpg123.so decoders/modplug.so decoders/speex.so
 FRONTENDS_TO_BUILD?=frontends/sdl.so frontends/gmuhttp.so
 else
 # static build
