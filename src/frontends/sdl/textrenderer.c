@@ -117,7 +117,7 @@ void textrenderer_draw_string_with_highlight(const TextRenderer *tr1, const Text
 		if (utf8_chars > max_length) {
 			int current_max = 0;
 
-			for (i = 0, j = 0; j < max_length; i++, j++) {
+			for (i = 0, j = 0; j < max_length && str[i] != '\0'; i++, j++) {
 				if (str[i] == '*' && i+1 < l && str[i+1] == '*') j-=2;
 				if (str[i] == ' ') current_max = j;
 			}
