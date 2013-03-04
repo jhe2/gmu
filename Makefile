@@ -65,6 +65,7 @@ DEC_musepack_LFLAGS=-lmpcdec
 DEC_mikmod_LFLAGS=-lmikmod
 DEC_speex_LFLAGS=-logg -lspeex
 DEC_modplug_LFLAGS=-lmodplug
+DEC_opus_LFLAGS=-lopus -logg -lopusfile
 
 ifeq (1,$(STATIC))
 LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(basename $(i))_LFLAGS))
@@ -179,7 +180,7 @@ gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net
 
 decoders/%.so: src/decoders/%.c
 	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS)
+	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS) $(DEC_$(*)_CFLAGS)
 
 decoders/wavpack.so: src/decoders/wavpack.c util.o
 	@echo -e "Compiling \033[1m$<\033[0m"
