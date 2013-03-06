@@ -262,9 +262,16 @@ static GmuCharset meta_data_get_charset(void)
 	return M_CHARSET_UTF_8;
 }
 
-static int data_check_mime_type(const char *data, int size)
+static int data_check_magic_bytes(const char *data, int size)
 {
-	return 0;
+	int res = 0;
+	if (strncmp(data, "OggS", 4) == 0) { /* Ok, we've got an Ogg container */
+		if (strncmp(data+28, "OpusHead", 8) == 0) {
+			res = 1;
+			wdprintf(V_DEBUG, "opus", "Magic check: Ogg Opus data detected!\n");
+		}
+	}
+	return res;
 }
 
 static void set_reader_handle(Reader *reader)
@@ -296,7 +303,7 @@ static GmuDecoder gd = {
 	meta_data_load,
 	meta_data_close,
 	meta_data_get_charset,
-	data_check_mime_type,
+	data_check_magic_bytes,
 	set_reader_handle,
 	NULL
 };
