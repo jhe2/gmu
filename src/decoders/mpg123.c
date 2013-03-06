@@ -381,18 +381,16 @@ static GmuCharset meta_data_get_charset(void)
 	return M_CHARSET_UTF_8;
 }
 
-static int data_check_mime_type(const char *data, int size)
+static int data_check_magic_bytes(const char *data, int size)
 {
-	int i, id3 = 0, sync = 0;
+	int id3 = 0, sync = 0;
 	if (size >= 3) {
 		if (data[0] == 'I' && data[1] == 'D' && data[2] == '3') {
 			id3 = 1;
 		} else {
-			for (i = 0; i < size-1; i++) { /* Search for mpeg sync bits */
-				if (((unsigned char)data[i]) == 0xff && (((unsigned char)data[i+1]) & 0xf0) == 0xf0) {
-					sync = 1;
-					break;
-				}
+			/* Check for mpeg sync bits */
+			if (((unsigned char)data[0]) == 0xff && (((unsigned char)data[1]) & 0xf0) == 0xf0) {
+				sync = 1;
 			}
 		}
 	}
@@ -429,7 +427,7 @@ static GmuDecoder gd = {
 	meta_data_load,
 	meta_data_close,
 	meta_data_get_charset,
-	data_check_mime_type,
+	data_check_magic_bytes,
 	set_reader_handle,
 	NULL
 };
