@@ -429,8 +429,8 @@ static void *decode_audio_thread(void *udata)
 			free(filename);
 			filename = NULL;
 		}
+		if (r) reader_close(r);
 		if (gd && gd->set_reader_handle) {
-			if (r) reader_close(r);
 			(*gd->set_reader_handle)(NULL);
 		}
 		usleep(100000);
