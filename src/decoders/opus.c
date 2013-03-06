@@ -42,12 +42,10 @@ static int read_func(void *_stream, unsigned char *_ptr, int _nbytes)
 {
 	int     res = -1;
 	Reader *r = (Reader *)_stream;
-	wdprintf(V_DEBUG, "opus", "Reading %d bytes...\n", _nbytes);
 	if (reader_read_bytes(r, _nbytes)) {
 		memcpy(_ptr, reader_get_buffer(r), _nbytes);
 		byte_counter += _nbytes;
 		res = _nbytes;
-		wdprintf(V_DEBUG, "opus", "read okay\n");
 	}
 	return res;
 }
@@ -98,7 +96,6 @@ static int decode_data(char *target, int max_size)
 	if (samples > 0) {
 		res = samples * 4;
 	}
-	wdprintf(V_DEBUG, "opus", "decode_data(): bytes = %d\n", res);
 	return res;
 }
 
@@ -119,7 +116,6 @@ static int opus_play_file(char *opus_file)
 	byte_counter = available_bytes;
 
 	wdprintf(V_DEBUG, "opus", "Available bytes in buffer: %d\n", available_bytes);
-	wdprintf(V_DEBUG, "opus", "Stream data: %s\n", reader_get_buffer(r));
 	oof = op_open_callbacks(r, &ofc, (unsigned char *)reader_get_buffer(r),
 	                        available_bytes, &error);
 
