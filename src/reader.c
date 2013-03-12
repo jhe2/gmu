@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: reader.c  Created: 110406
  *
@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include "reader.h"
 #include "ringbuffer.h"
 #include "debug.h"
@@ -163,6 +164,7 @@ static Reader *_reader_open(char *url, int max_redirects)
 			/* 1) Split URL into host, port and path */
 			http_url_split_alloc(url, &hostname, &port, &path);
 			/* 2) open connection to host on port */
+			signal(SIGPIPE, SIG_IGN);
 			wdprintf(V_INFO, "reader", "Opening connection to host %s on port %d. Reading from %s.\n", hostname, port, path);
 			if (hostname && path && port > 0) {
 				struct addrinfo hints, *servinfo, *p;
