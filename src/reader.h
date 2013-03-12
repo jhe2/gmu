@@ -41,7 +41,9 @@ typedef struct
 	RingBuffer rb_http;
 	pthread_mutex_t mutex;
 	pthread_t       thread;
-	
+
+	unsigned long stream_pos;
+
 	int   is_ready;
 } Reader;
 
@@ -61,4 +63,5 @@ int     reader_reset_stream(Reader *r);
 int     reader_is_seekable(Reader *r);
 int     reader_seek(Reader *r, int byte_offset);
 long    reader_get_file_size(Reader *r);
+unsigned long reader_get_stream_position(Reader *r);
 #endif

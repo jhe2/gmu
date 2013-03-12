@@ -151,6 +151,7 @@ static Reader *_reader_open(char *url, int max_redirects)
 		r->buf_data_size = 0;
 		r->file_size = 0;
 		r->is_ready = 0;
+		r->stream_pos = 0;
 		wdprintf(V_DEBUG, "reader", "mutex init.\n");
 		pthread_mutex_init(&(r->mutex), NULL);
 		wdprintf(V_DEBUG, "reader", "mutex init done.\n");
@@ -425,6 +426,7 @@ char reader_read_byte(Reader *r)
 			if (!read_okay) usleep(150);
 			ch = buf[0];
 		}
+		if (read_okay) r->stream_pos++;
 	}
 	return (char)ch;
 }
@@ -459,6 +461,7 @@ int reader_read_bytes(Reader *r, int size)
 				r->buf[size] = '\0';
 				read_okay = 1;
 				r->buf_data_size = size;
+				r->stream_pos += size;
 			}
 		}
 	} else {
@@ -485,12 +488,18 @@ long reader_get_file_size(Reader *r)
 	return r->file_size;
 }
 
+unsigned long reader_get_stream_position(Reader *r)
+{
+	return r->stream_pos;
+}
+
 /* Resets the stream to the beginning (if possible), returns 1 on success, 0 otherwise */
 int reader_reset_stream(Reader *r)
 {
 	int res = 0;
 	if (r->file) { /* Only possible for local files */
 		rewind(r->file);
+		r->stream_pos = 0;
 		res = 1;
 	}
 	return res;
@@ -507,6 +516,7 @@ int reader_seek(Reader *r, int byte_offset)
 	if (r->file) {
 		if (fseek(r->file, byte_offset, SEEK_SET) == 0) {
 			r->buf_data_size = 0;
+			r->stream_pos = byte_offset;
 			res = 1;
 		} else {
 			wdprintf(V_INFO, "reader", "Seeking failed. :(\n");
