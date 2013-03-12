@@ -30,7 +30,6 @@ static int          sample_rate, channels = 0, bitrate = 0;
 static TrackInfo    ti, ti_metaonly;
 static Reader      *r;
 static OggOpusFile *oof;
-static int          byte_counter;
 
 static const char *get_name(void)
 {
@@ -44,7 +43,6 @@ static int read_func(void *_stream, unsigned char *_ptr, int _nbytes)
 	Reader *r = (Reader *)_stream;
 	if (reader_read_bytes(r, _nbytes)) {
 		memcpy(_ptr, reader_get_buffer(r), _nbytes);
-		byte_counter += _nbytes;
 		res = _nbytes;
 	}
 	return res;
@@ -63,14 +61,13 @@ static int seek_func(void *_stream, opus_int64 _offset, int _whence)
 				start = 0;
 				break;
 			case SEEK_CUR:
-				start = byte_counter;
+				start = reader_get_stream_position(r);
 				break;
 			case SEEK_END:
 				start = reader_get_file_size(r);
 				break;
 		}
 		res = reader_seek(r, start + _offset) ? 0 : -1;
-		if (res == 0) byte_counter = start + _offset;
 	}
 	return res;
 }
@@ -78,8 +75,9 @@ static int seek_func(void *_stream, opus_int64 _offset, int _whence)
 /* Returns the current position in the stream */
 static opus_int64 tell_func(void *_stream)
 {
-	wdprintf(V_DEBUG, "opus", "tell_func(): %d bytes\n", byte_counter);
-	return byte_counter;
+	Reader *r = (Reader *)_stream;
+	wdprintf(V_DEBUG, "opus", "tell_func(): %d bytes\n", reader_get_stream_position(r));
+	return reader_get_stream_position(r);
 }
 
 /* Returns 0 on success and EOF otherwise */
@@ -152,6 +150,7 @@ static int opus_play_file(char *opus_file)
 {
 	int result = 1, error;
 	OpusFileCallbacks ofc;
+	int available_bytes;
 
 	wdprintf(V_DEBUG, "opus", "Initializing.\n");
 	trackinfo_init(&ti);
@@ -161,9 +160,7 @@ static int opus_play_file(char *opus_file)
 	ofc.tell  = tell_func;
 	ofc.close = close_func;
 
-	int available_bytes = reader_get_number_of_bytes_in_buffer(r);
-
-	byte_counter = available_bytes;
+	available_bytes = reader_get_number_of_bytes_in_buffer(r);
 
 	wdprintf(V_DEBUG, "opus", "Available bytes in buffer: %d\n", available_bytes);
 	oof = op_open_callbacks(r, &ofc, (unsigned char *)reader_get_buffer(r),
@@ -296,7 +293,34 @@ static const char *get_mime_types(void)
 
 static int meta_data_load(const char *filename)
 {
-	return 0;
+	int result = 0, error;
+	OpusFileCallbacks ofc;
+	Reader *re;
+
+	wdprintf(V_DEBUG, "opus", "Initializing.\n");
+	trackinfo_init(&ti);
+
+	ofc.read  = read_func;
+	ofc.seek  = seek_func;
+	ofc.tell  = tell_func;
+	ofc.close = close_func;
+
+	re = reader_open((char *)filename);
+	if (re) {
+		oof = op_open_callbacks(re, &ofc, (unsigned char *)reader_get_buffer(re), 0, &error);
+
+		wdprintf(V_INFO, "opus", "Stream open result: %d\n", error);
+		if (error) {
+			result = 0;
+		} else {
+			int li = op_current_link(oof);
+			read_tags(li, tim_metaonly);
+			result = 1;
+		}
+		op_free(oof);
+		reader_close(re);
+	}
+	return result;
 }
 
 static int meta_data_close(void)
