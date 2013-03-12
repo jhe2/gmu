@@ -89,9 +89,58 @@ static int close_func(void *_stream)
 	return 0;
 }
 
+struct _trackinfo_mapping {
+	char *key;
+	char *target;
+	int   maxlen;
+};
+
+static struct _trackinfo_mapping tim[] = {
+	{ "artist=",      ti.artist,  SIZE_ARTIST },
+	{ "title=",       ti.title,   SIZE_TITLE },
+	{ "album=",       ti.album,   SIZE_ALBUM },
+	{ "tracknumber=", ti.tracknr, SIZE_TRACKNR },
+	{ "date=",        ti.date,    SIZE_DATE },
+	{ "comment=",     ti.comment, SIZE_COMMENT },
+	{ NULL,           NULL,       0 }
+};
+
+static struct _trackinfo_mapping tim_metaonly[] = {
+	{ "artist=",      ti_metaonly.artist,  SIZE_ARTIST },
+	{ "title=",       ti_metaonly.title,   SIZE_TITLE },
+	{ "album=",       ti_metaonly.album,   SIZE_ALBUM },
+	{ "tracknumber=", ti_metaonly.tracknr, SIZE_TRACKNR },
+	{ "date=",        ti_metaonly.date,    SIZE_DATE },
+	{ "comment=",     ti_metaonly.comment, SIZE_COMMENT },
+	{ NULL,           NULL,       0 }
+};
+
+static void read_tags(int li, struct _trackinfo_mapping *tim)
+{
+	const OpusTags *tags = op_tags(oof, li);
+	int             ci, i;
+	for (ci = 0; ci < tags->comments; ci++) {
+		wdprintf(V_DEBUG, "opus", "metadata(%d): %s\n", ci, tags->user_comments[ci]);
+		for (i = 0; tim[i].key; i++) {
+			int len = strlen(tim[i].key);
+			if (strncasecmp(tags->user_comments[ci], tim[i].key, len) == 0) {
+				wdprintf(V_INFO, "opus", "%s> %s\n", tim[i].key, tags->user_comments[ci]+len);
+				strncpy(tim[i].target, tags->user_comments[ci]+len, tim[i].maxlen);
+				tim[i].target[tim[i].maxlen-1] = '\0';
+			}
+		}
+	}
+}
+
 static int decode_data(char *target, int max_size)
 {
 	int res = 0;
+	static int prev_li = -1;
+	int li = op_current_link(oof);
+	if (li != prev_li) {
+		prev_li = li;
+		read_tags(li, tim);
+	}
 	int samples = op_read_stereo(oof, (opus_int16 *)target, max_size / 2);
 	if (samples > 0) {
 		res = samples * 4;
@@ -105,6 +154,7 @@ static int opus_play_file(char *opus_file)
 	OpusFileCallbacks ofc;
 
 	wdprintf(V_DEBUG, "opus", "Initializing.\n");
+	trackinfo_init(&ti);
 
 	ofc.read  = read_func;
 	ofc.seek  = seek_func;
@@ -123,6 +173,8 @@ static int opus_play_file(char *opus_file)
 	if (error) {
 		result = 0;
 	} else {
+		int li = op_current_link(oof);
+		read_tags(li, tim);
 		channels = op_channel_count(oof, -1);
 		bitrate  = op_bitrate(oof, -1);
 		sample_rate = 48000;
