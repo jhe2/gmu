@@ -19,6 +19,7 @@
 #include <sys/poll.h>
 #include <errno.h>
 #include "net.h"
+#include "debug.h"
 
 /*
  * Send data of specified length 'size' to the client socket
@@ -28,21 +29,24 @@ int net_send_block(int sock, unsigned char *buf, int size)
 {
 	unsigned char *r = buf;
 	int            len = 0, res = 1;
+	int            tries = 3;
 
-	while (size > 0) {
+	while (size > 0 && tries > 0) {
 		len = send(sock, r, size, 0);
 		if (len == -1) {
 			if (errno == EWOULDBLOCK || errno == EAGAIN) {
 				struct pollfd ufds[1];
 				int           rv;
 
+				wdprintf(V_DEBUG, "net", "Socket %d does not accept more data. Retrying %d more time(s)...\n", sock, tries);
 				ufds[0].fd = sock;
 				ufds[0].events = POLLOUT;
-				rv = poll(ufds, 1, 1000);
+				rv = poll(ufds, 1, 500);
 				if (rv == -1) {
 					res = 0;
 					break;
 				}
+				tries--;
 			} else {
 				res = 0;
 				break;
@@ -52,6 +56,7 @@ int net_send_block(int sock, unsigned char *buf, int size)
 			r += len;
 		}
 	}
+	if (tries <= 0) res = 0;
 	return res;
 }
 
