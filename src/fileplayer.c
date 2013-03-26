@@ -197,11 +197,11 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 		if ((*gd->get_meta_data)(GMU_META_DATE, 1))
 			strncpy_charset_conv(ti_tmp.date,    (*gd->get_meta_data)(GMU_META_DATE, 1), SIZE_DATE-1, 0, charset);
 		/* Check if new dataset differs from old dataset: */
-		if (strncmp(ti_tmp.title, ti->title, SIZE_TITLE) != 0)
+		if (strlen(ti->title) == 0 || strncmp(ti_tmp.title, ti->title, SIZE_TITLE) != 0)
 			differ = 1;
-		else if (strncmp(ti_tmp.artist, ti->artist, SIZE_ARTIST) != 0)
+		else if (strlen(ti->artist) == 0 || strncmp(ti_tmp.artist, ti->artist, SIZE_ARTIST) != 0)
 			differ = 1;
-		else if (strncmp(ti_tmp.album, ti->album, SIZE_ALBUM) != 0)
+		else if (strlen(ti->album) == 0 || strncmp(ti_tmp.album, ti->album, SIZE_ALBUM) != 0)
 			differ = 1;
 
 		if (differ) {
