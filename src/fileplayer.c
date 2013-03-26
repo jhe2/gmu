@@ -196,6 +196,18 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 			strncpy_charset_conv(ti_tmp.tracknr, (*gd->get_meta_data)(GMU_META_TRACKNR, 1), SIZE_TRACKNR-1, 0, charset);
 		if ((*gd->get_meta_data)(GMU_META_DATE, 1))
 			strncpy_charset_conv(ti_tmp.date,    (*gd->get_meta_data)(GMU_META_DATE, 1), SIZE_DATE-1, 0, charset);
+
+		if (ti_tmp.title[0] == '\0') {
+			char *filename_without_path = strrchr(ti_tmp.file_name, '/');
+			if (filename_without_path != NULL)
+				filename_without_path++;
+			else
+				filename_without_path = (char *)ti_tmp.file_name;
+
+			if (!strncpy_charset_conv(ti_tmp.title, filename_without_path, SIZE_TITLE-1, 0, M_CHARSET_AUTODETECT))
+				ti_tmp.title[0] = '\0';
+		}
+
 		/* Check if new dataset differs from old dataset: */
 		if (strlen(ti->title) == 0 || strncmp(ti_tmp.title, ti->title, SIZE_TITLE) != 0)
 			differ = 1;
