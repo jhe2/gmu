@@ -20,6 +20,7 @@ void  strtolower(char *target, const char *src, int len);
 int   file_exists(char *filename);
 int   file_copy(char *destination_file, char *source_file);
 char *get_file_extension(char *filename);
+char *extract_filename_from_path(char *path);
 int   get_first_matching_file(char *target, int target_length, char *path, char *pattern);
 int   get_first_matching_file_pattern_list(char *target, int   target_length, 
                                            char *path,   char *pattern_list);

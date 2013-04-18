@@ -89,6 +89,16 @@ char *get_file_extension(char *filename)
 	return (l == 0 ? NULL : filename+l+1);
 }
 
+char *extract_filename_from_path(char *path)
+{
+	char *filename_without_path = strrchr(path, '/');
+	if (filename_without_path != NULL)
+		filename_without_path++;
+	else
+		filename_without_path = path;
+	return filename_without_path;
+}
+
 static int match_pattern(char *string, char *pattern)
 {
 	unsigned int result = 1, i, j = 0;
