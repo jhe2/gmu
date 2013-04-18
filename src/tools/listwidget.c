@@ -286,6 +286,7 @@ int listwidget_set_length(ListWidget *lw, int rows)
 		lw->cursor_pos = rows-1;
 		if (lw->cursor_pos < 0) lw->cursor_pos = 0;
 	}
+	if (lw->first_visible_row > rows) lw->first_visible_row = rows;
 	return 0;
 }
 
