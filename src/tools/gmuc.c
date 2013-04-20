@@ -49,9 +49,6 @@
 
 typedef enum { STATE_WEBSOCKET_HANDSHAKE, STATE_CONNECTION_ESTABLISHED, STATE_WEBSOCKET_HANDSHAKE_FAILED } State;
 
-static char cur_artist[128], cur_title[128], cur_status[32];
-static int  cur_time, cur_playmode, cur_volume;
-
 static int resized = 0;
 
 static void sig_handler_sigwinch(int sig)
@@ -182,9 +179,8 @@ static State do_websocket_handshake(RingBuffer *rb, State state)
 
 static void cmd_playback_time_change(UI *ui, JSON_Object *json)
 {
-	int t = (int)json_get_number_value_for_key(json, "time");
-	cur_time = t;
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
+	ui_update_playback_time(ui, (int)json_get_number_value_for_key(json, "time"));
+	ui_draw_header(ui);
 }
 
 static void cmd_trackinfo(UI *ui, JSON_Object *json)
@@ -193,10 +189,8 @@ static void cmd_trackinfo(UI *ui, JSON_Object *json)
 	char *title  = json_get_string_value_for_key(json, "title");
 	char *album  = json_get_string_value_for_key(json, "album");
 	char *date   = json_get_string_value_for_key(json, "date");
-	strncpy(cur_artist, artist, 127);
-	strncpy(cur_title, title, 127);
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
 	ui_update_trackinfo(ui, title, artist, album, date);
+	ui_draw_header(ui);
 	ui_refresh_active_window(ui);
 }
 
@@ -297,14 +291,14 @@ static char *cmd_dir_read(UI *ui, JSON_Object *json)
 
 static void cmd_playmode_info(UI *ui, JSON_Object *json)
 {
-	cur_playmode = (int)json_get_number_value_for_key(json, "mode");
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
+	ui_update_playmode(ui, (int)json_get_number_value_for_key(json, "mode"));
+	ui_draw_header(ui);
 }
 
 static void cmd_volume_info(UI *ui, JSON_Object *json)
 {
-	cur_volume = (int)json_get_number_value_for_key(json, "volume");
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
+	ui_update_volume(ui, (int)json_get_number_value_for_key(json, "volume"));
+	ui_draw_header(ui);
 }
 
 static int cmd_login(UI *ui, JSON_Object *json, int sock, char *cur_dir)
@@ -340,8 +334,8 @@ static void cmd_playback_state(UI *ui, JSON_Object *json)
 		case 1: str = "> "; break; /* play */
 		case 2: str = "||"; break; /* paused */
 	}
-	strncpy(cur_status, str, 31);
-	ui_draw_header(ui, cur_artist, cur_title, cur_status, cur_time, cur_playmode, cur_volume);
+	ui_update_playback_status(ui, str);
+	ui_draw_header(ui);
 }
 
 static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *password, char **cur_dir, char *input)
@@ -899,7 +893,8 @@ int main(int argc, char **argv)
 							if (size <= 0) {
 								wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
 								if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
-								ui_draw_header(&ui, "Gmu Network Error", strerror(errno), cur_status, cur_time, cur_playmode, cur_volume);
+								ui_update_trackinfo(&ui, "Gmu Network Error", strerror(errno), NULL, NULL);
+								ui_draw_header(&ui);
 								network_error = 1;
 							}
 							if (size > 0) r = ringbuffer_write(&rb, buffer, size);

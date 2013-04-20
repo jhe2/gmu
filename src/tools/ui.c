@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: ui.c  Created: 121209
  *
@@ -81,47 +81,87 @@ static FooterButtons fb_cmd[] = {
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
-static void ui_prepare_trackinfo_win(UI *ui)
+void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *date)
 {
-	wattron(ui->win_ti->win, A_BOLD);
-	mvwprintw(ui->win_ti->win, 0, 0, "Title:");
-	mvwprintw(ui->win_ti->win, 2, 0, "Artist:");
-	mvwprintw(ui->win_ti->win, 4, 0, "Album:");
-	mvwprintw(ui->win_ti->win, 6, 0, "Date:");
-	wattroff(ui->win_ti->win, A_BOLD);
+	if (title) {
+		strncpy(ui->ti_title, title, 128);
+		ui->ti_title[127] = '\0';
+	} else {
+		memset(ui->ti_title, 0, 128);
+	}
+	if (artist) {
+		strncpy(ui->ti_artist, artist, 128);
+		ui->ti_artist[127] = '\0';
+	} else {
+		memset(ui->ti_artist, 0, 128);
+	}
+	if (album) {
+		strncpy(ui->ti_album, album, 128);
+		ui->ti_album[127] = '\0';
+	} else {
+		memset(ui->ti_album, 0, 128);
+	}
+	if (date) {
+		strncpy(ui->ti_date, date, 64);
+		ui->ti_date[63] = '\0';
+	} else {
+		memset(ui->ti_date, 0, 64);
+	}
 }
 
-void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *date)
+void ui_update_playmode(UI *ui, int playmode)
+{
+	ui->playmode = playmode;
+}
+
+void ui_update_volume(UI *ui, int volume)
+{
+	ui->volume = volume;
+}
+
+void ui_update_playback_time(UI *ui, int time)
+{
+	ui->pb_time = time;
+}
+
+void ui_update_playback_status(UI *ui, char *status)
+{
+	strncpy(ui->status, status, 32);
+	ui->ti_date[31] = '\0';
+}
+
+void ui_draw_trackinfo(UI *ui)
 {
 	wattron(ui->win_ti->win, A_BOLD);
 	mvwprintw(ui->win_ti->win, 0, 0, "Title:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, title ? title : " ");
+	wprintw(ui->win_ti->win, ui->ti_title);
 	wclrtoeol(ui->win_ti->win);
 	wattron(ui->win_ti->win, A_BOLD);
 	wprintw(ui->win_ti->win, "\nArtist:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, artist ? artist : " ");
+	wprintw(ui->win_ti->win, ui->ti_artist);
 	wclrtoeol(ui->win_ti->win);
 	wattron(ui->win_ti->win, A_BOLD);
 	wprintw(ui->win_ti->win, "\nAlbum:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, album ? album : " ");
+	wprintw(ui->win_ti->win, ui->ti_album);
 	wclrtoeol(ui->win_ti->win);
 	wattron(ui->win_ti->win, A_BOLD);
 	wprintw(ui->win_ti->win, "\nDate:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, date ? date : " ");
+	wprintw(ui->win_ti->win, ui->ti_date);
 	wclrtoeol(ui->win_ti->win);
 	wclrtobot(ui->win_ti->win);
 }
 
 void ui_init(UI *ui, int color)
 {
+	memset(ui, 0, sizeof(UI));
 	ui->color = color;
 	setlocale(LC_CTYPE, ""); /* Set system locale (which hopefully is a UTF-8 locale) */
 	ui->rootwin = initscr();
@@ -158,11 +198,9 @@ void ui_init(UI *ui, int color)
 	ui->fb_cmd = fb_cmd;
 	ui->fb_visible = fb_pl;
 	ui->text_input_enabled = 0;
-	ui_prepare_trackinfo_win(ui);
 }
 
-void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, 
-                    char *cur_status, int cur_time, int playmode, int volume)
+void ui_draw_header(UI *ui)
 {
 	if (ui->win_header) {
 		char pm1 = ' ', pm2 = ' ';
@@ -173,13 +211,13 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 		if (ui->color) wattroff(ui->win_header->win, COLOR_PAIR(1));
 		wclrtoeol(ui->win_header->win);
 		wprintw(ui->win_header->win, " %s %s%s%s",
-		        cur_status != NULL ? cur_status : "", 
-		        cur_artist != NULL ? cur_artist : "", 
-		        cur_artist && cur_artist[0] != '\0' ? " - " : "",
-		        cur_title != NULL ? cur_title : "");
-		min = (cur_time / 1000) / 60;
-		sec = (cur_time / 1000) - min * 60;
-		switch (playmode) {
+		        ui->status != NULL ? ui->status : "  ", 
+		        ui->ti_artist != NULL ? ui->ti_artist : "", 
+		        ui->ti_artist && ui->ti_artist[0] != '\0' ? " - " : "",
+		        ui->ti_title != NULL ? ui->ti_title : "");
+		min = (ui->pb_time / 1000) / 60;
+		sec = (ui->pb_time / 1000) - min * 60;
+		switch (ui->playmode) {
 			case PM_CONTINUE:
 				pm1 = 'C'; pm2 = ' ';
 				break;
@@ -199,7 +237,7 @@ void ui_draw_header(UI *ui, char *cur_artist, char *cur_title,
 		wattroff(ui->win_header->win, A_BOLD);
 		mvwprintw(ui->win_header->win, 0, ui->cols-15, "[");
 		wattron(ui->win_header->win, A_BOLD);
-		wprintw(ui->win_header->win, "%03d", volume);
+		wprintw(ui->win_header->win, "%03d", ui->volume);
 		wattroff(ui->win_header->win, A_BOLD);
 		wprintw(ui->win_header->win, "|");
 		wattron(ui->win_header->win, A_BOLD);
@@ -241,6 +279,7 @@ void ui_refresh_active_window(UI *ui)
 			listwidget_refresh(ui->lw_fb);
 			break;
 		case WIN_TI:
+			ui_draw_trackinfo(ui);
 			window_refresh(ui->win_ti);
 			break;
 		case WIN_CMD:
@@ -272,7 +311,7 @@ void ui_draw(UI *ui)
 	clear();
 	refresh();
 
-	ui_draw_header(ui, NULL, NULL, NULL, 0, 0, 0);
+	ui_draw_header(ui);
 	ui_draw_footer(ui);
 
 	ui_refresh_active_window(ui);
@@ -303,7 +342,6 @@ void ui_resize(UI *ui)
 	getmaxyx(stdscr, ui->rows, ui->cols);
 	window_resize(ui->win_cmd, ui->rows-2, ui->cols);
 	window_resize(ui->win_ti, ui->rows-2, ui->cols);
-	ui_prepare_trackinfo_win(ui);
 	listwidget_resize(ui->lw_pl, ui->rows-2, ui->cols);
 	listwidget_resize(ui->lw_fb, ui->rows-2, ui->cols);
 	mvwin(ui->win_footer->win, ui->rows-1, 0);

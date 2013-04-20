@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: ui.h  Created: 121209
  *
@@ -44,14 +44,23 @@ typedef struct UI {
 	WINDOW        *rootwin;
 	int            text_input_enabled;
 	int            color;
+	/* Track information & playback status */
+	char           ti_title[128], ti_artist[128], ti_album[128], ti_date[64];
+	char           status[32];
+	int            pb_time, playmode, volume;
 } UI;
 
 void ui_init(UI *ui, int color);
-void ui_draw_header(UI *ui, char *cur_artist, char *cur_title, char *cur_status, int cur_time, int playmode, int volume);
+void ui_draw_header(UI *ui);
 void ui_refresh_active_window(UI *ui);
 void ui_draw_footer(UI *ui);
 void ui_draw(UI *ui);
 void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *date);
+void ui_update_playmode(UI *ui, int playmode);
+void ui_update_volume(UI *ui, int volume);
+void ui_update_playback_time(UI *ui, int time);
+void ui_update_playback_status(UI *ui, char *status);
+void ui_draw_trackinfo(UI *ui);
 void ui_cursor_text_input(UI *ui, char *str);
 void ui_enable_text_input(UI *ui, int enable);
 void ui_resize(UI *ui);
