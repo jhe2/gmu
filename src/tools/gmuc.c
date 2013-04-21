@@ -528,6 +528,8 @@ int main(int argc, char **argv)
 		ui_enable_text_input(&ui, 0);
 
 		while (!quit) {
+			ui_update_trackinfo(&ui, host, "Trying to connect to Gmu server", NULL, NULL);
+			ui_draw_header(&ui);
 			if (!buffer) {
 				quit = 1;
 			} else if ((sock = nethelper_tcp_connect_to_host(host, PORT, 0)) > 0) {
