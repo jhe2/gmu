@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: plbrowser.h  Created: 061025
  *
@@ -21,7 +21,7 @@ typedef struct PlaylistBrowser
 	int         offset;
 	int         horiz_offset;
 	int         selection;
-	Entry      *first_visible_entry;
+	int         first_visible_item;
 	const Skin *skin;
 	Charset     filenames_charset;
 	int         longest_line_so_far;

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
  *
  * File: httpd.c  Created: 111209
  *
@@ -733,10 +733,13 @@ void gmu_http_playlist_get_info(Connection *c)
 void gmu_http_playlist_get_item(int id, Connection *c)
 {
 	char   msg[MSG_MAX_LEN], *tmp_title = NULL;
-	Entry *item = gmu_core_playlist_get_entry(id);
+	Entry *item;
 	int    r;
 
+	gmu_core_playlist_acquire_lock();
+	item = gmu_core_playlist_get_entry(id);
 	tmp_title = json_string_escape_alloc(gmu_core_playlist_get_entry_name(item));
+	gmu_core_playlist_release_lock();
 	r = snprintf(msg, MSG_MAX_LEN,
 	             "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
 	             id, tmp_title ? tmp_title : "??", 0);

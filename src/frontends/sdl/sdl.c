@@ -282,16 +282,20 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 					path = file_browser_get_selected_file_full_path_alloc(fb);
 					if (path) {
 						if (user_key_action == FB_INSERT_FILE_INTO_PL) { /* insert item */
-							Entry *sel_entry = gmu_core_playlist_get_first();
+							int    pl_length = gmu_core_playlist_get_length();
+							Entry *sel_entry;
 							int    i;
 
+							gmu_core_playlist_acquire_lock();
+							sel_entry = gmu_core_playlist_get_first();
 							wdprintf(V_DEBUG, "sdl_frontend", "Inserting entry after %d...\n", pl_browser_get_selection(pb));
 							for (i = 0;
-								 i < gmu_core_playlist_get_length() && i != pl_browser_get_selection(pb);
+								 i < pl_length && i != pl_browser_get_selection(pb);
 								 i++) {
 								sel_entry = gmu_core_playlist_get_next(sel_entry);
 							}
 							gmu_core_playlist_insert_file_after(sel_entry, path);
+							gmu_core_playlist_release_lock();
 							pl_brower_move_selection_down(pb);
 							player_display_set_notice_message("ITEM INSERTED IN PLAYLIST", NOTICE_DELAY);
 						} else { /* add item */
@@ -337,48 +341,12 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 	return update;
 }
 
-struct _pb_delete_params {
-	PlaylistBrowser *pb;
-	CoverViewer     *cv;
-	TrackInfo       *ti;
-};
-
-static void pb_delete_func(void *arg)
-{
-	struct _pb_delete_params *p = (struct _pb_delete_params *)arg;
-	Entry                    *entry = gmu_core_playlist_get_first();
-	int                       i = 0;
-	if (entry != NULL) {
-		char *f;
-		while (i < pl_browser_get_selection(p->pb)) {
-			entry = gmu_core_playlist_get_next(entry);
-			i++;
-		}
-		if (pl_browser_are_selection_and_current_entry_equal(p->pb)) {
-			if (!play_next(p->ti, p->cv)) {
-				gmu_core_stop();
-			}
-		}
-		f = gmu_core_playlist_get_entry_filename(entry);
-		wdprintf(V_DEBUG, "sdl_frontend", "Delete file %s.\n", f);
-		if (remove(f) == 0)
-			player_display_set_notice_message("FILE DELETED!", NOTICE_DELAY);
-		else
-			player_display_set_notice_message("COULD NOT DELETE FILE!", NOTICE_DELAY);
-		pl_browser_playlist_remove_selection(p->pb);
-	}
-}
-
 static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
                                            CoverViewer     *cv,
                                            int              user_key_action,
                                            int              items_skip)
 {
-	Entry                           *entry;
-	int                              i;
-	Update                           update = UPDATE_NONE;
-	static struct _pb_delete_params  pdp;
-	static char                      buf[128];
+	Update      update = UPDATE_NONE;
 
 	switch (user_key_action) {
 		case PL_TOGGLE_RANDOM:
@@ -403,37 +371,15 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 			update = UPDATE_ALL;
 			break;
 		case PL_DELETE_FILE:
-			pdp.pb = pb;
-			pdp.ti = ti;
-			pdp.cv = cv;
-			entry = gmu_core_playlist_get_first();
-			i = 0;
-			if (entry != NULL) {
-				char buf2[128], *bufptr;
-				if (gmu_core_playlist_get_play_mode() == PM_RANDOM ||
-				    gmu_core_playlist_get_play_mode() == PM_RANDOM_REPEAT)
-					gmu_core_playlist_reset_random();
-				while (i < pl_browser_get_selection(pb)) {
-					entry = gmu_core_playlist_get_next(entry);
-					i++;
-				}
-				bufptr = strrchr(gmu_core_playlist_get_entry_filename(entry), '/')+1;
-				if (pl_browser_get_filenames_charset(pb) != UTF_8) {
-					charset_iso8859_1_to_utf8(buf2, bufptr, 127);
-					bufptr = buf2;
-				}
-				snprintf(buf, 127, "Delete \"%s\"?", bufptr);
-				question_set(&dlg, PLAYLIST, &view, buf, &pb_delete_func, (void *)&pdp);
-				view = QUESTION;
-				update = UPDATE_ALL;
-			}
 			break;
 		case PL_SAVE_PLAYLIST:
 			view = PLAYLIST_SAVE;
 			update = UPDATE_ALL;
 			break;
 		case PL_ENQUEUE:
+			gmu_core_playlist_acquire_lock();
 			gmu_core_playlist_entry_enqueue(pl_browser_get_selected_entry(pb));
+			gmu_core_playlist_release_lock();
 			update = UPDATE_TEXTAREA;
 			break;
 		case MOVE_CURSOR_DOWN:

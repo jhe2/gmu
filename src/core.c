@@ -310,12 +310,20 @@ int gmu_core_play_file(const char *filename)
 }
 
 /* Playlist wrapper functions: */
+void gmu_core_playlist_acquire_lock(void)
+{
+	playlist_get_lock(&pl);
+}
+
+void gmu_core_playlist_release_lock(void)
+{
+	playlist_release_lock(&pl);
+}
+
 int gmu_core_playlist_set_current(Entry *entry)
 {
 	int res;
-	playlist_get_lock(&pl);
 	res = playlist_set_current(&pl, entry);
-	playlist_release_lock(&pl);
 	/*event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);*/
 	return res;
 }
@@ -349,8 +357,6 @@ PlayMode gmu_core_playlist_get_play_mode(void)
 
 static void add_dir_finish_callback(int pos)
 {
-	playlist_get_lock(&pl);
-	playlist_release_lock(&pl);
 	wdprintf(V_DEBUG, "gmu", "In callback: Recursive directory add done.\n");
 	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, pos);
 }
@@ -366,11 +372,7 @@ int gmu_core_playlist_add_dir(char *dir)
 
 Entry *gmu_core_playlist_get_first(void)
 {
-	Entry *first;
-	playlist_get_lock(&pl);
-	first = playlist_get_first(&pl);
-	playlist_release_lock(&pl);
-	return first;
+	return playlist_get_first(&pl);
 }
 
 int gmu_core_playlist_get_length(void)
@@ -385,9 +387,7 @@ int gmu_core_playlist_get_length(void)
 int gmu_core_playlist_insert_file_after(Entry *entry, char *filename_with_path)
 {
 	int res;
-	playlist_get_lock(&pl);
 	res = playlist_insert_file_after(&pl, entry, filename_with_path);
-	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
@@ -441,9 +441,7 @@ void gmu_core_playlist_set_play_mode(PlayMode pm)
 int gmu_core_playlist_entry_enqueue(Entry *entry)
 {
 	int res;
-	playlist_get_lock(&pl);
 	res = playlist_entry_enqueue(&pl, entry);
-	playlist_release_lock(&pl);
 	event_queue_push(&event_queue, GMU_QUEUE_CHANGE);
 	return res;
 }
@@ -468,18 +466,13 @@ void gmu_core_playlist_clear(void)
 Entry *gmu_core_playlist_get_entry(int item)
 {
 	Entry *e;
-	playlist_get_lock(&pl);
 	e = playlist_get_entry(&pl, item);
-	playlist_release_lock(&pl);
 	return e;
 }
 
 int gmu_core_playlist_entry_delete(Entry *entry)
 {
-	int res;
-	playlist_get_lock(&pl);
-	res = playlist_entry_delete(&pl, entry);
-	playlist_release_lock(&pl);
+	int res = playlist_entry_delete(&pl, entry);
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
@@ -487,9 +480,7 @@ int gmu_core_playlist_entry_delete(Entry *entry)
 Entry *gmu_core_playlist_item_delete(int item)
 {
 	Entry *next = NULL;
-	playlist_get_lock(&pl);
 	next = playlist_item_delete(&pl, item);
-	playlist_release_lock(&pl);
 	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, item);
 	return next;
 }
@@ -521,29 +512,17 @@ int gmu_core_playlist_is_recursive_directory_add_in_progress(void)
 
 Entry *gmu_core_playlist_get_next(Entry *entry)
 {
-	Entry *e;
-	playlist_get_lock(&pl);
-	e = playlist_get_next(entry);
-	playlist_release_lock(&pl);
-	return e;
+	return playlist_get_next(entry);
 }
 
 Entry *gmu_core_playlist_get_prev(Entry *entry)
 {
-	Entry *e;
-	playlist_get_lock(&pl);
-	e = playlist_get_prev(entry);
-	playlist_release_lock(&pl);
-	return e;
+	return playlist_get_prev(entry);
 }
 
 int gmu_core_playlist_get_played(Entry *entry)
 {
-	int res;
-	playlist_get_lock(&pl);
-	res = playlist_get_played(entry);
-	playlist_release_lock(&pl);
-	return res;
+	return playlist_get_played(entry);
 }
 
 int gmu_core_playlist_entry_get_queue_pos(Entry *entry)

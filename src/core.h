@@ -51,7 +51,13 @@ void             gmu_core_set_shutdown_time(int value);
 int              gmu_core_get_shutdown_time_total(void);
 int              gmu_core_get_shutdown_time_remaining(void);
 EventQueue      *gmu_core_get_event_queue(void);
-/* Playlist wrapper functions: */
+/* Playlist wrapper functions:
+ * Most playlist wrapper functions acquire a lock for playlist access,
+ * except functions working on playlist Entry objects. A lock must be 
+ * acquired manually before calling those functions and released afterwards.
+ */
+void             gmu_core_playlist_acquire_lock(void);
+void             gmu_core_playlist_release_lock(void);
 int              gmu_core_playlist_set_current(Entry *entry);
 int              gmu_core_playlist_add_item(char *file, char *name);
 void             gmu_core_playlist_reset_random(void);
