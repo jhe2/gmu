@@ -62,6 +62,7 @@ int window_update_title(Window *win, char *title)
 	if (win->title) {
 		strncpy(win->title, title, len);
 		win->title[len] = '\0';
+		mvwhline(win->win_outer, 0, 1, ACS_HLINE, win->width - 2);
 		mvwprintw(win->win_outer, 0, 1, " %s ", win->title);
 		res = 1;
 	}
