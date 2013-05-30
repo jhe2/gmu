@@ -42,7 +42,7 @@
 #define OKAY 0
 #define ERROR (-1)
 
-#define PASSWORD_MIN_LENGTH 9
+#define PASSWORD_MIN_LENGTH 0
 #define INDEX_FILE "gmu.html"
 
 /*
