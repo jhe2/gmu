@@ -109,7 +109,7 @@ static int close_file(void)
 
 static const char* get_file_extensions(void)
 {
-	return ".mod;.xm;.it;.669;.s3m;.amf;.ams;.dbm;.dmf;.dsm;.far;.mdl;.med;.mtm;.okt;.ptm;.stm;.ult;.umx;.mt2;.psm";
+	return ".mod;.xm;.it;.669;.s3m;.amf;.ams;.dbm;.dmf;.dsm;.far;.mdl;.med;.mtm;.okt;.ptm;.stm;.ult;.umx;.mt2;.psm;.mid;.midi";
 }
 
 static const char *get_file_type(void)
