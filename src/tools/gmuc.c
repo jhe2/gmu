@@ -440,7 +440,6 @@ int main(int argc, char **argv)
 	int                sock, res = EXIT_FAILURE;
 	char              *buffer = malloc(BUF);
 	ssize_t            size;
-	struct sockaddr_in address;
 	ConfigFile         config;
 	char              *password, *host;
 	char               config_file_path[256] = "", *homedir;
@@ -554,7 +553,7 @@ int main(int argc, char **argv)
 
 				key = websocket_client_generate_sec_websocket_key_alloc();
 				if (key) {
-					snprintf(str2, 1023, str, inet_ntoa(address.sin_addr), key);
+					snprintf(str2, 1023, str, host, key);
 					wdprintf(V_DEBUG, "gmuc", "request:%s\n", str2);
 					send(sock, str2, strlen(str2), 0);
 					free(key);
