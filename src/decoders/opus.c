@@ -160,21 +160,26 @@ static int opus_play_file(char *opus_file)
 	ofc.tell  = tell_func;
 	ofc.close = close_func;
 
-	available_bytes = reader_get_number_of_bytes_in_buffer(r);
+	if (r) {
+		available_bytes = reader_get_number_of_bytes_in_buffer(r);
 
-	wdprintf(V_DEBUG, "opus", "Available bytes in buffer: %d\n", available_bytes);
-	oof = op_open_callbacks(r, &ofc, (unsigned char *)reader_get_buffer(r),
-	                        available_bytes, &error);
+		wdprintf(V_DEBUG, "opus", "Available bytes in buffer: %d\n", available_bytes);
+		oof = op_open_callbacks(r, &ofc, (unsigned char *)reader_get_buffer(r),
+								available_bytes, &error);
 
-	wdprintf(V_INFO, "opus", "Stream open result: %d\n", error);
-	if (error) {
-		result = 0;
+		wdprintf(V_INFO, "opus", "Stream open result: %d\n", error);
+		if (error) {
+			result = 0;
+		} else {
+			int li = op_current_link(oof);
+			read_tags(li, tim);
+			channels = op_channel_count(oof, -1);
+			bitrate  = op_bitrate(oof, -1);
+			sample_rate = 48000;
+		}
 	} else {
-		int li = op_current_link(oof);
-		read_tags(li, tim);
-		channels = op_channel_count(oof, -1);
-		bitrate  = op_bitrate(oof, -1);
-		sample_rate = 48000;
+		wdprintf(V_WARNING, "opus", "Reader was unable to open stream/file.\n");
+		result = 0;
 	}
 	return result;
 }
