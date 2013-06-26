@@ -11,6 +11,7 @@
 #define GMU_HTTPD_H
 #include <stdio.h>
 #include "../../ringbuffer.h"
+#include <arpa/inet.h>
 
 #define bool int
 #define true  1
@@ -29,7 +30,7 @@
 
 typedef enum ConnectionState {
 	HTTP_NEW, HTTP_IDLE, HTTP_BUSY, HTTP_CLOSED,
-	WEBSOCKET_CONNECTING, WEBSOCKET_OPEN
+	WEBSOCKET_CONNECTING, WEBSOCKET_OPEN, ERROR
 } ConnectionState;
 
 typedef struct Connection {
@@ -42,6 +43,7 @@ typedef struct Connection {
 	RingBuffer      rb_receive;
 	char           *password_ref;
 	int             authentication_okay;
+	char            client_ip[INET6_ADDRSTRLEN+1];
 } Connection;
 
 typedef enum HTTPCommand {
@@ -57,9 +59,10 @@ void *httpd_run_server(void *webserver_root);
 void  httpd_stop_server(void);
 void  httpd_send_websocket_broadcast(char *str);
 
-int  connection_init(Connection *c, int fd);
+int  connection_init(Connection *c, int fd, char *client_ip);
 void connection_reset_timeout(Connection *c);
 int  connection_is_valid(Connection *c);
+int  connection_is_local(Connection *c);
 int  connection_is_authenticated(Connection *c);
 int  connection_authenticate(Connection *c, char *password);
 void connection_close(Connection *c);

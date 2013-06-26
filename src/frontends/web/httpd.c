@@ -165,7 +165,7 @@ static int websocket_send_string(Connection *c, char *str)
 	return res;
 }
 
-int connection_init(Connection *c, int fd)
+int connection_init(Connection *c, int fd, char *client_ip)
 {
 	ConfigFile *cf = gmu_core_get_config();
 	memset(c, 0, sizeof(Connection));
@@ -176,6 +176,7 @@ int connection_init(Connection *c, int fd)
 	c->password_ref = NULL;
 	if (cf) c->password_ref = cfg_get_key_value(*cf, "gmuhttp.Password");
 	c->authentication_okay = 0;
+	if (client_ip) strncpy(c->client_ip, client_ip, INET6_ADDRSTRLEN);
 	ringbuffer_init(&(c->rb_receive), 131072);
 	return 1;
 }
@@ -301,15 +302,33 @@ int connection_file_read_chunk(Connection *c)
 	return 0;
 }
 
+/* Returns true if connection originates from localhost */
+int connection_is_local(Connection *c)
+{
+	return c->client_ip && strcmp(c->client_ip, "127.0.0.1") == 0;
+}
+
 int connection_authenticate(Connection *c, char *password)
 {
+	int no_local_password_required = 0;
+	ConfigFile *cf = gmu_core_get_config();
+	char *tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
+
+	if (strcmp(tmp, "yes") == 0) no_local_password_required = 1;
+
+	c->authentication_okay = 0;
 	if (password && c->password_ref &&
 	    strlen(password) >= PASSWORD_MIN_LENGTH &&
 	    strcmp(password, c->password_ref) == 0) {
 		c->authentication_okay = 1;
+	} else if (no_local_password_required && connection_is_local(c)) {
+		wdprintf(V_DEBUG, "httpd", "Accepting local and password-less client connection.\n");
+		c->authentication_okay = 1;
+	}
+
+	if (c->authentication_okay) {
 		websocket_send_string(c, "{\"cmd\":\"login\",\"res\":\"success\"}");
 	} else {
-		c->authentication_okay = 0;
 		websocket_send_string(c, "{\"cmd\":\"login\",\"res\":\"failure\"}");
 	}
 	return c->authentication_okay;
@@ -443,18 +462,27 @@ static int tcp_server_init(int port, int local_only)
 
 /*
  * Open connection to client. To be called for every new client.
- * Returns socket fs when successful, ERROR otherwise
+ * Sets conn.state == ERROR in result in case of an error
  */
-static int tcp_server_client_init(int listen_fd)
+static Connection tcp_server_client_init(int listen_fd)
 {
-	int                fd;
-	struct sockaddr_in sock;
-	socklen_t          socklen;
+	int                     ipver = 4;
+	struct sockaddr_storage sock;
+	socklen_t               socklen;
+	Connection              conn;
 
 	socklen = sizeof(sock);
-	fd = accept(listen_fd, (struct sockaddr *) &sock, &socklen);
-
-	return fd < 0 ? ERROR : fd;
+	conn.fd = accept(listen_fd, (struct sockaddr *) &sock, &socklen);
+	if (conn.fd < 0) conn.state = ERROR; else conn.state = HTTP_NEW;
+	ipver = sock.ss_family == AF_INET ? 4 : 6;
+	inet_ntop(sock.ss_family, 
+	          sock.ss_family == AF_INET ?
+	          (const void *)&((struct sockaddr_in *)&sock)->sin_addr :
+	          (const void *)&((struct sockaddr_in6 *)&sock)->sin6_addr,
+	          conn.client_ip, socklen);
+	wdprintf(V_DEBUG, "httpd", "Incoming IPv%d connection from %s...\n",
+	         ipver, conn.client_ip);
+	return conn;
 }
 
 /*
@@ -998,15 +1026,15 @@ static void webserver_main_loop(int listen_fd)
 		/* Check TCP listen port for incoming connections... */
 		if (FD_ISSET(listen_fd, &readfds)) {
 			int con_num;
-			rfd = tcp_server_client_init(listen_fd);
-			if (rfd != ERROR) {
+			Connection ctmp = tcp_server_client_init(listen_fd);
+			if (ctmp.state != ERROR) {
 				fcntl(rfd, F_SETFL, O_NONBLOCK);
-				con_num = rfd-listen_fd-1;
+				con_num = ctmp.fd-listen_fd-1;
 				if (con_num < MAX_CONNECTIONS) {
 					if (rfd >= 0) {
-						FD_SET(rfd, &the_state); /* add new client */
-						if (rfd > maxfd) maxfd = rfd;
-						connection_init(&(connection[con_num]), rfd);
+						FD_SET(ctmp.fd, &the_state); /* add new client */
+						if (ctmp.fd > maxfd) maxfd = ctmp.fd;
+						connection_init(&(connection[con_num]), ctmp.fd, ctmp.client_ip);
 						wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: ++\n", con_num);
 					}
 				} else {
