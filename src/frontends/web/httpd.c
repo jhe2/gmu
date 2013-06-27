@@ -314,7 +314,7 @@ int connection_authenticate(Connection *c, char *password)
 	ConfigFile *cf = gmu_core_get_config();
 	char *tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
 
-	if (strcmp(tmp, "yes") == 0) no_local_password_required = 1;
+	if (tmp && strcmp(tmp, "yes") == 0) no_local_password_required = 1;
 
 	c->authentication_okay = 0;
 	if (password && c->password_ref &&
