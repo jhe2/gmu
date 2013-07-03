@@ -109,7 +109,6 @@ int dir_read(Dir *dir, char *path, int directories_first)
 
 			/* directories first: */
 			if (directories_first) {
-				int files_count = dir->files;
 				for (i = 0, j = 0; i < dir->files; i++) {
 					if (dir->flag_tmp[i] == DIRECTORY) {
 						dir->filename[j] = dir->ep[i]->d_name;
@@ -122,7 +121,6 @@ int dir_read(Dir *dir, char *path, int directories_first)
 					if (dir->flag_tmp[i] != DIRECTORY) {
 						int k;
 						if (dir_extensions) {
-							int res = 0;
 							for (k = 0; dir_extensions[k] != NULL; k++) {
 								int filename_len = strlen(dir->ep[i]->d_name);
 								int ext_len      = strlen(dir_extensions[k]);
@@ -133,16 +131,14 @@ int dir_read(Dir *dir, char *path, int directories_first)
 										dir->flag[j]     = dir->flag_tmp[i];
 										dir->filesize[j] = dir->filesize_tmp[i];
 										j++;
-										res = 1;
 										break;
 									}
 								}
 							}
-							if (!res) files_count--;
 						}
 					}
 				}
-				dir->files = files_count;
+				dir->files = j;
 			} else {
 				for (i = 0; i < dir->files; i++) {
 					dir->filename[i] = dir->ep[i]->d_name;

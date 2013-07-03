@@ -84,7 +84,7 @@ int file_copy(char *destination_file, char *source_file)
 
 char *get_file_extension(char *filename)
 {
-	int l = strlen(filename);
+	int l = filename ? strlen(filename) : 0;
 	while (filename[l] != '.' && l > 0) l--;
 	return (l == 0 ? NULL : filename+l+1);
 }
