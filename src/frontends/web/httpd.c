@@ -847,7 +847,7 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 	if (strncmp(base_dir, directory, strlen(base_dir)) != 0)
 		directory = base_dir;
 	dir_set_base_dir(&dir, base_dir);
-	dir_set_ext_filter(gmu_core_get_file_extensions(), 1);
+	dir_set_ext_filter(&dir, (char **)gmu_core_get_file_extensions(), 1);
 
 	if (dir_read(&dir, directory, 1)) {
 		int i = 0, num_files = dir_get_number_of_files(&dir);

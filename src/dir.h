@@ -30,6 +30,8 @@ struct _Dir
 	char           *filename[MAX_FILES];
 	char            path[256];
 	char            base_dir[256];
+	char          **dir_extensions;
+	int             show_directories;
 };
 
 typedef struct _Dir Dir;
@@ -37,7 +39,8 @@ typedef struct _Dir Dir;
 void  dir_init(Dir *dir);
 void  dir_set_base_dir(Dir *dir, char *base_dir);
 char *dir_get_base_dir(Dir *dir);
-void  dir_set_ext_filter(const char **dir_exts, int show_dirs);
+/* dir_set_ext_filter() expects a pointer to a _statically_ allocated array of file extensions! */
+void  dir_set_ext_filter(Dir *dir, char **dir_exts, int show_dirs);
 int   dir_read(Dir *dir, char *path, int directories_first);
 void  dir_free(Dir *dir);
 char *dir_get_filename(Dir *dir, int i);

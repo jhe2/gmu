@@ -634,7 +634,6 @@ static void run_player(char *skin_name, char *decoders_str)
 
 		question_init(&dlg, &skin);
 
-		dir_set_ext_filter(gmu_core_get_file_extensions(), 1);
 		if (strncmp(cfg_get_key_value(*config, "FileSystemCharset"), "UTF-8", 5) == 0) {
 			char *base_dir = cfg_get_key_value(*config, "SDL_frontend.BaseDir");
 			file_browser_init(&fb, &skin, UTF_8, base_dir ? base_dir : "/");

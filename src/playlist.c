@@ -26,6 +26,7 @@
 #include "charset.h"
 #include "fileplayer.h" /* file_player_read_tags() */
 #include "debug.h"
+#include "core.h"
 
 #define PLAYLIST_MAX_LENGTH 9999
 
@@ -183,6 +184,7 @@ static int internal_playlist_add_dir(Playlist *pl, char *directory)
 	wdprintf(V_INFO, "playlist", "Adding '%s'...\n", directory);
 
 	dir_init(&dir);
+	dir_set_ext_filter(&dir, (char **)gmu_core_get_file_extensions(), 1);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 1)) {
 		for (i = 0; i < dir_get_number_of_files(&dir); i++) {

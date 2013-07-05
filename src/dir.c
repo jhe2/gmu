@@ -26,13 +26,10 @@
 #include "debug.h"
 #include "charset.h"
 
-static const char **dir_extensions = NULL;
-static int          show_directories;
-
-void dir_set_ext_filter(const char **dir_exts, int show_dirs)
+void dir_set_ext_filter(Dir *dir, char **dir_exts, int show_dirs)
 {
-	dir_extensions = dir_exts;
-	show_directories = show_dirs;
+	dir->dir_extensions = dir_exts;
+	dir->show_directories = show_dirs;
 }
 
 static int select_file(const struct dirent *de)
@@ -50,6 +47,8 @@ void dir_init(Dir *dir)
 	dir->ep = NULL;
 	dir->path[0] = '\0';
 	dir->base_dir[0] = '\0';
+	dir->dir_extensions = NULL;
+	dir->show_directories = 0;
 }
 
 void dir_set_base_dir(Dir *dir, char *base_dir)
@@ -120,13 +119,13 @@ int dir_read(Dir *dir, char *path, int directories_first)
 				for (i = 0; i < dir->files; i++) {
 					if (dir->flag_tmp[i] != DIRECTORY) {
 						int k;
-						if (dir_extensions) {
-							for (k = 0; dir_extensions[k] != NULL; k++) {
+						if (dir->dir_extensions) {
+							for (k = 0; dir->dir_extensions[k] != NULL; k++) {
 								int filename_len = strlen(dir->ep[i]->d_name);
-								int ext_len      = strlen(dir_extensions[k]);
+								int ext_len      = strlen(dir->dir_extensions[k]);
 								ext_len      = (ext_len > 15 ? 15 : ext_len);
 								if (filename_len-ext_len >= 0) {
-									if (strncasecmp(dir->ep[i]->d_name+filename_len-ext_len, dir_extensions[k], ext_len) == 0) {
+									if (strncasecmp(dir->ep[i]->d_name+filename_len-ext_len, dir->dir_extensions[k], ext_len) == 0) {
 										dir->filename[j] = dir->ep[i]->d_name;
 										dir->flag[j]     = dir->flag_tmp[i];
 										dir->filesize[j] = dir->filesize_tmp[i];
@@ -135,6 +134,11 @@ int dir_read(Dir *dir, char *path, int directories_first)
 									}
 								}
 							}
+						} else { /* Include all files if no file extensions have been specified */
+							dir->filename[j] = dir->ep[i]->d_name;
+							dir->flag[j]     = dir->flag_tmp[i];
+							dir->filesize[j] = dir->filesize_tmp[i];
+							j++;
 						}
 					}
 				}

@@ -103,13 +103,13 @@ int decloader_load_all(char *directory)
 	DecoderChain *dc;
 
 	wdprintf(V_DEBUG, "decloader", "Configuring decoder extension...\n");
-	dir_set_ext_filter((const char **)&dir_extensions, 0);
 
 	dc = dc_init_element();
 	dc_root = dc;
 	wdprintf(V_DEBUG, "decloader", "Searching...\n");
 
 	dir_init(&dir);
+	dir_set_ext_filter(&dir, (char **)&dir_extensions, 0);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
 		int i, num = dir_get_number_of_files(&dir);
