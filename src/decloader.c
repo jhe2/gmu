@@ -149,7 +149,7 @@ GmuDecoder *decloader_get_decoder_for_extension(char *file_extension)
 	GmuDecoder   *gd = NULL;
 
 	if (file_extension) {
-		while (dc->next) {
+		while (dc && dc->next) {
 			char ext[512], ext2[512] = "";
 			if (dc->gd->get_file_extensions) {
 				strtoupper(ext, (*dc->gd->get_file_extensions)(), 511);
@@ -162,9 +162,10 @@ GmuDecoder *decloader_get_decoder_for_extension(char *file_extension)
 			}
 			dc = dc->next;
 		}
-		gd = dc->gd;
+		if (dc) gd = dc->gd;
 	}
-	if (dc->gd == NULL) wdprintf(V_INFO, "decloader", "No matching decoder found for %s.\n", file_extension);
+	if (!dc || dc->gd == NULL)
+		wdprintf(V_INFO, "decloader", "No matching decoder found for %s.\n", file_extension);
 	return gd;
 }
 
