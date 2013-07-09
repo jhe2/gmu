@@ -16,6 +16,7 @@
 #ifndef _READER_H
 #define _READER_H
 #define MINIMUM_HTTP_READ 1024
+#include <stdio.h>
 #include <pthread.h>
 #include "ringbuffer.h"
 #include "wejpconfig.h"
