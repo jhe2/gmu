@@ -55,6 +55,8 @@ struct _TrackInfo
 	int   has_cover_artwork, has_lyrics;
 	long  file_size;
 	int   updated;
+
+	int   id;
 };
 
 typedef struct _TrackInfo TrackInfo;
@@ -66,6 +68,8 @@ void  trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
 void  trackinfo_set_artist(TrackInfo *ti, char *artist);
 void  trackinfo_set_title(TrackInfo *ti, char *title);
 void  trackinfo_set_album(TrackInfo *ti, char *album);
+void  trackinfo_set_trackid(TrackInfo *ti, int id);
+void  trackinfo_set_filename(TrackInfo *ti, char *file);
 char *trackinfo_get_artist(TrackInfo *ti);
 char *trackinfo_get_title(TrackInfo *ti);
 char *trackinfo_get_album(TrackInfo *ti);

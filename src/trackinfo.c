@@ -267,3 +267,13 @@ void trackinfo_set_updated(TrackInfo *ti)
 {
 	ti->updated = 1;
 }
+
+void trackinfo_set_trackid(TrackInfo *ti, int id)
+{
+	ti->id = id;
+}
+
+void trackinfo_set_filename(TrackInfo *ti, char *file)
+{
+	strncpy(ti->file_name, file, SIZE_FILE_NAME-1);
+}
