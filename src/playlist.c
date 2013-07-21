@@ -27,6 +27,7 @@
 #include "fileplayer.h" /* file_player_read_tags() */
 #include "debug.h"
 #include "core.h"
+#include "metadatareader.h"
 
 #define PLAYLIST_MAX_LENGTH 9999
 
@@ -145,7 +146,7 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 		strtoupper(filetype, tmp, 15);
 	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 	if (strncmp(filetype, "M3U", 3) != 0) {
-		if (file_player_read_tags(filename_with_path, filetype, &ti)) {
+		if (metadatareader_read(filename_with_path, filetype, &ti)) {
 			char temp[256];
 			trackinfo_get_full_title(&ti, temp, 255);
 			if (!charset_is_valid_utf8_string(temp)) {
@@ -303,7 +304,7 @@ int playlist_insert_file_after(Playlist *pl, Entry *entry, char *filename_with_p
 		strtoupper(filetype, tmp, 15);
 	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
 	if (strncmp(filetype, "M3U", 3) != 0) {
-		if (file_player_read_tags(filename_with_path, filetype, &ti)) {
+		if (metadatareader_read(filename_with_path, filetype, &ti)) {
 			char temp[256];
 			trackinfo_get_full_title(&ti, temp, 255);
 			if (!charset_is_valid_utf8_string(temp)) {
