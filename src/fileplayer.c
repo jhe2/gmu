@@ -464,36 +464,6 @@ int file_player_play_file(char *filename, TrackInfo *lti, int skip_current)
 	return playback_status;
 }
 
-int file_player_read_tags(char *file, char *file_type, TrackInfo *ti)
-{
-	int         result = 0;
-	GmuDecoder *gd = decloader_get_decoder_for_extension(file_type);
-	GmuCharset  charset = M_CHARSET_AUTODETECT;
-
-	if (gd && *gd->meta_data_get_charset)
-		charset = (*gd->meta_data_get_charset)();
-
-	trackinfo_clear(ti);
-	if (gd && *gd->meta_data_load && (*gd->meta_data_load)(file)) {
-		if (*gd->get_meta_data) {
-			if ((*gd->get_meta_data)(GMU_META_ARTIST, 0))
-				strncpy_charset_conv(ti->artist,  (*gd->get_meta_data)(GMU_META_ARTIST, 0), SIZE_ARTIST-1, 0, charset);
-			if ((*gd->get_meta_data)(GMU_META_TITLE, 0))
-				strncpy_charset_conv(ti->title,   (*gd->get_meta_data)(GMU_META_TITLE, 0), SIZE_TITLE-1, 0, charset);
-			if ((*gd->get_meta_data)(GMU_META_ALBUM, 0))
-				strncpy_charset_conv(ti->album,   (*gd->get_meta_data)(GMU_META_ALBUM, 0), SIZE_ALBUM-1, 0, charset);
-			if ((*gd->get_meta_data)(GMU_META_TRACKNR, 0))
-				strncpy_charset_conv(ti->tracknr, (*gd->get_meta_data)(GMU_META_TRACKNR, 0), SIZE_TRACKNR-1, 0, charset);
-			if ((*gd->get_meta_data)(GMU_META_DATE, 0))
-				strncpy_charset_conv(ti->date,    (*gd->get_meta_data)(GMU_META_DATE, 0), SIZE_DATE-1, 0, charset);
-			trackinfo_set_updated(ti);
-			result = 1;
-		}
-		if (*gd->meta_data_close) (*gd->meta_data_close)();
-	}
-	return result;
-}
-
 int file_player_seek(long offset)
 {
 	seek_second = audio_get_playtime() / 1000 + offset;
