@@ -21,6 +21,7 @@
 #include "wejpconfig.h"
 #include "audio.h"
 #include "eventqueue.h"
+#include "medialib.h"
 
 #define VERSION_NUMBER "0.9.1"
 
@@ -88,4 +89,9 @@ Entry           *gmu_core_playlist_get_next(Entry *entry);
 Entry           *gmu_core_playlist_get_prev(Entry *entry);
 int              gmu_core_playlist_get_played(Entry *entry);
 int              gmu_core_playlist_entry_get_queue_pos(Entry *entry);
+/* Media library wrapper functions: */
+void             gmu_core_medialib_start_refresh(void);
+void             gmu_core_medialib_search_find(GmuMedialibDataType type, char *str);
+TrackInfo        gmu_core_medialib_search_fetch_next_result(void);
+void             gmu_core_medialib_search_finish(void);
 #endif

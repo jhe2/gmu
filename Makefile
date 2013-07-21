@@ -21,7 +21,7 @@ include $(TARGET).mk
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\""
 
-LFLAGS_CORE=$(SDL_LIB) -ldl -lrt
+LFLAGS_CORE=$(SDL_LIB) -ldl -lrt -lsqlite3
 LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image
 ifneq ($(SDLFE_WITHOUT_SDL_GFX),1)
 LFLAGS_SDLFE+=-lSDL_gfx
@@ -29,7 +29,7 @@ else
 CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif
 
-OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o
+OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o metadatareader.o dirparser.o medialib.o
 ALLFILES=src/ htdocs/ Makefile  *.sh *.dge *.gpu *.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
 BINARY=gmu.bin
 COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop

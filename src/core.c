@@ -35,6 +35,7 @@
 #include FILE_HW_H
 #include "util.h"
 #include "reader.h" /* for reader_set_cache_size_kb() */
+#include "medialib.h"
 #include "debug.h"
 #define MAX_FILE_EXTENSIONS 255
 
@@ -55,7 +56,7 @@ static unsigned int  player_status = STOPPED;
 static int           shutdown_timer = 0;
 static int           remaining_time;
 static char          base_dir[256], *config_dir;
-
+static GmuMedialib   gm;
 
 static void init_sdl(void)
 {
@@ -637,6 +638,33 @@ char *gmu_core_get_config_dir(void)
 	return config_dir;
 }
 
+static void medialib_refresh_finish_callback(void)
+{
+	wdprintf(V_DEBUG, "gmu", "In callback: Medialib refresh done.\n");
+	event_queue_push(&event_queue, GMU_MEDIALIB_REFRESH_DONE);
+}
+
+void gmu_core_medialib_start_refresh(void)
+{
+	medialib_start_refresh(&gm, medialib_refresh_finish_callback);
+}
+
+void gmu_core_medialib_search_find(GmuMedialibDataType type, char *str)
+{
+	medialib_search_find(&gm, type, str);
+}
+
+TrackInfo gmu_core_medialib_search_fetch_next_result(void)
+{
+	return medialib_search_fetch_next_result(&gm);
+}
+
+void gmu_core_medialib_search_finish(void)
+{
+	medialib_search_finish(&gm);
+}
+
+
 static void print_cmd_help(char *prog_name)
 {
 	printf("Gmu Music Player " VERSION_NUMBER "\n");
@@ -957,7 +985,8 @@ int main(int argc, char **argv)
 		add_m3u_contents_to_playlist(&pl, temp);
 	}
 	wdprintf(V_INFO, "gmu", "Playlist length: %d items\n", playlist_get_length(&pl));
-
+	medialib_open(&gm);
+	gmu_core_medialib_start_refresh();
 	init_sdl(); /* Initialize SDL audio */
 
 	/* Load frontends */
@@ -1175,6 +1204,8 @@ int main(int argc, char **argv)
 		wdprintf(V_DEBUG, "gmu", "Syncing disc...\n");
 		sync();
 	}
+
+	medialib_close(&gm);
 
 	wdprintf(V_INFO, "gmu", "Unloading decoders...\n");
 	decloader_free();
