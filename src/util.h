@@ -15,6 +15,9 @@
  */
 #ifndef _UTIL_H
 #define _UTIL_H
+#include <stdio.h>
+#include "gmudecoder.h"
+
 void  strtoupper(char *target, const char *src, int len);
 void  strtolower(char *target, const char *src, int len);
 int   file_exists(char *filename);
@@ -26,4 +29,6 @@ int   get_first_matching_file_pattern_list(char *target, int   target_length,
                                            char *path,   char *pattern_list);
 char *get_file_matching_given_pattern_alloc(char *original_file,
                                             char *file_pattern);
+int   strncpy_charset_conv(char *target, const char* source, int target_size,
+                           int source_size, GmuCharset charset);
 #endif

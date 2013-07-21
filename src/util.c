@@ -240,3 +240,43 @@ char *get_file_matching_given_pattern_alloc(char *original_file,
 	if (filename_without_ext[0] != '\0') free(pattern);
 	return res_str;
 }
+
+int strncpy_charset_conv(char *target, const char* source, int target_size,
+                                int source_size, GmuCharset charset)
+{
+	int res = 0;
+	switch (charset) {
+		case M_CHARSET_ISO_8859_1:
+		case M_CHARSET_ISO_8859_15:
+			res = charset_iso8859_1_to_utf8(target, source, target_size);
+			break;
+		case M_CHARSET_UTF_8:
+			if (charset_is_valid_utf8_string(source)) {
+				strncpy(target, source, target_size);
+				res = 1;
+			} else {
+				target[0] = '\0';
+			}
+			break;
+		case M_CHARSET_UTF_16_BOM:
+			res = charset_utf16_to_utf8(target, target_size, source, source_size, BOM);
+			break;
+		case M_CHARSET_UTF_16_BE:
+			res = charset_utf16_to_utf8(target, target_size, source, source_size, BE);
+			break;
+		case M_CHARSET_UTF_16_LE:
+			res = charset_utf16_to_utf8(target, target_size, source, source_size, LE);
+			break;
+		case M_CHARSET_AUTODETECT:
+			wdprintf(V_DEBUG, "fileplayer", "Charset autodetect!\n");
+			if (charset_is_valid_utf8_string(source)) {
+				strncpy(target, source, target_size);
+				res = 1;
+			} else {
+				if (!(res = charset_utf16_to_utf8(target, target_size, source, source_size, BOM)))
+					res = charset_iso8859_1_to_utf8(target, source, target_size);
+			}
+			break;
+	}
+	return res;
+}
