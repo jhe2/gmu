@@ -649,9 +649,9 @@ void gmu_core_medialib_start_refresh(void)
 	medialib_start_refresh(&gm, medialib_refresh_finish_callback);
 }
 
-void gmu_core_medialib_search_find(GmuMedialibDataType type, char *str)
+int gmu_core_medialib_search_find(GmuMedialibDataType type, char *str)
 {
-	medialib_search_find(&gm, type, str);
+	return medialib_search_find(&gm, type, str);
 }
 
 TrackInfo gmu_core_medialib_search_fetch_next_result(void)
