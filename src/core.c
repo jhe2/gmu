@@ -986,7 +986,6 @@ int main(int argc, char **argv)
 	}
 	wdprintf(V_INFO, "gmu", "Playlist length: %d items\n", playlist_get_length(&pl));
 	medialib_open(&gm);
-	gmu_core_medialib_start_refresh();
 	init_sdl(); /* Initialize SDL audio */
 
 	/* Load frontends */
