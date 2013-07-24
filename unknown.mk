@@ -35,7 +35,7 @@ MIKMOD_LIB=$(shell libmikmod-config --libs)
 MIKMOD_CFLAGS=$(shell libmikmod-config --cflags)
 
 COPTS?=-O0 -fno-short-enums -g
-CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H
+CFLAGS=$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DDEBUG
 LFLAGS=-I/usr/local/include -L/usr/local/lib -Wl,-export-dynamic
 DISTFILES=$(COMMON_DISTBIN_FILES) gmuinput.unknown.conf gmu.sh
 
