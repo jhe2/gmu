@@ -899,6 +899,37 @@ static void gmu_http_ping(Connection *c)
 	websocket_send_string(c, "{\"cmd\":\"pong\"}");
 }
 
+static void gmu_http_medialib_search(Connection *c, char *type, char *str)
+{
+	TrackInfo ti;
+	int       i = 0;
+	char      rstr[1024];
+	int       res = gmu_core_medialib_search_find(GMU_MLIB_ANY, str);
+
+	if (res) {
+		for (ti = gmu_core_medialib_search_fetch_next_result();
+			 ti.id >= 0;
+			 ti = gmu_core_medialib_search_fetch_next_result(), i++) {
+			char *artist = json_string_escape_alloc(ti.artist);
+			char *title  = json_string_escape_alloc(ti.title);
+			char *album  = json_string_escape_alloc(ti.album);
+			char *date   = json_string_escape_alloc(ti.date);
+			char *file   = json_string_escape_alloc(ti.file_name);
+			snprintf(rstr, 1023,
+			         "{\"cmd\":\"mlib_result\", \"pos\":%d,\"id\":%d,\"artist\":\"%s\",\"title\":\"%s\",\"album\":\"%s\",\"date\":\"%s\",\"file\":\"%s\"}",
+					 i, ti.id, artist, title, album, date, file
+			);
+			free(artist);
+			free(title);
+			free(album);
+			free(date);
+			free(file);
+			websocket_send_string(c, rstr);
+		}
+	}
+	gmu_core_medialib_search_finish();
+}
+
 static void gmu_http_handle_websocket_message(char *message, Connection *c)
 {
 	JSON_Object *json = json_parse_alloc(message);
@@ -980,6 +1011,16 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				}
 			} else if (strcmp(cmd, "ping") == 0) {
 				gmu_http_ping(c);
+			} else if (strcmp(cmd, "medialib_refresh") == 0) {
+				gmu_core_medialib_start_refresh();
+			} else if (strcmp(cmd, "medialib_search") == 0) {
+				char *type = json_get_string_value_for_key(json, "type");
+				char *str  = json_get_string_value_for_key(json, "str");
+				printf("mlib search: %s %s\n", type, str);
+				if (type && str) {
+					printf("go!!\n");
+					gmu_http_medialib_search(c, type, str);
+				}
 			}
 		}
 	}
