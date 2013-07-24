@@ -75,7 +75,6 @@ int medialib_add_file(GmuMedialib *gm, char *file)
 		/* Add file with metadata to media library... */
 		char *q = "INSERT INTO track (file, artist, title, album, comment) VALUES (?1, ?2, ?3, ?4, ?5)";
 		sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
-		printf("prepare=%d\n", sqres);
 		int a, b, c, d, e;
 		a = sqlite3_bind_text(pp_stmt, 1, file,       -1, SQLITE_STATIC);
 		b = sqlite3_bind_text(pp_stmt, 2, ti.artist,  -1, SQLITE_STATIC);
@@ -89,7 +88,6 @@ int medialib_add_file(GmuMedialib *gm, char *file)
 			}
 		} else wdprintf(V_ERROR, "medialib", "NOT GOOD! Problem with SQL params.\n");
 		sqlite3_finalize(pp_stmt);
-		printf("%d %d %d %d %d\n", a, b, c, d, e);
 	}
 	return 0;
 }

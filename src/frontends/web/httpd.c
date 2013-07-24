@@ -1016,9 +1016,7 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 			} else if (strcmp(cmd, "medialib_search") == 0) {
 				char *type = json_get_string_value_for_key(json, "type");
 				char *str  = json_get_string_value_for_key(json, "str");
-				printf("mlib search: %s %s\n", type, str);
 				if (type && str) {
-					printf("go!!\n");
 					gmu_http_medialib_search(c, type, str);
 				}
 			}
