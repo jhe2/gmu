@@ -167,6 +167,7 @@ void medialib_path_remove(GmuMedialib *gm, char *path)
 int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, char *str)
 {
 	char *q;
+	int   sqres;
 
 	switch (type) {
 		case GMU_MLIB_ANY:
@@ -183,13 +184,16 @@ int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, char *str)
 			q = "SELECT * FROM track WHERE title LIKE ?1";
 			break;
 	}
-	return (sqlite3_prepare_v2(gm->db, q, -1, &(gm->pp_stmt_search), NULL) == SQLITE_OK);
+	sqres = sqlite3_prepare_v2(gm->db, q, -1, &(gm->pp_stmt_search), NULL);
+	if (sqres == SQLITE_OK) sqres = sqlite3_bind_text(gm->pp_stmt_search, 1, str, -1, SQLITE_STATIC);
+	return (sqres == SQLITE_OK);
 }
 
 TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm)
 {
 	TrackInfo ti;
-	trackinfo_clear(&ti);
+	trackinfo_init(&ti);
+
 	if (sqlite3_step(gm->pp_stmt_search) == SQLITE_ROW) {
 		int   id     =         sqlite3_column_int(gm->pp_stmt_search, 0);
 		char *file   = (char *)sqlite3_column_text(gm->pp_stmt_search, 1);
