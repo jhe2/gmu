@@ -176,7 +176,7 @@ int listwidget_draw(ListWidget *lw)
 			int col_w = lw->col_width[col];
 			if (col_w < 0) {
 				int i;
-				col_w = lw->win->width-2;
+				col_w = lw->win->width-3;
 				for (i = 0; i < lw->cols; i++)
 					col_w -= lw->col_width[i] > 0 ? lw->col_width[i] : 0;
 			}
