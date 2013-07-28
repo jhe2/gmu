@@ -1019,6 +1019,9 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 				if (type && str) {
 					gmu_http_medialib_search(c, type, str);
 				}
+			} else if (strcmp(cmd, "medialib_add_id_to_playlist") == 0) {
+				int id = json_get_number_value_for_key(json, "id");
+				if (id > 0) gmu_core_medialib_add_id_to_playlist(id);
 			}
 		}
 	}
