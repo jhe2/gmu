@@ -15,7 +15,7 @@
  */
 #ifndef WEJ_WINDOW_H
 #define WEJ_WINDOW_H
-typedef enum WindowType { WIN_CMD, WIN_PL, WIN_TI, WIN_FB, WIN_LIB } WindowType;
+typedef enum WindowType { WIN_CMD, WIN_PL, WIN_TI, WIN_FB, WIN_LIB, WIN_LIB_SEARCH } WindowType;
 
 typedef struct Window
 {

@@ -192,6 +192,11 @@ void ui_init(UI *ui, int color)
 	listwidget_set_col_width(ui->lw_pl, 0, 6);
 	listwidget_set_col_width(ui->lw_pl, 1, -1);
 	listwidget_set_col_width(ui->lw_pl, 2, 6);
+	ui->lw_mlib_search = listwidget_new(4, "Media Library Search", 1, 0, ui->rows-2, ui->cols);
+	listwidget_set_col_width(ui->lw_mlib_search, 0, 30);
+	listwidget_set_col_width(ui->lw_mlib_search, 1, 25);
+	listwidget_set_col_width(ui->lw_mlib_search, 2, -1);
+	listwidget_set_col_width(ui->lw_mlib_search, 3, 0);
 	ui->fb_pl = fb_pl;
 	ui->fb_fb = fb_fb;
 	ui->fb_ti = fb_ti;
@@ -285,6 +290,10 @@ void ui_refresh_active_window(UI *ui)
 		case WIN_CMD:
 			window_refresh(ui->win_cmd);
 			break;
+		case WIN_LIB_SEARCH:
+			listwidget_draw(ui->lw_mlib_search);
+			listwidget_refresh(ui->lw_mlib_search);
+			break;
 	}
 }
 
@@ -344,6 +353,7 @@ void ui_resize(UI *ui)
 	window_resize(ui->win_ti, ui->rows-2, ui->cols);
 	listwidget_resize(ui->lw_pl, ui->rows-2, ui->cols);
 	listwidget_resize(ui->lw_fb, ui->rows-2, ui->cols);
+	listwidget_resize(ui->lw_mlib_search, ui->rows-2, ui->cols);
 	mvwin(ui->win_footer->win, ui->rows-1, 0);
 	ui_draw(ui);
 	if (ui->win_cmd && ui->win_cmd->win)
@@ -379,6 +389,12 @@ void ui_active_win_next(UI *ui)
 	ui_set_footer_buttons(ui);
 }
 
+void ui_active_win_set(UI *ui, WindowType aw)
+{
+	ui->active_win = aw;
+	ui_set_footer_buttons(ui);
+}
+
 void ui_free(UI *ui)
 {
 	window_destroy(ui->win_cmd);
@@ -387,6 +403,7 @@ void ui_free(UI *ui)
 	window_destroy(ui->win_footer);
 	listwidget_free(ui->lw_pl);
 	listwidget_free(ui->lw_fb);
+	listwidget_free(ui->lw_mlib_search);
 	endwin();
 }
 

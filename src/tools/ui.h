@@ -36,7 +36,7 @@ typedef struct FooterButtons {
 
 typedef struct UI {
 	Window        *win_cmd, *win_ti, *win_lib, *win_header, *win_footer;
-	ListWidget    *lw_pl, *lw_fb;
+	ListWidget    *lw_pl, *lw_fb, *lw_mlib_search;
 	FooterButtons *fb_pl, *fb_fb, *fb_ti, *fb_cmd;
 	FooterButtons *fb_visible;
 	int            rows, cols;
@@ -66,6 +66,7 @@ void ui_enable_text_input(UI *ui, int enable);
 void ui_resize(UI *ui);
 void ui_set_footer_buttons(UI *ui);
 void ui_active_win_next(UI *ui);
+void ui_active_win_set(UI *ui, WindowType aw);
 void ui_free(UI *ui);
 int  ui_has_color(UI *ui);
 #endif

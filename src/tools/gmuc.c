@@ -64,6 +64,7 @@ typedef enum Command {
 	STOP,
 	FILES,
 	ADD,
+	SEARCH,
 	RAW, /* Sends raw data as command to thr server (which has to be supplied as parameter) */
 	NO_COMMAND
 } Command;
@@ -76,6 +77,7 @@ static char *cmd_arr[] = {
 	"stop",
 	"files",
 	"add",
+	"search",
 	"raw",
 	NULL
 };
@@ -289,6 +291,29 @@ static char *cmd_dir_read(UI *ui, JSON_Object *json)
 	return cur_dir;
 }
 
+static void cmd_mlib_result(UI *ui, JSON_Object *json)
+{
+	int pos = (int)json_get_number_value_for_key(json, "pos");
+
+	if (pos == 0) listwidget_clear_all_rows(ui->lw_mlib_search);
+	if (pos >= 0) {
+		int   row;
+		int   id     = json_get_number_value_for_key(json, "id");
+		char *artist = json_get_string_value_for_key(json, "artist");
+		char *album  = json_get_string_value_for_key(json, "album");
+		char *title  = json_get_string_value_for_key(json, "title");
+		char  tmpid[8];
+
+		snprintf(tmpid, 8, "%d", id);
+		row = listwidget_add_row(ui->lw_mlib_search) - 1;
+		listwidget_set_cell_data(ui->lw_mlib_search, row, 0, artist);
+		listwidget_set_cell_data(ui->lw_mlib_search, row, 1, album);
+		listwidget_set_cell_data(ui->lw_mlib_search, row, 2, title);
+		listwidget_set_cell_data(ui->lw_mlib_search, row, 3, tmpid);
+		ui_refresh_active_window(ui);
+	}
+}
+
 static void cmd_playmode_info(UI *ui, JSON_Object *json)
 {
 	ui_update_playmode(ui, (int)json_get_number_value_for_key(json, "mode"));
@@ -395,6 +420,8 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 							cmd_playmode_info(ui, json);
 						} else if (strcmp(cmd, "volume_info") == 0) {
 							cmd_volume_info(ui, json);
+						} else if (strcmp(cmd, "mlib_result") == 0) {
+							cmd_mlib_result(ui, json);
 						}
 						if (screen_update) ui_refresh_active_window(ui);
 						ui_cursor_text_input(ui, input);
@@ -637,8 +664,24 @@ int main(int argc, char **argv)
 																free_str = 1;
 															}
 															break;
+														case SEARCH:
+															str = malloc(320);
+															if (str) {
+																char *params_esc = json_string_escape_alloc(params);
+																if (params_esc) {
+																	if (snprintf(str, 320, "{\"cmd\":\"medialib_search\",\"type\":\"0\",\"str\":\"%s\"}", params_esc) == 320) {
+																		free(str);
+																		str = NULL;
+																	}
+																	free(params_esc);
+																}
+																free_str = 1;
+															}
+															ui_active_win_set(&ui, WIN_LIB_SEARCH);
+															break;
 														case RAW:
 															str = params;
+															break;
 														default:
 															break;
 													}
@@ -803,6 +846,9 @@ int main(int argc, char **argv)
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, 1);
 											break;
+										case WIN_LIB_SEARCH:
+											listwidget_move_cursor(ui.lw_mlib_search, 1);
+											break;
 										default:
 											break;
 									}
@@ -815,6 +861,9 @@ int main(int argc, char **argv)
 											break;
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, -1);
+											break;
+										case WIN_LIB_SEARCH:
+											listwidget_move_cursor(ui.lw_mlib_search, -1);
 											break;
 										default:
 											break;
@@ -829,6 +878,9 @@ int main(int argc, char **argv)
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
 											break;
+										case WIN_LIB_SEARCH:
+											listwidget_move_cursor(ui.lw_mlib_search, ui.lw_mlib_search->win->height-2);
+											break;
 										default:
 											break;
 									}
@@ -841,6 +893,9 @@ int main(int argc, char **argv)
 											break;
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
+											break;
+										case WIN_LIB_SEARCH:
+											listwidget_move_cursor(ui.lw_mlib_search, -(ui.lw_mlib_search->win->height-2));
 											break;
 										default:
 											break;
@@ -872,6 +927,16 @@ int main(int argc, char **argv)
 											} else { /* Add file */
 												/* TODO */
 											}
+											break;
+										}
+										case WIN_LIB_SEARCH: {
+											char tmp[256];
+											int s = listwidget_get_selection(ui.lw_mlib_search);
+											char *idstr = listwidget_get_row_data(ui.lw_mlib_search, s, 3);
+											int   id = idstr ? atoi(idstr) : -1;
+											wprintw(ui.win_cmd->win, "Add medialib ID %d to playlist...\n", id);
+											snprintf(tmp, 255, "{\"cmd\":\"medialib_add_id_to_playlist\", \"id\": %d}", id);
+											websocket_send_str(sock, tmp, 1);
 											break;
 										}
 										default:
