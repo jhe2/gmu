@@ -664,6 +664,17 @@ void gmu_core_medialib_search_finish(void)
 	medialib_search_finish(&gm);
 }
 
+int gmu_core_medialib_add_id_to_playlist(int id)
+{
+	int res = 0;
+	TrackInfo ti = medialib_get_data_for_id(&gm, id);
+	if (ti.id > 0 && ti.file_name) {
+		gmu_core_playlist_add_file(ti.file_name);
+		res = 1;
+	}
+	wdprintf(V_DEBUG, "core", "Added track with ID %d to playlist: %d\n", id, res);
+	return res;
+}
 
 static void print_cmd_help(char *prog_name)
 {

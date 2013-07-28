@@ -94,4 +94,5 @@ void             gmu_core_medialib_start_refresh(void);
 int              gmu_core_medialib_search_find(GmuMedialibDataType type, char *str);
 TrackInfo        gmu_core_medialib_search_fetch_next_result(void);
 void             gmu_core_medialib_search_finish(void);
+int              gmu_core_medialib_add_id_to_playlist(int id);
 #endif
