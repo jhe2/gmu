@@ -213,3 +213,31 @@ void medialib_search_finish(GmuMedialib *gm)
 {
 	sqlite3_finalize(gm->pp_stmt_search);
 }
+
+TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id)
+{
+	sqlite3_stmt *pp_stmt;
+	TrackInfo     ti;
+	char         *q = "SELECT * FROM track WHERE id = ?1 LIMIT 1";
+	int           sqres;
+
+	trackinfo_init(&ti);
+
+	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
+	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
+	if (sqres == SQLITE_OK && sqlite3_step(pp_stmt) == SQLITE_ROW) {
+		char *file   = (char *)sqlite3_column_text(pp_stmt, 1);
+		char *artist = (char *)sqlite3_column_text(pp_stmt, 3);
+		char *title  = (char *)sqlite3_column_text(pp_stmt, 4);
+		char *album  = (char *)sqlite3_column_text(pp_stmt, 5);
+		trackinfo_set_trackid(&ti, id);
+		trackinfo_set_filename(&ti, file);
+		trackinfo_set_artist(&ti, artist);
+		trackinfo_set_title(&ti, title);
+		trackinfo_set_album(&ti, album);
+	} else {
+		trackinfo_set_trackid(&ti, -1);
+	}
+	sqlite3_finalize(pp_stmt);
+	return ti;
+}

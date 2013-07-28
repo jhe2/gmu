@@ -34,4 +34,5 @@ void medialib_path_remove(GmuMedialib *gm, char *path);
 int  medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, char *str);
 TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm);
 void medialib_search_finish(GmuMedialib *gm);
+TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id);
 #endif
