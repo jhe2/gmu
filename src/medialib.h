@@ -22,6 +22,7 @@ typedef enum {
 	GMU_MLIB_ANY, GMU_MLIB_ARTIST, GMU_MLIB_TITLE, GMU_MLIB_ALBUM, 
 } GmuMedialibDataType;
 
+int  medialib_create_db_and_open(GmuMedialib *gm);
 int  medialib_open(GmuMedialib *gm);
 void medialib_close(GmuMedialib *gm);
 int  medialib_start_refresh(GmuMedialib *gm, void (*finished_callback)(void));

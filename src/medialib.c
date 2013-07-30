@@ -13,21 +13,35 @@
 #include <pthread.h>
 #include <sqlite3.h>
 #include "medialib.h"
+#include "medialibsql.h"
 #include "dirparser.h"
 #include "trackinfo.h"
 #include "metadatareader.h"
 #include "util.h"
 #include "debug.h"
 
+int medialib_create_db_and_open(GmuMedialib *gm)
+{
+	int res = 0;
+	if (sqlite3_open_v2("gmu.db", &(gm->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) == SQLITE_OK) {
+		res = sqlite3_exec(gm->db, medialib_sql, 0, 0, 0);
+		wdprintf(V_DEBUG, "medialib", "Create result: %d\n", res);
+		if (res == SQLITE_OK) res = 1;
+	}
+	return res;
+}
+
 int medialib_open(GmuMedialib *gm)
 {
 	int res = 0;
 	gm->refresh_in_progress = 0;
 	wdprintf(V_INFO, "medialib", "Opening medialib...\n");
-	if (sqlite3_open_v2("gmu.db", &(gm->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX, NULL) != SQLITE_OK) {
+	if (sqlite3_open_v2("gmu.db", &(gm->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
 		wdprintf(V_ERROR, "medialib", "ERROR: Can't open database: %s\n", sqlite3_errmsg(gm->db));
 		sqlite3_close(gm->db);
 		gm->db = NULL;
+		res = medialib_create_db_and_open(gm);
+		if (res) wdprintf(V_INFO, "medialib", "New database created!\n");
 	} else {
 		res = 1;
 		wdprintf(V_INFO, "medialib", "OK!\n");
