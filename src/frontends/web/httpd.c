@@ -1210,6 +1210,7 @@ static void webserver_main_loop(int listen_fd)
 	queue_free(&queue);
 	for (i = 0; i < MAX_CONNECTIONS; i++)
 		connection_close(&(connection[i]));
+	close(listen_fd);
 }
 
 void httpd_stop_server(void)
