@@ -82,6 +82,23 @@ static char *cmd_arr[] = {
 	NULL
 };
 
+static void set_terminal_title(char *title)
+{
+	char *env_term = getenv("TERM");
+	if (!title) title = "Terminal";
+	if ((strncmp(env_term, "xterm", 5) == 0) ||
+	    (strncmp(env_term, "rxvt", 4) == 0)  ||
+	    (strcmp(env_term, "Eterm") == 0)     ||
+	    (strcmp(env_term, "aixterm") == 0)   ||
+	    (strcmp(env_term, "dtterm") == 0)    ||
+	    (strcmp(env_term, "iris-ansi") == 0)) {
+		printf("\33]0;%s\7", title);
+	} else if (strncmp(env_term, "screen", 6) == 0) {
+		printf("\033k%s\033\\", title);
+		printf("\33]0;%s\7", title);
+	}
+}
+
 /* Parses the input string and sotres the detected command in cmd and 
  * its parameters in params, when successful and returns 1. Memory for
  * 'params' will be allocated as needed. If there are no parameters
@@ -533,6 +550,7 @@ int main(int argc, char **argv)
 	}
 
 	wdprintf_set_verbosity(V_SILENT);
+	set_terminal_title("Gmu");
 
 	if (argc >= 1) {
 		int   network_error = 0, color = 0;
