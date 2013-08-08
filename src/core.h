@@ -28,7 +28,12 @@
 #define GMU_CORE_HW_VOLUME_MAX 100
 #define GMU_CORE_SW_VOLUME_MAX AUDIO_MAX_SW_VOLUME
 
+typedef enum GmuFeatures {
+	GMU_FEATURE_MEDIALIB = 1
+} GmuFeatures;
+
 ConfigFile      *gmu_core_get_config(void);
+GmuFeatures      gmu_core_get_features(void);
 int              gmu_core_play(void);
 int              gmu_core_play_pause(void);
 int              gmu_core_pause(void);

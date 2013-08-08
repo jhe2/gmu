@@ -71,6 +71,15 @@ static void init_sdl(void)
 	wdprintf(V_DEBUG, "gmu", "SDL init done.\n");
 }
 
+GmuFeatures gmu_core_get_features(void)
+{
+	GmuFeatures features = 0;
+#ifdef GMU_MEDIALIB
+	features |= GMU_FEATURE_MEDIALIB; 
+#endif
+	return features;
+}
+
 static int add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 {
 	M3u m3u;
