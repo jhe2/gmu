@@ -32,8 +32,10 @@ int net_send_block(int sock, unsigned char *buf, int size)
 	int            tries = 3;
 
 	while (size > 0 && tries > 0) {
+		errno = 0;
 		len = send(sock, r, size, 0);
 		if (len == -1) {
+			tries--;
 			if (errno == EWOULDBLOCK || errno == EAGAIN) {
 				struct pollfd ufds[1];
 				int           rv;
@@ -46,14 +48,16 @@ int net_send_block(int sock, unsigned char *buf, int size)
 					res = 0;
 					break;
 				}
-				tries--;
 			} else {
+				wdprintf(V_DEBUG, "net", "Error on socket %d: %s\n", sock, strerror(errno));
 				res = 0;
 				break;
 			} 
-		} else {
+		} else if (len > 0) {
 			size -= len;
 			r += len;
+		} else {
+			tries--;
 		}
 	}
 	if (tries <= 0) res = 0;
