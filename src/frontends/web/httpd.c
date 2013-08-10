@@ -170,7 +170,7 @@ int connection_init(Connection *c, int fd, char *client_ip)
 	ConfigFile *cf = gmu_core_get_config();
 	memset(c, 0, sizeof(Connection));
 	c->connection_time = time(NULL);
-	c->state = HTTP_NEW;
+	c->state = CON_HTTP_NEW;
 	c->fd = fd;
 	c->http_request_header = NULL;
 	c->password_ref = NULL;
@@ -212,7 +212,7 @@ void connection_free_request_header(Connection *c)
 
 int connection_is_timed_out(Connection *c)
 {
-	int timeout = c->state == WEBSOCKET_OPEN ? 
+	int timeout = c->state == CON_WEBSOCKET_OPEN ? 
 	              CONNECTION_TIMEOUT_WEBSOCKET : CONNECTION_TIMEOUT_HTTP;
 	return (time(NULL) - c->connection_time > timeout);
 }
@@ -285,7 +285,7 @@ int connection_file_read_chunk(Connection *c)
 			c->remaining_bytes_to_send -= size;
 			c->connection_time = time(NULL);
 		} else {
-			connection_set_state(c, HTTP_IDLE);
+			connection_set_state(c, CON_HTTP_IDLE);
 			if (c->local_file) fclose(c->local_file);
 			c->local_file = NULL;
 		}
@@ -294,7 +294,7 @@ int connection_file_read_chunk(Connection *c)
 		if (c->local_file && feof(c->local_file)) {
 			fclose(c->local_file);
 			c->local_file = NULL;
-			connection_set_state(c, HTTP_IDLE);
+			connection_set_state(c, CON_HTTP_IDLE);
 		}
 	} else {
 		wdprintf(V_DEBUG, "httpd", "Connection: ERROR, file handle invalid.\n");
@@ -407,7 +407,7 @@ void *httpd_run_server(void *data)
 
 /*
  * Open server listen port 'port'
- * Returns socket fd
+ * Returns socket fd or ERROR
  */
 static int tcp_server_init(int port, int local_only)
 {
@@ -462,7 +462,7 @@ static int tcp_server_init(int port, int local_only)
 
 /*
  * Open connection to client. To be called for every new client.
- * Sets conn.state == ERROR in result in case of an error
+ * Sets conn.state == CON_ERROR in result in case of an error
  */
 static Connection tcp_server_client_init(int listen_fd)
 {
@@ -473,7 +473,7 @@ static Connection tcp_server_client_init(int listen_fd)
 
 	socklen = sizeof(sock);
 	conn.fd = accept(listen_fd, (struct sockaddr *) &sock, &socklen);
-	if (conn.fd < 0) conn.state = ERROR; else conn.state = HTTP_NEW;
+	if (conn.fd < 0) conn.state = CON_ERROR; else conn.state = CON_HTTP_NEW;
 	ipver = sock.ss_family == AF_INET ? 4 : 6;
 	inet_ntop(sock.ss_family, 
 	          sock.ss_family == AF_INET ?
@@ -691,7 +691,7 @@ static int process_command(int rfd, Connection *c)
 							net_send_buf(rfd, str2);
 							net_send_buf(rfd, "\r\n");
 							/* 3) Set flags in connection struct to WebSocket */
-							connection_set_state(c, WEBSOCKET_OPEN);
+							connection_set_state(c, CON_WEBSOCKET_OPEN);
 							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
 						} else if (!connection_file_is_open(c)) { // ?? open file (if not open already) ??
 							char filename[512];
@@ -706,7 +706,7 @@ static int process_command(int rfd, Connection *c)
 								int         time_ok = 0;
 								struct stat st;
 								if (stat(filename, &st) == 0) time_ok = 1;
-								if (!head_only) connection_set_state(c, HTTP_BUSY);
+								if (!head_only) connection_set_state(c, CON_HTTP_BUSY);
 								send_http_header(rfd, "200",
 												 connection_get_number_of_bytes_to_send(c),
 												 time_ok ? &(st.st_ctime) : NULL,
@@ -1069,7 +1069,7 @@ static void webserver_main_loop(int listen_fd)
 		if (FD_ISSET(listen_fd, &readfds)) {
 			int con_num;
 			Connection ctmp = tcp_server_client_init(listen_fd);
-			if (ctmp.state != ERROR) {
+			if (ctmp.state != CON_ERROR) {
 				fcntl(ctmp.fd, F_SETFL, O_NONBLOCK);
 				con_num = ctmp.fd-listen_fd-1;
 				if (con_num < MAX_CONNECTIONS) {
@@ -1104,10 +1104,10 @@ static void webserver_main_loop(int listen_fd)
 				close(rfd);
 				FD_CLR(rfd, &the_state);
 			} else {
-				if (connection_get_state(&(connection[conn_num])) == HTTP_BUSY) { /* feed data */
+				if (connection_get_state(&(connection[conn_num])) == CON_HTTP_BUSY) { /* feed data */
 					/* Read CHUNK_SIZE bytes from file and send data to socket & update remaining bytes counter */
 					connection_file_read_chunk(&(connection[conn_num]));
-				} else if (connection[conn_num].state == WEBSOCKET_OPEN) {
+				} else if (connection[conn_num].state == CON_WEBSOCKET_OPEN) {
 					/* If data for sending through websocket has been fetched
 					 * from the broadcast queue, send the data to all open WebSocket connections */
 					if (websocket_msg) {
@@ -1131,7 +1131,7 @@ static void webserver_main_loop(int listen_fd)
 						int len = msgbuflen;
 						int len_header = 0;
 
-						if (connection[conn_num].state != WEBSOCKET_OPEN) {
+						if (connection[conn_num].state != CON_WEBSOCKET_OPEN) {
 							wdprintf(V_DEBUG, "httpd", "%04d http message.\n", rfd);
 							if (connection[conn_num].http_request_header)
 								len_header = strlen(connection[conn_num].http_request_header);
@@ -1195,7 +1195,7 @@ static void webserver_main_loop(int listen_fd)
 				} else { /* no data received */
 					if (connection_is_valid(&(connection[conn_num])) &&
 						connection_is_timed_out(&(connection[conn_num])) &&
-						connection[conn_num].state != WEBSOCKET_OPEN) { /* close idle connection */
+						connection[conn_num].state != CON_WEBSOCKET_OPEN) { /* close idle connection */
 						wdprintf(V_DEBUG, "httpd", "Closing connection to idle client %d...\n", rfd);
 						FD_CLR(rfd, &the_state);
 						close(rfd);
