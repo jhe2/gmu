@@ -193,6 +193,16 @@ print_features_and_write_config()
 	echo "$BUILD_CONFIG_EXTRAS" >>config.mk
 }
 
+help()
+{
+	echo "Usage $0 [options]"
+	echo "Possible options:"
+	echo "  --enable <feature>"
+	echo "  --disable <feature>"
+	echo "  --target-device <device name>"
+	echo "  --help"
+}
+
 # Flags (possible values: 0=disabled, 1=enabled, -2=autodetect)
 # Set most flags to -2 (autodetect)
 tool_gmuc=-2
@@ -216,7 +226,7 @@ while :
 do
 	case $1 in
 		-h | --help | -\?)
-			#  Call your Help() or usage() function here.
+			help
 			exit 0
 			;;
 		-e | --enable | --with)
@@ -256,10 +266,10 @@ do
 			break
 			;;
 		-*)
-			echo "WARN: Unknown option (ignored): $1" >&2
+			echo "WARNING: Unknown option (ignored): $1" >&2
 			shift
 			;;
-		*)  # no more options. Stop while loop
+		*)  # No more options. Stop while loop
 			break
 			;;
 	esac
