@@ -15,8 +15,7 @@
 #
 Q?=@
 STATIC?=0
-TARGET?=unknown
-include $(TARGET).mk
+include config.mk
 
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\""

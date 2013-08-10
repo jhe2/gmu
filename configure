@@ -1,0 +1,347 @@
+#!/bin/sh
+#
+# Minimal configure script for detecting and/or manually configuring 
+# settings required for building the project. Not based on autoconf.
+#
+# File: configure  Created: 130804
+#
+# Copyright (c) 2013 Johannes Heimansberg (wejp.k.vu)
+#
+
+# Project independent stuff
+if [ "$CC" = "" ]; then
+	CC=cc
+fi
+
+TMP_CC=`which $CC`
+
+LIBRARY_PATHS=
+BASE_INCLUDE_PATH="`dirname $TMP_CC`/../include"
+INCLUDE_PATHS="-I$BASE_INCLUDE_PATH"
+TARGET=unknown
+EXTRA_CFLAGS=
+BUILD_CONFIG_EXTRAS=
+
+test_compiler()
+{
+	res=1
+	cat - <<_WEJTEST >/tmp/test.wej.c
+$includes_test
+int main(void)
+{
+  return 0;
+}
+_WEJTEST
+	$CC $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c
+
+	if [ $? = 0 ]; then
+		echo "Compiler $CC: okay";
+	else
+		echo "Compiler $CC: not working";
+		res=0
+	fi
+	return $res
+}
+
+test_lib()
+{
+	cat - <<_WEJTEST >/tmp/test.wej.c
+$includes_test
+int main(void)
+{
+  return 0;
+}
+_WEJTEST
+
+	echo "Checking library '$1'..."
+	res=1
+	echo -n "$1 header files: "
+	$CC $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall
+	if [ $? = 0 ]; then
+		echo "okay";
+	else
+		echo "failed";
+		res=0
+	fi
+
+	echo -n "$1 library: "
+	$CC $LIBRARY_PATHS -o /tmp/test.exe /tmp/test.o $libs_test 2>/dev/null
+	if [ $? = 0 ]; then
+		echo "okay";
+	else
+		echo "failed";
+		res=0
+	fi
+	return $res
+}
+
+add_config()
+{
+	BUILD_CONFIG_EXTRAS="$BUILD_CONFIG_EXTRAS
+$1"
+}
+
+# Project dependent stuff
+set_feature()
+{
+	feature=$1
+	on_off=$2
+	case $feature in
+		gmuc)
+			tool_gmuc=$on_off
+			;;
+		opus-decoder)
+			dec_opus=$on_off
+			;;
+		mpg123-decoder)
+			dec_mpg123=$on_off
+			;;
+		vorbis-decoder)
+			dec_vorbis=$on_off
+			;;
+		musepack-decoder)
+			dec_musepack=$on_off
+			;;
+		flac-decoder)
+			dec_flac=$on_off
+			;;
+		speex-decoder)
+			dec_speex=$on_off
+			;;
+		modplug-decoder)
+			dec_modplug=$on_off
+			;;
+		sdl-frontend)
+			fe_sdl=$on_off
+			;;
+		web-frontend)
+			fe_web=$on_off
+			;;
+		lirc-frontend)
+			fe_lirc=$on_off
+			;;
+		medialib)
+			feature_medialib=$on_off
+			;;
+	esac
+}
+
+print_features_and_write_config()
+{
+	local dec=""
+	local frn=""
+
+	echo "Enabled features:"
+	if [ $tool_gmuc = 1 ]; then
+		echo "gmuc enabled"
+	fi
+	if [ $feature_medialib = 1 ]; then
+		echo "Media library enabled"
+	fi
+	echo
+	echo "Decoders:"
+	if [ $dec_opus = 1 ]; then
+		echo "Opus enabled"
+		dec="$dec decoders/opus.so"
+	fi
+	if [ $dec_mpg123 = 1 ]; then
+		echo "mpg123 enabled"
+		dec="$dec decoders/mpg123.so"
+	fi
+	if [ $dec_vorbis = 1 ]; then
+		echo "Vorbis enabled"
+		dec="$dec decoders/vorbis.so"
+	fi
+	if [ $dec_musepack = 1 ]; then
+		echo "Musepack enabled"
+		dec="$dec decoders/musepack.so"
+	fi
+	if [ $dec_flac = 1 ]; then
+		echo "FLAC enabled"
+		dec="$dec decoders/flac.so"
+	fi
+	if [ $dec_speex = 1 ]; then
+		echo "Speex enabled"
+		dec="$dec decoders/speex.so"
+	fi
+	if [ $dec_modplug = 1 ]; then
+		echo "ModPlug enabled"
+		dec="$dec decoders/modplug.so"
+	fi
+	echo
+	echo "Frontends:"
+	if [ $fe_sdl = 1 ]; then
+		echo "SDL frontend enabled"
+		frn="$frn frontends/sdl.so"
+	fi
+	if [ $fe_web = 1 ]; then
+		echo "Web frontend enabled"
+		frn="$frn frontends/gmuhttp.so"
+	fi
+	if [ $fe_lirc = 1 ]; then
+		echo "LIRC frontend enabled"
+		frn="$frn frontends/lirc.so"
+	fi
+	echo "CC=$CC" >config.mk
+	echo "SDL_LIB=\$(shell sdl-config --libs)" >>config.mk
+	echo "SDL_CFLAGS=\$(shell sdl-config --cflags)" >>config.mk
+	echo "CFLAGS=\$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DDEBUG $EXTRA_CFLAGS" >>config.mk
+	echo "LFLAGS=-Wl,-export-dynamic" >>config.mk
+	echo "DECODERS_TO_BUILD=$dec" >>config.mk
+	echo "FRONTENDS_TO_BUILD=$frn" >>config.mk
+	echo "TARGET=$TARGET" >>config.mk
+	echo "$BUILD_CONFIG_EXTRAS" >>config.mk
+}
+
+# Flags (possible values: 0=disabled, 1=enabled, -2=autodetect)
+# Set most flags to -2 (autodetect)
+tool_gmuc=-2
+dec_opus=-2
+dec_mpg123=-2
+dec_vorbis=-2
+dec_musepack=-2
+dec_flac=-2
+dec_speex=-2
+dec_modplug=-2
+fe_sdl=-2
+fe_web=-2
+fe_lirc=-2
+feature_medialib=1
+target_device="unknown"
+
+# Parse options
+file=""
+verbose=0
+
+while :
+do
+	case $1 in
+		-h | --help | -\?)
+			#  Call your Help() or usage() function here.
+			exit 0
+			;;
+		-e | --enable | --with)
+			enable=$2
+			if [ "$enable" = "" ]; then
+				echo "Invalid use of --enable"
+				break;
+			fi
+			shift 2
+			;;
+		--enable=* | --with=*)
+			enable=${1#*=}
+			shift
+			;;
+		-d | --disable | --without)
+			disable=$2
+			if [ "$disable" = "" ]; then
+				echo "Invalid use of --disable"
+				break;
+			fi
+			shift 2
+			;;
+		--disable=* | --without=*)
+			disable=${1#*=}
+			shift
+			;;
+		--target-device | -t)
+			target_device=$2
+			shift 2
+			;;
+		--target-device=*)
+			target_device=${1#*=}
+			shift
+			;;
+		-v | --verbose)
+			# Each instance of -v adds 1 to verbosity
+			verbose=$((verbose+1))
+			shift
+			;;
+		--) # End of all options
+			shift
+			break
+			;;
+		-*)
+			echo "WARN: Unknown option (ignored): $1" >&2
+			shift
+			;;
+		*)  # no more options. Stop while loop
+			break
+			;;
+	esac
+	
+	set_feature $enable 1
+	enable=
+	set_feature $disable 0
+	disable=
+	TARGET=$target_device
+done
+
+test_compiler
+if [ $? = 0 ]; then
+	exit 2
+fi
+
+# Tests
+includes_test="#include <curses.h>"
+libs_test="-lncursesw"
+test_lib "ncurses"
+if [ $? = 0 ]; then
+	tool_gmuc=0
+fi
+
+if [ $dec_opus != 0 ]; then
+	includes_test="#include <opus/opus.h>
+#include <opusfile.h>"
+	includes_test_flags="-I$BASE_INCLUDE_PATH/opus"
+	libs_test="-lopus -lopusfile"
+	test_lib "opus"
+	dec_opus=$?
+	[ $dec_opus = 1 ] && add_config "DEC_opus_CFLAGS=$includes_test_flags"
+fi
+
+if [ $dec_mpg123 != 0 ]; then
+	includes_test="#include <mpg123.h>"
+	libs_test="-lmpg123"
+	test_lib "libmpg123"
+	dec_mpg123=$?
+fi
+
+if [ $dec_flac != 0 ]; then
+	includes_test="#include <FLAC/stream_decoder.h>"
+	libs_test="-lFLAC"
+	test_lib "libFLAC"
+	dec_flac=$?
+fi
+
+if [ $dec_vorbis != 0 ]; then
+	includes_test="#include <tremor/ivorbiscodec.h>"
+	libs_test="-lvorbisidec"
+	test_lib "libvorbisidec"
+	dec_vorbis=$?
+fi
+
+if [ $dec_modplug != 0 ]; then
+	includes_test="#include <libmodplug/modplug.h>"
+	libs_test="-lmodplug"
+	test_lib "libmodplug"
+	dec_modplug=$?
+fi
+
+
+if [ $feature_medialib != 0 ]; then
+	includes_test="#include <sqlite3.h>"
+	libs_test="-lsqlite3"
+	test_lib "Media library dependency: libsqlite3"
+	if [ $? = 1 ]; then
+		feature_medialib=1
+		EXTRA_CFLAGS="$EXTRA_CFLAGS -DGMU_MEDIALIB=1"
+	else
+		feature_medialib=0
+	fi
+fi
+
+echo
+echo "Configuration complete!"
+echo "Target device: $target_device"
+print_features_and_write_config
