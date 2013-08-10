@@ -211,7 +211,6 @@ target_device="unknown"
 
 # Parse options
 file=""
-verbose=0
 
 while :
 do
@@ -250,11 +249,6 @@ do
 			;;
 		--target-device=*)
 			target_device=${1#*=}
-			shift
-			;;
-		-v | --verbose)
-			# Each instance of -v adds 1 to verbosity
-			verbose=$((verbose+1))
 			shift
 			;;
 		--) # End of all options
