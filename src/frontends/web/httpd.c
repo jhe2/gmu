@@ -1083,7 +1083,7 @@ static void webserver_main_loop(int listen_fd)
 					wdprintf(V_WARNING, "httpd",
 							 "Connection limit reached of %d. Cannot accept incoming connection %d.\n",
 							 MAX_CONNECTIONS, con_num);
-					close(rfd);
+					close(ctmp.fd);
 				}
 			} else {
 				wdprintf(V_WARNING, "httpd", "ERROR: Could not accept client connection.\n");
