@@ -287,6 +287,15 @@ if [ $? = 0 ]; then
 fi
 
 # Tests
+includes_test="#include <SDL/SDL.h>"
+libs_test="-lSDL"
+test_lib "SDL"
+if [ $? = 0 ]; then
+	echo "ERROR: Gmu depends on SDL. Cannot continue without it."
+	exit 1
+fi
+
+
 includes_test="#include <curses.h>"
 libs_test="-lncursesw"
 test_lib "ncurses"
