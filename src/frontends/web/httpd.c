@@ -1070,10 +1070,10 @@ static void webserver_main_loop(int listen_fd)
 			int con_num;
 			Connection ctmp = tcp_server_client_init(listen_fd);
 			if (ctmp.state != ERROR) {
-				fcntl(rfd, F_SETFL, O_NONBLOCK);
+				fcntl(ctmp.fd, F_SETFL, O_NONBLOCK);
 				con_num = ctmp.fd-listen_fd-1;
 				if (con_num < MAX_CONNECTIONS) {
-					if (rfd >= 0) {
+					if (ctmp.fd >= 0) {
 						FD_SET(ctmp.fd, &the_state); /* add new client */
 						if (ctmp.fd > maxfd) maxfd = ctmp.fd;
 						connection_init(&(connection[con_num]), ctmp.fd, ctmp.client_ip);
