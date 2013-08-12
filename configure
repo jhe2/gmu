@@ -140,12 +140,14 @@ print_features_and_write_config()
 	local dec=""
 	local frn=""
 
+	echo "# Generated Gmu config" >config.mk
 	echo "Enabled features:"
 	if [ $tool_gmuc = 1 ]; then
 		echo "gmuc enabled"
 	fi
 	if [ $feature_medialib = 1 ]; then
 		echo "Media library enabled"
+		echo "GMU_MEDIALIB=1" >>config.mk
 	fi
 	echo
 	echo "Decoders:"
@@ -191,7 +193,7 @@ print_features_and_write_config()
 		echo "LIRC frontend enabled"
 		frn="$frn frontends/lirc.so"
 	fi
-	echo "CC=$CC" >config.mk
+	echo "CC=$CC" >>config.mk
 	echo "SDL_LIB=\$(shell sdl-config --libs)" >>config.mk
 	echo "SDL_CFLAGS=\$(shell sdl-config --cflags)" >>config.mk
 	echo "CFLAGS=\$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DDEBUG $EXTRA_CFLAGS" >>config.mk

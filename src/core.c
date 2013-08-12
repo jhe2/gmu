@@ -56,7 +56,9 @@ static unsigned int  player_status = STOPPED;
 static int           shutdown_timer = 0;
 static int           remaining_time;
 static char          base_dir[256], *config_dir;
+#ifdef GMU_MEDIALIB
 static GmuMedialib   gm;
+#endif
 
 static void init_sdl(void)
 {
@@ -647,41 +649,59 @@ char *gmu_core_get_config_dir(void)
 	return config_dir;
 }
 
+#ifdef GMU_MEDIALIB
 static void medialib_refresh_finish_callback(void)
 {
 	wdprintf(V_DEBUG, "gmu", "In callback: Medialib refresh done.\n");
 	event_queue_push(&event_queue, GMU_MEDIALIB_REFRESH_DONE);
 }
+#endif
 
 void gmu_core_medialib_start_refresh(void)
 {
+#ifdef GMU_MEDIALIB
 	medialib_start_refresh(&gm, medialib_refresh_finish_callback);
+#endif
 }
 
 int gmu_core_medialib_search_find(GmuMedialibDataType type, char *str)
 {
+#ifdef GMU_MEDIALIB
 	return medialib_search_find(&gm, type, str);
+#else
+	return 0;
+#endif
 }
 
 TrackInfo gmu_core_medialib_search_fetch_next_result(void)
 {
-	return medialib_search_fetch_next_result(&gm);
+	TrackInfo res;
+#ifdef GMU_MEDIALIB
+	res = medialib_search_fetch_next_result(&gm);
+#else
+	trackinfo_init(&res);
+#endif
+	return res;
 }
 
 void gmu_core_medialib_search_finish(void)
 {
+#ifdef GMU_MEDIALIB
 	medialib_search_finish(&gm);
+#endif
 }
 
 int gmu_core_medialib_add_id_to_playlist(int id)
 {
 	int res = 0;
+#ifdef GMU_MEDIALIB
 	TrackInfo ti = medialib_get_data_for_id(&gm, id);
 	if (ti.id > 0 && ti.file_name) {
 		gmu_core_playlist_add_file(ti.file_name);
 		res = 1;
 	}
 	wdprintf(V_DEBUG, "core", "Added track with ID %d to playlist: %d\n", id, res);
+#endif
 	return res;
 }
 
@@ -1005,7 +1025,9 @@ int main(int argc, char **argv)
 		add_m3u_contents_to_playlist(&pl, temp);
 	}
 	wdprintf(V_INFO, "gmu", "Playlist length: %d items\n", playlist_get_length(&pl));
+#ifdef GMU_MEDIALIB
 	medialib_open(&gm);
+#endif
 	init_sdl(); /* Initialize SDL audio */
 
 	/* Load frontends */
@@ -1224,7 +1246,9 @@ int main(int argc, char **argv)
 		sync();
 	}
 
+#ifdef GMU_MEDIALIB
 	medialib_close(&gm);
+#endif
 
 	wdprintf(V_INFO, "gmu", "Unloading decoders...\n");
 	decloader_free();
