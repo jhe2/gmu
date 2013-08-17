@@ -494,6 +494,46 @@ static Function get_function_from_button(UI *ui, int res, wchar_t ch)
 	return func;
 }
 
+static void playlist_handle_return_key(UI *ui, int sock)
+{
+	char str[128];
+	snprintf(str, 127, "{\"cmd\":\"play\", \"item\":%d}", listwidget_get_selection(ui->lw_pl));
+	websocket_send_str(sock, str, 1);
+}
+
+static void file_browser_handle_return_key(UI *ui, int sock, char **cur_dir)
+{
+	char tmp[256], *prev_cur_dir = *cur_dir;
+	int  sel_row = listwidget_get_selection(ui->lw_fb);
+	char *ftype = listwidget_get_row_data(ui->lw_fb, sel_row, 0);
+	if (ftype && strcmp(ftype, "[DIR]") == 0) {
+		*cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
+		                                 listwidget_get_row_data(ui->lw_fb, sel_row, 1));
+		free(prev_cur_dir);
+		wprintw(ui->win_cmd->win, "Selected dir: %s/%d\n", listwidget_get_row_data(ui->lw_fb, sel_row, 1), sel_row);
+		wprintw(ui->win_cmd->win, "Full path: %s\n", *cur_dir);
+		listwidget_clear_all_rows(ui->lw_fb);
+		ui_refresh_active_window(ui);
+		if (*cur_dir) {
+			snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", *cur_dir);
+			websocket_send_str(sock, tmp, 1);
+		}
+	} else { /* Add file */
+		/* TODO */
+	}
+}
+
+static void media_library_handle_return_key(UI *ui, int sock)
+{
+	char tmp[256];
+	int s = listwidget_get_selection(ui->lw_mlib_search);
+	char *idstr = listwidget_get_row_data(ui->lw_mlib_search, s, 3);
+	int   id = idstr ? atoi(idstr) : -1;
+	wprintw(ui->win_cmd->win, "Add medialib ID %d to playlist...\n", id);
+	snprintf(tmp, 255, "{\"cmd\":\"medialib_add_id_to_playlist\", \"id\": %d}", id);
+	websocket_send_str(sock, tmp, 1);
+}
+
 int main(int argc, char **argv)
 {
 	int                sock, res = EXIT_FAILURE;
@@ -934,43 +974,16 @@ int main(int argc, char **argv)
 									}
 									break;
 								case '\n': {
-									char str[128];
 									switch (ui.active_win) {
 										case WIN_PL:
-											snprintf(str, 127, "{\"cmd\":\"play\", \"item\":%d}", listwidget_get_selection(ui.lw_pl));
-											websocket_send_str(sock, str, 1);
+											playlist_handle_return_key(&ui, sock);
 											break;
-										case WIN_FB: {
-											char tmp[256], *prev_cur_dir = cur_dir;
-											int  sel_row = listwidget_get_selection(ui.lw_fb);
-											char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
-											if (ftype && strcmp(ftype, "[DIR]") == 0) {
-												cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
-															 listwidget_get_row_data(ui.lw_fb, sel_row, 1));
-												free(prev_cur_dir);
-												wprintw(ui.win_cmd->win, "Selected dir: %s/%d\n", listwidget_get_row_data(ui.lw_fb, sel_row, 1), sel_row);
-												wprintw(ui.win_cmd->win, "Full path: %s\n", cur_dir);
-												listwidget_clear_all_rows(ui.lw_fb);
-												ui_refresh_active_window(&ui);
-												if (cur_dir) {
-													snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
-													websocket_send_str(sock, tmp, 1);
-												}
-											} else { /* Add file */
-												/* TODO */
-											}
+										case WIN_FB:
+											file_browser_handle_return_key(&ui, sock, &cur_dir);
 											break;
-										}
-										case WIN_LIB: {
-											char tmp[256];
-											int s = listwidget_get_selection(ui.lw_mlib_search);
-											char *idstr = listwidget_get_row_data(ui.lw_mlib_search, s, 3);
-											int   id = idstr ? atoi(idstr) : -1;
-											wprintw(ui.win_cmd->win, "Add medialib ID %d to playlist...\n", id);
-											snprintf(tmp, 255, "{\"cmd\":\"medialib_add_id_to_playlist\", \"id\": %d}", id);
-											websocket_send_str(sock, tmp, 1);
+										case WIN_LIB:
+											media_library_handle_return_key(&ui, sock);
 											break;
-										}
 										default:
 											break;
 									}
