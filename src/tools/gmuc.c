@@ -479,6 +479,21 @@ static void gmuc_help(char *str)
 	exit(0);
 }
 
+static Function get_function_from_button(UI *ui, int res, wchar_t ch)
+{
+	int i;
+	Function func = FUNC_NONE;
+	for (i = 0; ui->fb_visible && ui->fb_visible[i].button_name; i++) {
+		if (ui->fb_visible[i].key == ch) {
+			if ((res == KEY_CODE_YES && ui->fb_visible[i].keycode) ||
+				(res != KEY_CODE_YES && !ui->fb_visible[i].keycode))
+				func = ui->fb_visible[i].func;
+			break;
+		}
+	}
+	return func;
+}
+
 int main(int argc, char **argv)
 {
 	int                sock, res = EXIT_FAILURE;
@@ -760,16 +775,7 @@ int main(int argc, char **argv)
 								}
 							}
 						} else if (res == OK || res == KEY_CODE_YES) {
-							int i;
-							Function func = FUNC_NONE;
-							for (i = 0; ui.fb_visible && ui.fb_visible[i].button_name; i++) {
-								if (ui.fb_visible[i].key == ch) {
-									if ((res == KEY_CODE_YES && ui.fb_visible[i].keycode) ||
-									    (res != KEY_CODE_YES && !ui.fb_visible[i].keycode))
-										func = ui.fb_visible[i].func;
-									break;
-								}
-							}
+							Function func = get_function_from_button(&ui, res, ch);
 							switch (func) {
 								case FUNC_NEXT_WINDOW:
 									ui_active_win_next(&ui);
