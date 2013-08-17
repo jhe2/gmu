@@ -534,6 +534,23 @@ static void media_library_handle_return_key(UI *ui, int sock)
 	websocket_send_str(sock, tmp, 1);
 }
 
+static void initiate_websocket_handshake(int sock, char *host)
+{
+	char        str2[1024];
+	char *key, *str = "GET /gmu HTTP/1.1\r\n"
+				"Host: %s\r\n"
+				"Upgrade: websocket\r\n"
+				"Connection: Upgrade\r\n"
+				"Sec-WebSocket-Key: %s\r\n"
+				"Sec-WebSocket-Version: 13\r\n\r\n";
+	key = websocket_client_generate_sec_websocket_key_alloc();
+	if (key) {
+		snprintf(str2, 1023, str, host, key);
+		send(sock, str2, strlen(str2), 0);
+		free(key);
+	}
+}
+
 static int run_gmuc_ui(int color, char *host, char *password)
 {
 	int     res = EXIT_FAILURE;
@@ -569,25 +586,12 @@ static int run_gmuc_ui(int color, char *host, char *password)
 			RingBuffer     rb;
 			int            r = 1, connected = 1;
 			State          state = STATE_WEBSOCKET_HANDSHAKE;
-			char           str2[1024], *key;
 			wchar_t        wchars[256];
-			char          *str = "GET /gmu HTTP/1.1\r\n"
-				"Host: %s\r\n"
-				"Upgrade: websocket\r\n"
-				"Connection: Upgrade\r\n"
-				"Sec-WebSocket-Key: %s\r\n"
-				"Sec-WebSocket-Version: 13\r\n\r\n";
 
 			network_error = 0;
 			wchars[0] = L'\0';
 
-			key = websocket_client_generate_sec_websocket_key_alloc();
-			if (key) {
-				snprintf(str2, 1023, str, host, key);
-				wdprintf(V_DEBUG, "gmuc", "request:%s\n", str2);
-				send(sock, str2, strlen(str2), 0);
-				free(key);
-			}
+			initiate_websocket_handshake(sock, host);
 
 			ringbuffer_init(&rb, 65536);
 			while (!quit && connected && !network_error) {
