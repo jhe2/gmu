@@ -534,11 +534,450 @@ static void media_library_handle_return_key(UI *ui, int sock)
 	websocket_send_str(sock, tmp, 1);
 }
 
+static int run_gmuc_ui(int color, char *host, char *password)
+{
+	int     res = EXIT_FAILURE;
+	int     network_error = 0;
+	UI      ui;
+	char   *cur_dir = NULL;
+	int     sock;
+	ssize_t size;
+	char   *buffer = malloc(BUF);
+
+	/* Setup SIGWINCH */
+	struct sigaction act;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = sig_handler_sigwinch;
+	sigaction(SIGWINCH, &act, NULL);
+
+	ui_init(&ui, color);
+	ui_draw(&ui);
+	ui_cursor_text_input(&ui, NULL);
+	ui_enable_text_input(&ui, 0);
+
+	while (!quit) {
+		ui_update_trackinfo(&ui, host, "Trying to connect to Gmu server", NULL, NULL);
+		ui_draw_header(&ui);
+		if (!buffer) {
+			quit = 1;
+		} else if ((sock = nethelper_tcp_connect_to_host(host, PORT, 0)) > 0) {
+			struct timeval tv;
+			fd_set         readfds, errorfds;
+			char          *input = NULL;
+			int            cpos = 0;
+			RingBuffer     rb;
+			int            r = 1, connected = 1;
+			State          state = STATE_WEBSOCKET_HANDSHAKE;
+			char           str2[1024], *key;
+			wchar_t        wchars[256];
+			char          *str = "GET /gmu HTTP/1.1\r\n"
+				"Host: %s\r\n"
+				"Upgrade: websocket\r\n"
+				"Connection: Upgrade\r\n"
+				"Sec-WebSocket-Key: %s\r\n"
+				"Sec-WebSocket-Version: 13\r\n\r\n";
+
+			network_error = 0;
+			wchars[0] = L'\0';
+
+			key = websocket_client_generate_sec_websocket_key_alloc();
+			if (key) {
+				snprintf(str2, 1023, str, host, key);
+				wdprintf(V_DEBUG, "gmuc", "request:%s\n", str2);
+				send(sock, str2, strlen(str2), 0);
+				free(key);
+			}
+
+			ringbuffer_init(&rb, 65536);
+			while (!quit && connected && !network_error) {
+				FD_ZERO(&readfds);
+				FD_ZERO(&errorfds);
+				FD_SET(fileno(stdin), &readfds);
+				FD_SET(sock, &readfds);
+				tv.tv_sec = 1;
+				tv.tv_usec = 500000;
+				if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
+					/* ERROR in select() */
+					FD_ZERO(&readfds);
+				}
+
+				if (resized) {
+					resized = 0;
+					ui_resize(&ui);
+				}
+
+				if (FD_ISSET(fileno(stdin), &readfds)) {
+					char   buf[1024];
+					wint_t ch;
+					int    res;
+
+					memset(buf, 0, 1024);
+					res = wget_wch(stdscr, &ch);
+					if (res == OK && ui.text_input_enabled) {
+						ui_refresh_active_window(&ui);
+						switch (ch) {
+							case '\n': {
+								int len = wcstombs(NULL, wchars, 0);
+								ui_enable_text_input(&ui, 0);
+								ui_draw_footer(&ui);
+								if (len > 0) {
+									input = wchars_to_utf8_str_realloc(input, wchars);
+									if (input) {
+										Command cmd = NO_COMMAND;
+										char   *params = NULL;
+
+										if (len > 0) {
+											wprintw(ui.win_cmd->win, "%s\n", input);
+											cpos = 0;
+											parse_input_alloc(input, &cmd, &params);
+											if (state == STATE_CONNECTION_ESTABLISHED) {
+												char *str = NULL;
+												int   free_str = 0;
+												switch (cmd) {
+													case PLAY:
+														str = "{\"cmd\":\"play\"}";
+														break;
+													case PAUSE:
+														str = "{\"cmd\":\"pause\"}";
+														break;
+													case NEXT:
+														str = "{\"cmd\":\"next\"}";
+														break;
+													case PREVIOUS:
+														str = "{\"cmd\":\"prev\"}";
+														break;
+													case STOP:
+														str = "{\"cmd\":\"stop\"}";
+														break;
+													case FILES:
+														str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
+														break;
+													case ADD:
+														str = malloc(320);
+														if (str) {
+															char *params_esc = json_string_escape_alloc(params);
+															if (params_esc) {
+																if (snprintf(str, 320, "{\"cmd\":\"playlist_add\",\"path\":\"%s\",\"type\":\"file\"}", params_esc) == 320) {
+																	free(str);
+																	str = NULL;
+																}
+																free(params_esc);
+															}
+															free_str = 1;
+														}
+														break;
+													case SEARCH:
+														str = malloc(320);
+														if (str) {
+															char *params_esc = json_string_escape_alloc(params);
+															if (params_esc) {
+																if (snprintf(str, 320, "{\"cmd\":\"medialib_search\",\"type\":\"0\",\"str\":\"%s\"}", params_esc) == 320) {
+																	free(str);
+																	str = NULL;
+																}
+																free(params_esc);
+															}
+															free_str = 1;
+														}
+														ui_active_win_set(&ui, WIN_LIB);
+														break;
+													case RAW:
+														str = params;
+														break;
+													default:
+														break;
+												}
+												if (str) websocket_send_str(sock, str, 1);
+												if (free_str) free(str);
+											} else {
+												wdprintf(V_INFO, "gmuc", "Connection not established. Cannot send command.\n");
+											}
+										}
+										wprintw(ui.win_cmd->win, "Command translates to %d", cmd);
+										if (params) {
+											wprintw(ui.win_cmd->win, " with parameters '%s'", params);
+											free(params);
+										}
+										wprintw(ui.win_cmd->win, ".\n", cmd);
+										free(input);
+										input = NULL;
+										ui_cursor_text_input(&ui, NULL);
+									} else {
+										wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
+									}
+									wchars[0] = L'\0';
+								}
+								ui_refresh_active_window(&ui);
+								ui_cursor_text_input(&ui, NULL);
+								window_refresh(ui.win_footer);
+								break;
+							}
+							case KEY_BACKSPACE:
+							case '\b':
+							case KEY_DC:
+							case 127: {
+								if (cpos > 0) {
+									wchars[cpos-1] = L'\0';
+									cpos--;
+								}
+								input = wchars_to_utf8_str_realloc(input, wchars);
+								if (input) {
+									ui_refresh_active_window(&ui);
+									ui_cursor_text_input(&ui, input);
+								} else {
+									wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
+								}
+								window_refresh(ui.win_footer);
+								break;
+							}
+							case KEY_RESIZE:
+								flushinp();
+								break;
+							default: {
+								wchars[cpos] = ch;
+								wchars[cpos+1] = L'\0';
+								cpos++;
+								input = wchars_to_utf8_str_realloc(input, wchars);
+								ui_cursor_text_input(&ui, input);
+								window_refresh(ui.win_footer);
+								break;
+							}
+						}
+					} else if (res == OK || res == KEY_CODE_YES) {
+						Function func = get_function_from_button(&ui, res, ch);
+						switch (func) {
+							case FUNC_NEXT_WINDOW:
+								ui_active_win_next(&ui);
+								break;
+							case FUNC_FB_ADD: {
+								char  cmd[256];
+								int   sel_row = listwidget_get_selection(ui.lw_fb);
+								char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
+								char *file = listwidget_get_row_data(ui.lw_fb, sel_row, 1);
+								char *type = strcmp(ftype, "[DIR]") == 0 ? "dir" : "file";
+								char *cur_dir_esc = json_string_escape_alloc(cur_dir);
+								char *file_esc = json_string_escape_alloc(file);
+								if (cur_dir_esc && file_esc) {
+									snprintf(cmd, 255, 
+											 "{\"cmd\":\"playlist_add\",\"path\":\"%s/%s\",\"type\":\"%s\"}",
+											 cur_dir_esc, file_esc, type);
+									websocket_send_str(sock, cmd, 1);
+								}
+								free(cur_dir_esc);
+								free(file_esc);
+								break;
+							}
+							case FUNC_PREVIOUS:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"prev\"}", 1);
+								}
+								break;
+							case FUNC_NEXT:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"next\"}", 1);
+								}
+								break;
+							case FUNC_STOP:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"stop\"}", 1);
+								}
+								break;
+							case FUNC_PAUSE:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"pause\"}", 1);
+								}
+								break;
+							case FUNC_PLAY:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"play\"}", 1);
+								}
+								break;
+							case FUNC_PLAY_PAUSE:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"play_pause\"}", 1);
+								}
+								break;
+							case FUNC_PLAYMODE:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_cycle\"}", 1);
+								}
+								break;
+							case FUNC_PL_CLEAR:
+								if (state == STATE_CONNECTION_ESTABLISHED) {
+									websocket_send_str(sock, "{\"cmd\":\"playlist_clear\"}", 1);
+								}
+								break;
+							case FUNC_PL_DEL_ITEM: {
+								char str[128];
+								snprintf(str, 127, "{\"cmd\":\"playlist_item_delete\",\"item\":%d}", 
+										 listwidget_get_selection(ui.lw_pl));
+								websocket_send_str(sock, str, 1);
+								break;
+							}
+							case FUNC_TEXT_INPUT:
+								ui_enable_text_input(&ui, 1);
+								break;
+							case FUNC_SEARCH:
+								/* set text to "search " */
+								mbstowcs(wchars, "search ", 7);
+								cpos = 7;
+								wchars[cpos] = L'\0';
+								input = wchars_to_utf8_str_realloc(input, wchars);
+								ui_enable_text_input(&ui, 1);
+								break;
+							case FUNC_VOLUME_UP:
+								websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);
+								break;
+							case FUNC_VOLUME_DOWN:
+								websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":-1}", 1);
+								break;
+							case FUNC_QUIT:
+								quit = 1;
+							default:
+								break;
+						}
+
+						switch (ch) {
+							case KEY_DOWN:
+								flushinp();
+								switch(ui.active_win) {
+									case WIN_PL:
+										listwidget_move_cursor(ui.lw_pl, 1);
+										break;
+									case WIN_FB:
+										listwidget_move_cursor(ui.lw_fb, 1);
+										break;
+									case WIN_LIB:
+										listwidget_move_cursor(ui.lw_mlib_search, 1);
+										break;
+									default:
+										break;
+								}
+								break;
+							case KEY_UP:
+								flushinp();
+								switch(ui.active_win) {
+									case WIN_PL:
+										listwidget_move_cursor(ui.lw_pl, -1);
+										break;
+									case WIN_FB:
+										listwidget_move_cursor(ui.lw_fb, -1);
+										break;
+									case WIN_LIB:
+										listwidget_move_cursor(ui.lw_mlib_search, -1);
+										break;
+									default:
+										break;
+								}
+								break;
+							case KEY_NPAGE:
+								flushinp();
+								switch(ui.active_win) {
+									case WIN_PL:
+										listwidget_move_cursor(ui.lw_pl, ui.lw_pl->win->height-2);
+										break;
+									case WIN_FB:
+										listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
+										break;
+									case WIN_LIB:
+										listwidget_move_cursor(ui.lw_mlib_search, ui.lw_mlib_search->win->height-2);
+										break;
+									default:
+										break;
+								}
+								break;
+							case KEY_PPAGE:
+								flushinp();
+								switch(ui.active_win) {
+									case WIN_PL:
+										listwidget_move_cursor(ui.lw_pl, -(ui.lw_pl->win->height-2));
+										break;
+									case WIN_FB:
+										listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
+										break;
+									case WIN_LIB:
+										listwidget_move_cursor(ui.lw_mlib_search, -(ui.lw_mlib_search->win->height-2));
+										break;
+									default:
+										break;
+								}
+								break;
+							case '\n': {
+								switch (ui.active_win) {
+									case WIN_PL:
+										playlist_handle_return_key(&ui, sock);
+										break;
+									case WIN_FB:
+										file_browser_handle_return_key(&ui, sock, &cur_dir);
+										break;
+									case WIN_LIB:
+										media_library_handle_return_key(&ui, sock);
+										break;
+									default:
+										break;
+								}
+								break;
+							}
+						}
+						ui_refresh_active_window(&ui);
+						ui_cursor_text_input(&ui, input);
+						window_refresh(ui.win_footer);
+					} else {
+						wprintw(ui.win_cmd->win, "ERROR\n");
+					}
+				}
+				if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
+					if (r) {
+						memset(buffer, 0, BUF); // we don't need that later
+						size = recv(sock, buffer, BUF-1, 0);
+						if (size <= 0) {
+							wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
+							if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
+							ui_update_trackinfo(&ui, "Gmu Network Error", strerror(errno), NULL, NULL);
+							ui_draw_header(&ui);
+							network_error = 1;
+						}
+						if (size > 0) r = ringbuffer_write(&rb, buffer, size);
+						if (!r) wprintw(ui.win_cmd->win, "Write failed, ringbuffer full!\n");
+					} else {
+						wprintw(ui.win_cmd->win, "Can't read more from socket, ringbuffer full!\n");
+					}
+				}
+
+				switch (state) {
+					case STATE_WEBSOCKET_HANDSHAKE: {
+						state = do_websocket_handshake(&rb, state);
+						break;
+					}
+					case STATE_CONNECTION_ESTABLISHED: {
+						if (!network_error)
+							network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, &cur_dir, input);
+						break;
+					}
+					case STATE_WEBSOCKET_HANDSHAKE_FAILED:
+						network_error = 1;
+						connected = 0;
+						break;
+				}
+			}
+			if (input) free(input);
+			ringbuffer_free(&rb);
+			close(sock);
+			res = EXIT_SUCCESS;
+		}
+		usleep(500000);
+	}
+	ui_free(&ui);
+	free(cur_dir);
+	if (buffer) free(buffer);
+	return res;
+}
+
 int main(int argc, char **argv)
 {
-	int        sock, res = EXIT_FAILURE;
-	char      *buffer = malloc(BUF);
-	ssize_t    size;
+	int        res = EXIT_FAILURE;
+	char      *tmp;
 	ConfigFile config;
 	char      *password, *host;
 	char       config_file_path[256] = "", *homedir;
@@ -607,444 +1046,8 @@ int main(int argc, char **argv)
 	wdprintf_set_verbosity(V_SILENT);
 	set_terminal_title("Gmu");
 
-	if (argc >= 1) {
-		int   network_error = 0, color = 0;
-		UI    ui;
-		char *cur_dir = NULL, *tmp;
-
-		/* Setup SIGWINCH */
-		struct sigaction act;
-		sigemptyset(&act.sa_mask);
-		act.sa_flags = SA_RESTART;
-		act.sa_handler = sig_handler_sigwinch;
-		sigaction(SIGWINCH, &act, NULL);
-
-		tmp = cfg_get_key_value(config, "Color");
-		if (tmp && strcmp(tmp, "yes") == 0) color = 1;
-		ui_init(&ui, color);
-		ui_draw(&ui);
-		ui_cursor_text_input(&ui, NULL);
-		ui_enable_text_input(&ui, 0);
-
-		while (!quit) {
-			ui_update_trackinfo(&ui, host, "Trying to connect to Gmu server", NULL, NULL);
-			ui_draw_header(&ui);
-			if (!buffer) {
-				quit = 1;
-			} else if ((sock = nethelper_tcp_connect_to_host(host, PORT, 0)) > 0) {
-				struct timeval tv;
-				fd_set         readfds, errorfds;
-				char          *input = NULL;
-				int            cpos = 0;
-				RingBuffer     rb;
-				int            r = 1, connected = 1;
-				State          state = STATE_WEBSOCKET_HANDSHAKE;
-				char           str2[1024], *key;
-				wchar_t        wchars[256];
-				char          *str = "GET /gmu HTTP/1.1\r\n"
-					"Host: %s\r\n"
-					"Upgrade: websocket\r\n"
-					"Connection: Upgrade\r\n"
-					"Sec-WebSocket-Key: %s\r\n"
-					"Sec-WebSocket-Version: 13\r\n\r\n";
-
-				network_error = 0;
-				wchars[0] = L'\0';
-
-				key = websocket_client_generate_sec_websocket_key_alloc();
-				if (key) {
-					snprintf(str2, 1023, str, host, key);
-					wdprintf(V_DEBUG, "gmuc", "request:%s\n", str2);
-					send(sock, str2, strlen(str2), 0);
-					free(key);
-				}
-
-				ringbuffer_init(&rb, 65536);
-				while (!quit && connected && !network_error) {
-					FD_ZERO(&readfds);
-					FD_ZERO(&errorfds);
-					FD_SET(fileno(stdin), &readfds);
-					FD_SET(sock, &readfds);
-					tv.tv_sec = 1;
-					tv.tv_usec = 500000;
-					if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
-						/* ERROR in select() */
-						FD_ZERO(&readfds);
-					}
-
-					if (resized) {
-						resized = 0;
-						ui_resize(&ui);
-					}
-
-					if (FD_ISSET(fileno(stdin), &readfds)) {
-						char   buf[1024];
-						wint_t ch;
-						int    res;
-
-						memset(buf, 0, 1024);
-						res = wget_wch(stdscr, &ch);
-						if (res == OK && ui.text_input_enabled) {
-							ui_refresh_active_window(&ui);
-							switch (ch) {
-								case '\n': {
-									int len = wcstombs(NULL, wchars, 0);
-									ui_enable_text_input(&ui, 0);
-									ui_draw_footer(&ui);
-									if (len > 0) {
-										input = wchars_to_utf8_str_realloc(input, wchars);
-										if (input) {
-											Command cmd = NO_COMMAND;
-											char   *params = NULL;
-
-											if (len > 0) {
-												wprintw(ui.win_cmd->win, "%s\n", input);
-												cpos = 0;
-												parse_input_alloc(input, &cmd, &params);
-												if (state == STATE_CONNECTION_ESTABLISHED) {
-													char *str = NULL;
-													int   free_str = 0;
-													switch (cmd) {
-														case PLAY:
-															str = "{\"cmd\":\"play\"}";
-															break;
-														case PAUSE:
-															str = "{\"cmd\":\"pause\"}";
-															break;
-														case NEXT:
-															str = "{\"cmd\":\"next\"}";
-															break;
-														case PREVIOUS:
-															str = "{\"cmd\":\"prev\"}";
-															break;
-														case STOP:
-															str = "{\"cmd\":\"stop\"}";
-															break;
-														case FILES:
-															str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
-															break;
-														case ADD:
-															str = malloc(320);
-															if (str) {
-																char *params_esc = json_string_escape_alloc(params);
-																if (params_esc) {
-																	if (snprintf(str, 320, "{\"cmd\":\"playlist_add\",\"path\":\"%s\",\"type\":\"file\"}", params_esc) == 320) {
-																		free(str);
-																		str = NULL;
-																	}
-																	free(params_esc);
-																}
-																free_str = 1;
-															}
-															break;
-														case SEARCH:
-															str = malloc(320);
-															if (str) {
-																char *params_esc = json_string_escape_alloc(params);
-																if (params_esc) {
-																	if (snprintf(str, 320, "{\"cmd\":\"medialib_search\",\"type\":\"0\",\"str\":\"%s\"}", params_esc) == 320) {
-																		free(str);
-																		str = NULL;
-																	}
-																	free(params_esc);
-																}
-																free_str = 1;
-															}
-															ui_active_win_set(&ui, WIN_LIB);
-															break;
-														case RAW:
-															str = params;
-															break;
-														default:
-															break;
-													}
-													if (str) websocket_send_str(sock, str, 1);
-													if (free_str) free(str);
-												} else {
-													wdprintf(V_INFO, "gmuc", "Connection not established. Cannot send command.\n");
-												}
-											}
-											wprintw(ui.win_cmd->win, "Command translates to %d", cmd);
-											if (params) {
-												wprintw(ui.win_cmd->win, " with parameters '%s'", params);
-												free(params);
-											}
-											wprintw(ui.win_cmd->win, ".\n", cmd);
-											free(input);
-											input = NULL;
-											ui_cursor_text_input(&ui, NULL);
-										} else {
-											wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
-										}
-										wchars[0] = L'\0';
-									}
-									ui_refresh_active_window(&ui);
-									ui_cursor_text_input(&ui, NULL);
-									window_refresh(ui.win_footer);
-									break;
-								}
-								case KEY_BACKSPACE:
-								case '\b':
-								case KEY_DC:
-								case 127: {
-									if (cpos > 0) {
-										wchars[cpos-1] = L'\0';
-										cpos--;
-									}
-									input = wchars_to_utf8_str_realloc(input, wchars);
-									if (input) {
-										ui_refresh_active_window(&ui);
-										ui_cursor_text_input(&ui, input);
-									} else {
-										wprintw(ui.win_cmd->win, "Error when processing input text. :(\n");
-									}
-									window_refresh(ui.win_footer);
-									break;
-								}
-								case KEY_RESIZE:
-									flushinp();
-									break;
-								default: {
-									wchars[cpos] = ch;
-									wchars[cpos+1] = L'\0';
-									cpos++;
-									input = wchars_to_utf8_str_realloc(input, wchars);
-									ui_cursor_text_input(&ui, input);
-									window_refresh(ui.win_footer);
-									break;
-								}
-							}
-						} else if (res == OK || res == KEY_CODE_YES) {
-							Function func = get_function_from_button(&ui, res, ch);
-							switch (func) {
-								case FUNC_NEXT_WINDOW:
-									ui_active_win_next(&ui);
-									break;
-								case FUNC_FB_ADD: {
-									char  cmd[256];
-									int   sel_row = listwidget_get_selection(ui.lw_fb);
-									char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
-									char *file = listwidget_get_row_data(ui.lw_fb, sel_row, 1);
-									char *type = strcmp(ftype, "[DIR]") == 0 ? "dir" : "file";
-									char *cur_dir_esc = json_string_escape_alloc(cur_dir);
-									char *file_esc = json_string_escape_alloc(file);
-									if (cur_dir_esc && file_esc) {
-										snprintf(cmd, 255, 
-												 "{\"cmd\":\"playlist_add\",\"path\":\"%s/%s\",\"type\":\"%s\"}",
-												 cur_dir_esc, file_esc, type);
-										websocket_send_str(sock, cmd, 1);
-									}
-									free(cur_dir_esc);
-									free(file_esc);
-									break;
-								}
-								case FUNC_PREVIOUS:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"prev\"}", 1);
-									}
-									break;
-								case FUNC_NEXT:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"next\"}", 1);
-									}
-									break;
-								case FUNC_STOP:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"stop\"}", 1);
-									}
-									break;
-								case FUNC_PAUSE:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"pause\"}", 1);
-									}
-									break;
-								case FUNC_PLAY:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"play\"}", 1);
-									}
-									break;
-								case FUNC_PLAY_PAUSE:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"play_pause\"}", 1);
-									}
-									break;
-								case FUNC_PLAYMODE:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_cycle\"}", 1);
-									}
-									break;
-								case FUNC_PL_CLEAR:
-									if (state == STATE_CONNECTION_ESTABLISHED) {
-										websocket_send_str(sock, "{\"cmd\":\"playlist_clear\"}", 1);
-									}
-									break;
-								case FUNC_PL_DEL_ITEM: {
-									char str[128];
-									snprintf(str, 127, "{\"cmd\":\"playlist_item_delete\",\"item\":%d}", 
-											 listwidget_get_selection(ui.lw_pl));
-									websocket_send_str(sock, str, 1);
-									break;
-								}
-								case FUNC_TEXT_INPUT:
-									ui_enable_text_input(&ui, 1);
-									break;
-								case FUNC_SEARCH:
-									/* set text to "search " */
-									mbstowcs(wchars, "search ", 7);
-									cpos = 7;
-									wchars[cpos] = L'\0';
-									input = wchars_to_utf8_str_realloc(input, wchars);
-									ui_enable_text_input(&ui, 1);
-									break;
-								case FUNC_VOLUME_UP:
-									websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);
-									break;
-								case FUNC_VOLUME_DOWN:
-									websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":-1}", 1);
-									break;
-								case FUNC_QUIT:
-									quit = 1;
-								default:
-									break;
-							}
-
-							switch (ch) {
-								case KEY_DOWN:
-									flushinp();
-									switch(ui.active_win) {
-										case WIN_PL:
-											listwidget_move_cursor(ui.lw_pl, 1);
-											break;
-										case WIN_FB:
-											listwidget_move_cursor(ui.lw_fb, 1);
-											break;
-										case WIN_LIB:
-											listwidget_move_cursor(ui.lw_mlib_search, 1);
-											break;
-										default:
-											break;
-									}
-									break;
-								case KEY_UP:
-									flushinp();
-									switch(ui.active_win) {
-										case WIN_PL:
-											listwidget_move_cursor(ui.lw_pl, -1);
-											break;
-										case WIN_FB:
-											listwidget_move_cursor(ui.lw_fb, -1);
-											break;
-										case WIN_LIB:
-											listwidget_move_cursor(ui.lw_mlib_search, -1);
-											break;
-										default:
-											break;
-									}
-									break;
-								case KEY_NPAGE:
-									flushinp();
-									switch(ui.active_win) {
-										case WIN_PL:
-											listwidget_move_cursor(ui.lw_pl, ui.lw_pl->win->height-2);
-											break;
-										case WIN_FB:
-											listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
-											break;
-										case WIN_LIB:
-											listwidget_move_cursor(ui.lw_mlib_search, ui.lw_mlib_search->win->height-2);
-											break;
-										default:
-											break;
-									}
-									break;
-								case KEY_PPAGE:
-									flushinp();
-									switch(ui.active_win) {
-										case WIN_PL:
-											listwidget_move_cursor(ui.lw_pl, -(ui.lw_pl->win->height-2));
-											break;
-										case WIN_FB:
-											listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
-											break;
-										case WIN_LIB:
-											listwidget_move_cursor(ui.lw_mlib_search, -(ui.lw_mlib_search->win->height-2));
-											break;
-										default:
-											break;
-									}
-									break;
-								case '\n': {
-									switch (ui.active_win) {
-										case WIN_PL:
-											playlist_handle_return_key(&ui, sock);
-											break;
-										case WIN_FB:
-											file_browser_handle_return_key(&ui, sock, &cur_dir);
-											break;
-										case WIN_LIB:
-											media_library_handle_return_key(&ui, sock);
-											break;
-										default:
-											break;
-									}
-									break;
-								}
-							}
-							ui_refresh_active_window(&ui);
-							ui_cursor_text_input(&ui, input);
-							window_refresh(ui.win_footer);
-						} else {
-							wprintw(ui.win_cmd->win, "ERROR\n");
-						}
-					}
-					if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
-						if (r) {
-							memset(buffer, 0, BUF); // we don't need that later
-							size = recv(sock, buffer, BUF-1, 0);
-							if (size <= 0) {
-								wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
-								if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
-								ui_update_trackinfo(&ui, "Gmu Network Error", strerror(errno), NULL, NULL);
-								ui_draw_header(&ui);
-								network_error = 1;
-							}
-							if (size > 0) r = ringbuffer_write(&rb, buffer, size);
-							if (!r) wprintw(ui.win_cmd->win, "Write failed, ringbuffer full!\n");
-						} else {
-							wprintw(ui.win_cmd->win, "Can't read more from socket, ringbuffer full!\n");
-						}
-					}
-
-					switch (state) {
-						case STATE_WEBSOCKET_HANDSHAKE: {
-							state = do_websocket_handshake(&rb, state);
-							break;
-						}
-						case STATE_CONNECTION_ESTABLISHED: {
-							if (!network_error)
-								network_error = handle_data_in_ringbuffer(&rb, &ui, sock, password, &cur_dir, input);
-							break;
-						}
-						case STATE_WEBSOCKET_HANDSHAKE_FAILED:
-							network_error = 1;
-							connected = 0;
-							break;
-					}
-				}
-				if (input) free(input);
-				ringbuffer_free(&rb);
-				close(sock);
-				res = EXIT_SUCCESS;
-			}
-			usleep(500000);
-		}
-		ui_free(&ui);
-		free(cur_dir);
-	} else {
-		printf("Usage: %s <command> [parameters]\n", argv[0]);
-		printf("Use \"%s h\" for a list of available commands.\n", argv[0]);
-	}
+	tmp = cfg_get_key_value(config, "Color");
+	if (argc >= 1) res = run_gmuc_ui(tmp && strcmp(tmp, "yes") == 0, host, password);
 	cfg_free_config_file_struct(&config);
-	if (buffer) free(buffer);
 	return res;
 }
