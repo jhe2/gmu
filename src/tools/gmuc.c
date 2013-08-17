@@ -481,7 +481,7 @@ static void gmuc_help(char *str)
 
 static Function get_function_from_button(UI *ui, int res, wchar_t ch)
 {
-	int i;
+	int      i;
 	Function func = FUNC_NONE;
 	for (i = 0; ui->fb_visible && ui->fb_visible[i].button_name; i++) {
 		if (ui->fb_visible[i].key == ch) {
@@ -503,8 +503,8 @@ static void playlist_handle_return_key(UI *ui, int sock)
 
 static void file_browser_handle_return_key(UI *ui, int sock, char **cur_dir)
 {
-	char tmp[256], *prev_cur_dir = *cur_dir;
-	int  sel_row = listwidget_get_selection(ui->lw_fb);
+	char  tmp[256], *prev_cur_dir = *cur_dir;
+	int   sel_row = listwidget_get_selection(ui->lw_fb);
 	char *ftype = listwidget_get_row_data(ui->lw_fb, sel_row, 0);
 	if (ftype && strcmp(ftype, "[DIR]") == 0) {
 		*cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
@@ -525,8 +525,8 @@ static void file_browser_handle_return_key(UI *ui, int sock, char **cur_dir)
 
 static void media_library_handle_return_key(UI *ui, int sock)
 {
-	char tmp[256];
-	int s = listwidget_get_selection(ui->lw_mlib_search);
+	char  tmp[256];
+	int   s = listwidget_get_selection(ui->lw_mlib_search);
 	char *idstr = listwidget_get_row_data(ui->lw_mlib_search, s, 3);
 	int   id = idstr ? atoi(idstr) : -1;
 	wprintw(ui->win_cmd->win, "Add medialib ID %d to playlist...\n", id);
@@ -536,12 +536,12 @@ static void media_library_handle_return_key(UI *ui, int sock)
 
 int main(int argc, char **argv)
 {
-	int                sock, res = EXIT_FAILURE;
-	char              *buffer = malloc(BUF);
-	ssize_t            size;
-	ConfigFile         config;
-	char              *password, *host;
-	char               config_file_path[256] = "", *homedir;
+	int        sock, res = EXIT_FAILURE;
+	char      *buffer = malloc(BUF);
+	ssize_t    size;
+	ConfigFile config;
+	char      *password, *host;
+	char       config_file_path[256] = "", *homedir;
 
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
