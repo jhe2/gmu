@@ -695,7 +695,7 @@ int main(int argc, char **argv)
 																}
 																free_str = 1;
 															}
-															ui_active_win_set(&ui, WIN_LIB_SEARCH);
+															ui_active_win_set(&ui, WIN_LIB);
 															break;
 														case RAW:
 															str = params;
@@ -864,7 +864,7 @@ int main(int argc, char **argv)
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, 1);
 											break;
-										case WIN_LIB_SEARCH:
+										case WIN_LIB:
 											listwidget_move_cursor(ui.lw_mlib_search, 1);
 											break;
 										default:
@@ -880,7 +880,7 @@ int main(int argc, char **argv)
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, -1);
 											break;
-										case WIN_LIB_SEARCH:
+										case WIN_LIB:
 											listwidget_move_cursor(ui.lw_mlib_search, -1);
 											break;
 										default:
@@ -896,7 +896,7 @@ int main(int argc, char **argv)
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
 											break;
-										case WIN_LIB_SEARCH:
+										case WIN_LIB:
 											listwidget_move_cursor(ui.lw_mlib_search, ui.lw_mlib_search->win->height-2);
 											break;
 										default:
@@ -912,7 +912,7 @@ int main(int argc, char **argv)
 										case WIN_FB:
 											listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
 											break;
-										case WIN_LIB_SEARCH:
+										case WIN_LIB:
 											listwidget_move_cursor(ui.lw_mlib_search, -(ui.lw_mlib_search->win->height-2));
 											break;
 										default:
@@ -947,7 +947,7 @@ int main(int argc, char **argv)
 											}
 											break;
 										}
-										case WIN_LIB_SEARCH: {
+										case WIN_LIB: {
 											char tmp[256];
 											int s = listwidget_get_selection(ui.lw_mlib_search);
 											char *idstr = listwidget_get_row_data(ui.lw_mlib_search, s, 3);

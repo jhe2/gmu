@@ -287,12 +287,12 @@ void ui_refresh_active_window(UI *ui)
 			ui_draw_trackinfo(ui);
 			window_refresh(ui->win_ti);
 			break;
-		case WIN_CMD:
-			window_refresh(ui->win_cmd);
-			break;
-		case WIN_LIB_SEARCH:
+		case WIN_LIB:
 			listwidget_draw(ui->lw_mlib_search);
 			listwidget_refresh(ui->lw_mlib_search);
+			break;
+		case WIN_CMD:
+			window_refresh(ui->win_cmd);
 			break;
 	}
 }
@@ -380,7 +380,7 @@ void ui_set_footer_buttons(UI *ui)
 void ui_active_win_next(UI *ui)
 {
 	ui->active_win++;
-	if (ui->active_win > WIN_FB)
+	if (ui->active_win > WIN_LIB)
 #ifdef DEBUG
 		ui->active_win = WIN_CMD;
 #else
