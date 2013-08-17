@@ -37,7 +37,7 @@ typedef struct FooterButtons {
 typedef struct UI {
 	Window        *win_cmd, *win_ti, *win_lib, *win_header, *win_footer;
 	ListWidget    *lw_pl, *lw_fb, *lw_mlib_search;
-	FooterButtons *fb_pl, *fb_fb, *fb_ti, *fb_cmd;
+	FooterButtons *fb_pl, *fb_fb, *fb_ti, *fb_lib, *fb_cmd;
 	FooterButtons *fb_visible;
 	int            rows, cols;
 	WindowType     active_win;

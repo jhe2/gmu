@@ -28,7 +28,7 @@
 static FooterButtons fb_pl[] = {
 	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "b",   "Prev",     FUNC_PREVIOUS,    'b', 0 },
-	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
+	{ "S",   "Stop",     FUNC_STOP,        'S', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "m",   "P.Mode",   FUNC_PLAYMODE,    'm', 0 },
@@ -45,7 +45,7 @@ static FooterButtons fb_fb[] = {
 	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "a",   "Add",      FUNC_FB_ADD,      'a', 0 },
 	{ "b",   "Prev",     FUNC_PREVIOUS,    'b', 0 },
-	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
+	{ "S",   "Stop",     FUNC_STOP,        'S', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
@@ -58,7 +58,7 @@ static FooterButtons fb_fb[] = {
 static FooterButtons fb_ti[] = {
 	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "b",   "Prev",     FUNC_PREVIOUS,    'b', 0 },
-	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
+	{ "S",   "Stop",     FUNC_STOP,        'S', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
@@ -71,9 +71,23 @@ static FooterButtons fb_ti[] = {
 static FooterButtons fb_cmd[] = {
 	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
 	{ "b",   "Prev",     FUNC_PREVIOUS,    'b', 0 },
-	{ "s",   "Stop",     FUNC_STOP,        's', 0 },
+	{ "S",   "Stop",     FUNC_STOP,        'S', 0 },
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
+	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
+	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
+	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
+	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
+	{ NULL, NULL, FUNC_NONE, 0, 0 }
+};
+
+static FooterButtons fb_lib[] = {
+	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
+	{ "b",   "Prev",     FUNC_PREVIOUS,    'b', 0 },
+	{ "S",   "Stop",     FUNC_STOP,        'S', 0 },
+	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
+	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
+	{ "s",   "Search",   FUNC_SEARCH,      's', 0 },
 	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
@@ -201,6 +215,7 @@ void ui_init(UI *ui, int color)
 	ui->fb_fb = fb_fb;
 	ui->fb_ti = fb_ti;
 	ui->fb_cmd = fb_cmd;
+	ui->fb_lib = fb_lib;
 	ui->fb_visible = fb_pl;
 	ui->text_input_enabled = 0;
 }
@@ -369,6 +384,7 @@ void ui_set_footer_buttons(UI *ui)
 		case WIN_PL:  fb = ui->fb_pl; break;
 		case WIN_FB:  fb = ui->fb_fb; break;
 		case WIN_TI:  fb = ui->fb_ti; break;
+		case WIN_LIB: fb = ui->fb_lib; break;
 		case WIN_CMD: fb = ui->fb_cmd; break;
 	}
 	if (fb != ui->fb_visible) {

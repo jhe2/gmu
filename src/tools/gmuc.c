@@ -842,6 +842,14 @@ int main(int argc, char **argv)
 								case FUNC_TEXT_INPUT:
 									ui_enable_text_input(&ui, 1);
 									break;
+								case FUNC_SEARCH:
+									/* set text to "search " */
+									mbstowcs(wchars, "search ", 7);
+									cpos = 7;
+									wchars[cpos] = L'\0';
+									input = wchars_to_utf8_str_realloc(input, wchars);
+									ui_enable_text_input(&ui, 1);
+									break;
 								case FUNC_VOLUME_UP:
 									websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);
 									break;
