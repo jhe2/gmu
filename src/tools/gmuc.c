@@ -505,7 +505,11 @@ static void file_browser_handle_return_key(UI *ui, int sock, char **cur_dir)
 {
 	char  tmp[256], *prev_cur_dir = *cur_dir;
 	int   sel_row = listwidget_get_selection(ui->lw_fb);
-	char *ftype = listwidget_get_row_data(ui->lw_fb, sel_row, 0);
+	char *ftype = NULL;
+	
+	if (sel_row >= 0)
+		ftype = listwidget_get_row_data(ui->lw_fb, sel_row, 0);
+
 	if (ftype && strcmp(ftype, "[DIR]") == 0) {
 		*cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
 		                                 listwidget_get_row_data(ui->lw_fb, sel_row, 1));

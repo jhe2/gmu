@@ -68,7 +68,7 @@ int listwidget_get_rows(ListWidget *lw)
 char *listwidget_get_row_data(ListWidget *lw, int row, int col)
 {
 	int i;
-	ListCell *crow = lw->rows_ref[row];
+	ListCell *crow = lw->rows_ref ? lw->rows_ref[row] : NULL;
 	for (i = 0; i < col && crow; i++) {
 		crow = crow->next_column;
 	}
