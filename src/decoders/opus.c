@@ -139,9 +139,14 @@ static int decode_data(char *target, int max_size)
 		prev_li = li;
 		read_tags(li, tim);
 	}
-	int samples = op_read_stereo(oof, (opus_int16 *)target, max_size / 2);
+	int samples = 0;
+	
+	if (channels > 1)
+		samples = op_read_stereo(oof, (opus_int16 *)target, max_size / 2);
+	else if (channels == 1)
+		samples = op_read(oof, (opus_int16 *)target, max_size / 2, NULL);
 	if (samples > 0) {
-		res = samples * 4;
+		res = samples * 2 * channels;
 	}
 	return res;
 }
