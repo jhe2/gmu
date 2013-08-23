@@ -306,6 +306,7 @@ static int meta_data_load(const char *filename)
 	int result = 0, error;
 	OpusFileCallbacks ofc;
 	Reader *re;
+	OggOpusFile *oof_tmp;
 
 	wdprintf(V_DEBUG, "opus", "Initializing.\n");
 	trackinfo_init(&ti);
@@ -317,17 +318,17 @@ static int meta_data_load(const char *filename)
 
 	re = reader_open((char *)filename);
 	if (re) {
-		oof = op_open_callbacks(re, &ofc, (unsigned char *)reader_get_buffer(re), 0, &error);
+		oof_tmp = op_open_callbacks(re, &ofc, (unsigned char *)reader_get_buffer(re), 0, &error);
 
 		wdprintf(V_INFO, "opus", "Stream open result: %d\n", error);
 		if (error) {
 			result = 0;
 		} else {
-			int li = op_current_link(oof);
+			int li = op_current_link(oof_tmp);
 			read_tags(li, tim_metaonly);
 			result = 1;
 		}
-		op_free(oof);
+		op_free(oof_tmp);
 		reader_close(re);
 	}
 	return result;
