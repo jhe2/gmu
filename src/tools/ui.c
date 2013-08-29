@@ -88,6 +88,7 @@ static FooterButtons fb_lib[] = {
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "s",   "Search",   FUNC_SEARCH,      's', 0 },
+	{ "R",   "Refresh",  FUNC_MLIB_REFRESH,'R', 0 },
 	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },

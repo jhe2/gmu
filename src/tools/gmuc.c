@@ -834,6 +834,9 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								input = wchars_to_utf8_str_realloc(input, wchars);
 								ui_enable_text_input(&ui, 1);
 								break;
+							case FUNC_MLIB_REFRESH:
+								websocket_send_str(sock, "{\"cmd\":\"medialib_refresh\"}", 1);
+								break;
 							case FUNC_VOLUME_UP:
 								websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);
 								break;
