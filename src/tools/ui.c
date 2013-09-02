@@ -183,6 +183,7 @@ void ui_init(UI *ui, int color)
 	if (ui->color) {
 		if (has_colors()) {
 			start_color();
+			use_default_colors();
 			init_pair(1, COLOR_YELLOW, COLOR_BLACK);
 			init_pair(2, COLOR_GREEN, COLOR_BLACK);
 			init_pair(3, COLOR_BLUE, COLOR_BLACK);
@@ -230,6 +231,7 @@ void ui_draw_header(UI *ui)
 		if (ui->color) wattron(ui->win_header->win, COLOR_PAIR(1));
 		mvwprintw(ui->win_header->win, 0, 0, "Gmu");
 		if (ui->color) wattroff(ui->win_header->win, COLOR_PAIR(1));
+		if (ui->color) wbkgdset(ui->win_header->win, COLOR_PAIR(4));
 		wclrtoeol(ui->win_header->win);
 		wprintw(ui->win_header->win, " %s %s%s%s",
 		        ui->status != NULL ? ui->status : "  ", 
@@ -284,7 +286,8 @@ static void ui_draw_footer_button(UI *ui, char *key, char *name)
 	wattron(ui->win_footer->win, A_BOLD);
 	wprintw(ui->win_footer->win, "%s ", name);
 	wattroff(ui->win_footer->win, A_BOLD);
-	if (ui->color) wattron(ui->win_footer->win, COLOR_PAIR(4));
+	if (ui->color) wbkgdset(ui->win_header->win, COLOR_PAIR(4));
+	wclrtoeol(ui->win_header->win);
 }
 
 void ui_refresh_active_window(UI *ui)
