@@ -286,7 +286,7 @@ static void ui_draw_footer_button(UI *ui, char *key, char *name)
 	wattron(ui->win_footer->win, A_BOLD);
 	wprintw(ui->win_footer->win, "%s ", name);
 	wattroff(ui->win_footer->win, A_BOLD);
-	if (ui->color) wbkgdset(ui->win_header->win, COLOR_PAIR(4));
+	if (ui->color) wbkgdset(ui->win_footer->win, COLOR_PAIR(4));
 	wclrtoeol(ui->win_header->win);
 }
 
