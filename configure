@@ -392,6 +392,14 @@ if [ $fe_web != 0 ]; then
 	fe_web=$?
 fi
 
+if [ $fe_lirc != 0 ]; then
+	includes_test="#include <pthread.h>
+#include <lirc/lirc_client.h>"
+	libs_test="-llirc_client"
+	test_lib "lirc_client"
+	fe_lirc=$?
+fi
+
 echo
 echo "Configuration complete!"
 echo "Target device: $target_device"
