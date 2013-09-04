@@ -62,7 +62,7 @@ int main(void)
 }
 _WEJTEST
 
-	echo "Checking library '$1'..."
+	echo "Checking '$1'..."
 	res=1
 	echo -n "$1 header files: "
 	$CC $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall
@@ -363,6 +363,33 @@ if [ $feature_medialib != 0 ]; then
 	else
 		feature_medialib=0
 	fi
+fi
+
+
+if [ $fe_sdl != 0 ]; then
+	includes_test="#include <SDL/SDL.h>
+#include <SDL/SDL_image.h>"
+	libs_test="-lSDL_image -lSDL"
+	test_lib "SDL + helper libs"
+	fe_sdl=$?
+fi
+
+if [ $fe_web != 0 ]; then
+	includes_test="#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <signal.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+"
+	libs_test="-lpthread"
+	test_lib "web frontend dependencies"
+	fe_web=$?
 fi
 
 echo
