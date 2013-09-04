@@ -193,6 +193,10 @@ print_features_and_write_config()
 		echo "LIRC frontend enabled"
 		frn="$frn frontends/lirc.so"
 	fi
+	if [ $fe_log = 1 ]; then
+		echo "Log frontend enabled"
+		frn="$frn frontends/log.so"
+	fi
 	echo "CC=$CC" >>config.mk
 	echo "SDL_LIB=\$(shell sdl-config --libs)" >>config.mk
 	echo "SDL_CFLAGS=\$(shell sdl-config --cflags)" >>config.mk
@@ -227,6 +231,7 @@ dec_modplug=-2
 fe_sdl=-2
 fe_web=-2
 fe_lirc=-2
+fe_log=-2
 feature_medialib=1
 target_device="unknown"
 
@@ -398,6 +403,17 @@ if [ $fe_lirc != 0 ]; then
 	libs_test="-llirc_client"
 	test_lib "lirc_client"
 	fe_lirc=$?
+fi
+
+if [ $fe_log != 0 ]; then
+	includes_test="#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>"
+	libs_test=""
+	test_lib "log frontend dependencies"
+	fe_log=$?
 fi
 
 echo
