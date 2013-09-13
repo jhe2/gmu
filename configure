@@ -129,6 +129,9 @@ set_feature()
 		lirc-frontend)
 			fe_lirc=$on_off
 			;;
+		log-frontend)
+			fe_log=$on_off
+			;;
 		medialib)
 			feature_medialib=$on_off
 			;;
