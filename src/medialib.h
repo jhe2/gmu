@@ -15,7 +15,7 @@
 typedef struct GmuMedialib {
 	sqlite3      *db;
 	int           refresh_in_progress;
-	sqlite3_stmt *pp_stmt_search;
+	sqlite3_stmt *pp_stmt_search, *pp_stmt_browse;
 } GmuMedialib;
 
 typedef enum {
@@ -35,5 +35,8 @@ void medialib_path_remove(GmuMedialib *gm, char *path);
 int  medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, char *str);
 TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm);
 void medialib_search_finish(GmuMedialib *gm);
+int  medialib_browse(GmuMedialib *gm, char *sel_column, ...);
+char *medialib_browse_fetch_next_result(GmuMedialib *gm);
+void medialib_browse_finish(GmuMedialib *gm);
 TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id);
 #endif

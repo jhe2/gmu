@@ -238,6 +238,69 @@ void medialib_search_finish(GmuMedialib *gm)
 	sqlite3_finalize(gm->pp_stmt_search);
 }
 
+/*
+ * Browse the medialib by applying one or more filters.
+ * sel_column is the column name to be selected, e.g. "album".
+ * Last argument needs to be NULL.
+ * For each filter two arguments are required:
+ *  - column name (e.g. "artist") and
+ *  - filter value (e.g. "Foo")
+ * Any number of filters can be applied.
+ */
+int medialib_browse(GmuMedialib *gm, char *sel_column, ...)
+{
+	char   *q = NULL, *qtmp = NULL;
+	int     sqres = -1;
+	va_list args;
+	char   *arg;
+
+	va_start(args, sel_column);
+
+	qtmp = sqlite3_mprintf("SELECT DISTINCT %s FROM track WHERE 1=1", sel_column);
+	for (arg = va_arg(args, char *); arg; arg = va_arg(args, char *)) {
+		char *fcol = NULL;
+		char *fvalue = va_arg(args, char *);
+		if (fvalue) {
+			if (strcmp(arg, "artist") == 0) {
+				fcol = "artist";
+			} else if (strcmp(arg, "album") == 0) {
+				fcol = "album";
+			} else if (strcmp(arg, "title") == 0) {
+				fcol = "title";
+			} else if (strcmp(arg, "date") == 0) {
+				fcol = "date";
+			}
+			if (!fcol) break;
+			q = sqlite3_mprintf("%s AND %s = %Q", qtmp, fcol, fvalue);
+			if (qtmp) sqlite3_free(qtmp);
+			qtmp = q;
+		}
+	}
+	if (!q) q = qtmp;
+	qtmp = sqlite3_mprintf("%s ORDER BY %s ASC", q, sel_column);
+	sqlite3_free(q);
+	q = qtmp;
+
+	va_end(args);
+	sqres = sqlite3_prepare_v2(gm->db, q, -1, &(gm->pp_stmt_browse), NULL);
+	sqlite3_free(q);
+	return (sqres == SQLITE_OK);
+}
+
+char *medialib_browse_fetch_next_result(GmuMedialib *gm)
+{
+	char *res = NULL;
+	if (sqlite3_step(gm->pp_stmt_browse) == SQLITE_ROW) {
+		res = (char *)sqlite3_column_text(gm->pp_stmt_browse, 0);
+	}
+	return res;
+}
+
+void medialib_browse_finish(GmuMedialib *gm)
+{
+	sqlite3_finalize(gm->pp_stmt_browse);
+}
+
 TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id)
 {
 	sqlite3_stmt *pp_stmt;
