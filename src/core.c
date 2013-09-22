@@ -705,6 +705,40 @@ int gmu_core_medialib_add_id_to_playlist(int id)
 	return res;
 }
 
+int gmu_core_medialib_browse_artists(void)
+{
+	int res = 0;
+#ifdef GMU_MEDIALIB
+	res = medialib_browse(&gm, "artist", NULL);
+#endif
+	return res;
+}
+
+int gmu_core_medialib_browse_albums_by_artist(char *artist)
+{
+	int res = 0;
+#ifdef GMU_MEDIALIB
+	res = medialib_browse(&gm, "album", "artist", artist, NULL);
+#endif
+	return res;
+}
+
+char *gmu_core_medialib_browse_fetch_next_result(void)
+{
+	char *res = NULL;
+#ifdef GMU_MEDIALIB
+	res = medialib_browse_fetch_next_result(&gm);
+#endif
+	return res;
+}
+
+void gmu_core_medialib_browse_finish(void)
+{
+#ifdef GMU_MEDIALIB
+	medialib_browse_finish(&gm);
+#endif
+}
+
 static void print_cmd_help(char *prog_name)
 {
 	printf("Gmu Music Player " VERSION_NUMBER "\n");
