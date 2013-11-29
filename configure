@@ -25,7 +25,8 @@ fi
 TMP_CC=`which $CC`
 
 LIBRARY_PATHS=
-BASE_INCLUDE_PATH="`dirname $TMP_CC`/../include"
+BASE_DIR="`dirname $TMP_CC`/.."
+BASE_INCLUDE_PATH="$BASE_DIR/include"
 INCLUDE_PATHS="-I$BASE_INCLUDE_PATH"
 TARGET=unknown
 EXTRA_CFLAGS=
@@ -41,7 +42,7 @@ int main(void)
   return 0;
 }
 _WEJTEST
-	$CC $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c
+	$CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c
 
 	if [ $? = 0 ]; then
 		echo "Compiler $CC: okay";
@@ -65,7 +66,7 @@ _WEJTEST
 	echo "Checking '$1'..."
 	res=1
 	echo -n "$1 header files: "
-	$CC $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall
+	$CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall
 	if [ $? = 0 ]; then
 		echo "okay";
 	else
@@ -74,7 +75,7 @@ _WEJTEST
 	fi
 
 	echo -n "$1 library: "
-	$CC $LIBRARY_PATHS -o /tmp/test.exe /tmp/test.o $libs_test 2>/dev/null
+	$CC $LFLAGS $LIBRARY_PATHS -o /tmp/test.exe /tmp/test.o $libs_test 2>/dev/null
 	if [ $? = 0 ]; then
 		echo "okay";
 	else
@@ -137,6 +138,9 @@ set_feature()
 			;;
 	esac
 }
+
+sdl_cflags=
+sdl_libs=
 
 print_features_and_write_config()
 {
@@ -201,10 +205,15 @@ print_features_and_write_config()
 		frn="$frn frontends/log.so"
 	fi
 	echo "CC=$CC" >>config.mk
-	echo "SDL_LIB=\$(shell sdl-config --libs)" >>config.mk
-	echo "SDL_CFLAGS=\$(shell sdl-config --cflags)" >>config.mk
-	echo "CFLAGS=\$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DDEBUG $EXTRA_CFLAGS" >>config.mk
-	echo "LFLAGS=-Wl,-export-dynamic" >>config.mk
+	if [ $sdk_path ]; then
+		echo "SDL_CFLAGS=$(sdl-config --prefix=$sdk_path --cflags)" >>config.mk
+		echo "SDL_LIB=$(sdl-config --prefix=$sdk_path --libs)" >>config.mk
+	else
+		echo "SDL_CFLAGS=$(sdl-config --cflags)" >>config.mk
+		echo "SDL_LIB=$(sdl-config --libs)" >>config.mk
+	fi
+	echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DDEBUG $EXTRA_CFLAGS" >>config.mk
+	echo "LFLAGS=$LFLAGS -Wl,-export-dynamic" >>config.mk
 	echo "DECODERS_TO_BUILD=$dec" >>config.mk
 	echo "FRONTENDS_TO_BUILD=$frn" >>config.mk
 	echo "TARGET=$TARGET" >>config.mk
@@ -218,6 +227,7 @@ help()
 	echo "  --enable <feature>"
 	echo "  --disable <feature>"
 	echo "  --target-device <device name>"
+	echo "  --sdk-path </path/to/sdk/base/dir>"
 	echo "  --help"
 }
 
@@ -237,6 +247,7 @@ fe_lirc=-2
 fe_log=-2
 feature_medialib=1
 target_device="unknown"
+sdk_path=
 
 # Parse options
 file=""
@@ -280,6 +291,14 @@ do
 			target_device=${1#*=}
 			shift
 			;;
+		--sdk-path)
+			sdk_path=$2
+			shift 2
+			;;
+		--sdk-path=*)
+			sdk_path=${1#*=}
+			shift
+			;;
 		--) # End of all options
 			shift
 			break
@@ -307,7 +326,14 @@ fi
 
 # Tests
 includes_test="#include <SDL/SDL.h>"
-libs_test="-lSDL"
+if [ $sdk_path ]; then
+		sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
+		sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
+	else
+		sdl_cflags=$(sdl-config --cflags)
+		sdl_libs=$(sdl-config --libs)
+	fi
+libs_test=$sdl_libs
 test_lib "SDL"
 if [ $? = 0 ]; then
 	echo "ERROR: Gmu depends on SDL. Cannot continue without it."
