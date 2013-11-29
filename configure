@@ -149,8 +149,10 @@ print_features_and_write_config()
 
 	echo "# Generated Gmu config" >config.mk
 	echo "Enabled features:"
-	if [ $tool_gmuc = 1 ]; then
+	local TOOLS_TO_BUILD=
+	if [ $tool_gmuc != 0 ]; then
 		echo "gmuc enabled"
+		TOOLS_TO_BUILD="$TOOLS_TO_BUILD gmuc"
 	fi
 	if [ $feature_medialib = 1 ]; then
 		echo "Media library enabled"
@@ -217,6 +219,7 @@ print_features_and_write_config()
 	echo "DECODERS_TO_BUILD=$dec" >>config.mk
 	echo "FRONTENDS_TO_BUILD=$frn" >>config.mk
 	echo "TARGET=$TARGET" >>config.mk
+	echo "TOOLS_TO_BUILD=$TOOLS_TO_BUILD" >>config.mk
 	echo "$BUILD_CONFIG_EXTRAS" >>config.mk
 }
 
