@@ -329,51 +329,42 @@ TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id)
 	return ti;
 }
 
-int medialib_rate_track_up(GmuMedialib *gm, int id)
+static int rate_track(GmuMedialib *gm, int id, int relative, int rating)
 {
 	sqlite3_stmt *pp_stmt;
-	char         *q = "UPDATE track SET rating_explicit = rating_explicit + 1 WHERE id = ?1";
+	char         *q;
 	int           sqres;
 
+	if (!relative) {
+		q = "UPDATE track SET rating_explicit = ?2 WHERE id = ?1";
+	} else {
+		if (rating > 0)
+			q = "UPDATE track SET rating_explicit = rating_explicit + 1 WHERE id = ?1";
+		else
+			q = "UPDATE track SET rating_explicit = rating_explicit - 1 WHERE id = ?1";
+	}
 	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
+	if (!relative && sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 2, rating);
 	sqres = sqlite3_step(pp_stmt);
 	if (sqres != SQLITE_DONE) {
-		wdprintf(V_ERROR, "medialib", "ERROR while inserting into database: ERROR %d\n", sqres);
+		wdprintf(V_ERROR, "medialib", "ERROR while updating database: ERROR %d\n", sqres);
 	}
 	sqlite3_finalize(pp_stmt);
 	return sqres;
+}
+
+int medialib_rate_track_up(GmuMedialib *gm, int id)
+{
+	return rate_track(gm, id, 1, 1);
 }
 
 int medialib_rate_track_down(GmuMedialib *gm, int id)
 {
-	sqlite3_stmt *pp_stmt;
-	char         *q = "UPDATE track SET rating_explicit = rating_explicit - 1 WHERE id = ?1";
-	int           sqres;
-
-	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
-	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
-	sqres = sqlite3_step(pp_stmt);
-	if (sqres != SQLITE_DONE) {
-		wdprintf(V_ERROR, "medialib", "ERROR while inserting into database: ERROR %d\n", sqres);
-	}
-	sqlite3_finalize(pp_stmt);
-	return sqres;
+	return rate_track(gm, id, 1, -1);
 }
 
 int medialib_rate_track(GmuMedialib *gm, int id, int rating)
 {
-	sqlite3_stmt *pp_stmt;
-	char         *q = "UPDATE track SET rating_explicit = ?2 WHERE id = ?1";
-	int           sqres;
-
-	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
-	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
-	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 2, rating);
-	sqres = sqlite3_step(pp_stmt);
-	if (sqres != SQLITE_DONE) {
-		wdprintf(V_ERROR, "medialib", "ERROR while inserting into database: ERROR %d\n", sqres);
-	}
-	sqlite3_finalize(pp_stmt);
-	return sqres;
+	return rate_track(gm, id, 0, rating);
 }
