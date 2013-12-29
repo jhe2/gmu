@@ -39,4 +39,8 @@ int  medialib_browse(GmuMedialib *gm, char *sel_column, ...);
 char *medialib_browse_fetch_next_result(GmuMedialib *gm);
 void medialib_browse_finish(GmuMedialib *gm);
 TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id);
+/* Increase/decrease/set rating for a given track */
+int  medialib_rate_track_up(GmuMedialib *gm, int id);
+int  medialib_rate_track_down(GmuMedialib *gm, int id);
+int  medialib_rate_track(GmuMedialib *gm, int id, int rating);
 #endif
