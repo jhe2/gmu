@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: log.c  Created: 091218
  *
@@ -102,7 +102,12 @@ static void save_previous_trackinfo()
 
 static void update_trackinfo(TrackInfo *ti)
 {
-	if (ti)	memcpy(&previous, ti, sizeof(TrackInfo)); else trackinfo_clear(&previous);
+	if (ti && trackinfo_acquire_lock(ti)) {
+		memcpy(&previous, ti, sizeof(TrackInfo));
+		trackinfo_release_lock(ti);
+	} else {
+		trackinfo_clear(&previous);
+	}
 }
 
 static int event_callback(GmuEvent event, int param)

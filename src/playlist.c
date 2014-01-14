@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playlist.c  Created: 060930
  *
@@ -140,7 +140,7 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 	TrackInfo  ti;
 	int        result = 0;
 
-	trackinfo_init(&ti);
+	trackinfo_init(&ti, 0);
 	filetype[0] = '\0';
 	if (tmp != NULL)
 		strtoupper(filetype, tmp, 15);
@@ -298,7 +298,7 @@ int playlist_insert_file_after(Playlist *pl, Entry *entry, char *filename_with_p
 	TrackInfo  ti;
 	int        result = 0;
 
-	trackinfo_init(&ti);
+	trackinfo_init(&ti, 0);
 	filetype[0] = '\0';
 	if (tmp != NULL)
 		strtoupper(filetype, tmp, 15);

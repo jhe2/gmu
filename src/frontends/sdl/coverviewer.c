@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: coverviewer.c  Created: 061030
  *
@@ -60,34 +60,37 @@ void cover_viewer_load_artwork(CoverViewer *cv, TrackInfo *ti, char *audio_file,
 		cover_image_set_target_size(&cv->ci, gmu_widget_get_width((GmuWidget *)&cv->skin->lv, 1), -1);
 
 	/* Try to load image embedded in tag: */
-	if (cv->try_to_load_embedded_cover == EMBEDDED_COVER_FIRST && ti->image.data != NULL) {
-		cover_image_load_image_from_memory(&cv->ci, ti->image.data, ti->image.data_size, 
-                                         ti->image.mime_type, ready_flag);
-		last_cover_path[0] = '\0';
-		ti->has_cover_artwork = 1;
-	} else if (audio_file != NULL && strlen(audio_file) < 256) {
-		char *fn = get_file_matching_given_pattern_alloc(audio_file, image_file_pattern);
-		if (fn) {
+	if (trackinfo_acquire_lock(ti)) {
+		if (cv->try_to_load_embedded_cover == EMBEDDED_COVER_FIRST && ti->image.data != NULL) {
+			cover_image_load_image_from_memory(&cv->ci, ti->image.data, ti->image.data_size, 
+											 ti->image.mime_type, ready_flag);
+			last_cover_path[0] = '\0';
 			ti->has_cover_artwork = 1;
-			if (strncmp(fn, last_cover_path, 255) != 0) {
-				wdprintf(V_INFO, "coverviewer", "Loading %s\n", fn);
-				cover_image_load_image_from_file(&cv->ci, fn, ready_flag);
-				wdprintf(V_DEBUG, "coverviewer", "Ok. Loading in progress...\n");
-				strncpy(last_cover_path, fn, 255);
-				last_cover_path[255] = '\0';
+		} else if (audio_file != NULL && strlen(audio_file) < 256) {
+			char *fn = get_file_matching_given_pattern_alloc(audio_file, image_file_pattern);
+			if (fn) {
+				ti->has_cover_artwork = 1;
+				if (strncmp(fn, last_cover_path, 255) != 0) {
+					wdprintf(V_INFO, "coverviewer", "Loading %s\n", fn);
+					cover_image_load_image_from_file(&cv->ci, fn, ready_flag);
+					wdprintf(V_DEBUG, "coverviewer", "Ok. Loading in progress...\n");
+					strncpy(last_cover_path, fn, 255);
+					last_cover_path[255] = '\0';
+				} else {
+					wdprintf(V_INFO, "coverviewer", "Cover file already loaded. No need to reload the file.\n");
+				}
+				free(fn);
 			} else {
-				wdprintf(V_INFO, "coverviewer", "Cover file already loaded. No need to reload the file.\n");
+				ti->has_cover_artwork = 0;
+				if (cover_image_free_image(&cv->ci))
+					last_cover_path[0] = '\0';
 			}
-			free(fn);
-		} else {
-			ti->has_cover_artwork = 0;
-			if (cover_image_free_image(&cv->ci))
-				last_cover_path[0] = '\0';
+		} else if (cv->try_to_load_embedded_cover == EMBEDDED_COVER_LAST && ti->image.data != NULL) {
+			cover_image_load_image_from_memory(&cv->ci, ti->image.data, ti->image.data_size, 
+											   ti->image.mime_type, ready_flag);
+			last_cover_path[0] = '\0';	
 		}
-	} else if (cv->try_to_load_embedded_cover == EMBEDDED_COVER_LAST && ti->image.data != NULL) {
-		cover_image_load_image_from_memory(&cv->ci, ti->image.data, ti->image.data_size, 
-		                                   ti->image.mime_type, ready_flag);
-		last_cover_path[0] = '\0';	
+		trackinfo_release_lock(ti);
 	}
 }
 
@@ -95,24 +98,27 @@ void cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti)
 {
 	char *lyrics = "";
 
-	if (strlen(trackinfo_get_lyrics(ti)) > 0) {
-		int len = strlen(trackinfo_get_lyrics(ti)) + 42;
-		lyrics = malloc(sizeof(char) * len);
-		snprintf(lyrics, len, "\n\n**Lyrics/Additional information:**\n%s", trackinfo_get_lyrics(ti));
-	}
+	if (trackinfo_acquire_lock(ti)) {
+		if (strlen(trackinfo_get_lyrics(ti)) > 0) {
+			int len = strlen(trackinfo_get_lyrics(ti)) + 42;
+			lyrics = malloc(sizeof(char) * len);
+			snprintf(lyrics, len, "\n\n**Lyrics/Additional information:**\n%s", trackinfo_get_lyrics(ti));
+		}
 
-	snprintf(cv->track_info_text, SIZE_TRACKINFO_TEXT-1,
-	         "**Title:**\n%s\n**Artist:**\n%s\n**Album:**\n%s\n**Track number:**\n%s\n"
-	         "**Date:**\n%s\n**Length:**\n%02d:%02d\n**Samplerate:**\n%d Hz\n"
-	         "**Channels:**\n%d (%s)\n**Bitrate:**\n%ld kbit/s %s\n**File type:**\n%s\n"
-	         "**File:**\n%s%s",
-	         trackinfo_get_title(ti), trackinfo_get_artist(ti), trackinfo_get_album(ti),
-	         trackinfo_get_tracknr(ti), trackinfo_get_date(ti), trackinfo_get_length_minutes(ti),
-	         trackinfo_get_length_seconds(ti), trackinfo_get_samplerate(ti),
-	         trackinfo_get_channels(ti), trackinfo_get_channels(ti) >= 2 ? "stereo" : "mono",
-	         trackinfo_get_bitrate(ti) / 1000, trackinfo_is_vbr(ti) ? "(average)" : "",
-	         trackinfo_get_file_type(ti), trackinfo_get_file_name(ti), lyrics);
-	text_browser_set_text(&cv->tb, cv->track_info_text, "Track info");
+		snprintf(cv->track_info_text, SIZE_TRACKINFO_TEXT-1,
+				 "**Title:**\n%s\n**Artist:**\n%s\n**Album:**\n%s\n**Track number:**\n%s\n"
+				 "**Date:**\n%s\n**Length:**\n%02d:%02d\n**Samplerate:**\n%d Hz\n"
+				 "**Channels:**\n%d (%s)\n**Bitrate:**\n%ld kbit/s %s\n**File type:**\n%s\n"
+				 "**File:**\n%s%s",
+				 trackinfo_get_title(ti), trackinfo_get_artist(ti), trackinfo_get_album(ti),
+				 trackinfo_get_tracknr(ti), trackinfo_get_date(ti), trackinfo_get_length_minutes(ti),
+				 trackinfo_get_length_seconds(ti), trackinfo_get_samplerate(ti),
+				 trackinfo_get_channels(ti), trackinfo_get_channels(ti) >= 2 ? "stereo" : "mono",
+				 trackinfo_get_bitrate(ti) / 1000, trackinfo_is_vbr(ti) ? "(average)" : "",
+				 trackinfo_get_file_type(ti), trackinfo_get_file_name(ti), lyrics);
+		trackinfo_release_lock(ti);
+		text_browser_set_text(&cv->tb, cv->track_info_text, "Track info");
+	}
 	if (lyrics[0] != '\0') free(lyrics);
 }
 

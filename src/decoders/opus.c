@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: opus.c  Created: 130303
  *
@@ -158,7 +158,7 @@ static int opus_play_file(char *opus_file)
 	int available_bytes;
 
 	wdprintf(V_DEBUG, "opus", "Initializing.\n");
-	trackinfo_init(&ti);
+	trackinfo_init(&ti, 0);
 
 	ofc.read  = read_func;
 	ofc.seek  = seek_func;
@@ -309,7 +309,7 @@ static int meta_data_load(const char *filename)
 	OggOpusFile *oof_tmp;
 
 	wdprintf(V_DEBUG, "opus", "Initializing.\n");
-	trackinfo_init(&ti);
+	trackinfo_init(&ti, 0);
 
 	ofc.read  = read_func;
 	ofc.seek  = seek_func;

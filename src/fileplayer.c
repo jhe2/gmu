@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: fileplayer.c  Created: 070107
  *
@@ -119,10 +119,11 @@ void file_player_start_playback(void)
 	locked = 0;
 }
 
-int file_player_init(void)
+int file_player_init(TrackInfo *ti_ref)
 {
 	pthread_mutex_init(&mutex, NULL);
 	file_player_set_filename(NULL);
+	ti = ti_ref;
 	pthread_create(&thread, NULL, decode_audio_thread, NULL);
 	return 0;
 }
@@ -256,30 +257,35 @@ static void *decode_audio_thread(void *udata)
 				playback_status = PLAYING;
 
 				if (item_status == PLAYING && !file_player_shut_down && (*gd->open_file)(filename)) {
-					trackinfo_clear(ti);
-					if (charset_is_valid_utf8_string(filename))
-						strncpy(ti->file_name, filename, SIZE_FILE_NAME-1);
-					else
-						charset_iso8859_1_to_utf8(ti->file_name, filename, SIZE_FILE_NAME-1);
+					int channels = 0;
+					if (trackinfo_acquire_lock(ti)) {
+						trackinfo_clear(ti);
+						if (charset_is_valid_utf8_string(filename))
+							strncpy(ti->file_name, filename, SIZE_FILE_NAME-1);
+						else
+							charset_iso8859_1_to_utf8(ti->file_name, filename, SIZE_FILE_NAME-1);
 
-					/* Assume 44.1 kHz stereo as default */
-					ti->samplerate = 44100;
-					ti->channels   = 2;
-					ti->bitrate    = 0;
+						/* Assume 44.1 kHz stereo as default */
+						ti->samplerate = 44100;
+						ti->channels   = 2;
+						ti->bitrate    = 0;
 
-					if (*gd->get_samplerate)
-						ti->samplerate = (*gd->get_samplerate)();
-					if (*gd->get_channels)
-						ti->channels   = (*gd->get_channels)();
-					if (*gd->get_bitrate)
-						ti->bitrate    = (*gd->get_bitrate)();
-					if (*gd->get_length)
-						ti->length     = (*gd->get_length)();
-					if (*gd->get_file_type)
-						strncpy_charset_conv(ti->file_type, (*gd->get_file_type)(),
-											 SIZE_FILE_TYPE-1, 0, charset);
+						if (*gd->get_samplerate)
+							ti->samplerate = (*gd->get_samplerate)();
+						if (*gd->get_channels)
+							ti->channels   = (*gd->get_channels)();
+						if (*gd->get_bitrate)
+							ti->bitrate    = (*gd->get_bitrate)();
+						if (*gd->get_length)
+							ti->length     = (*gd->get_length)();
+						if (*gd->get_file_type)
+							strncpy_charset_conv(ti->file_type, (*gd->get_file_type)(),
+												 SIZE_FILE_TYPE-1, 0, charset);
+						channels = ti->channels;
+						trackinfo_release_lock(ti);
+					}
 
-					if (ti->channels > 0) {
+					if (channels > 0 && trackinfo_acquire_lock(ti)) {
 						wdprintf(V_INFO, "fileplayer", "Found %s stream w/ %d channel(s), %d Hz, %ld bps, %d seconds\n",
 								 ti->file_type, ti->channels, ti->samplerate, ti->bitrate, ti->length);
 
@@ -305,6 +311,7 @@ static void *decode_audio_thread(void *udata)
 						/* read meta data */
 						if (update_metadata(gd, ti, charset))
 							event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
+						trackinfo_release_lock(ti);
 						meta_data_loaded = 1;
 
 						audio_set_pause(0);
@@ -350,7 +357,12 @@ static void *decode_audio_thread(void *udata)
 								size += ret;
 							}
 							if (gd->get_current_bitrate) br = (*gd->get_current_bitrate)();
-							if (br > 0) ti->recent_bitrate = br;
+							if (br > 0) {
+								if (trackinfo_acquire_lock(ti)) {
+									ti->recent_bitrate = br;
+									trackinfo_release_lock(ti);
+								}
+							}
 							if (ret == 0) {
 								item_status = FINISHED;
 								break;
@@ -376,9 +388,12 @@ static void *decode_audio_thread(void *udata)
 							}
 							if (*gd->get_meta_data_int) {
 								if ((*gd->get_meta_data_int)(GMU_META_IS_UPDATED, 1)) {
-									if (update_metadata(gd, ti, charset)) {
-										event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
-										wdprintf(V_DEBUG, "fileplayer", "Meta data change detected!\n");
+									if (trackinfo_acquire_lock(ti)) {
+										if (update_metadata(gd, ti, charset)) {
+											event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
+											wdprintf(V_DEBUG, "fileplayer", "Meta data change detected!\n");
+										}
+										trackinfo_release_lock(ti);
 									}
 								}
 							}
@@ -413,7 +428,7 @@ static void *decode_audio_thread(void *udata)
 	return NULL;
 }
 
-int file_player_play_file(char *filename, TrackInfo *lti, int skip_current)
+int file_player_play_file(char *filename, int skip_current)
 {
 	item_status = skip_current ? STOPPED : FINISHED;
 	playback_status = PLAYING;
@@ -421,7 +436,6 @@ int file_player_play_file(char *filename, TrackInfo *lti, int skip_current)
 	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
 	file_player_set_filename(filename);
 	file_player_start_playback();
-	ti = lti;
 	return playback_status;
 }
 
@@ -436,4 +450,9 @@ int file_player_is_metadata_loaded(void)
 	int result = meta_data_loaded;
 	meta_data_loaded = 0;
 	return result;
+}
+
+TrackInfo *file_player_get_trackinfo_ref(void)
+{
+	return ti;
 }

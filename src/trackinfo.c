@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: trackinfo.c  Created: 060929
  *
@@ -19,6 +19,7 @@
 #include "trackinfo.h"
 #include "charset.h"
 #include "debug.h"
+#include <pthread.h>
 
 void trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
                    char *tracknr, long bitrate, int samplerate, int channels)
@@ -49,7 +50,7 @@ void trackinfo_set_album(TrackInfo *ti, char *album)
 	strncpy(ti->album, album, SIZE_ALBUM-1);
 }
 
-void trackinfo_init(TrackInfo *ti)
+void trackinfo_init(TrackInfo *ti, int with_locking)
 {
 	ti->artist[0] = '\0';
 	ti->title[0] = '\0';
@@ -72,6 +73,18 @@ void trackinfo_init(TrackInfo *ti)
 	ti->image.data_size = 0;
 	ti->image.mime_type[0] = '\0';
 	ti->updated = 0;
+	ti->with_locking = with_locking;
+	if (with_locking) {
+		pthread_mutex_init(&(ti->mutex), NULL);
+	}
+}
+
+void trackinfo_destroy(TrackInfo *ti)
+{
+	trackinfo_clear(ti);
+	if (ti->with_locking) {
+		pthread_mutex_destroy(&(ti->mutex));
+	}
 }
 
 void trackinfo_clear(TrackInfo *ti)
@@ -276,4 +289,20 @@ void trackinfo_set_trackid(TrackInfo *ti, int id)
 void trackinfo_set_filename(TrackInfo *ti, char *file)
 {
 	strncpy(ti->file_name, file, SIZE_FILE_NAME-1);
+}
+
+int trackinfo_acquire_lock(TrackInfo *ti)
+{
+	int res = 0;
+	if (ti->with_locking && pthread_mutex_lock(&(ti->mutex)) == 0)
+		res = 1;
+	return res;
+}
+
+int trackinfo_release_lock(TrackInfo *ti)
+{
+	int res = 0;
+	if (ti->with_locking && pthread_mutex_unlock(&(ti->mutex)) == 0)
+		res = 1;
+	return res;
 }

@@ -782,27 +782,32 @@ void gmu_http_playlist_get_item(int id, Connection *c)
 
 void gmu_http_get_current_trackinfo(Connection *c)
 {
+	int        r = 0;
+	char       msg[MSG_MAX_LEN];
 	TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
-	char msg[MSG_MAX_LEN];
-	char *ti_artist = trackinfo_get_artist(ti);
-	char *ti_title  = trackinfo_get_title(ti);
-	char *ti_album  = trackinfo_get_album(ti);
-	char *ti_date   = trackinfo_get_date(ti);
-	int  r = snprintf(msg, MSG_MAX_LEN,
-	                  "{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", \"album\": \"%s\", \"date\": \"%s\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
-	                  ti_artist ? ti_artist : "",
-	                  ti_title ? ti_title : "",
-	                  ti_album ? ti_album : "",
-	                  ti_date ? ti_date : "",
-	                  trackinfo_get_length_minutes(ti),
-	                  trackinfo_get_length_seconds(ti),
-	                  0);
-	if (r > 0 && !charset_is_valid_utf8_string(msg)) {
-		snprintf(msg, MSG_MAX_LEN,
-		         "{ \"cmd\": \"trackinfo\", \"artist\": \"(Invalid UTF-8)\", \"title\": \"(Invalid UTF-8)\", \"album\": \"(Invalid UTF-8)\", \"date\": \"(Invalid UTF-8)\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
-		         trackinfo_get_length_minutes(ti),
-	             trackinfo_get_length_seconds(ti),
-	             0);
+
+	if (trackinfo_acquire_lock(ti)) {
+		char *ti_artist = trackinfo_get_artist(ti);
+		char *ti_title  = trackinfo_get_title(ti);
+		char *ti_album  = trackinfo_get_album(ti);
+		char *ti_date   = trackinfo_get_date(ti);
+		r = snprintf(msg, MSG_MAX_LEN,
+		             "{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", \"album\": \"%s\", \"date\": \"%s\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+		             ti_artist ? ti_artist : "",
+		             ti_title ? ti_title : "",
+		             ti_album ? ti_album : "",
+		             ti_date ? ti_date : "",
+		             trackinfo_get_length_minutes(ti),
+		             trackinfo_get_length_seconds(ti),
+		             0);
+		if (r > 0 && !charset_is_valid_utf8_string(msg)) {
+			snprintf(msg, MSG_MAX_LEN,
+					 "{ \"cmd\": \"trackinfo\", \"artist\": \"(Invalid UTF-8)\", \"title\": \"(Invalid UTF-8)\", \"album\": \"(Invalid UTF-8)\", \"date\": \"(Invalid UTF-8)\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+					 trackinfo_get_length_minutes(ti),
+					 trackinfo_get_length_seconds(ti),
+					 0);
+		}
+		trackinfo_release_lock(ti);
 	}
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
@@ -928,6 +933,29 @@ static void gmu_http_medialib_search(Connection *c, char *type, char *str)
 		}
 	}
 	gmu_core_medialib_search_finish();
+}
+
+static void gmu_http_medialib_browse_artists(Connection *c)
+{
+	char *str = NULL;
+	int   i = 0;
+	char  rstr[1024];
+	int   res = gmu_core_medialib_browse_artists();
+
+	if (res) {
+		for (str = gmu_core_medialib_browse_fetch_next_result();
+			 str;
+			 str = gmu_core_medialib_browse_fetch_next_result(), i++) {
+			char *artist = json_string_escape_alloc(str);
+			snprintf(rstr, 1023,
+			         "{\"cmd\":\"mlib_browse_result\", \"pos\":%d,\"artist\":\"%s\"}",
+					 i, artist
+			);
+			free(artist);
+			websocket_send_string(c, rstr);
+		}
+	}
+	gmu_core_medialib_browse_finish();
 }
 
 static void gmu_http_handle_websocket_message(char *message, Connection *c)

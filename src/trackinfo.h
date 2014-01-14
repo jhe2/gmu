@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: trackinfo.h  Created: 060929
  *
@@ -15,6 +15,7 @@
  */
 #ifndef _TRACKINFO_H
 #define _TRACKINFO_H
+#include <pthread.h>
 
 #define SIZE_ARTIST    128
 #define SIZE_TITLE     128
@@ -57,11 +58,16 @@ struct _TrackInfo
 	int   updated;
 
 	int   id;
+	pthread_mutex_t mutex;
+	int   with_locking;
 };
 
 typedef struct _TrackInfo TrackInfo;
 
-void  trackinfo_init(TrackInfo *ti);
+void  trackinfo_init(TrackInfo *ti, int with_locking);
+/* When the locking capability is enabled, trackinfo_destroy() must be
+ * called when done with the TrackInfo object to clean up properly */
+void  trackinfo_destroy(TrackInfo *ti);
 void  trackinfo_clear(TrackInfo *ti);
 void  trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
                     char *tracknr, long bitrate, int samplerate, int channels);
@@ -94,4 +100,10 @@ void  trackinfo_set_updated(TrackInfo *ti);
 char *trackinfo_get_image_data(TrackInfo *ti);
 int   trackinfo_get_image_data_size(TrackInfo *ti);
 char *trackinfo_get_image_mime_type(TrackInfo *ti);
+/* The locking/unlocking functions return 1 on success and 0 otherwise.
+ * The functions can fail either because of an error inside of the
+ * pthread library or because the TrackInfo object has not been
+ * initialized with locking enabled. */
+int   trackinfo_acquire_lock(TrackInfo *ti);
+int   trackinfo_release_lock(TrackInfo *ti);
 #endif

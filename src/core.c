@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: core.c  Created: 081115
  *
@@ -134,12 +134,12 @@ void gmu_core_add_pls_contents_to_playlist(char *filename)
 	playlist_release_lock(&pl);
 }
 
-static int play_next(Playlist *pl, TrackInfo *ti, int skip_current)
+static int play_next(Playlist *pl, int skip_current)
 {
 	int result = 0;
 	playlist_get_lock(pl);
 	if (playlist_next(pl)) {
-		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), ti, skip_current);
+		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), skip_current);
 		result = 1;
 		event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 		player_status = PLAYING;
@@ -148,14 +148,14 @@ static int play_next(Playlist *pl, TrackInfo *ti, int skip_current)
 	return result;
 }
 
-static int play_previous(Playlist *pl, TrackInfo *ti)
+static int play_previous(Playlist *pl)
 {
 	int result = 0;
 	playlist_get_lock(pl);
 	if (playlist_prev(pl)) {
 		Entry *entry = playlist_get_current(pl);
 		if (entry != NULL) {
-			file_player_play_file(playlist_get_entry_filename(pl, entry), ti, 1);
+			file_player_play_file(playlist_get_entry_filename(pl, entry), 1);
 			result = 1;
 			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 			player_status = PLAYING;
@@ -275,12 +275,12 @@ int gmu_core_pause(void)
 
 int gmu_core_next(void)
 {
-	return play_next(&pl, &current_track_ti, 1);
+	return play_next(&pl, 1);
 }
 
 int gmu_core_previous(void)
 {
-	return play_previous(&pl, &current_track_ti);
+	return play_previous(&pl);
 }
 
 static int stop_playback(void)
@@ -544,7 +544,12 @@ int gmu_core_playlist_entry_get_queue_pos(Entry *entry)
 
 int gmu_core_get_length_current_track(void)
 {
-	return current_track_ti.length;
+	int len = 0;
+	if (trackinfo_acquire_lock(&current_track_ti)) {
+		len = current_track_ti.length;
+		trackinfo_release_lock(&current_track_ti);
+	}
+	return len;
 }
 
 EventQueue *gmu_core_get_event_queue(void)
@@ -679,7 +684,7 @@ TrackInfo gmu_core_medialib_search_fetch_next_result(void)
 #ifdef GMU_MEDIALIB
 	res = medialib_search_fetch_next_result(&gm);
 #else
-	trackinfo_init(&res);
+	trackinfo_init(&res, 0);
 #endif
 	return res;
 }
@@ -1047,7 +1052,7 @@ int main(int argc, char **argv)
 	}
 
 	audio_buffer_init();
-	trackinfo_init(&current_track_ti);
+	trackinfo_init(&current_track_ti, 1);
 	playlist_init(&pl);
 	if (alt_playlist) { /* Load user playlist if it has been specified with the -l cmd option */
 		if (!add_pls_contents_to_playlist(&pl, alt_playlist))
@@ -1080,7 +1085,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	file_player_init();
+	file_player_init(&current_track_ti);
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "LyricsFilePattern"));
 
 	set_default_play_mode(&config, &pl);
@@ -1118,7 +1123,7 @@ int main(int argc, char **argv)
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);
 			if (tmp_item != NULL) {
 				playlist_set_current(&pl, tmp_item);
-				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), &current_track_ti, 1);
+				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), 1);
 			}
 			playlist_release_lock(&pl);
 			global_command = NO_CMD;
@@ -1128,12 +1133,12 @@ int main(int argc, char **argv)
 			playlist_get_lock(&pl);
 			playlist_set_current(&pl, NULL);
 			playlist_release_lock(&pl);
-			file_player_play_file(global_filename, &current_track_ti, 1);
+			file_player_play_file(global_filename, 1);
 			global_command = NO_CMD;
 		} else if ((file_player_get_item_status() == FINISHED && 
 		            file_player_get_playback_status() == PLAYING) || 
 		           global_command == NEXT) {
-			if (global_filename[0] != '\0' || !play_next(&pl, &current_track_ti, 0)) {
+			if (global_filename[0] != '\0' || !play_next(&pl, 0)) {
 				statu = STOPPED; /* no next track? -> STOP */
 				stop_playback();
 				if (shutdown_timer == -1) { /* Shutdown after last track */
@@ -1146,11 +1151,14 @@ int main(int argc, char **argv)
 			global_command = NO_CMD;
 			global_param = 0;
 		}
-		if (trackinfo_is_updated(&current_track_ti)) {
-			wdprintf(V_INFO, "gmu", "Track info:\n\tArtist: %s\n\tTitle : %s\n\tAlbum : %s\n",
-			         trackinfo_get_artist(&current_track_ti),
-				     trackinfo_get_title(&current_track_ti),
-				     trackinfo_get_album(&current_track_ti));
+		if (trackinfo_acquire_lock(&current_track_ti)) {
+			if (trackinfo_is_updated(&current_track_ti)) {
+				wdprintf(V_INFO, "gmu", "Track info:\n\tArtist: %s\n\tTitle : %s\n\tAlbum : %s\n",
+						 trackinfo_get_artist(&current_track_ti),
+						 trackinfo_get_title(&current_track_ti),
+						 trackinfo_get_album(&current_track_ti));
+			}
+			trackinfo_release_lock(&current_track_ti);
 		}
 		if (statu != file_player_get_item_status()) {
 			statu = file_player_get_item_status();

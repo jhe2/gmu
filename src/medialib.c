@@ -84,7 +84,7 @@ int medialib_add_file(GmuMedialib *gm, char *file)
 		sqlite3_finalize(pp_stmt);
 	}
 	
-	trackinfo_init(&ti);
+	trackinfo_init(&ti, 0);
 	if (new_file && metadatareader_read(file, filetype, &ti)) {
 		/* Add file with metadata to media library... */
 		char *q = "INSERT INTO track (file, artist, title, album, comment) VALUES (?1, ?2, ?3, ?4, ?5)";
@@ -214,7 +214,7 @@ int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, char *str)
 TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm)
 {
 	TrackInfo ti;
-	trackinfo_init(&ti);
+	trackinfo_init(&ti, 0);
 
 	if (sqlite3_step(gm->pp_stmt_search) == SQLITE_ROW) {
 		int   id     =         sqlite3_column_int(gm->pp_stmt_search, 0);
@@ -308,7 +308,7 @@ TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id)
 	char         *q = "SELECT * FROM track WHERE id = ?1 LIMIT 1";
 	int           sqres;
 
-	trackinfo_init(&ti);
+	trackinfo_init(&ti, 0);
 
 	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
