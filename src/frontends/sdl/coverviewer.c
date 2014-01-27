@@ -94,9 +94,10 @@ void cover_viewer_load_artwork(CoverViewer *cv, TrackInfo *ti, char *audio_file,
 	}
 }
 
-void cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti)
+int cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti)
 {
 	char *lyrics = "";
+	int   contains_image = 0;
 
 	if (trackinfo_acquire_lock(ti)) {
 		if (strlen(trackinfo_get_lyrics(ti)) > 0) {
@@ -116,10 +117,12 @@ void cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti)
 				 trackinfo_get_channels(ti), trackinfo_get_channels(ti) >= 2 ? "stereo" : "mono",
 				 trackinfo_get_bitrate(ti) / 1000, trackinfo_is_vbr(ti) ? "(average)" : "",
 				 trackinfo_get_file_type(ti), trackinfo_get_file_name(ti), lyrics);
+		contains_image = trackinfo_has_cover_artwork(ti);
 		trackinfo_release_lock(ti);
 		text_browser_set_text(&cv->tb, cv->track_info_text, "Track info");
 	}
 	if (lyrics[0] != '\0') free(lyrics);
+	return contains_image;
 }
 
 int cover_viewer_is_spectrum_analyzer_enabled(CoverViewer *cv)
@@ -139,7 +142,7 @@ void cover_viewer_disable_spectrum_analyzer(CoverViewer *cv)
 	audio_spectrum_unregister();
 }
 
-void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
+void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 {
 	SDL_Rect     srect, drect;
 	int          text_x_offset = 5;
@@ -151,7 +154,7 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti)
 	int          aw = gmu_widget_get_width((GmuWidget *)&cv->skin->lv, 1);
 	int          ah = gmu_widget_get_height((GmuWidget *)&cv->skin->lv, 1);
 
-	if (cover != NULL && !cv->hide_cover && trackinfo_has_cover_artwork(ti)) {
+	if (cover != NULL && !cv->hide_cover && with_image) {
 		if (!cv->large) {
 			if (cv->small_cover_align == ALIGN_LEFT) {
 				text_browser_set_pos_x(&cv->tb, ax + aw / 2);

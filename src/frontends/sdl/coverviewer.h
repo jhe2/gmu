@@ -47,8 +47,9 @@ void cover_viewer_init(CoverViewer *cv, const Skin *skin, int large,
 void cover_viewer_free(CoverViewer *cv);
 void cover_viewer_load_artwork(CoverViewer *cv, TrackInfo *ti, char *audio_file, 
                                char *image_file_pattern, int *ready_flag);
-void cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti);
-void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, TrackInfo *ti);
+/* Returns 1 if updated data contains cover image, 0 otherwise */
+int  cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti);
+void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image);
 void cover_viewer_scroll_down(CoverViewer *cv);
 void cover_viewer_scroll_up(CoverViewer *cv);
 void cover_viewer_scroll_left(CoverViewer *cv);

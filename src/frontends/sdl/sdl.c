@@ -709,6 +709,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	}
 
 	while (quit == DONT_QUIT && SDL_WaitEvent(&event)) {
+		int trackinfo_change = 1;
 		switch (event.type) {
 			case SDL_VIDEORESIZE: {
 				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE,
@@ -1100,6 +1101,7 @@ static void run_player(char *skin_name, char *decoders_str)
 
 		if (event.type == SDL_USEREVENT) {
 			if (update_event == GMU_TRACKINFO_CHANGE || update_event == GMU_PLAYMODE_CHANGE) {
+				trackinfo_change = 1;
 				update = UPDATE_ALL;
 				update_event = GMU_NO_EVENT;
 			}
@@ -1184,10 +1186,13 @@ static void run_player(char *skin_name, char *decoders_str)
 					case HELP:
 						text_browser_draw(&tb_help, buffer);
 						break;
-					case TRACK_INFO:
-						if (file_player_is_metadata_loaded()) cover_viewer_update_data(&cv, ti);
-						cover_viewer_show(&cv, buffer, ti);
+					case TRACK_INFO: {
+						static int with_image = 0;
+						if (trackinfo_change) with_image = cover_viewer_update_data(&cv, ti);
+						trackinfo_change = 0;
+						cover_viewer_show(&cv, buffer, with_image);
 						break;
+					}
 					case QUESTION:
 						question_draw(&dlg, buffer);
 						break;
