@@ -26,7 +26,6 @@ void      file_player_stop_playback(void);
 int       file_player_play_file(char *file, int skip_current);
 int       file_player_read_tags(char *file, char *file_type, TrackInfo *ti);
 int       file_player_seek(long offset);
-int       file_player_is_metadata_loaded(void);
 int       file_player_is_thread_running(void);
 void      file_player_shutdown(void);
 void      file_player_set_filename(char *filename);

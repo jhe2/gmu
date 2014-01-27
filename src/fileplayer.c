@@ -36,7 +36,6 @@
 
 static char      lyrics_file_pattern[256];
 static long      seek_second;
-static int       meta_data_loaded = 0;
 static int       thread_running = 0;
 static int       file_player_shut_down = 0;
 
@@ -312,7 +311,6 @@ static void *decode_audio_thread(void *udata)
 						if (update_metadata(gd, ti, charset))
 							event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
 						trackinfo_release_lock(ti);
-						meta_data_loaded = 1;
 
 						audio_set_pause(0);
 
@@ -443,13 +441,6 @@ int file_player_seek(long offset)
 {
 	seek_second = audio_get_playtime() / 1000 + offset;
 	return 0;
-}
-
-int file_player_is_metadata_loaded(void)
-{
-	int result = meta_data_loaded;
-	meta_data_loaded = 0;
-	return result;
 }
 
 TrackInfo *file_player_get_trackinfo_ref(void)
