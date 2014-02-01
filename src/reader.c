@@ -217,8 +217,7 @@ static Reader *_reader_open(char *url, int max_redirects)
 
 						wdprintf(V_DEBUG, "reader", "Connection in progress. select()ing...\n");
 						do {
-							int       res, valopt; 
-							socklen_t lon;
+							int res;
 
 							tv.tv_sec = 5; 
 							tv.tv_usec = 0; 
@@ -229,7 +228,8 @@ static Reader *_reader_open(char *url, int max_redirects)
 								wdprintf(V_DEBUG, "reader", "Error while connecting: %d - %s\n", errno, strerror(errno));
 								break;
 							} else if (res > 0) {
-								lon = sizeof(int);
+								int valopt = 0;
+								socklen_t lon = sizeof(int);
 								if (getsockopt(r->sockfd, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
 									wdprintf(V_DEBUG, "reader", "Error in getsockopt(): %d - %s\n", errno, strerror(errno));
 									p = NULL;
