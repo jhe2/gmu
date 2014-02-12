@@ -80,10 +80,8 @@ void json_object_attach_key(JSON_Object *object, JSON_Key *key)
 	JSON_Key *pk, *tk = pk = object->first_key;
 
 	if (!object->first_key) {
-		wdprintf(V_DEBUG, "json", "Adding first key to object...\n");
 		object->first_key = key;
 	} else {
-		wdprintf(V_DEBUG, "json", "Adding additional key to object...\n");
 		while (tk) {
 			pk = tk;
 			tk = tk->next;
@@ -129,7 +127,6 @@ JSON_Object *json_parse_alloc(char *json_data)
 					if (v >= 0) i += v; else break;
 					if (json_data[i] == '{') { /* Object found */
 						s = STATE_SEARCH_KEY;
-						wdprintf(V_DEBUG, "json", "JSON object found.\n");
 					} else { /* Malformed JSON data */
 						wdprintf(V_WARNING, "json", "ERROR: Malformed JSON data found: '{' expected.\n");
 						json->parse_error = 1;
@@ -143,16 +140,13 @@ JSON_Object *json_parse_alloc(char *json_data)
 					if (json_data[i] == '"') { /* Key beginning found */
 						int start = ++i;
 						char *key_name = NULL;
-						wdprintf(V_DEBUG, "json", "Key found!\n");
 						while (json_data[i] != '"' && i < len) i++;
-						wdprintf(V_DEBUG, "json", "Key length = %d\n", i - start);
 						if (i - start > 0) {
 							key_name = malloc(i - start + 1);
 							if (key_name) {
 								int j;
 								for (j = start; j < i; j++) key_name[j - start] = json_data[j];
 								key_name[j - start] = '\0';
-								wdprintf(V_DEBUG, "json", "Key name = [%s]\n", key_name);
 								current_key = json_key_new();
 								if (current_key) {
 									current_key->key_name = key_name;
@@ -169,38 +163,33 @@ JSON_Object *json_parse_alloc(char *json_data)
 					break;
 				}
 				case STATE_SEARCH_VALUE: {
-					wdprintf(V_DEBUG, "json", "Searching for value...\n");
 					int v = find_first_non_whitespace_char(json_data+i);
 					if (v >= 0) i += v; else break;
 					if (json_data[i] == ':') {
 						++i;
 						v = find_first_non_whitespace_char(json_data+i);
 						if (v >= 0) i += v; else break;
-						wdprintf(V_DEBUG, "json", "Value found!\n");
 						/* extract value data ... */
 						/* recursion for object values; everything else will be extracted in place */
 						switch (json_data[i]) {
 							case '{': { /* Object */
 								JSON_Object *obj;
-								wdprintf(V_DEBUG, "json", "--> Object found.\n");
 								obj = json_parse_alloc(json_data+i);
 								i += obj->length;
 								if (current_key) {
 									current_key->type = OBJECT;
 									current_key->key_value_object = obj;
 								}
-								wdprintf(V_DEBUG, "json", "<--\n");
 								break;
 							}
 							case '"': { /* String */
 								int   start = ++i;
 								char *key_value = NULL;
-								wdprintf(V_DEBUG, "json", "String found.\n");
 								while (json_data[i] != '"' && i < len) {
 									if (json_data[i] == '\\' && i-1 < len) i++;
 									i++;
 								}
-								wdprintf(V_DEBUG, "json", "String length = %d\n", i - start);
+
 								if (i - start >= 0) {
 									key_value = malloc(i - start + 1);
 									if (key_value) {
@@ -210,9 +199,7 @@ JSON_Object *json_parse_alloc(char *json_data)
 											key_value[k] = json_data[j];
 										}
 										key_value[k] = '\0';
-										wdprintf(V_DEBUG, "json", "Key value = [%s]\n", key_value);
 										if (current_key) {
-											wdprintf(V_DEBUG, "json", "Storing value..\n");
 											current_key->type = STRING;
 											current_key->key_value_str = key_value;
 										}
@@ -236,16 +223,13 @@ JSON_Object *json_parse_alloc(char *json_data)
 							default: { /* Number/Boolean */
 								int   start = i;
 								char *key_value = NULL;
-								wdprintf(V_DEBUG, "json", "Number or boolean value found (probably).\n");
 								while (json_data[i] != ' ' && json_data[i] != ',' && json_data[i] != '}' && i < len) i++;
-								wdprintf(V_DEBUG, "json", "String(number) length = %d\n", i - start);
 								if (i - start > 0) {
 									key_value = malloc(i - start + 1);
 									if (key_value) {
 										int j;
 										for (j = start; j < i; j++) key_value[j - start] = json_data[j];
 										key_value[j - start] = '\0';
-										wdprintf(V_DEBUG, "json", "Key value = [%s]\n", key_value);
 										if (current_key) {
 											if (key_value[0] == 't' || key_value[0] == 'f') {
 												current_key->type = BOOLEAN;
@@ -268,11 +252,9 @@ JSON_Object *json_parse_alloc(char *json_data)
 						if (v >= 0) i += v; else break;
 						switch (json_data[i]) {
 							case ',': /* End of key/value pair */
-								wdprintf(V_DEBUG, "json", "Comma found -> Searching for next key.\n");
 								s = STATE_SEARCH_KEY;
 								break;
 							case '}': /* End of object */
-								wdprintf(V_DEBUG, "json", "End of object detected.\n");
 								i++;
 								s = STATE_DONE;
 								json->length = i;
@@ -286,7 +268,6 @@ JSON_Object *json_parse_alloc(char *json_data)
 					break;
 				}
 				case STATE_DONE:
-					wdprintf(V_DEBUG, "json", "Done with JSON object!\n");
 					break;
 			}
 		}
