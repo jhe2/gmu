@@ -80,6 +80,17 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 	                             - skin.title_scroller_offset_x1) / (skin.font_display_char_width+1);
 	static int blink_state = BLINK_DELAY;
 
+	int  samplerate = 0, recent_bitrate = 0, length = 0;
+	char text[MAX_LENGTH+1];
+
+	if (trackinfo_acquire_lock(ti)) {
+		trackinfo_get_full_title(ti, text, MAX_LENGTH);
+		samplerate = ti->samplerate;
+		recent_bitrate = ti->recent_bitrate;
+		length = ti->length;
+		trackinfo_release_lock(ti);
+	}
+
 	if (player_status != STOPPED) {
 		SkinDisplaySymbol symbol = (player_status == PLAYING ? SYMBOL_PLAY  : 
 		                            player_status == PAUSED  ? SYMBOL_PAUSE : SYMBOL_NONE);
@@ -96,8 +107,8 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 
 		if (ptime_remaining) {
 			if (ptime_msec >= 0) {
-				min = (ti->length - ptime_msec / 1000) / 60;
-				sec = (ti->length - ptime_msec / 1000) - min * 60;
+				min = (length - ptime_msec / 1000) / 60;
+				sec = (length - ptime_msec / 1000) - min * 60;
 			} else {
 				min = -1;
 			}
@@ -112,7 +123,6 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 
 	if (skin.title_scroller_offset_x1 >= 0 && skin.title_scroller_offset_y >= 0) {
 		char        lcd_text[MAX_LENGTH+1];
-		char        text[MAX_LENGTH+1];
 		int         len = (title_scroller_chars > MAX_LENGTH ? 
 		                   MAX_LENGTH : title_scroller_chars);
 		int         str_max_visible_len = (busy && len > 2) ? 
@@ -121,8 +131,6 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 		int         str_len = 0;
 		UCodePoint *lcd_text_cp = NULL;
 		int         lcd_text_cp_size = 0;
-
-		trackinfo_get_full_title(ti, text, MAX_LENGTH);
 
 		/* Fix the string in case it was cropped due to length limit 
 		 * and left an incomplete uft8 char at the end: */
@@ -193,13 +201,13 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 		}
 	}
 	if (skin.bitrate_offset_x >= 0 && skin.bitrate_offset_y >= 0) {
-		snprintf(buf, 27, "%4d KBPS", (int)(ti->recent_bitrate / 1000));
+		snprintf(buf, 27, "%4d KBPS", (int)(recent_bitrate / 1000));
 		textrenderer_draw_string(&skin.font_display, buf, buffer,
 		                         skin.bitrate_offset_x, skin.bitrate_offset_y);
 	}
 	if (skin.frequency_offset_x >= 0 && skin.frequency_offset_y >= 0) {
 		char tmp6[6];
-		snprintf(tmp6, 6, "%05d", ti->samplerate);
+		snprintf(tmp6, 6, "%05d", samplerate);
 		snprintf(buf, 27, "%c%c.%c KHZ", tmp6[0] != '0' ? tmp6[0] : ' ', tmp6[1], tmp6[2]);
 		textrenderer_draw_string(&skin.font_display, buf, buffer,
 		                         skin.frequency_offset_x, skin.frequency_offset_y);
