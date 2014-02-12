@@ -23,7 +23,7 @@
 #define RINGBUFFER_SIZE 131072
 
 static RingBuffer    audio_rb;
-static SDL_mutex    *audio_mutex, *spectrum_mutex, *cond_mutex;
+static SDL_mutex    *audio_mutex, *spectrum_mutex, *cond_mutex, *audio_mutex2;
 static SDL_cond     *cond_data_needed;
 static unsigned long buf_read_counter;
 static int           have_samplerate, have_channels;
@@ -106,13 +106,21 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 		if (ringbuffer_get_fill(&audio_rb) == 0) {
 			SDL_PauseAudio(1);
 			if (SDL_mutexV(audio_mutex) == 0) {
-				if (done) {
-					audio_set_pause(1);
-				} else {
-					while (ringbuffer_get_free(&audio_rb) > 65536 && !paused && !done) {
-						wdprintf(V_DEBUG, "audio", "Waiting for buffer to refill...\n");
-						SDL_Delay(100);
+				if (SDL_mutexP(audio_mutex2) != -1) {
+					if (done) {
+						audio_set_pause(1);
+					} else {
+						int loop = 1;
+						while (loop && !paused && !done) {
+							if (SDL_mutexP(audio_mutex) != -1) {
+								if (ringbuffer_get_free(&audio_rb) <= 65536) loop = 0;
+								SDL_mutexV(audio_mutex);
+							}
+							wdprintf(V_DEBUG, "audio", "Waiting for buffer to refill...\n");
+							SDL_Delay(100);
+						}
 					}
+					SDL_mutexV(audio_mutex2);
 				}
 				SDL_mutexP(audio_mutex);
 			}
@@ -122,10 +130,15 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 	if (!ringbuffer_read(&audio_rb, buf, len)) {
 		int avail = ringbuffer_get_fill(&audio_rb);
 		memset(buf, 0, 65536);
-		if (ringbuffer_read(&audio_rb, buf, avail))
-			buf_read_counter += avail;
-	} else {
+		if (ringbuffer_read(&audio_rb, buf, avail)) {
+			if (SDL_mutexP(audio_mutex2) != -1) {
+				buf_read_counter += avail;
+				SDL_mutexV(audio_mutex2);
+			}
+		}
+	} else if (SDL_mutexP(audio_mutex2) != -1) {
 		buf_read_counter += len;
+		SDL_mutexV(audio_mutex2);
 	}
 
 	/* When requested, run DFT on a few samples of each block of data for visualization purposes */
@@ -152,41 +165,50 @@ int audio_device_open(int samplerate, int channels)
 	static SDL_AudioSpec wanted, obtained;
 	int                  result = -1;
 
-	buf_read_counter = 0;
 	/* Keep audio device open unless sampling rate or number of channels change */
-	wdprintf(V_DEBUG, "audio", "Device already open: %s\n", device_open ? "yes" : "no");
-	if (device_open)
-		wdprintf(V_DEBUG, "audio", "Samplerate: have=%d want=%d Channels: have=%d want=%d\n",
-		         have_samplerate, samplerate, have_channels, channels);
-	if (!device_open || samplerate != have_samplerate || channels != have_channels) {
-		if (device_open) audio_device_close();
-		wdprintf(V_INFO, "audio", "Opening audio device...\n");
-		wanted.freq     = samplerate;
-		wanted.format   = AUDIO_S16;
-		wanted.channels = channels; /* 1 = mono, 2 = stereo */
-		wanted.samples  = SAMPLE_BUFFER_SIZE;
-		wanted.callback = fill_audio;
-		wanted.userdata = NULL;
-		if (SDL_OpenAudio(&wanted, &obtained) < 0) {
-			wdprintf(V_ERROR, "audio", "Could not open audio: %s\n", SDL_GetError());
-			result = -3;
+	if (SDL_mutexP(audio_mutex2) != -1) {
+		buf_read_counter = 0;
+		wdprintf(V_DEBUG, "audio", "Device already open: %s\n", device_open ? "yes" : "no");
+		if (device_open)
+			wdprintf(V_DEBUG, "audio", "Samplerate: have=%d want=%d Channels: have=%d want=%d\n",
+					 have_samplerate, samplerate, have_channels, channels);
+		if (!device_open || samplerate != have_samplerate || channels != have_channels) {
+			if (device_open) audio_device_close();
+			wdprintf(V_INFO, "audio", "Opening audio device...\n");
+			wanted.freq     = samplerate;
+			wanted.format   = AUDIO_S16;
+			wanted.channels = channels; /* 1 = mono, 2 = stereo */
+			wanted.samples  = SAMPLE_BUFFER_SIZE;
+			wanted.callback = fill_audio;
+			wanted.userdata = NULL;
+			if (SDL_OpenAudio(&wanted, &obtained) < 0) {
+				wdprintf(V_ERROR, "audio", "Could not open audio: %s\n", SDL_GetError());
+				result = -3;
+			} else {
+				result = 0;
+				device_open = 1;
+				have_samplerate = samplerate;
+				have_channels   = channels;
+				wdprintf(V_INFO, "audio", "Device opened with %d Hz, %d channels and sample buffer w/ %d samples.\n",
+						 obtained.freq, obtained.channels, obtained.samples);
+			}
+			if (SDL_mutexV(audio_mutex2) != -1) {
+				if (SDL_mutexP(audio_mutex) != -1) {
+					ringbuffer_clear(&audio_rb);
+					SDL_mutexV(audio_mutex);
+				}
+				SDL_mutexP(audio_mutex2);
+			}
 		} else {
+			wdprintf(V_INFO, "audio", "Using already opened audio device with the same settings...\n");
 			result = 0;
-			device_open = 1;
-			have_samplerate = samplerate;
-			have_channels   = channels;
-			wdprintf(V_INFO, "audio", "Device opened with %d Hz, %d channels and sample buffer w/ %d samples.\n",
-			         obtained.freq, obtained.channels, obtained.samples);
 		}
-		ringbuffer_clear(&audio_rb);
-	} else {
-		wdprintf(V_INFO, "audio", "Using already opened audio device with the same settings...\n");
-		result = 0;
-	}
 
-	if (result == 0) {
-		done = 0;
-		SDL_CondSignal(cond_data_needed);
+		if (result == 0) {
+			done = 0;
+			SDL_CondSignal(cond_data_needed);
+		}
+		SDL_mutexV(audio_mutex2);
 	}
 	return result;
 }
@@ -208,7 +230,10 @@ int audio_set_pause(int pause_state)
 
 void audio_set_done(void)
 {
-	done = 1;
+	if (SDL_mutexP(audio_mutex2) != -1) {
+		done = 1;
+		SDL_mutexV(audio_mutex2);
+	}
 }
 
 int audio_get_pause(void)
@@ -218,17 +243,32 @@ int audio_get_pause(void)
 
 int audio_get_playtime(void)
 {
-	return buf_read_counter / (have_samplerate * 2 * have_channels) * 1000;
+	int res = 0;
+	if (SDL_mutexP(audio_mutex2) != -1) {
+		res = buf_read_counter / (have_samplerate * 2 * have_channels) * 1000;
+		SDL_mutexV(audio_mutex2);
+	}
+	return res;
 }
 
 int audio_buffer_get_fill(void)
 {
-	return ringbuffer_get_fill(&audio_rb);
+	int res = 0;
+	if (SDL_mutexP(audio_mutex) != -1) {
+		res = ringbuffer_get_fill(&audio_rb);
+		SDL_mutexV(audio_mutex);
+	}
+	return res;
 }
 
 int audio_buffer_get_size(void)
 {
-	return ringbuffer_get_size(&audio_rb);
+	int res = 0;
+	if (SDL_mutexP(audio_mutex) != -1) {
+		res = ringbuffer_get_size(&audio_rb);
+		SDL_mutexV(audio_mutex);
+	}
+	return res;
 }
 
 void audio_buffer_init(void)
@@ -245,12 +285,16 @@ void audio_buffer_init(void)
 	spectrum_mutex = SDL_CreateMutex();
 	cond_mutex = SDL_CreateMutex();
 	cond_data_needed = SDL_CreateCond();
+	audio_mutex2 = SDL_CreateMutex();
 }
 
 void audio_buffer_clear(void)
 {
 	audio_set_pause(1);
-	ringbuffer_clear(&audio_rb);
+	if (SDL_mutexP(audio_mutex) != -1) {
+		ringbuffer_clear(&audio_rb);
+		SDL_mutexV(audio_mutex);
+	}
 }
 
 void audio_buffer_free(void)
@@ -260,6 +304,7 @@ void audio_buffer_free(void)
 	SDL_DestroyMutex(spectrum_mutex);
 	SDL_DestroyCond(cond_data_needed);
 	SDL_DestroyMutex(cond_mutex);
+	if (audio_mutex2) SDL_DestroyMutex(audio_mutex2);
 }
 
 void audio_device_close(void)
@@ -290,19 +335,33 @@ int audio_get_volume(void)
 
 long audio_set_sample_counter(long sample)
 {
-	buf_read_counter = (sample * 2 * have_channels);
-	return buf_read_counter;
+	long res = 0;
+	if (SDL_mutexP(audio_mutex2) != -1) {
+		res = buf_read_counter = (sample * 2 * have_channels);
+		SDL_mutexV(audio_mutex2);
+	}
+	return res;
 }
 
 long audio_increase_sample_counter(long sample_offset)
 {
-	buf_read_counter += (sample_offset * 2 * have_channels);
-	return buf_read_counter;
+	long res = 0;
+	if (SDL_mutexP(audio_mutex2) != -1) {
+		buf_read_counter += (sample_offset * 2 * have_channels);
+		res = buf_read_counter;
+		SDL_mutexV(audio_mutex2);
+	}
+	return res;
 }
 
 long audio_get_sample_count(void)
 {
-	return buf_read_counter / (2 * have_channels);
+	long res = 0;
+	if (SDL_mutexP(audio_mutex2) != -1) {
+		res = buf_read_counter / (2 * have_channels);
+		SDL_mutexV(audio_mutex2);
+	}
+	return res;
 }
 
 void audio_wait_until_more_data_is_needed(void)
