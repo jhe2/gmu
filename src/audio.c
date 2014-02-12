@@ -106,21 +106,27 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 		if (ringbuffer_get_fill(&audio_rb) == 0) {
 			SDL_PauseAudio(1);
 			if (SDL_mutexV(audio_mutex) == 0) {
+				int tmp_done = 0;
 				if (SDL_mutexP(audio_mutex2) != -1) {
-					if (done) {
-						audio_set_pause(1);
-					} else {
-						int loop = 1;
-						while (loop && !paused && !done) {
-							if (SDL_mutexP(audio_mutex) != -1) {
-								if (ringbuffer_get_free(&audio_rb) <= 65536) loop = 0;
-								SDL_mutexV(audio_mutex);
-							}
-							wdprintf(V_DEBUG, "audio", "Waiting for buffer to refill...\n");
-							SDL_Delay(100);
-						}
-					}
+					tmp_done = done;
 					SDL_mutexV(audio_mutex2);
+				}
+				if (tmp_done) {
+					audio_set_pause(1);
+				} else {
+					int loop = 1;
+					while (loop) {
+						if (SDL_mutexP(audio_mutex2) != -1) {
+							if (paused || done) loop = 0;
+							SDL_mutexV(audio_mutex2);
+						}
+						if (SDL_mutexP(audio_mutex) != -1) {
+							if (ringbuffer_get_free(&audio_rb) <= 65536) loop = 0;
+							SDL_mutexV(audio_mutex);
+						}
+						wdprintf(V_DEBUG, "audio", "Waiting for buffer to refill...\n");
+						SDL_Delay(100);
+					}
 				}
 				SDL_mutexP(audio_mutex);
 			}
