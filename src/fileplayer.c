@@ -143,7 +143,7 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 	int       differ = 0;
 
 	if (*gd->get_meta_data) {
-		memcpy(&ti_tmp, ti, sizeof(TrackInfo));
+		trackinfo_copy(&ti_tmp, ti);
 		trackinfo_set_artist(&ti_tmp, "");
 		trackinfo_set_title(&ti_tmp, "");
 		trackinfo_set_album(&ti_tmp, "");
@@ -178,7 +178,7 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 			differ = 1;
 
 		if (differ) {
-			memcpy(ti, &ti_tmp, sizeof(TrackInfo));
+			trackinfo_copy(ti, &ti_tmp);
 			if (*gd->get_meta_data_int) {
 				if ((*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1) &&
 				   ((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)) &&

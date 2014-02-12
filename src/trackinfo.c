@@ -306,3 +306,31 @@ int trackinfo_release_lock(TrackInfo *ti)
 		res = 1;
 	return res;
 }
+
+/* Copies the content of a TrackInfo object */
+int trackinfo_copy(TrackInfo *dest, TrackInfo *src)
+{
+	int res = 0;
+	strncpy(dest->artist, src->artist, SIZE_ARTIST);
+	strncpy(dest->title, src->title, SIZE_TITLE);
+	strncpy(dest->album, src->album, SIZE_ALBUM);
+	strncpy(dest->comment, src->comment, SIZE_COMMENT);
+	strncpy(dest->date, src->date, SIZE_DATE);
+	strncpy(dest->file_type, src->file_type, SIZE_FILE_TYPE);
+	strncpy(dest->file_name, src->file_name, SIZE_FILE_NAME);
+	strncpy(dest->tracknr, src->tracknr, SIZE_TRACKNR);
+	strncpy(dest->lyrics, src->lyrics, SIZE_LYRICS);
+	dest->image = src->image;
+	dest->bitrate = src->bitrate;
+	dest->recent_bitrate = src->recent_bitrate;
+	dest->samplerate = src->samplerate;
+	dest->channels = src->channels;
+	dest->length = src->length;
+	dest->vbr = src->vbr;
+	dest->has_cover_artwork = src->has_cover_artwork;
+	dest->has_lyrics = src->has_lyrics;
+	dest->file_size = src->file_size;
+	dest->updated = src->updated;
+	dest->id = src->id;
+	return res;
+}

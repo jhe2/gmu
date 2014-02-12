@@ -106,4 +106,6 @@ char *trackinfo_get_image_mime_type(TrackInfo *ti);
  * initialized with locking enabled. */
 int   trackinfo_acquire_lock(TrackInfo *ti);
 int   trackinfo_release_lock(TrackInfo *ti);
+/* Copies the content of a TrackInfo object */
+int   trackinfo_copy(TrackInfo *dest, TrackInfo *src);
 #endif
