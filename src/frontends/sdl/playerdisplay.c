@@ -99,8 +99,11 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 				skin_draw_display_symbol((Skin *)&skin, buffer, symbol);
 		}
 
-		if (trackinfo_get_channels(ti) > 1)
-			skin_draw_display_symbol((Skin *)&skin, buffer, SYMBOL_STEREO);
+		if (trackinfo_acquire_lock(ti)) {
+			if (trackinfo_get_channels(ti) > 1)
+				skin_draw_display_symbol((Skin *)&skin, buffer, SYMBOL_STEREO);
+			trackinfo_release_lock(ti);
+		}
 
 		blink_state--;
 		if (blink_state < 0) blink_state = BLINK_DELAY;
