@@ -1252,14 +1252,14 @@ int main(int argc, char **argv)
 	}
 	gmu_core_config_release_lock();
 
+	wdprintf(V_INFO, "gmu", "Unloading frontends...\n");
+	feloader_free();
+
 	file_player_shutdown();
 	while (file_player_is_thread_running())	usleep(50);
 	while (file_player_is_thread_running())	usleep(50); /* In case another thread had been started in the meantime */
 	audio_device_close();
 	audio_buffer_free();
-
-	wdprintf(V_INFO, "gmu", "Unloading frontends...\n");
-	feloader_free();
 
 	gmu_core_config_acquire_lock();
 	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0 ||
