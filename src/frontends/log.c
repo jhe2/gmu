@@ -103,7 +103,7 @@ static void save_previous_trackinfo()
 static void update_trackinfo(TrackInfo *ti)
 {
 	if (ti && trackinfo_acquire_lock(ti)) {
-		memcpy(&previous, ti, sizeof(TrackInfo));
+		trackinfo_copy(&previous, ti);
 		trackinfo_release_lock(ti);
 	} else {
 		trackinfo_clear(&previous);
