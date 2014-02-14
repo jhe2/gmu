@@ -42,22 +42,23 @@
 typedef enum GlobalCommand { NO_CMD, PLAY, PAUSE, STOP, NEXT, 
                              PREVIOUS, PLAY_ITEM, PLAY_FILE } GlobalCommand;
 
-static GlobalCommand global_command = NO_CMD;
-static int           global_param = 0;
-static char          global_filename[256];
-static int           gmu_running = 0;
-static Playlist      pl;
-static TrackInfo     current_track_ti;
-static EventQueue    event_queue;
-static ConfigFile    config;
-static char         *file_extensions[MAX_FILE_EXTENSIONS+1];
-static int           volume_max;
-static unsigned int  player_status = STOPPED;
-static int           shutdown_timer = 0;
-static int           remaining_time;
-static char          base_dir[256], *config_dir;
+static GlobalCommand   global_command = NO_CMD;
+static int             global_param = 0;
+static char            global_filename[256];
+static int             gmu_running = 0;
+static Playlist        pl;
+static TrackInfo       current_track_ti;
+static EventQueue      event_queue;
+static ConfigFile      config;
+static pthread_mutex_t config_mutex;
+static char           *file_extensions[MAX_FILE_EXTENSIONS+1];
+static int             volume_max;
+static unsigned int    player_status = STOPPED;
+static int             shutdown_timer = 0;
+static int             remaining_time;
+static char            base_dir[256], *config_dir;
 #ifdef GMU_MEDIALIB
-static GmuMedialib   gm;
+static GmuMedialib     gm;
 #endif
 
 static void init_sdl(void)
@@ -239,6 +240,16 @@ static void set_default_play_mode(ConfigFile *config, Playlist *pl)
 ConfigFile *gmu_core_get_config(void)
 {
 	return &config;
+}
+
+int gmu_core_config_acquire_lock(void)
+{
+	return pthread_mutex_lock(&config_mutex);
+}
+
+int gmu_core_config_release_lock(void)
+{
+	return pthread_mutex_unlock(&config_mutex);
 }
 
 /* Start playback */
@@ -996,6 +1007,11 @@ int main(int argc, char **argv)
 
 	event_queue_init(&event_queue);
 	wdprintf(V_INFO, "gmu", "Loading configuration %s...\n", config_file_path);
+	if (pthread_mutex_init(&config_mutex, NULL) != 0) {
+		wdprintf(V_ERROR, "gmu", "Failed to initialize config mutex.\n");
+		exit(10);
+	}
+	gmu_core_config_acquire_lock();
 	cfg_init_config_file_struct(&config);
 	add_default_cfg_settings(&config);
 	if (cfg_read_config_file(&config, config_file_path) != 0) {
@@ -1050,6 +1066,7 @@ int main(int argc, char **argv)
 		if (cfg_get_key_value(config, "VolumeHardwareMixerChannel"))
 			hw_open_mixer(atoi(cfg_get_key_value(config, "VolumeHardwareMixerChannel")));
 	}
+	gmu_core_config_release_lock();
 
 	audio_buffer_init();
 	trackinfo_init(&current_track_ti, 1);
@@ -1088,6 +1105,7 @@ int main(int argc, char **argv)
 	file_player_init(&current_track_ti);
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "LyricsFilePattern"));
 
+	gmu_core_config_acquire_lock();
 	set_default_play_mode(&config, &pl);
 	gmu_core_set_volume(atoi(cfg_get_key_value(config, "Volume")));
 
@@ -1106,6 +1124,7 @@ int main(int argc, char **argv)
 			gmu_core_play_pl_item(item-1);
 		}
 	}
+	gmu_core_config_release_lock();
 
 	time(&start);
 	/* Main loop */
@@ -1221,6 +1240,7 @@ int main(int argc, char **argv)
 	         gmu_core_playlist_get_current_position(),
 	         file_player_playback_get_time());
 
+	gmu_core_config_acquire_lock();
 	if (file_player_get_item_status() == PLAYING) {
 		snprintf(temp, 10, "%d", gmu_core_playlist_get_current_position()+1);
 		cfg_add_key(&config, "LastPlayedPlaylistItem", temp);
@@ -1230,6 +1250,7 @@ int main(int argc, char **argv)
 		cfg_add_key(&config, "LastPlayedPlaylistItem", "None");
 		cfg_add_key(&config, "LastPlayedPlaylistItemTime", "0");
 	}
+	gmu_core_config_release_lock();
 
 	file_player_shutdown();
 	while (file_player_is_thread_running())	usleep(50);
@@ -1237,12 +1258,13 @@ int main(int argc, char **argv)
 	audio_device_close();
 	audio_buffer_free();
 
+	wdprintf(V_INFO, "gmu", "Unloading frontends...\n");
+	feloader_free();
+
+	gmu_core_config_acquire_lock();
 	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0 ||
 	    strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0)
 		hw_close_mixer();
-
-	wdprintf(V_INFO, "gmu", "Unloading frontends...\n");
-	feloader_free();
 
 	if (strncmp(cfg_get_key_value(config, "RememberLastPlaylist"), "yes", 3) == 0) {
 		wdprintf(V_INFO, "gmu", "Saving playlist...\n");
@@ -1283,6 +1305,7 @@ int main(int argc, char **argv)
 		cfg_write_config_file(&config, config_file_path);
 		disksync = 1;
 	}
+	gmu_core_config_release_lock();
 	if (disksync) {
 		wdprintf(V_DEBUG, "gmu", "Syncing disc...\n");
 		sync();
@@ -1300,6 +1323,7 @@ int main(int argc, char **argv)
 	file_extensions_free();
 	wdprintf(V_DEBUG, "gmu", "File extensions freed.\n");
 
+	gmu_core_config_acquire_lock();
 	if (auto_shutdown) {
 		char *tmp = cfg_get_key_value(config, "ShutdownCommand");
 		if (tmp) {
@@ -1308,6 +1332,8 @@ int main(int argc, char **argv)
 		}
 	}
 	cfg_free_config_file_struct(&config);
+	gmu_core_config_release_lock();
+	pthread_mutex_destroy(&config_mutex);
 	SDL_Quit();
 	event_queue_free(&event_queue);
 	wdprintf(V_INFO, "gmu", "Shutdown complete.\n");

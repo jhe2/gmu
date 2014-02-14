@@ -45,7 +45,11 @@ static int init(void)
 
 	ip = malloc(sizeof(HTTPD_Init_Params));
 	ip->local_only = 1;
-	if (config) kval = cfg_get_key_value(*config, "gmuhttp.Listen");
+	if (config) {
+		gmu_core_config_acquire_lock();
+		kval = cfg_get_key_value(*config, "gmuhttp.Listen");
+		gmu_core_config_release_lock();
+	}
 	ip->webserver_root = gmu_core_get_base_dir();
 	if (kval && strcmp(kval, "All") == 0)
 		ip->local_only = 0;

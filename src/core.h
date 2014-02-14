@@ -33,6 +33,8 @@ typedef enum GmuFeatures {
 } GmuFeatures;
 
 ConfigFile      *gmu_core_get_config(void);
+int              gmu_core_config_acquire_lock(void);
+int              gmu_core_config_release_lock(void);
 GmuFeatures      gmu_core_get_features(void);
 int              gmu_core_play(void);
 int              gmu_core_play_pause(void);
