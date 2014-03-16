@@ -1050,6 +1050,11 @@ static void gmu_http_handle_websocket_message(char *message, Connection *c)
 			} else if (strcmp(cmd, "medialib_add_id_to_playlist") == 0) {
 				int id = json_get_number_value_for_key(json, "id");
 				if (id > 0) gmu_core_medialib_add_id_to_playlist(id);
+			} else if (strcmp(cmd, "medialib_browse") == 0) {
+				char *col = json_get_string_value_for_key(json, "column");
+				if (col && strcmp(col, "artist") == 0) {
+					gmu_http_medialib_browse_artists(c);
+				}
 			}
 		}
 	}
