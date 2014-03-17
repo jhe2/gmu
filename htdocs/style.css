@@ -181,7 +181,7 @@ div.tab {
 	overflow-x:hidden;
 }
 
-div.tab div {
+div.tab div.controls div {
 	padding:5px;
 }
 
@@ -235,20 +235,30 @@ div.tabmenu {
 	width:100%;
 }
 
-#playlisttable, #filebrowsertable {
+#playlisttable, #filebrowsertable, #medialibbrowsertable {
 	table-layout:fixed;
 	position:absolute;
 	top:0; left:0; right:0px;
 	width:100%;
 }
 
-#playlisttable tr,td, #filebrowsertable tr,td {
+#playlisttable tr,td, #filebrowsertable tr,td, #medialibbrowsertable tr,td {
 	border:0;
 	margin:0;
 	padding:0;
 }
 
-#plscrollbar, #fbscrollbar {
+#playlisttable td div, #filebrowsertable td div, #medialibbrowsertable td div {
+	border:0;
+	margin:0;
+	padding:0;
+	overflow:hidden;
+	display:block;
+	height:20px;
+	max-height:20px;
+}
+
+#plscrollbar, #fbscrollbar, #mbscrollbar {
 	overflow-y:auto;
 	overflow-x:hidden;
 	width:10px;
@@ -256,7 +266,7 @@ div.tabmenu {
 	top:0; right:0; bottom:10px;
 }
 
-#plscrolldummy, #fbscrolldummy {
+#plscrolldummy, #fbscrolldummy, #mbscrolldummy {
 	height:10px;
 	width:1px;
 }

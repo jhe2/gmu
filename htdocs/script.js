@@ -1,19 +1,19 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: script.js  Created: 120213
  *
  * Description: HTTP/Websocket frontend
  */
 
-var pl = [], fb_dir = [];
+var pl = [], fb_dir = [], mb = [];
 var dir;
 var selected_tab = 'pl';
 
 var con = null;
-var plt, fbt;
+var plt, fbt, mbt;
 var playmode = 0;
 
 window.onload = function() { init(); }
@@ -63,6 +63,7 @@ function Connection()
 							cur_dir = '/';
 							dir = undefined;
 							c.do_send('{"cmd":"dir_read","dir":"' + cur_dir + '"}');
+							mlib_browse('artist');
 						}
 						break;
 					case 'time':
@@ -171,6 +172,27 @@ function Connection()
 								break;
 						}
 						break;
+					case 'mlib_browse_result':
+						if (jmsg['pos'] != undefined) {
+							mb[jmsg['pos']] = [];
+							mb[jmsg['pos']]['artist'] = jmsg['artist'];
+							if (jmsg['pos']-mbt.first_visible_line >= 0)
+								mbt.set_row_data(jmsg['pos']-mbt.first_visible_line);
+							mbt.set_length(mb.length);
+						}
+						break;
+					case 'mlib_result':
+						if (jmsg['pos'] == 0) mb.length = 0;
+						handle_mb_scroll();
+						mb[jmsg['pos']] = [];
+						mb[jmsg['pos']]['artist'] = jmsg['artist'];
+						mb[jmsg['pos']]['title'] = jmsg['title'];
+						mb[jmsg['pos']]['album'] = jmsg['album'];
+						mb[jmsg['pos']]['file'] = jmsg['file'];
+						if (jmsg['pos']-mbt.first_visible_line >= 0)
+							mbt.set_row_data(jmsg['pos']-mbt.first_visible_line);
+						mbt.set_length(mb.length);
+						break;
 					default:
 						if (msg.data != undefined) write_to_screen('msg='+msg.data);
 						break;
@@ -189,7 +211,6 @@ function Connection()
 			} catch (e) {
 				this.disconnected = true;
 			}
-		
 		}
 	}
 
@@ -202,7 +223,6 @@ function Connection()
 function GmuList()
 {
 	gl = this;
-	this.baz = null;
 	this.visible_line_count = 0;
 	this.first_visible_line = 0;
 	this.item_height = 1;
@@ -212,6 +232,7 @@ function GmuList()
 	this.func_item_construct = undefined;
 	this.length = 0;
 	this.table_elem = undefined;
+	this.table_column_size = [5, 90, 5];
 
 	this.init = function(div_elem_id, table_elem_id, scrollbar_elem_id, scrolldummy_elem_id,
 	                     func_get_data, func_item_construct, func_need_data)
@@ -224,7 +245,7 @@ function GmuList()
 		this.func_need_data = func_need_data;
 		this.table_elem = document.getElementById(table_elem_id);
 		this.table_elem.innerHTML = '';
-		add_row(table_elem_id, '?', '?', '?', '#111');
+		this.add_row('?', '?', '?', '#111');
 		select_tab(div_elem_id);
 		div_elem_id = div_elem_id + 'x';
 		var div_elem = document.getElementById(div_elem_id);
@@ -232,7 +253,33 @@ function GmuList()
 		this.item_height = this.table_elem.clientHeight;
 		this.visible_line_count = parseInt(height / this.item_height) + 1;
 		for (i = 0; i < this.visible_line_count; i++)
-			add_row(table_elem_id, '', '?', '', '#111');
+			this.add_row('', '?', '', '#111');
+	}
+
+	this.set_table_column_sizes = function(col1_width, col2_width, col3_width)
+	{
+		this.table_column_size[0] = col1_width;
+		this.table_column_size[1] = col2_width;
+		this.table_column_size[2] = col3_width;
+	}
+
+	this.add_row = function(col1, col2, col3, bg)
+	{
+		var tabl = document.getElementById(this.table_elem_id);
+		var ro   = tabl.insertRow(tabl.rows.length);
+		ro.style.backgroundColor = bg;
+		cell1 = ro.insertCell(0);
+		cell1.innerHTML = col1;
+		cell1.style.width = this.table_column_size[0]+"%";
+		cell1.style.height = "20px";
+		cell2 = ro.insertCell(1);
+		cell2.innerHTML = col2;
+		cell2.style.width = this.table_column_size[1]+"%";
+		cell2.style.height = "20px";
+		cell3 = ro.insertCell(2);
+		cell3.innerHTML = col3;
+		cell3.style.width = this.table_column_size[2]+"%";
+		cell3.style.height = "20px";
 	}
 
 	/* ros is the number of the visible row -> first visible row=0 */
@@ -241,7 +288,7 @@ function GmuList()
 		if ((r = this.table_elem.rows[row])) {
 			for (col = 0; col < 3; col++) {
 				r.childNodes[col].innerHTML = (this.func_item_construct !== undefined) ?
-				                              this.func_item_construct(this.first_visible_line+row, col) : '';
+				                              '<div>'+this.func_item_construct(this.first_visible_line+row, col)+'</div>' : '';
 			}
 		}
 	}
@@ -332,25 +379,6 @@ function select_tab(tab_id)
 	selected_tab = tab_id;
 }
 
-function add_row(table_id, col1, col2, col3, bg)
-{
-	var tabl = document.getElementById(table_id);
-	var ro   = tabl.insertRow(tabl.rows.length);
-	ro.style.backgroundColor = bg;
-	cell1 = ro.insertCell(0);
-	cell1.innerHTML = col1;
-	cell1.style.width = "5%";
-	cell1.style.height = "20px";
-	cell2 = ro.insertCell(1);
-	cell2.innerHTML = col2;
-	cell2.style.width = "90%";
-	cell2.style.height = "20px";
-	cell3 = ro.insertCell(2);
-	cell3.innerHTML = col3;
-	cell3.style.width = "5%";
-	cell3.style.height = "20px";
-}
-
 function play(id)
 {
 	con.do_send('{"cmd":"play","item":'+id+'}');
@@ -386,6 +414,11 @@ function handle_fb_scroll()
 	fbt.handle_scroll();
 }
 
+function handle_mb_scroll()
+{
+	mbt.handle_scroll();
+}
+
 function handle_mouse_scroll_event(e)
 {
 	var evt = window.event || e; // equalize event object
@@ -398,6 +431,9 @@ function handle_mouse_scroll_event(e)
 			break;
 		case 'fb':
 			fbt.scroll_n_rows(direction);
+			break;
+		case 'mb':
+			mbt.scroll_n_rows(direction);
 			break;
 	}
 }
@@ -486,6 +522,12 @@ function handle_tab_select_fb(e)
 	select_tab('fb');
 }
 
+function handle_tab_select_mb(e)
+{
+	var evt = window.event || e;
+	select_tab('mb');
+}
+
 function handle_tab_select_pl(e)
 {
 	var evt = window.event || e;
@@ -513,6 +555,12 @@ function handle_keypress(e)
 				fbt.scroll_n_rows(1);
 			else if (e.keyCode == 38) // Cursor up
 				fbt.scroll_n_rows(-1);
+			break;
+		case 'mb':
+			if (e.keyCode == 40)      // Cursor down
+				mbt.scroll_n_rows(1);
+			else if (e.keyCode == 38) // Cursor up
+				mbt.scroll_n_rows(-1);
 			break;
 		default:
 			break;
@@ -573,7 +621,7 @@ function fb_item_row_construct(item, col)
 				var path = cur_dir+fb_dir[item]['name'];
 				var path_mask = path.replace(/'/g, "\\'");
 				res = fb_dir[item]['is_dir'] ?
-				      "<a href=\"javascript:add_dir('"+path_mask+"');\"><strong title='Add this directory to playlist'>+</strong></a> <a href=\"javascript:open_dir('"+path_mask+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>" :
+				      "<a href=\"javascript:add_dir('"+path_mask+"');\"><strong title='Add this directory to playlist'>+</strong></a> <a href=\"javascript:open_dir('"+html_entity_encode(path_mask)+"');\">" + html_entity_encode(fb_dir[item]['name']) + "</a>" :
 				      "<a href=\"javascript:add_file('"+path_mask+"');\"><strong title='Add this file to playlist'>+</strong> " + html_entity_encode(fb_dir[item]['name']) + "</a>";
 				}
 			else
@@ -582,6 +630,46 @@ function fb_item_row_construct(item, col)
 		case 2:
 			res = '';
 			break;
+	}
+	return res;
+}
+
+function str_escape(str)
+{
+	str = str.replace(/'/g, "\\'");
+	return str.replace(/"/g, "\\\"");
+}
+
+function mb_item_row_construct(item, col)
+{
+	var res;
+	if (mb[item] != undefined) {
+		switch (col) {
+			default:
+			case 0:
+				res = '';
+				if (mb[item]['artist'] !== undefined) {
+					var str = str_escape(mb[item]['artist']);
+					res = "<a href=\"javascript:mlib_find('"+html_entity_encode(str)+"');\">" + html_entity_encode(mb[item]['artist']) + "</a>";
+				}
+				break;
+			case 1:
+				res = '';
+				if (mb[item]['title'] !== undefined && mb[item]['file'] != undefined) {
+					var path_mask = str_escape(mb[item]['file']);
+					res = "<a href=\"javascript:add_file('"+html_entity_encode(path_mask)+"');\">" + html_entity_encode(mb[item]['title']) + "</a>";
+				}
+				break;
+			case 2:
+				res = '';
+				if (mb[item]['album'] !== undefined) {
+					var str = str_escape(mb[item]['album']);
+					res = "<a href=\"javascript:mlib_find('"+html_entity_encode(str)+"');\">" + html_entity_encode(mb[item]['album']) + "</a>";
+				}
+				break;
+		}
+	} else {
+		res = '?';
 	}
 	return res;
 }
@@ -598,7 +686,17 @@ function add_file(path)
 
 function add_dir(path)
 {
-	c.do_send('{"cmd":"playlist_add","path":"' + path + '","type":"dir"}');
+	c.do_send('{"cmd":"playlist_add","path":"' + str_escape(path) + '","type":"dir"}');
+}
+
+function mlib_find(str)
+{
+	c.do_send('{"cmd":"medialib_search","str":"' + str_escape(str) + '","type":"0"}');
+}
+
+function mlib_browse(str)
+{
+	c.do_send('{"cmd":"medialib_browse","column":"' + str_escape(str) + '"}');
 }
 
 function html_entity_encode(str)
@@ -614,6 +712,20 @@ function html_entity_encode(str)
 function init()
 {
 	con = new Connection();
+
+	fbt = new GmuList();
+	fbt.init('fb', 'filebrowsertable', 'fbscrollbar', 'fbscrolldummy',
+	         undefined,
+	         fb_item_row_construct
+	);
+
+	mbt = new GmuList();
+	mbt.set_table_column_sizes(34, 33, 33);
+	mbt.init('mb', 'medialibbrowsertable', 'mbscrollbar', 'mbscrolldummy',
+	         undefined,
+	         mb_item_row_construct
+	);
+
 	plt = new GmuList();
 	plt.init('pl', 'playlisttable', 'plscrollbar', 'plscrolldummy',
 	         function(item)
@@ -624,17 +736,13 @@ function init()
 	         pl_need_data
 	);
 
-	fbt = new GmuList();
-	fbt.init('fb', 'filebrowsertable', 'fbscrollbar', 'fbscrolldummy',
-	         undefined,
-	         fb_item_row_construct
-	);
 	// FF doesn't recognize mousewheel as of FF3.x
 	var mwevt = (/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel";
 
 	document.onkeydown = handle_keypress;
 	add_event_handler('pl',          mwevt,    handle_mouse_scroll_event);
 	add_event_handler('fb',          mwevt,    handle_mouse_scroll_event);
+	add_event_handler('mb',          mwevt,    handle_mouse_scroll_event);
 	add_event_handler('btn-next',    'click',  handle_btn_next);
 	add_event_handler('btn-prev',    'click',  handle_btn_prev);
 	add_event_handler('btn-play',    'click',  handle_btn_play);
@@ -642,7 +750,9 @@ function init()
 	add_event_handler('btn-stop',    'click',  handle_btn_stop);
 	add_event_handler('plscrollbar', 'scroll', handle_playlist_scroll);
 	add_event_handler('fbscrollbar', 'scroll', handle_fb_scroll);
+	add_event_handler('mbscrollbar', 'scroll', handle_mb_scroll);
 	add_event_handler('tfb',         'click',  handle_tab_select_fb);
+	add_event_handler('tmb',         'click',  handle_tab_select_mb);
 	add_event_handler('tpl',         'click',  handle_tab_select_pl);
 	add_event_handler('tlo',         'click',  handle_tab_select_log);
 	add_event_handler('btn-login',   'click',  handle_login);
@@ -665,7 +775,12 @@ function init()
 			undefined,
 			fb_item_row_construct
 		);
+		mbt.init('mb', 'medialibbrowsertable', 'mbscrollbar', 'mbscrolldummy',
+	         undefined,
+	         mb_item_row_construct
+		);
 		handle_playlist_scroll();
 		handle_fb_scroll();
+		handle_mb_scroll();
 	}
 }
