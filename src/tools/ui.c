@@ -32,7 +32,7 @@ static FooterButtons fb_pl[] = {
 	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
 	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
 	{ "m",   "P.Mode",   FUNC_PLAYMODE,    'm', 0 },
-	{ "c",   "Clear",    FUNC_PL_CLEAR,    'c', 0 },
+	{ "C",   "Clear",    FUNC_PL_CLEAR,    'C', 0 },
 	{ "Del", "Remove",   FUNC_PL_DEL_ITEM, KEY_DC, 1 },
 	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
