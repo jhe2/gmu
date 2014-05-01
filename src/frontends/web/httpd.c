@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: httpd.c  Created: 111209
  *
@@ -84,7 +84,7 @@ static char *mime_type[] = {
 	NULL
 };
 
-static char *get_mime_type(char *url)
+static char *get_mime_type(const char *url)
 {
 	char *ext, *res = "text/html";
 	ext = strrchr(url, '.');
@@ -101,7 +101,7 @@ static char *get_mime_type(char *url)
 }
 
 /* Returns pointer to next char after value */
-static char *get_next_key_value_pair(char *str, char *key, int key_len, char *value, int value_len)
+static const char *get_next_key_value_pair(const char *str, char *key, int key_len, char *value, int value_len)
 {
 	int sc = 0, i = 0, eoh = 0;
 
@@ -152,7 +152,7 @@ static sighandler_t my_signal(int sig_nr, sighandler_t signalhandler)
 	return alt_sig.sa_handler;
 }
 
-static int websocket_send_string(Connection *c, char *str)
+static int websocket_send_string(Connection *c, const char *str)
 {
 	int res = 0;
 	if (str && c->fd) {
@@ -165,7 +165,7 @@ static int websocket_send_string(Connection *c, char *str)
 	return res;
 }
 
-int connection_init(Connection *c, int fd, char *client_ip)
+int connection_init(Connection *c, int fd, const char *client_ip)
 {
 	ConfigFile *cf = gmu_core_get_config();
 	memset(c, 0, sizeof(Connection));
@@ -238,7 +238,7 @@ int connection_file_is_open(Connection *c)
 	return (c->local_file ? 1 : 0);
 }
 
-int connection_file_open(Connection *c, char *filename)
+int connection_file_open(Connection *c, const char *filename)
 {
 	struct stat fst;
 	if (c->local_file) fclose(c->local_file);
@@ -308,7 +308,7 @@ int connection_is_local(Connection *c)
 	return c->client_ip && strcmp(c->client_ip, "127.0.0.1") == 0;
 }
 
-int connection_authenticate(Connection *c, char *password)
+int connection_authenticate(Connection *c, const char *password)
 {
 	int no_local_password_required = 0;
 	ConfigFile *cf = gmu_core_get_config();
@@ -334,7 +334,7 @@ int connection_authenticate(Connection *c, char *password)
 	return c->authentication_okay;
 }
 
-static void send_http_header(int soc, char *code,
+static void send_http_header(int soc, const char *code,
                              int length, time_t *time_modified,
                              const char *content_type)
 {
@@ -489,7 +489,7 @@ static Connection tcp_server_client_init(int listen_fd)
  * Write to client socket
  * Returns OKAY when the message could be written completely, ERROR otherwise
  */
-static int tcp_server_write(int fd, char buf[], int buflen)
+static int tcp_server_write(int fd, const char buf[], int buflen)
 {
 	return write(fd, buf, buflen) == buflen ? OKAY : ERROR;
 }
@@ -509,7 +509,7 @@ static int tcp_server_read(int fd, char buf[], int *buflen)
 	return res;
 }
 
-static int is_valid_resource(char *str)
+static int is_valid_resource(const char *str)
 {
 	int res = 1, i, len = 0;
 	/* Resource strings MUST NOT contain substrings containing ".." */
@@ -527,7 +527,7 @@ static int is_valid_resource(char *str)
 	return res;
 }
 
-static HTTPCommand get_command(char *str)
+static HTTPCommand get_command(const char *str)
 {
 	HTTPCommand cmd = UNKNOWN;
 	if (str) {
@@ -622,7 +622,8 @@ static int process_command(int rfd, Connection *c)
 		}
 		if (http_version) wdprintf(V_DEBUG, "httpd", "%04d http_version: [%s]\n", rfd, http_version);
 		if (options) {
-			char key[128], value[256], *opts = options;
+			char key[128], value[256];
+			const char *opts = options;
 			int  websocket_version = 0, websocket_upgrade = 0, websocket_connection = 0;
 			wdprintf(V_DEBUG, "httpd", "%04d Options: [%s]\n", rfd, options);
 			while (opts) {
@@ -742,7 +743,7 @@ static int process_command(int rfd, Connection *c)
 /*
  * Send string "str" to all connected WebSocket clients
  */
-void httpd_send_websocket_broadcast(char *str)
+void httpd_send_websocket_broadcast(const char *str)
 {
 	queue_push(&queue, str);
 }
@@ -840,7 +841,7 @@ void gmu_http_send_initial_information(Connection *c)
 
 #define MAX_LEN 32768
 
-static void gmu_http_read_dir(char *directory, Connection *c)
+static void gmu_http_read_dir(const char *directory, Connection *c)
 {
 	Dir   dir;
 	char *base_dir;
@@ -852,7 +853,7 @@ static void gmu_http_read_dir(char *directory, Connection *c)
 	if (strncmp(base_dir, directory, strlen(base_dir)) != 0)
 		directory = base_dir;
 	dir_set_base_dir(&dir, base_dir);
-	dir_set_ext_filter(&dir, (char **)gmu_core_get_file_extensions(), 1);
+	dir_set_ext_filter(&dir, (const char **)gmu_core_get_file_extensions(), 1);
 
 	if (dir_read(&dir, directory, 1)) {
 		int i = 0, num_files = dir_get_number_of_files(&dir);
@@ -904,7 +905,7 @@ static void gmu_http_ping(Connection *c)
 	websocket_send_string(c, "{\"cmd\":\"pong\"}");
 }
 
-static void gmu_http_medialib_search(Connection *c, char *type, char *str)
+static void gmu_http_medialib_search(Connection *c, const char *type, const char *str)
 {
 	TrackInfo ti;
 	int       i = 0;
@@ -958,7 +959,7 @@ static void gmu_http_medialib_browse_artists(Connection *c)
 	gmu_core_medialib_browse_finish();
 }
 
-static void gmu_http_handle_websocket_message(char *message, Connection *c)
+static void gmu_http_handle_websocket_message(const char *message, Connection *c)
 {
 	JSON_Object *json = json_parse_alloc(message);
 	if (json && !json_object_has_parse_error(json)) { /* Valid JSON data received */

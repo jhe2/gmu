@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: medialib.h  Created: 130627
  *
@@ -28,14 +28,14 @@ void medialib_close(GmuMedialib *gm);
 int  medialib_start_refresh(GmuMedialib *gm, void (*finished_callback)(void));
 int  medialib_is_refresh_in_progress(GmuMedialib *gm);
 void medialib_refresh(GmuMedialib *gm);
-int  medialib_add_file(GmuMedialib *gm, char *file);
-void medialib_path_add(GmuMedialib *gm, char *path);
-void medialib_path_remove(GmuMedialib *gm, char *path);
+int  medialib_add_file(GmuMedialib *gm, const char *file);
+void medialib_path_add(GmuMedialib *gm, const char *path);
+void medialib_path_remove(GmuMedialib *gm, const char *path);
 /* Search the medialib; Returns the number of results */
-int  medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, char *str);
+int  medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, const char *str);
 TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm);
 void medialib_search_finish(GmuMedialib *gm);
-int  medialib_browse(GmuMedialib *gm, char *sel_column, ...);
+int  medialib_browse(GmuMedialib *gm, const char *sel_column, ...);
 char *medialib_browse_fetch_next_result(GmuMedialib *gm);
 void medialib_browse_finish(GmuMedialib *gm);
 TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id);

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: decloader.c  Created: 081022
  *
@@ -69,7 +69,7 @@ void decloader_free(void)
 	dc_free(dc_root);
 }
 
-GmuDecoder *decloader_load_decoder(char *so_file)
+GmuDecoder *decloader_load_decoder(const char *so_file)
 {
 	GmuDecoder *result = NULL;
 	void       *handle;
@@ -96,7 +96,7 @@ GmuDecoder *decloader_load_decoder(char *so_file)
 	return result;
 }
 
-int decloader_load_all(char *directory)
+int decloader_load_all(const char *directory)
 {
 	Dir           dir;
 	int           res = 0;
@@ -109,7 +109,7 @@ int decloader_load_all(char *directory)
 	wdprintf(V_DEBUG, "decloader", "Searching...\n");
 
 	dir_init(&dir);
-	dir_set_ext_filter(&dir, (char **)&dir_extensions, 0);
+	dir_set_ext_filter(&dir, (const char **)&dir_extensions, 0);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
 		int i, num = dir_get_number_of_files(&dir);
@@ -143,7 +143,7 @@ int decloader_load_all(char *directory)
 	return res;
 }
 
-GmuDecoder *decloader_get_decoder_for_extension(char *file_extension)
+GmuDecoder *decloader_get_decoder_for_extension(const char *file_extension)
 {
 	DecoderChain *dc = dc_root;
 	GmuDecoder   *gd = NULL;
@@ -169,7 +169,7 @@ GmuDecoder *decloader_get_decoder_for_extension(char *file_extension)
 	return gd;
 }
 
-GmuDecoder *decloader_get_decoder_for_mime_type(char *mime_type)
+GmuDecoder *decloader_get_decoder_for_mime_type(const char *mime_type)
 {
 	DecoderChain *dc = dc_root;
 	GmuDecoder   *gd = NULL;
@@ -193,7 +193,7 @@ GmuDecoder *decloader_get_decoder_for_mime_type(char *mime_type)
 }
 
 
-GmuDecoder *decloader_get_decoder_for_data_chunk(char *data, int size)
+GmuDecoder *decloader_get_decoder_for_data_chunk(const char *data, int size)
 {
 	DecoderChain *dc = dc_root;
 	GmuDecoder   *gd = NULL;

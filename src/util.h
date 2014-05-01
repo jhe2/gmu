@@ -20,15 +20,16 @@
 
 void  strtoupper(char *target, const char *src, int len);
 void  strtolower(char *target, const char *src, int len);
-int   file_exists(char *filename);
-int   file_copy(char *destination_file, char *source_file);
-char *get_file_extension(char *filename);
-char *extract_filename_from_path(char *path);
-int   get_first_matching_file(char *target, int target_length, char *path, char *pattern);
-int   get_first_matching_file_pattern_list(char *target, int   target_length, 
-                                           char *path,   char *pattern_list);
-char *get_file_matching_given_pattern_alloc(char *original_file,
-                                            char *file_pattern);
+int   file_exists(const char *filename);
+int   file_copy(const char *destination_file, const char *source_file);
+const char *get_file_extension(const char *filename);
+const char *extract_filename_from_path(const char *path);
+int   get_first_matching_file(char *target, int target_length,
+                              const char *path, const char *pattern);
+int   get_first_matching_file_pattern_list(char *target, int target_length, 
+                                           const char *path, const char *pattern_list);
+char *get_file_matching_given_pattern_alloc(const char *original_file,
+                                            const char *file_pattern);
 int   strncpy_charset_conv(char *target, const char* source, int target_size,
                            int source_size, GmuCharset charset);
 #endif

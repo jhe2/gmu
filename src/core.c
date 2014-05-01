@@ -83,7 +83,7 @@ GmuFeatures gmu_core_get_features(void)
 	return features;
 }
 
-static int add_m3u_contents_to_playlist(Playlist *pl, char *filename)
+static int add_m3u_contents_to_playlist(Playlist *pl, const char *filename)
 {
 	M3u m3u;
 	int res = 0;
@@ -102,14 +102,14 @@ static int add_m3u_contents_to_playlist(Playlist *pl, char *filename)
 	return res;
 }
 
-void gmu_core_add_m3u_contents_to_playlist(char *filename)
+void gmu_core_add_m3u_contents_to_playlist(const char *filename)
 {
 	playlist_get_lock(&pl);
 	add_m3u_contents_to_playlist(&pl, filename);
 	playlist_release_lock(&pl);
 }
 
-static int add_pls_contents_to_playlist(Playlist *pl, char *filename)
+static int add_pls_contents_to_playlist(Playlist *pl, const char *filename)
 {
 	PLS pls;
 	int res = 0;
@@ -128,7 +128,7 @@ static int add_pls_contents_to_playlist(Playlist *pl, char *filename)
 	return res;
 }
 
-void gmu_core_add_pls_contents_to_playlist(char *filename)
+void gmu_core_add_pls_contents_to_playlist(const char *filename)
 {
 	playlist_get_lock(&pl);
 	add_pls_contents_to_playlist(&pl, filename);
@@ -200,7 +200,7 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "ReaderCachePrebufferSize", "256");
 }
 
-int gmu_core_export_playlist(char *file)
+int gmu_core_export_playlist(const char *file)
 {
 	M3u m3u_export;
 	int result = 0;
@@ -351,7 +351,7 @@ int gmu_core_playlist_set_current(Entry *entry)
 	return res;
 }
 
-int gmu_core_playlist_add_item(char *file, char *name)
+int gmu_core_playlist_add_item(const char *file, const char *name)
 {
 	int res, len;
 	playlist_get_lock(&pl);
@@ -384,7 +384,7 @@ static void add_dir_finish_callback(int pos)
 	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, pos);
 }
 
-int gmu_core_playlist_add_dir(char *dir)
+int gmu_core_playlist_add_dir(const char *dir)
 {
 	int res;
 	playlist_get_lock(&pl);
@@ -407,7 +407,7 @@ int gmu_core_playlist_get_length(void)
 	return len;
 }
 
-int gmu_core_playlist_insert_file_after(Entry *entry, char *filename_with_path)
+int gmu_core_playlist_insert_file_after(Entry *entry, const char *filename_with_path)
 {
 	int res;
 	res = playlist_insert_file_after(&pl, entry, filename_with_path);
@@ -415,11 +415,11 @@ int gmu_core_playlist_insert_file_after(Entry *entry, char *filename_with_path)
 	return res;
 }
 
-int gmu_core_playlist_add_file(char *filename_with_path)
+int gmu_core_playlist_add_file(const char *filename_with_path)
 {
 	int   res, len;
 	char  filetype[16] = "(none)";
-	char *tmp = filename_with_path ? get_file_extension(filename_with_path) : NULL;
+	const char *tmp = filename_with_path ? get_file_extension(filename_with_path) : NULL;
 	if (tmp != NULL) strtoupper(filetype, tmp, 15);
 	filetype[15] = '\0';
 	playlist_get_lock(&pl);
@@ -680,7 +680,7 @@ void gmu_core_medialib_start_refresh(void)
 #endif
 }
 
-int gmu_core_medialib_search_find(GmuMedialibDataType type, char *str)
+int gmu_core_medialib_search_find(GmuMedialibDataType type, const char *str)
 {
 #ifdef GMU_MEDIALIB
 	return medialib_search_find(&gm, type, str);
@@ -730,7 +730,7 @@ int gmu_core_medialib_browse_artists(void)
 	return res;
 }
 
-int gmu_core_medialib_browse_albums_by_artist(char *artist)
+int gmu_core_medialib_browse_albums_by_artist(const char *artist)
 {
 	int res = 0;
 #ifdef GMU_MEDIALIB
@@ -755,7 +755,7 @@ void gmu_core_medialib_browse_finish(void)
 #endif
 }
 
-static void print_cmd_help(char *prog_name)
+static void print_cmd_help(const char *prog_name)
 {
 	printf("Gmu Music Player " VERSION_NUMBER "\n");
 	printf("Copyright (c) 2006-2013 Johannes Heimansberg\n");
@@ -775,7 +775,7 @@ static void print_cmd_help(char *prog_name)
 	printf("You can add as many files as you like.\n\n");
 }
 
-static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, char *config_file)
+static int init_user_config_dir(char *user_config_dir, const char *sys_config_dir, const char *config_file)
 {
 	int   result = 0;
 	char *home = getenv("HOME");
@@ -796,7 +796,7 @@ static int init_user_config_dir(char *user_config_dir, char *sys_config_dir, cha
 			filename = strrchr(config_file, '/');
 			filename++;
 		} else {
-			filename = config_file;
+			filename = (char *)config_file;
 		}
 		snprintf(target, 383, "%s/%s", user_config_dir, filename);
 		if (!file_exists(target)) {

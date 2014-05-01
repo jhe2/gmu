@@ -21,7 +21,7 @@
 #include "decloader.h"
 #include "metadatareader.h"
 
-int metadatareader_read(char *file, char *file_type, TrackInfo *ti)
+int metadatareader_read(const char *file, const char *file_type, TrackInfo *ti)
 {
 	int         result = 0;
 	GmuDecoder *gd = decloader_get_decoder_for_extension(file_type);

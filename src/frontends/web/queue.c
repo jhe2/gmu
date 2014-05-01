@@ -29,7 +29,7 @@ void queue_init(Queue *q)
 	pthread_cond_init(&(q->cond), NULL);
 }
 
-int queue_push(Queue *q, char *str)
+int queue_push(Queue *q, const char *str)
 {
 	QueueEntry *new_entry;
 	int         result = 0;

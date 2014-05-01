@@ -222,9 +222,8 @@ static void *decode_audio_thread(void *udata)
 		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
 		r = NULL;
 		if (!file_player_shut_down && filename && item_status == PLAYING) {
-			char *tmp;
+			const char *tmp = get_file_extension(filename);
 			wdprintf(V_INFO, "fileplayer", "Playing %s...\n", filename);
-			tmp = get_file_extension(filename);
 			if (tmp) gd = decloader_get_decoder_for_extension(tmp);
 			if (!(gd && gd->identifier)) { /* No decoder found by extension, try mime-type check by data chunk */
 				wdprintf(V_WARNING, "fileplayer", "No suitable decoder available for extension %s. Trying mime type check.\n", tmp);

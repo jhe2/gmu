@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: dir.h  Created: 060929
  *
@@ -30,18 +30,18 @@ struct _Dir
 	char           *filename[MAX_FILES];
 	char            path[256];
 	char            base_dir[256];
-	char          **dir_extensions;
+	const char    **dir_extensions;
 	int             show_directories;
 };
 
 typedef struct _Dir Dir;
 
 void  dir_init(Dir *dir);
-void  dir_set_base_dir(Dir *dir, char *base_dir);
+void  dir_set_base_dir(Dir *dir, const char *base_dir);
 char *dir_get_base_dir(Dir *dir);
 /* dir_set_ext_filter() expects a pointer to a _statically_ allocated array of file extensions! */
-void  dir_set_ext_filter(Dir *dir, char **dir_exts, int show_dirs);
-int   dir_read(Dir *dir, char *path, int directories_first);
+void  dir_set_ext_filter(Dir *dir, const char **dir_exts, int show_dirs);
+int   dir_read(Dir *dir, const char *path, int directories_first);
 void  dir_free(Dir *dir);
 char *dir_get_filename(Dir *dir, int i);
 char *dir_get_filename_with_full_path_alloc(Dir *dir, int i);
@@ -51,5 +51,5 @@ void  dir_get_human_readable_filesize(Dir *dir, int i,
 int   dir_get_number_of_files(Dir *dir);
 int   dir_get_flag(Dir *dir, int i);
 char *dir_get_path(Dir *dir);
-char *dir_get_new_dir_alloc(char *current_dir, char *new_dir);
+char *dir_get_new_dir_alloc(const char *current_dir, const char *new_dir);
 #endif

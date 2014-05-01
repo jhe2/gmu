@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: queue.h  Created: 120212
  *
@@ -35,10 +35,9 @@ struct _Queue
 typedef struct _Queue Queue;
 
 void     queue_init(Queue *q);
-int      queue_push(Queue *q, char *str);
+int      queue_push(Queue *q, const char *str);
 char    *queue_pop_alloc(Queue *q);
 void     queue_clear(Queue *q);
 int      queue_is_empty(Queue *q);
-//void     event_queue_wait_for_event(Queue *eq, int with_timeout);
 void     queue_free(Queue *q);
 #endif

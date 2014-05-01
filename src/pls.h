@@ -31,7 +31,7 @@ typedef struct PLS
 	int   current_item_length;
 } PLS;
 
-int   pls_open_file(PLS *pls, char *filename);
+int   pls_open_file(PLS *pls, const char *filename);
 void  pls_close_file(PLS *pls);
 int   pls_read_next_item(PLS *pls);
 char *pls_current_item_get_title(PLS *pls);

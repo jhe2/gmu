@@ -57,21 +57,21 @@ typedef struct HTTPD_Init_Params {
 
 void *httpd_run_server(void *webserver_root);
 void  httpd_stop_server(void);
-void  httpd_send_websocket_broadcast(char *str);
+void  httpd_send_websocket_broadcast(const char *str);
 
-int  connection_init(Connection *c, int fd, char *client_ip);
+int  connection_init(Connection *c, int fd, const char *client_ip);
 void connection_reset_timeout(Connection *c);
 int  connection_is_valid(Connection *c);
 int  connection_is_local(Connection *c);
 int  connection_is_authenticated(Connection *c);
-int  connection_authenticate(Connection *c, char *password);
+int  connection_authenticate(Connection *c, const char *password);
 void connection_close(Connection *c);
 void connection_free_request_header(Connection *c);
 int  connection_is_timed_out(Connection *c);
 void connection_set_state(Connection *c, ConnectionState s);
 ConnectionState connection_get_state(Connection *c);
 int  connection_file_is_open(Connection *c);
-int  connection_file_open(Connection *c, char *filename);
+int  connection_file_open(Connection *c, const char *filename);
 void connection_file_close(Connection *c);
 int  connection_get_number_of_bytes_to_send(Connection *c);
 int  connection_file_read_chunk(Connection *c);

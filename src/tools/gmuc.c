@@ -400,7 +400,7 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 		 *    from the ringbuffer and leave inner loop so the ringbuffer can fill more */
 		if (ringbuffer_get_fill(rb) >= size && size > 0) {
 			char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
-			char *payload;
+			const char *payload;
 			if (wspacket) {
 				JSON_Object *json;
 				ringbuffer_read(rb, wspacket, size);

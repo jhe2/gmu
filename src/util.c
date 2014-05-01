@@ -40,7 +40,7 @@ void strtolower(char *target, const char *src, int len)
 	target[i] = '\0';
 }
 
-int file_exists(char *filename)
+int file_exists(const char *filename)
 {
 	int   result = 0;
 	FILE *file = fopen(filename, "r");
@@ -52,7 +52,7 @@ int file_exists(char *filename)
 	return result;
 }
 
-int file_copy(char *destination_file, char *source_file)
+int file_copy(const char *destination_file, const char *source_file)
 {
 	int result = 1;
 	FILE *inf, *ouf;
@@ -82,24 +82,24 @@ int file_copy(char *destination_file, char *source_file)
 	return result;
 }
 
-char *get_file_extension(char *filename)
+const char *get_file_extension(const char *filename)
 {
 	int l = filename ? strlen(filename) : 0;
 	while (filename[l] != '.' && l > 0) l--;
 	return (l == 0 ? NULL : filename+l+1);
 }
 
-char *extract_filename_from_path(char *path)
+const char *extract_filename_from_path(const char *path)
 {
 	char *filename_without_path = strrchr(path, '/');
 	if (filename_without_path != NULL)
 		filename_without_path++;
 	else
-		filename_without_path = path;
+		filename_without_path = (char *)path;
 	return filename_without_path;
 }
 
-static int match_pattern(char *string, char *pattern)
+static int match_pattern(const char *string, const char *pattern)
 {
 	unsigned int result = 1, i, j = 0;
 	for (i = 0; i < strlen(pattern); i++) {
@@ -119,7 +119,7 @@ static int match_pattern(char *string, char *pattern)
 	return result;
 }
 
-int get_first_matching_file(char *target, int target_length, char *path, char *pattern)
+int get_first_matching_file(char *target, int target_length, const char *path, const char *pattern)
 {
 	struct dirent **ep = NULL;
 	int             result = 0, entries = 0;
@@ -141,8 +141,8 @@ int get_first_matching_file(char *target, int target_length, char *path, char *p
 	return result;
 }
 
-static int check_pattern(char *target,       int target_length,  char *path,
-                         char *pattern_list, int pattern_offset, int   pattern_length)
+static int check_pattern(char *target, int target_length, const char *path,
+                         const char *pattern_list, int pattern_offset, int pattern_length)
 {
 	int res = 0;
 	if (pattern_length > 0) {
@@ -161,8 +161,8 @@ static int check_pattern(char *target,       int target_length,  char *path,
 }
 
 /* pattern_list is a string with a list of patterns seperated by semicolons ';' */
-int get_first_matching_file_pattern_list(char *target, int   target_length, 
-                                         char *path,   char *pattern_list)
+int get_first_matching_file_pattern_list(char *target, int target_length,
+                                         const char *path, const char *pattern_list)
 {
 	int i, j, res = 0;
 	for (i = 0, j = 0; pattern_list[i] != '\0'; i++) { /* bug */
@@ -181,7 +181,7 @@ int get_first_matching_file_pattern_list(char *target, int   target_length,
 }
 
 #define MAX_REPLACE_STR_LENGTH 256
-static char *replace_char_with_string_alloc(char *str, char char_to_replace, char *str_to_insert)
+static char *replace_char_with_string_alloc(const char *str, const char char_to_replace, const char *str_to_insert)
 {
 	int   i, k, l = strlen(str);
 	int   len_str_to_insert = strlen(str_to_insert);
@@ -203,8 +203,8 @@ static char *replace_char_with_string_alloc(char *str, char char_to_replace, cha
 	return res_str;
 }
 
-char *get_file_matching_given_pattern_alloc(char *original_file,
-                                            char *file_pattern)
+char *get_file_matching_given_pattern_alloc(const char *original_file,
+                                            const char *file_pattern)
 {
 	int   path_length = 0, filename_without_ext_length = 0;
 	char *d = strrchr(original_file, '/');
@@ -226,7 +226,7 @@ char *get_file_matching_given_pattern_alloc(char *original_file,
 		pattern = replace_char_with_string_alloc(file_pattern, '$', filename_without_ext);
 		/*printf("Pattern new = %s\nPattern old = %s\n", pattern, image_file_pattern);*/
 	} else {
-		pattern = file_pattern;
+		pattern = (char *)file_pattern;
 	}
 
 	wdprintf(V_DEBUG, "util", "path = %s\n", path);
@@ -242,7 +242,7 @@ char *get_file_matching_given_pattern_alloc(char *original_file,
 }
 
 int strncpy_charset_conv(char *target, const char* source, int target_size,
-                                int source_size, GmuCharset charset)
+                         int source_size, GmuCharset charset)
 {
 	int res = 0;
 	switch (charset) {

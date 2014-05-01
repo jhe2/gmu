@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: m3u.c  Created: 061018
  *
@@ -21,7 +21,7 @@
 #include "debug.h"
 #include "charset.h"
 
-int m3u_open_file(M3u *m3u, char *filename)
+int m3u_open_file(M3u *m3u, const char *filename)
 {
 	int  result = 0, i, j;
 
@@ -171,7 +171,7 @@ int m3u_is_extended(M3u *m3u)
 
 /* M3U Export */
 
-int m3u_export_file(M3u *m3u, char *filename)
+int m3u_export_file(M3u *m3u, const char *filename)
 {
 	int result = 0;
 	if ((m3u->pl_file = fopen(filename, "w")) != NULL) {
@@ -181,7 +181,7 @@ int m3u_export_file(M3u *m3u, char *filename)
 	return result;
 }
 
-int m3u_export_write_entry(M3u *m3u, char *file, char *title, int length)
+int m3u_export_write_entry(M3u *m3u, const char *file, const char *title, int length)
 {
 	int result = 0;
 	if (m3u->pl_file && title != NULL && file != NULL)

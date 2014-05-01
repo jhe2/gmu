@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: dir.c  Created: 060929
  *
@@ -26,7 +26,7 @@
 #include "debug.h"
 #include "charset.h"
 
-void dir_set_ext_filter(Dir *dir, char **dir_exts, int show_dirs)
+void dir_set_ext_filter(Dir *dir, const char **dir_exts, int show_dirs)
 {
 	dir->dir_extensions = dir_exts;
 	dir->show_directories = show_dirs;
@@ -51,7 +51,7 @@ void dir_init(Dir *dir)
 	dir->show_directories = 0;
 }
 
-void dir_set_base_dir(Dir *dir, char *base_dir)
+void dir_set_base_dir(Dir *dir, const char *base_dir)
 {
 	if (base_dir) {
 		if (strlen(base_dir) < 256)
@@ -66,7 +66,7 @@ char *dir_get_base_dir(Dir *dir)
 	return dir->base_dir;
 }
 
-int dir_read(Dir *dir, char *path, int directories_first)
+int dir_read(Dir *dir, const char *path, int directories_first)
 {
 	int   i, j, result = 0;
 	char *new_path = NULL;
@@ -248,7 +248,7 @@ char *dir_get_path(Dir *dir)
  * absolute or relative to the current directory), the function
  * returns a newly allocated string with the absolute path of the
  * new directory */
-char *dir_get_new_dir_alloc(char *current_dir, char *new_dir)
+char *dir_get_new_dir_alloc(const char *current_dir, const char *new_dir)
 {
 	char *new_dir_full = NULL, *new_dir_temp;
 	if (current_dir && new_dir) {

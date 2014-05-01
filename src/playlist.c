@@ -82,7 +82,7 @@ void playlist_clear(Playlist *pl)
 	pl->queue_start = NULL;
 }
 
-int playlist_add_item(Playlist *pl, char *file, char *name)
+int playlist_add_item(Playlist *pl, const char *file, const char *name)
 {
 	int    result = 1;
 	Entry *entry = NULL;
@@ -133,12 +133,12 @@ int playlist_add_item(Playlist *pl, char *file, char *name)
 	return result;
 }
 
-int playlist_add_file(Playlist *pl, char *filename_with_path)
+int playlist_add_file(Playlist *pl, const char *filename_with_path)
 {
-	char       filetype[16];
-	char      *tmp = get_file_extension(filename_with_path);
-	TrackInfo  ti;
-	int        result = 0;
+	char        filetype[16];
+	const char *tmp = get_file_extension(filename_with_path);
+	TrackInfo   ti;
+	int         result = 0;
 
 	trackinfo_init(&ti, 0);
 	filetype[0] = '\0';
@@ -175,7 +175,7 @@ int playlist_add_file(Playlist *pl, char *filename_with_path)
 	return result;
 }
 
-static int internal_playlist_add_dir(Playlist *pl, char *directory)
+static int internal_playlist_add_dir(Playlist *pl, const char *directory)
 {
 	Dir       dir;
 	int       i;
@@ -185,7 +185,7 @@ static int internal_playlist_add_dir(Playlist *pl, char *directory)
 	wdprintf(V_INFO, "playlist", "Adding '%s'...\n", directory);
 
 	dir_init(&dir);
-	dir_set_ext_filter(&dir, (char **)gmu_core_get_file_extensions(), 1);
+	dir_set_ext_filter(&dir, (const char **)gmu_core_get_file_extensions(), 1);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 1)) {
 		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
@@ -198,8 +198,8 @@ static int internal_playlist_add_dir(Playlist *pl, char *directory)
 					}
 				}
 			} else {
-				char *tmp = get_file_extension(dir_get_filename(&dir, i));
-				char *f   = dir_get_filename_with_full_path_alloc(&dir, i);
+				const char *tmp = get_file_extension(dir_get_filename(&dir, i));
+				char       *f   = dir_get_filename_with_full_path_alloc(&dir, i);
 				filetype[0] = '\0';
 				if (tmp != NULL) strtoupper(filetype, tmp, 15);
 				if (f) {
@@ -236,7 +236,7 @@ static void *thread_add_dir(void *udata)
 	return NULL;
 }
 
-int playlist_add_dir(Playlist *pl, char *directory, void (*finished_callback)(int pl_len))
+int playlist_add_dir(Playlist *pl, const char *directory, void (*finished_callback)(int pl_len))
 {
 	static pthread_t       thread;
 	static _thread_params  tp;
@@ -263,7 +263,7 @@ int playlist_is_recursive_directory_add_in_progress(void)
 	return recursive_directory_add_in_progress;
 }
 
-int playlist_insert_item_after(Playlist *pl, Entry *entry, char *file, char *name)
+int playlist_insert_item_after(Playlist *pl, Entry *entry, const char *file, const char *name)
 {
 	Entry *new_entry;
 	int    result = 0;
@@ -291,12 +291,12 @@ int playlist_insert_item_after(Playlist *pl, Entry *entry, char *file, char *nam
 	return result;
 }
 
-int playlist_insert_file_after(Playlist *pl, Entry *entry, char *filename_with_path)
+int playlist_insert_file_after(Playlist *pl, Entry *entry, const char *filename_with_path)
 {
-	char       filetype[16];
-	char      *tmp = get_file_extension(filename_with_path);
-	TrackInfo  ti;
-	int        result = 0;
+	char        filetype[16];
+	const char *tmp = get_file_extension(filename_with_path);
+	TrackInfo   ti;
+	int         result = 0;
 
 	trackinfo_init(&ti, 0);
 	filetype[0] = '\0';
@@ -685,7 +685,7 @@ Entry *playlist_get_entry(Playlist *pl, int item)
 }
 
 
-int playlist_entry_set_name(Entry *entry, char *name)
+int playlist_entry_set_name(Entry *entry, const char *name)
 {
 	int res = 0;
 	if (entry) {

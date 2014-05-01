@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: medialib.c  Created: 130627
  *
@@ -58,11 +58,11 @@ void medialib_close(GmuMedialib *gm)
  * Adds a single file (file = filename with full path) to the medialib
  * Returns 1 on success, 0 otherwise
  */
-int medialib_add_file(GmuMedialib *gm, char *file)
+int medialib_add_file(GmuMedialib *gm, const char *file)
 {
 	TrackInfo     ti;
 	char          filetype[16];
-	char         *tmp = get_file_extension(file);
+	const char   *tmp = get_file_extension(file);
 	char         *q;
 	sqlite3_stmt *pp_stmt = NULL;
 	int           sqres;
@@ -106,7 +106,7 @@ int medialib_add_file(GmuMedialib *gm, char *file)
 	return 0;
 }
 
-static int _medialib_add_file(void *gm, char *file)
+static int _medialib_add_file(void *gm, const char *file)
 {
 	return medialib_add_file((GmuMedialib *)gm, file);
 }
@@ -167,16 +167,16 @@ void medialib_refresh(GmuMedialib *gm)
 	sqlite3_exec(gm->db, "COMMIT", 0, 0, 0);
 }
 
-void medialib_path_add(GmuMedialib *gm, char *path)
+void medialib_path_add(GmuMedialib *gm, const char *path)
 {
 }
 
-void medialib_path_remove(GmuMedialib *gm, char *path)
+void medialib_path_remove(GmuMedialib *gm, const char *path)
 {
 }
 
 /* Search the medialib; Returns true on success; false (0) otherwise */
-int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, char *str)
+int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, const char *str)
 {
 	char *q;
 	int   sqres = -1, len;
@@ -247,7 +247,7 @@ void medialib_search_finish(GmuMedialib *gm)
  *  - filter value (e.g. "Foo")
  * Any number of filters can be applied.
  */
-int medialib_browse(GmuMedialib *gm, char *sel_column, ...)
+int medialib_browse(GmuMedialib *gm, const char *sel_column, ...)
 {
 	char   *q = NULL, *qtmp = NULL;
 	int     sqres = -1;

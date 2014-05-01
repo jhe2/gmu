@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: pls.c  Created: 110420
  *
@@ -20,7 +20,7 @@
 #include "pls.h"
 #include "debug.h"
 
-int pls_open_file(PLS *pls, char *filename)
+int pls_open_file(PLS *pls, const char *filename)
 {
 	int  result = 0, i, j;
 

@@ -17,4 +17,4 @@
 
 #include "trackinfo.h"
 
-int metadatareader_read(char *file, char *file_type, TrackInfo *ti);
+int metadatareader_read(const char *file, const char *file_type, TrackInfo *ti);

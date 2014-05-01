@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: feloader.c  Created: 081228
  *
@@ -144,7 +144,7 @@ int feloader_load_all(char *directory)
 	fec_root = fec;
 
 	dir_init(&dir);
-	dir_set_ext_filter(&dir, (char **)&dir_extensions, 0);
+	dir_set_ext_filter(&dir, (const char **)&dir_extensions, 0);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
 		int i, num = dir_get_number_of_files(&dir);

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: m3u.h  Created: 061018
  *
@@ -30,7 +30,7 @@ typedef struct M3u
 	int   current_item_length;
 } M3u;
 
-int   m3u_open_file(M3u *m3u, char *filename);
+int   m3u_open_file(M3u *m3u, const char *filename);
 void  m3u_close_file(M3u *m3u);
 int   m3u_read_next_item(M3u *m3u);
 char *m3u_current_item_get_title(M3u *m3u);
@@ -38,7 +38,7 @@ char *m3u_current_item_get_filename(M3u *m3u);
 char *m3u_current_item_get_full_path(M3u *m3u);
 int   m3u_current_item_get_length(M3u *m3u);
 int   m3u_is_extended(M3u *m3u);
-int   m3u_export_file(M3u *m3u, char *filename);
-int   m3u_export_write_entry(M3u *m3u, char *file, char *title, int length);
+int   m3u_export_file(M3u *m3u, const char *filename);
+int   m3u_export_write_entry(M3u *m3u, const char *file, const char *title, int length);
 void  m3u_export_close_file(M3u *m3u);
 #endif

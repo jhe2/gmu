@@ -17,7 +17,7 @@
 #include "net.h"
 #include "debug.h"
 
-static char *mask_message_alloc(char *message, int len, char *mask)
+static char *mask_message_alloc(const char *message, int len, const char *mask)
 {
 	int i;
 	char *res = malloc(len+1);
@@ -30,9 +30,11 @@ static char *mask_message_alloc(char *message, int len, char *mask)
 	return res;
 }
 
-char *websocket_unmask_message_alloc(char *msgbuf, int msgbuf_size)
+char *websocket_unmask_message_alloc(const char *msgbuf, int msgbuf_size)
 {
-	char *flags, *mask = NULL, *message, *unmasked_message = NULL;
+	const char *flags;
+	const char *mask = NULL, *message;
+	char *unmasked_message = NULL;
 	int   masked, len, offset = 0;
 
 	flags  = msgbuf;
@@ -80,7 +82,7 @@ char *websocket_client_generate_sec_websocket_key_alloc(void)
 }
 
 /* Returns 1 on success, 0 otherwise */
-int websocket_send_str(int sock, char *str, int mask)
+int websocket_send_str(int sock, const char *str, int mask)
 {
 	int res = 0;
 	if (str) {
@@ -94,7 +96,7 @@ int websocket_send_str(int sock, char *str, int mask)
 
 		buf = malloc(len+10); /* data length + 1 byte for flags + 9 bytes for length (1+8) */
 		if (buf) {
-			char *msg = str;
+			char *msg = (char *)str;
 			if (mask) msg = mask_message_alloc(str, len, mask_key);
 			memset(buf, 0, len);
 			if (len <= 125) {
@@ -128,7 +130,7 @@ int websocket_send_str(int sock, char *str, int mask)
 }
 
 
-int websocket_calculate_payload_size(char *websocket_packet_header)
+int websocket_calculate_payload_size(const char *websocket_packet_header)
 {
 	int len = websocket_packet_header[1] & 127;
 	if (len == 126) {
@@ -139,7 +141,7 @@ int websocket_calculate_payload_size(char *websocket_packet_header)
 	return len;
 }
 
-int websocket_calculate_packet_size(char *websocket_packet)
+int websocket_calculate_packet_size(const char *websocket_packet)
 {
 	int len = websocket_packet[1] & 127;
 	int size = 1;
@@ -158,9 +160,9 @@ int websocket_calculate_packet_size(char *websocket_packet)
 	return size;
 }
 
-char *websocket_get_payload(char *websocket_packet)
+const char *websocket_get_payload(const char *websocket_packet)
 {
-	char *payload = NULL;
+	const char *payload = NULL;
 	int   len = websocket_packet[1] & 127;
 	if (len > 0) {
 		payload = websocket_packet;

@@ -21,7 +21,7 @@
 
 /* Find first non-whitespace character and return the offset.
  * Negative results denote an error. */
-static int find_first_non_whitespace_char(char *str)
+static int find_first_non_whitespace_char(const char *str)
 {
 	int res = -2;
 	if (str) {
@@ -111,7 +111,7 @@ JSON_Key *json_key_new(void)
 	return jk;
 }
 
-JSON_Object *json_parse_alloc(char *json_data)
+JSON_Object *json_parse_alloc(const char *json_data)
 {
 	JSON_Object *json = NULL;
 	State s = STATE_SEARCH_OBJECT;
@@ -275,7 +275,7 @@ JSON_Object *json_parse_alloc(char *json_data)
 	return json;
 }
 
-char *json_string_escape_alloc(char *src)
+char *json_string_escape_alloc(const char *src)
 {
 	char *res = NULL;
 	int   len = src ? strlen(src) : 0;
@@ -301,7 +301,7 @@ char *json_string_escape_alloc(char *src)
 	return res;
 }
 
-JSON_Key *json_get_key_object_for_key(JSON_Object *object, char *key)
+JSON_Key *json_get_key_object_for_key(JSON_Object *object, const char *key)
 {
 	JSON_Key *res = NULL;
 	if (object) {
@@ -317,7 +317,7 @@ JSON_Key *json_get_key_object_for_key(JSON_Object *object, char *key)
 	return res;
 }
 
-char *json_get_string_value_for_key(JSON_Object *object, char *key)
+char *json_get_string_value_for_key(JSON_Object *object, const char *key)
 {
 	char *res = NULL;
 	if (object) {
@@ -329,7 +329,7 @@ char *json_get_string_value_for_key(JSON_Object *object, char *key)
 	return res;
 }
 
-double json_get_number_value_for_key(JSON_Object *object, char *key)
+double json_get_number_value_for_key(JSON_Object *object, const char *key)
 {
 	double res = 0.0;
 	if (object) {
@@ -346,7 +346,7 @@ char *json_get_first_key_string(JSON_Object *object)
 	return object->first_key->key_name;
 }
 
-JSON_Key_Type json_get_type_for_key(JSON_Object *object, char *key)
+JSON_Key_Type json_get_type_for_key(JSON_Object *object, const char *key)
 {
 	JSON_Key_Type res = EMPTY;
 	if (object) {
