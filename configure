@@ -50,6 +50,7 @@ _WEJTEST
 		echo "Compiler $CC: not working";
 		res=0
 	fi
+	rm -f /tmp/test.o /tmp/test.wej.c /tmp/test.exe
 	return $res
 }
 
