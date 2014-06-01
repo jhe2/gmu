@@ -683,6 +683,7 @@ void gmu_core_medialib_start_refresh(void)
 int gmu_core_medialib_search_find(GmuMedialibDataType type, const char *str)
 {
 #ifdef GMU_MEDIALIB
+	event_queue_push(&event_queue, GMU_MEDIALIB_SEARCH_START);
 	return medialib_search_find(&gm, type, str);
 #else
 	return 0;
@@ -704,6 +705,7 @@ void gmu_core_medialib_search_finish(void)
 {
 #ifdef GMU_MEDIALIB
 	medialib_search_finish(&gm);
+	event_queue_push(&event_queue, GMU_MEDIALIB_SEARCH_DONE);
 #endif
 }
 

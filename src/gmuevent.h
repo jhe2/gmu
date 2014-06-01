@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: gmuevent.h  Created: 110427
  *
@@ -24,6 +24,7 @@ typedef enum GmuEvent {
 	GMU_TRACKINFO_CHANGE, GMU_BUFFER_EMPTY,
 	GMU_FILE_ERROR, GMU_NETWORK_ERROR,
 	GMU_BUFFERING, GMU_BUFFERING_FAILED, GMU_BUFFERING_DONE,
-	GMU_PLAYBACK_TIME_CHANGE, GMU_MEDIALIB_REFRESH_DONE
+	GMU_PLAYBACK_TIME_CHANGE, GMU_MEDIALIB_REFRESH_DONE,
+	GMU_MEDIALIB_SEARCH_START, GMU_MEDIALIB_SEARCH_DONE
 } GmuEvent;
 #endif
