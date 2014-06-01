@@ -1,7 +1,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
 #
 # File: Makefile  Created: 060904
 #
@@ -76,12 +76,12 @@ ifeq (1,$(STATIC))
 LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(basename $(i))_LFLAGS))
 endif
 
-TOOLS_TO_BUILD?=gmuc
+TOOLS_TO_BUILD?=$(BINARY) gmuc
 DISTBIN_DEPS?=default_distbin
 
 TEMP_HEADER_FILES=tmp-felist.h tmp-declist.h
 
-all: $(BINARY) decoders frontends $(TOOLS_TO_BUILD)
+all: decoders frontends $(TOOLS_TO_BUILD)
 	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
 
 decoders: $(DECODERS_TO_BUILD)

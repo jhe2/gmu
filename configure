@@ -2,7 +2,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
 #
 # File: configure  Created: 130804
 #
@@ -97,6 +97,9 @@ set_feature()
 	feature=$1
 	on_off=$2
 	case $feature in
+		gmu)
+			gmu_core=$on_off
+			;;
 		gmuc)
 			tool_gmuc=$on_off
 			;;
@@ -150,6 +153,10 @@ print_features_and_write_config()
 	echo "# Generated Gmu config" >config.mk
 	echo "Enabled features:"
 	local TOOLS_TO_BUILD=
+	if [ $gmu_core != 0 ]; then
+		echo "Gmu core enabled"
+		TOOLS_TO_BUILD="$TOOLS_TO_BUILD gmu.bin"
+	fi
 	if [ $tool_gmuc != 0 ]; then
 		echo "gmuc enabled"
 		TOOLS_TO_BUILD="$TOOLS_TO_BUILD gmuc"
@@ -236,6 +243,7 @@ help()
 
 # Flags (possible values: 0=disabled, 1=enabled, -2=autodetect)
 # Set most flags to -2 (autodetect)
+gmu_core=-2
 tool_gmuc=-2
 dec_opus=-2
 dec_mpg123=-2
@@ -339,8 +347,8 @@ if [ $sdk_path ]; then
 libs_test=$sdl_libs
 test_lib "SDL"
 if [ $? = 0 ]; then
-	echo "ERROR: Gmu depends on SDL. Cannot continue without it."
-	exit 1
+	echo "WARNING: Gmu depends on SDL. Cannot build the Gmu core without it."
+	gmu_core=0
 fi
 
 
