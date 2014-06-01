@@ -82,6 +82,7 @@ _WEJTEST
 		echo "failed";
 		res=0
 	fi
+	rm -f /tmp/test.o /tmp/test.wej.c /tmp/test.exe
 	return $res
 }
 
