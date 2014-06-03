@@ -25,7 +25,9 @@ fi
 TMP_CC=`which $CC`
 
 LIBRARY_PATHS=
-BASE_DIR="`dirname $TMP_CC`/.."
+if [ "$TMP_CC" != "" ]; then
+	BASE_DIR="`dirname $TMP_CC`/.."
+fi
 BASE_INCLUDE_PATH="$BASE_DIR/include"
 INCLUDE_PATHS="-I$BASE_INCLUDE_PATH"
 TARGET=unknown
