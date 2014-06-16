@@ -169,10 +169,51 @@ void medialib_refresh(GmuMedialib *gm)
 
 void medialib_path_add(GmuMedialib *gm, const char *path)
 {
+	sqlite3_stmt *pp_stmt = NULL;
+	int sqres;
+	/* Check if path has already been added ... */
+	char *q = "SELECT id FROM path WHERE path = ?1 LIMIT 1";
+	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
+	if (sqres == SQLITE_OK) sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
+	if (sqres == SQLITE_OK && sqlite3_step(pp_stmt) != SQLITE_ROW) {
+		sqlite3_finalize(pp_stmt);
+		q = "INSERT INTO path (path) VALUE (?1)";
+		sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
+		if (sqres == SQLITE_OK) sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
+		sqlite3_step(pp_stmt);
+	}
+	sqlite3_finalize(pp_stmt);
 }
 
 void medialib_path_remove(GmuMedialib *gm, const char *path)
 {
+	sqlite3_stmt *pp_stmt = NULL;
+	char *q = "DELETE FROM path WHERE path = ?1";
+	int   sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
+	if (sqres == SQLITE_OK) sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
+	if (sqres == SQLITE_OK) sqlite3_step(pp_stmt);
+	sqlite3_finalize(pp_stmt);
+}
+
+int medialib_path_list(GmuMedialib *gm)
+{
+	char *q = "SELECT path FROM path";
+	int   sqres = sqlite3_prepare_v2(gm->db, q, -1, &(gm->pp_stmt_path_list), NULL);
+	return (sqres == SQLITE_OK);
+}
+
+char *medialib_path_list_fetch_next_result(GmuMedialib *gm)
+{
+	char *path = NULL;
+	if (sqlite3_step(gm->pp_stmt_path_list) == SQLITE_ROW) {
+		path = (char *)sqlite3_column_text(gm->pp_stmt_path_list, 0);
+	}
+	return path;
+}
+
+void medialib_path_list_finish(GmuMedialib *gm)
+{
+	sqlite3_finalize(gm->pp_stmt_path_list);
 }
 
 /* Search the medialib; Returns true on success; false (0) otherwise */

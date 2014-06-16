@@ -15,7 +15,7 @@
 typedef struct GmuMedialib {
 	sqlite3      *db;
 	int           refresh_in_progress;
-	sqlite3_stmt *pp_stmt_search, *pp_stmt_browse;
+	sqlite3_stmt *pp_stmt_search, *pp_stmt_browse, *pp_stmt_path_list;
 } GmuMedialib;
 
 typedef enum {
@@ -43,4 +43,7 @@ TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id);
 int  medialib_rate_track_up(GmuMedialib *gm, int id);
 int  medialib_rate_track_down(GmuMedialib *gm, int id);
 int  medialib_rate_track(GmuMedialib *gm, int id, int rating);
+int  medialib_path_list(GmuMedialib *gm);
+char *medialib_path_list_fetch_next_result(GmuMedialib *gm);
+void medialib_path_list_finish(GmuMedialib *gm);
 #endif
