@@ -232,12 +232,20 @@ int listwidget_move_cursor(ListWidget *lw, int offset)
 	int res = 0;
 	if (lw->cursor_pos + offset >= 0 && lw->cursor_pos + offset < lw->rows) {
 		lw->cursor_pos += offset;
+		res = 1;
+	} else if (lw->cursor_pos + offset < 0) {
+		lw->cursor_pos = 0;
+		res = 1;
+	} else if (lw->cursor_pos + offset >= lw->rows) {
+		lw->cursor_pos = lw->rows - 1;
+		res = 1;
+	}
+	if (res) {
 		/* Adjust first_visible_row if neccessary... */
 		if (lw->cursor_pos < lw->first_visible_row)
 			lw->first_visible_row = lw->cursor_pos;
 		else if (lw->cursor_pos > lw->first_visible_row + (lw->win->height-2)-1)
 			lw->first_visible_row = lw->cursor_pos - (lw->win->height-2)+1;
-		res = 1;
 	}
 	return res;
 }
