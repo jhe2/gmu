@@ -176,12 +176,12 @@ int listwidget_draw(ListWidget *lw)
 			int col_w = lw->col_width[col];
 			if (col_w < 0) {
 				int i;
-				col_w = lw->win->width-3;
+				col_w = lw->win->width-2;
 				for (i = 0; i < lw->cols; i++)
 					col_w -= lw->col_width[i] > 0 ? lw->col_width[i] : 0;
 			}
 			mvwaddnstr(lw->win->win, row - lw->first_visible_row, col_pos,
-			           lrc && lrc->text[0] != '\0' ? lrc->text : "", col_w);
+			           lrc && lrc->text[0] != '\0' ? lrc->text : "", col_w-1);
 			wclrtoeol(lw->win->win);
 			if (lw->col_width[col] > 0) { /* Normal column width */
 				col_pos += lw->col_width[col];
