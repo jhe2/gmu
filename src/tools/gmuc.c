@@ -924,6 +924,36 @@ static int run_gmuc_ui(int color, char *host, char *password)
 										break;
 								}
 								break;
+							case KEY_HOME:
+								switch(ui.active_win) {
+									case WIN_PL:
+										listwidget_set_cursor(ui.lw_pl, 0);
+										break;
+									case WIN_FB:
+										listwidget_set_cursor(ui.lw_fb, 0);
+										break;
+									case WIN_LIB:
+										listwidget_set_cursor(ui.lw_mlib_search, 0);
+										break;
+									default:
+										break;
+								}
+								break;
+							case KEY_END:
+								switch(ui.active_win) {
+									case WIN_PL:
+										listwidget_set_cursor(ui.lw_pl, listwidget_get_rows(ui.lw_pl)-1);
+										break;
+									case WIN_FB:
+										listwidget_set_cursor(ui.lw_fb, listwidget_get_rows(ui.lw_fb)-1);
+										break;
+									case WIN_LIB:
+										listwidget_set_cursor(ui.lw_mlib_search, listwidget_get_rows(ui.lw_mlib_search)-1);
+										break;
+									default:
+										break;
+								}
+								break;
 							case '\n': {
 								switch (ui.active_win) {
 									case WIN_PL:

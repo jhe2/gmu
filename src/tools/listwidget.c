@@ -258,8 +258,8 @@ int listwidget_set_cursor(ListWidget *lw, int pos)
 		/* Adjust first_visible_row if neccessary... */
 		if (lw->cursor_pos < lw->first_visible_row)
 			lw->first_visible_row = lw->cursor_pos;
-		else if (lw->cursor_pos > lw->first_visible_row + lw->win->height)
-			lw->first_visible_row = lw->cursor_pos + lw->win->height - 1;
+		else if (lw->cursor_pos > lw->first_visible_row + lw->win->height - 3)
+			lw->first_visible_row = lw->cursor_pos - lw->win->height + 3;
 		res = 1;
 	}
 	return res;
