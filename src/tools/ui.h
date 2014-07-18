@@ -49,6 +49,7 @@ typedef struct UI {
 	char           ti_title[128], ti_artist[128], ti_album[128], ti_date[64];
 	char           status[32];
 	int            pb_time, playmode, volume;
+	int            busy;
 } UI;
 
 void ui_init(UI *ui, int color);
@@ -70,4 +71,5 @@ void ui_active_win_next(UI *ui);
 void ui_active_win_set(UI *ui, WindowType aw);
 void ui_free(UI *ui);
 int  ui_has_color(UI *ui);
+void ui_busy_indicator(UI *ui, int busy);
 #endif

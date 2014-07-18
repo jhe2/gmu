@@ -912,6 +912,8 @@ static void gmu_http_medialib_search(Connection *c, const char *type, const char
 	char      rstr[1024];
 	int       res = gmu_core_medialib_search_find(GMU_MLIB_ANY, str);
 
+	websocket_send_string(c, "{ \"cmd\": \"mlib_search_start\" }");
+
 	if (res) {
 		for (ti = gmu_core_medialib_search_fetch_next_result();
 			 ti.id >= 0;
@@ -934,6 +936,7 @@ static void gmu_http_medialib_search(Connection *c, const char *type, const char
 		}
 	}
 	gmu_core_medialib_search_finish();
+	websocket_send_string(c, "{ \"cmd\": \"mlib_search_done\" }");
 }
 
 static void gmu_http_medialib_browse_artists(Connection *c)
@@ -1244,7 +1247,7 @@ static void webserver_main_loop(int listen_fd)
 	queue_free(&queue);
 	for (i = 0; i < MAX_CONNECTIONS; i++)
 		connection_close(&(connection[i]));
-	close(listen_fd);
+	shutdown(listen_fd, SHUT_RDWR);
 }
 
 void httpd_stop_server(void)

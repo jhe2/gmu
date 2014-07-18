@@ -178,6 +178,7 @@ void ui_init(UI *ui, int color)
 {
 	memset(ui, 0, sizeof(UI));
 	ui->color = color;
+	ui->busy = 0;
 	setlocale(LC_CTYPE, ""); /* Set system locale (which hopefully is a UTF-8 locale) */
 	ui->rootwin = initscr();
 	if (ui->color) {
@@ -266,7 +267,10 @@ void ui_draw_header(UI *ui)
 		wattron(ui->win_header->win, A_BOLD);
 		wprintw(ui->win_header->win, "%c%c", pm1, pm2);
 		wattroff(ui->win_header->win, A_BOLD);
-		wprintw(ui->win_header->win, "] ");
+		wprintw(ui->win_header->win, "]");
+		wattron(ui->win_header->win, A_BOLD | A_BLINK);
+		wprintw(ui->win_header->win, ui->busy ? "*" : " ");
+		wattroff(ui->win_header->win, A_BOLD | A_BLINK);
 		wattron(ui->win_header->win, A_BOLD);
 		wprintw(ui->win_header->win, "%3d:%02d", min, sec);
 		wattroff(ui->win_header->win, A_BOLD);
@@ -430,4 +434,12 @@ void ui_free(UI *ui)
 int ui_has_color(UI *ui)
 {
 	return ui->color;
+}
+
+void ui_busy_indicator(UI *ui, int busy)
+{
+	if (busy)
+		ui->busy++;
+	else
+		ui->busy--;
 }

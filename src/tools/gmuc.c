@@ -380,6 +380,12 @@ static void cmd_playback_state(UI *ui, JSON_Object *json)
 	ui_draw_header(ui);
 }
 
+static void cmd_busy(UI *ui, int busy)
+{
+	ui_busy_indicator(ui, busy);
+	ui_draw_header(ui);
+}
+
 static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *password, char **cur_dir, char *input)
 {
 	char tmp_buf[16];
@@ -439,6 +445,10 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 							cmd_volume_info(ui, json);
 						} else if (strcmp(cmd, "mlib_result") == 0) {
 							cmd_mlib_result(ui, json);
+						} else if (strcmp(cmd, "mlib_search_start") == 0) {
+							cmd_busy(ui, 1);
+						} else if (strcmp(cmd, "mlib_search_done") == 0) {
+							cmd_busy(ui, 0);
 						}
 						if (screen_update) ui_refresh_active_window(ui);
 						ui_cursor_text_input(ui, input);
