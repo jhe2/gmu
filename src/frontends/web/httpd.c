@@ -788,22 +788,31 @@ void gmu_http_get_current_trackinfo(Connection *c)
 	TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
 
 	if (trackinfo_acquire_lock(ti)) {
-		char *ti_artist = trackinfo_get_artist(ti);
-		char *ti_title  = trackinfo_get_title(ti);
-		char *ti_album  = trackinfo_get_album(ti);
-		char *ti_date   = trackinfo_get_date(ti);
+		char *ti_artist = json_string_escape_alloc(trackinfo_get_artist(ti));
+		char *ti_title  = json_string_escape_alloc(trackinfo_get_title(ti));
+		char *ti_album  = json_string_escape_alloc(trackinfo_get_album(ti));
+		char *ti_date   = json_string_escape_alloc(trackinfo_get_date(ti));
 		r = snprintf(msg, MSG_MAX_LEN,
-		             "{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", \"album\": \"%s\", \"date\": \"%s\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+		             "{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", " \
+		             "\"album\": \"%s\", \"date\": \"%s\", " \
+		             "\"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
 		             ti_artist ? ti_artist : "",
-		             ti_title ? ti_title : "",
-		             ti_album ? ti_album : "",
-		             ti_date ? ti_date : "",
+		             ti_title  ? ti_title  : "",
+		             ti_album  ? ti_album  : "",
+		             ti_date   ? ti_date   : "",
 		             trackinfo_get_length_minutes(ti),
 		             trackinfo_get_length_seconds(ti),
 		             0);
+		if (ti_artist) free(ti_artist);
+		if (ti_title)  free(ti_title);
+		if (ti_album)  free(ti_album);
+		if (ti_date)   free(ti_date);
 		if (r > 0 && !charset_is_valid_utf8_string(msg)) {
 			snprintf(msg, MSG_MAX_LEN,
-					 "{ \"cmd\": \"trackinfo\", \"artist\": \"(Invalid UTF-8)\", \"title\": \"(Invalid UTF-8)\", \"album\": \"(Invalid UTF-8)\", \"date\": \"(Invalid UTF-8)\", \"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+					 "{ \"cmd\": \"trackinfo\", \"artist\": \"(Invalid UTF-8)\", " \
+					 "\"title\": \"(Invalid UTF-8)\", \"album\": \"(Invalid UTF-8)\", " \
+					 "\"date\": \"(Invalid UTF-8)\", " \
+					 "\"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
 					 trackinfo_get_length_minutes(ti),
 					 trackinfo_get_length_seconds(ti),
 					 0);
