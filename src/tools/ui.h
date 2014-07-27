@@ -25,7 +25,7 @@ typedef enum { FUNC_NONE, FUNC_HELP, FUNC_NEXT_WINDOW, FUNC_PLAY, FUNC_PAUSE,
                FUNC_PLAY_PAUSE, FUNC_STOP, FUNC_NEXT, FUNC_PREVIOUS,
                FUNC_PLAYMODE, FUNC_PL_CLEAR, FUNC_PL_DEL_ITEM, FUNC_SEARCH,
                FUNC_FB_ADD, FUNC_TEXT_INPUT, FUNC_VOLUME_UP, FUNC_VOLUME_DOWN,
-               FUNC_QUIT, FUNC_MLIB_REFRESH
+               FUNC_QUIT, FUNC_MLIB_REFRESH, FUNC_TOGGLE_TIME
 } Function;
 
 typedef struct FooterButtons {
@@ -48,7 +48,8 @@ typedef struct UI {
 	/* Track information & playback status */
 	char           ti_title[128], ti_artist[128], ti_album[128], ti_date[64];
 	char           status[32];
-	int            pb_time, playmode, volume;
+	int            pb_time, total_time, playmode, volume;
+	int            time_display_remaining;
 	int            busy;
 } UI;
 
@@ -62,6 +63,7 @@ void ui_update_playmode(UI *ui, int playmode);
 void ui_update_volume(UI *ui, int volume);
 void ui_update_playback_time(UI *ui, int time);
 void ui_update_playback_status(UI *ui, char *status);
+void ui_set_total_track_time(UI *ui, int seconds);
 void ui_draw_trackinfo(UI *ui);
 void ui_cursor_text_input(UI *ui, char *str);
 void ui_enable_text_input(UI *ui, int enable);
@@ -72,4 +74,5 @@ void ui_active_win_set(UI *ui, WindowType aw);
 void ui_free(UI *ui);
 int  ui_has_color(UI *ui);
 void ui_busy_indicator(UI *ui, int busy);
+void ui_toggle_time_display(UI *ui);
 #endif

@@ -204,11 +204,15 @@ static void cmd_playback_time_change(UI *ui, JSON_Object *json)
 
 static void cmd_trackinfo(UI *ui, JSON_Object *json)
 {
-	char *artist = json_get_string_value_for_key(json, "artist");
-	char *title  = json_get_string_value_for_key(json, "title");
-	char *album  = json_get_string_value_for_key(json, "album");
-	char *date   = json_get_string_value_for_key(json, "date");
+	char *artist  = json_get_string_value_for_key(json, "artist");
+	char *title   = json_get_string_value_for_key(json, "title");
+	char *album   = json_get_string_value_for_key(json, "album");
+	char *date    = json_get_string_value_for_key(json, "date");
+	int   minutes = (int)json_get_number_value_for_key(json, "length_min");
+	int   seconds = (int)json_get_number_value_for_key(json, "length_sec");
+	seconds += minutes * 60;
 	ui_update_trackinfo(ui, title, artist, album, date);
+	ui_set_total_track_time(ui, seconds);
 	ui_draw_header(ui);
 	ui_refresh_active_window(ui);
 }
@@ -853,6 +857,11 @@ static int run_gmuc_ui(int color, char *host, char *password)
 							case FUNC_VOLUME_DOWN:
 								websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":-1}", 1);
 								break;
+							case FUNC_TOGGLE_TIME:
+								ui_toggle_time_display(&ui);
+								ui_draw_header(&ui);
+								window_refresh(ui.win_header);
+								break;
 							case FUNC_QUIT:
 								quit = 1;
 							default:
@@ -862,7 +871,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 						switch (ch) {
 							case KEY_DOWN:
 								flushinp();
-								switch(ui.active_win) {
+								switch (ui.active_win) {
 									case WIN_PL:
 										listwidget_move_cursor(ui.lw_pl, 1);
 										break;
@@ -878,7 +887,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								break;
 							case KEY_UP:
 								flushinp();
-								switch(ui.active_win) {
+								switch (ui.active_win) {
 									case WIN_PL:
 										listwidget_move_cursor(ui.lw_pl, -1);
 										break;
@@ -894,7 +903,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								break;
 							case KEY_NPAGE:
 								flushinp();
-								switch(ui.active_win) {
+								switch (ui.active_win) {
 									case WIN_PL:
 										listwidget_move_cursor(ui.lw_pl, ui.lw_pl->win->height-2);
 										break;
@@ -910,7 +919,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								break;
 							case KEY_PPAGE:
 								flushinp();
-								switch(ui.active_win) {
+								switch (ui.active_win) {
 									case WIN_PL:
 										listwidget_move_cursor(ui.lw_pl, -(ui.lw_pl->win->height-2));
 										break;
@@ -925,7 +934,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								}
 								break;
 							case KEY_HOME:
-								switch(ui.active_win) {
+								switch (ui.active_win) {
 									case WIN_PL:
 										listwidget_set_cursor(ui.lw_pl, 0);
 										break;
@@ -940,7 +949,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								}
 								break;
 							case KEY_END:
-								switch(ui.active_win) {
+								switch (ui.active_win) {
 									case WIN_PL:
 										listwidget_set_cursor(ui.lw_pl, listwidget_get_rows(ui.lw_pl)-1);
 										break;

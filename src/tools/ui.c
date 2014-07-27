@@ -38,6 +38,7 @@ static FooterButtons fb_pl[] = {
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
+	{ "t",   "Time",     FUNC_TOGGLE_TIME, 't', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -52,6 +53,7 @@ static FooterButtons fb_fb[] = {
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
+	{ "t",   "Time",     FUNC_TOGGLE_TIME, 't', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -65,6 +67,7 @@ static FooterButtons fb_ti[] = {
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
+	{ "t",   "Time",     FUNC_TOGGLE_TIME, 't', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -78,6 +81,7 @@ static FooterButtons fb_cmd[] = {
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
+	{ "t",   "Time",     FUNC_TOGGLE_TIME, 't', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -93,6 +97,7 @@ static FooterButtons fb_lib[] = {
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
+	{ "t",   "Time",     FUNC_TOGGLE_TIME, 't', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -145,6 +150,11 @@ void ui_update_playback_status(UI *ui, char *status)
 	ui->ti_date[31] = '\0';
 }
 
+void ui_set_total_track_time(UI *ui, int seconds)
+{
+	ui->total_time = seconds;
+}
+
 void ui_draw_trackinfo(UI *ui)
 {
 	wattron(ui->win_ti->win, A_BOLD);
@@ -179,6 +189,8 @@ void ui_init(UI *ui, int color)
 	memset(ui, 0, sizeof(UI));
 	ui->color = color;
 	ui->busy = 0;
+	ui->time_display_remaining = 0;
+	ui->total_time = 0;
 	setlocale(LC_CTYPE, ""); /* Set system locale (which hopefully is a UTF-8 locale) */
 	ui->rootwin = initscr();
 	if (ui->color) {
@@ -227,6 +239,7 @@ void ui_draw_header(UI *ui)
 {
 	if (ui->win_header) {
 		char pm1 = ' ', pm2 = ' ';
+		int t;
 		int min = 0, sec = 0;
 		wattron(ui->win_header->win, A_BOLD);
 		if (ui->color) wattron(ui->win_header->win, COLOR_PAIR(1));
@@ -239,8 +252,9 @@ void ui_draw_header(UI *ui)
 		        ui->ti_artist != NULL ? ui->ti_artist : "", 
 		        ui->ti_artist && ui->ti_artist[0] != '\0' ? " - " : "",
 		        ui->ti_title != NULL ? ui->ti_title : "");
-		min = (ui->pb_time / 1000) / 60;
-		sec = (ui->pb_time / 1000) - min * 60;
+		t = ui->time_display_remaining ? ui->total_time - ui->pb_time / 1000 : ui->pb_time / 1000;
+		min = t / 60;
+		sec = t - min * 60;
 		switch (ui->playmode) {
 			case PM_CONTINUE:
 				pm1 = 'C'; pm2 = ' ';
@@ -272,7 +286,9 @@ void ui_draw_header(UI *ui)
 		wprintw(ui->win_header->win, ui->busy ? "*" : " ");
 		wattroff(ui->win_header->win, A_BOLD | A_BLINK);
 		wattron(ui->win_header->win, A_BOLD);
-		wprintw(ui->win_header->win, "%3d:%02d", min, sec);
+		wprintw(ui->win_header->win,
+		        min >= 0 && sec >= 0 ? "%3d:%02d" : " --:--",
+		        min, sec);
 		wattroff(ui->win_header->win, A_BOLD);
 		window_refresh(ui->win_header);
 	}
@@ -442,4 +458,9 @@ void ui_busy_indicator(UI *ui, int busy)
 		ui->busy++;
 	else
 		ui->busy--;
+}
+
+void ui_toggle_time_display(UI *ui)
+{
+	ui->time_display_remaining = !ui->time_display_remaining;
 }
