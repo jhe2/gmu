@@ -178,10 +178,12 @@ int listwidget_draw(ListWidget *lw)
 				int i;
 				col_w = lw->win->width-2;
 				for (i = 0; i < lw->cols; i++)
-					col_w -= lw->col_width[i] > 0 ? lw->col_width[i] : 0;
+					if (lw->col_width[i] > 0) col_w -= lw->col_width[i];
 			}
-			mvwaddnstr(lw->win->win, row - lw->first_visible_row, col_pos,
-			           lrc && lrc->text[0] != '\0' ? lrc->text : "", col_w-1);
+			if (col_w > 1) {
+				mvwaddnstr(lw->win->win, row - lw->first_visible_row, col_pos,
+				           lrc && lrc->text[0] != '\0' ? lrc->text : "", col_w - 1);
+			}
 			wclrtoeol(lw->win->win);
 			if (lw->col_width[col] > 0) { /* Normal column width */
 				col_pos += lw->col_width[col];
