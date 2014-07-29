@@ -37,5 +37,6 @@ CREATE TABLE similarity \
 CREATE TABLE path \
 ( \
 	id integer primary key, \
-	path varchar(255) \
+	path varchar(255), \
+	date timestamp \
 );";
