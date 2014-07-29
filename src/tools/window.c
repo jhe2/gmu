@@ -71,7 +71,7 @@ int window_update_title(Window *win, char *title)
 
 void window_resize(Window *win, int height, int width)
 {
-	if (win && win->win) {
+	if (win && win->win && height > 2 && width > 2) {
 		if (!win->win_outer || wresize(win->win_outer, height, width) == OK) {
 			int ok = 0;
 			int d = win->win_outer ? 2 : 0;
