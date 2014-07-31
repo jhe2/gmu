@@ -166,37 +166,39 @@ int listwidget_clear_all_rows(ListWidget *lw)
 
 int listwidget_draw(ListWidget *lw)
 {
-	int row, col, new_pos;
+	int row = 0, col, new_pos;
 
-	for (row = lw->first_visible_row; row - lw->first_visible_row < lw->win->height && row < lw->rows; row++) {
-		ListCell *lrc = lw->rows_ref[row];
-		int       col_pos = 0;
-		if (row == lw->cursor_pos) wattron(lw->win->win, A_BOLD);
-		for (col = 0; col < lw->cols && lrc; col++) {
-			int col_w = lw->col_width[col];
-			if (col_w < 0) {
-				int i;
-				col_w = lw->win->width-2;
-				for (i = 0; i < lw->cols; i++)
-					if (lw->col_width[i] > 0) col_w -= lw->col_width[i];
-			}
-			if (col_w > 1) {
-				mvwaddnstr(lw->win->win, row - lw->first_visible_row, col_pos,
-				           lrc && lrc->text[0] != '\0' ? lrc->text : "", col_w - 1);
-			}
-			wclrtoeol(lw->win->win);
-			if (lw->col_width[col] > 0) { /* Normal column width */
-				col_pos += lw->col_width[col];
-			} else { /* negative column width = fill available space */
-				int i;
-				col_pos = lw->win->width-2;
-				for (i = col+1; i < lw->cols; i++) {
-					col_pos -= lw->col_width[i];
+	if (lw->rows_ref) {
+		for (row = lw->first_visible_row; row - lw->first_visible_row < lw->win->height && row < lw->rows; row++) {
+			ListCell *lrc = lw->rows_ref[row];
+			int       col_pos = 0;
+			if (row == lw->cursor_pos) wattron(lw->win->win, A_BOLD);
+			for (col = 0; col < lw->cols && lrc; col++) {
+				int col_w = lw->col_width[col];
+				if (col_w < 0) {
+					int i;
+					col_w = lw->win->width-2;
+					for (i = 0; i < lw->cols; i++)
+						if (lw->col_width[i] > 0) col_w -= lw->col_width[i];
 				}
+				if (col_w > 1) {
+					mvwaddnstr(lw->win->win, row - lw->first_visible_row, col_pos,
+							   lrc && lrc->text[0] != '\0' ? lrc->text : "", col_w - 1);
+				}
+				wclrtoeol(lw->win->win);
+				if (lw->col_width[col] > 0) { /* Normal column width */
+					col_pos += lw->col_width[col];
+				} else { /* negative column width = fill available space */
+					int i;
+					col_pos = lw->win->width-2;
+					for (i = col+1; i < lw->cols; i++) {
+						col_pos -= lw->col_width[i];
+					}
+				}
+				lrc = lrc->next_column;
 			}
-			lrc = lrc->next_column;
+			if (row == lw->cursor_pos) wattroff(lw->win->win, A_BOLD);
 		}
-		if (row == lw->cursor_pos) wattroff(lw->win->win, A_BOLD);
 	}
 	/* Blank remaining rows (if any) */
 	for (; row - lw->first_visible_row < lw->win->height; row++) {
