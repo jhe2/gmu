@@ -168,7 +168,7 @@ int listwidget_draw(ListWidget *lw)
 {
 	int row = 0, col, new_pos;
 
-	if (lw->rows_ref) {
+	if (lw->rows_ref && lw->first_visible_row >= 0) {
 		for (row = lw->first_visible_row; row - lw->first_visible_row < lw->win->height && row < lw->rows; row++) {
 			ListCell *lrc = lw->rows_ref[row];
 			int       col_pos = 0;
