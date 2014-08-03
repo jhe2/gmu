@@ -20,6 +20,9 @@ typedef struct _ListCell ListCell;
 
 #define LW_MAX_TEXT_LENGTH 127
 
+#define LW_CURSOR_POS_START (0)
+#define LW_CURSOR_POS_END (-1)
+
 struct _ListCell {
 	char      text[LW_MAX_TEXT_LENGTH+1];
 	ListCell *next_column;

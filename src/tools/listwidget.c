@@ -257,7 +257,9 @@ int listwidget_move_cursor(ListWidget *lw, int offset)
 int listwidget_set_cursor(ListWidget *lw, int pos)
 {
 	int res = 0;
-	if (pos < lw->rows && pos >= 0) {
+	if (pos < lw->rows && (pos >= 0 || pos == LW_CURSOR_POS_END)) {
+		if (pos == LW_CURSOR_POS_END)
+			pos = listwidget_get_rows(lw) - 1;
 		lw->cursor_pos = pos;
 		/* Adjust first_visible_row if neccessary... */
 		if (lw->cursor_pos < lw->first_visible_row)
