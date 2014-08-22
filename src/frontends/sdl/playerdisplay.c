@@ -227,7 +227,7 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 	}
 }
 
-void player_display_set_notice_message(char *message, int timeout)
+void player_display_set_notice_message(const char *message, int timeout)
 {
 	strncpy(notice_message, message, MAX_LENGTH);
 	notice_message[MAX_LENGTH] = '\0';
