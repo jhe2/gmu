@@ -46,10 +46,12 @@
 #include "plmanager.h"
 #include "inputconfig.h"
 #include "help.h"
+#include "gmuerror.h"
 
 #define FPS          10
 #define FRAME_SKIP    1
 #define NOTICE_DELAY  8
+#define ERROR_DELAY  16
 
 #define TIMER_ELAPSED -1234
 
@@ -1421,6 +1423,15 @@ static int event_callback(GmuEvent event, int param)
 			if (notice_msg)
 				player_display_set_notice_message(notice_msg, NOTICE_DELAY);
 			update_event = event;
+			break;
+		}
+		case GMU_ERROR: {
+			const char *msg = gmu_error_get_message(param);
+			if (msg) {
+				char errmsg[128];
+				strtoupper(errmsg, msg, 127);
+				player_display_set_notice_message(errmsg, ERROR_DELAY);
+			}
 			break;
 		}
 		default:

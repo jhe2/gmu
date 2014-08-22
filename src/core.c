@@ -37,6 +37,7 @@
 #include "reader.h" /* for reader_set_cache_size_kb() */
 #include "medialib.h"
 #include "debug.h"
+#include "gmuerror.h"
 #define MAX_FILE_EXTENSIONS 255
 
 typedef enum GlobalCommand { NO_CMD, PLAY, PAUSE, STOP, NEXT, 

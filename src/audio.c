@@ -19,6 +19,9 @@
 #include "audio.h"
 #include "fmath.h"
 #include "debug.h"
+#include "eventqueue.h"
+#include "gmuerror.h"
+#include "core.h"
 #include FILE_HW_H
 #define RINGBUFFER_SIZE 131072
 
@@ -190,6 +193,9 @@ int audio_device_open(int samplerate, int channels)
 			SDL_ClearError();
 			if (SDL_OpenAudio(&wanted, &obtained) < 0) {
 				wdprintf(V_ERROR, "audio", "Could not open audio: %s\n", SDL_GetError());
+				event_queue_push_with_parameter(gmu_core_get_event_queue(),
+				                                GMU_ERROR,
+				                                GMU_ERROR_CANNOT_OPEN_AUDIO_DEVICE);
 				result = -3;
 			} else {
 				result = 0;
