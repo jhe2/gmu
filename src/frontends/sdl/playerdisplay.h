@@ -26,7 +26,7 @@ enum { SCROLL_AUTO, SCROLL_ALWAYS, SCROLL_NEVER };
 void player_display_draw(TextRenderer *tr, TrackInfo *ti,PB_Status player_status,
                          int ptime_msec, int ptime_remaining, int volume,
                          int busy, int shutdown_time, SDL_Surface *buffer);
-void player_display_set_notice_message(char *message, int timeout);
+void player_display_set_notice_message(const char *message, int timeout);
 void player_display_set_scrolling(int s);
 void player_display_set_playback_symbol_blinking(int blink);
 #endif
