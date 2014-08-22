@@ -31,6 +31,7 @@
 #include "reader.h"
 #include "core.h"
 #include "eventqueue.h"
+#include "gmuerror.h"
 
 #define BUF_SIZE 65536
 
@@ -403,6 +404,9 @@ static void *decode_audio_thread(void *udata)
 					(*gd->close_file)();
 				} else {
 					wdprintf(V_DEBUG, "fileplayer", "Unable to open file.\n");
+					event_queue_push_with_parameter(gmu_core_get_event_queue(),
+													GMU_ERROR,
+													GMU_ERROR_CANNOT_OPEN_FILE);
 				}
 			}
 			if (item_status == STOPPED) audio_buffer_clear();
