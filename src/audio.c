@@ -187,6 +187,7 @@ int audio_device_open(int samplerate, int channels)
 			wanted.samples  = SAMPLE_BUFFER_SIZE;
 			wanted.callback = fill_audio;
 			wanted.userdata = NULL;
+			SDL_ClearError();
 			if (SDL_OpenAudio(&wanted, &obtained) < 0) {
 				wdprintf(V_ERROR, "audio", "Could not open audio: %s\n", SDL_GetError());
 				result = -3;
