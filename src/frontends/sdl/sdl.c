@@ -664,7 +664,11 @@ static void run_player(char *skin_name, char *decoders_str)
 														  "yes", 3) == 0 ? 1 : 0;
 			file_browser_set_directories_first(&fb, directories_first);
 			tmp = cfg_get_key_value(*config, "DefaultFileBrowserPath");
-			if (tmp) file_browser_change_dir(&fb, tmp);
+			tmp = expand_path_alloc(tmp);
+			if (tmp) {
+				file_browser_change_dir(&fb, tmp);
+				free(tmp);
+			}
 			tmp = cfg_get_key_value(*config, "SDL_frontend.FileBrowserSelectNextAfterAdd");
 			if (tmp) {
 				select_next_after_add = strncmp(tmp, "yes", 3) == 0 ? 1 : 0;

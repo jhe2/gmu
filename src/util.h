@@ -32,4 +32,11 @@ char *get_file_matching_given_pattern_alloc(const char *original_file,
                                             const char *file_pattern);
 int   strncpy_charset_conv(char *target, const char* source, int target_size,
                            int source_size, GmuCharset charset);
+/**
+ * expand_path_alloc() takes a file system path string as input and if it
+ * begins with a '~', it expands that to the user's home directory to
+ * form a complete absolute path. Any other type of input path is passed
+ * through, left unchanged. In case of error, the function might return NULL.
+ */
+char *expand_path_alloc(const char *path);
 #endif

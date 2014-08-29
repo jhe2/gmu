@@ -280,3 +280,18 @@ int strncpy_charset_conv(char *target, const char* source, int target_size,
 	}
 	return res;
 }
+
+char *expand_path_alloc(const char *path)
+{
+	char *res = NULL;
+	char *home = getenv("HOME");
+	if (home && path) {
+		int len_p = strlen(path);
+		int len_h = strlen(home);
+		res = malloc(len_p + len_h + 1);
+		if (res) {
+			snprintf(res, len_p + len_h + 1, "%s%s", home, path + 1);
+		}
+	}
+	return res;
+}
