@@ -288,9 +288,11 @@ char *expand_path_alloc(const char *path)
 	if (home && path) {
 		int len_p = strlen(path);
 		int len_h = strlen(home);
-		res = malloc(len_p + len_h + 1);
+		res = malloc(len_p + (path[0] == '~' ? len_h : 0) + 1);
 		if (res) {
-			snprintf(res, len_p + len_h + 1, "%s%s", home, path + 1);
+			snprintf(res, len_p + len_h + 1, "%s%s",
+			         path[0] == '~' ? home : "",
+			         path[0] == '~' ? path + 1 : path);
 		}
 	}
 	return res;
