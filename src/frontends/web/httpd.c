@@ -140,16 +140,16 @@ static Connection connection[MAX_CONNECTIONS];
 
 static int server_running = 0;
 
-static sighandler_t my_signal(int sig_nr, sighandler_t signalhandler)
+static int assign_signal_handler(int sig_num, void (*signalhandler)(int))
 {
-	struct sigaction neu_sig, alt_sig;
+	int              res = 1;
+	struct sigaction new_sig;
 
-	neu_sig.sa_handler = signalhandler;
-	sigemptyset(&neu_sig.sa_mask);
-	neu_sig.sa_flags = SA_RESTART;
-	if (sigaction(sig_nr, &neu_sig, &alt_sig) < 0)
-		return SIG_ERR;
-	return alt_sig.sa_handler;
+	new_sig.sa_handler = signalhandler;
+	sigemptyset(&new_sig.sa_mask);
+	new_sig.sa_flags = SA_RESTART;
+	if (sigaction(sig_num, &new_sig, NULL) < 0) res = 0;
+	return res;
 }
 
 static int websocket_send_string(Connection *c, const char *str)
@@ -1089,7 +1089,7 @@ static void webserver_main_loop(int listen_fd)
 	FD_SET(listen_fd, &the_state);
 	maxfd = listen_fd;
 
-	my_signal(SIGPIPE, SIG_IGN);
+	assign_signal_handler(SIGPIPE, SIG_IGN);
 
 	server_running = 1;
 	while (server_running) {
