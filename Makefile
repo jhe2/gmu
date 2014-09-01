@@ -205,10 +205,6 @@ frontends/sdl.so: $(PLUGIN_FE_SDL_OBJECTFILES) frontendsdir
 	@echo -e "Linking \033[1m$@\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_SDL_OBJECTFILES)
 
-frontends/fltkfe.so: src/frontends/fltk/fltkfe.cxx
-	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CXX) -Wall -pedantic $(PLUGIN_CFLAGS) -O2 $< -L/usr/lib/fltk/ -lfltk2 -lXext -lXinerama -lXft -lX11 -lXi -lm
-
 frontends/log.so: src/frontends/log.c util.o frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) util.o -lpthread
