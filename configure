@@ -243,6 +243,8 @@ help()
 	echo "  --target-device <device name>"
 	echo "  --sdk-path </path/to/sdk/base/dir>"
 	echo "  --help"
+	echo "  --includes </path/to/additional/include-files>"
+	echo "  --libs </path/to/additional/libs>"
 }
 
 # Flags (possible values: 0=disabled, 1=enabled, -2=autodetect)
@@ -263,6 +265,8 @@ fe_log=-2
 feature_medialib=1
 target_device="unknown"
 sdk_path=
+includes=
+libs=
 
 # Parse options
 file=""
@@ -314,6 +318,22 @@ do
 			sdk_path=${1#*=}
 			shift
 			;;
+		--includes)
+			includes="$includes -I$2"
+			shift 2
+			;;
+		--includes=*)
+			includes="$includes -I${1#*=}"
+			shift
+			;;
+		--libs)
+			libs="$libs -L$2"
+			shift 2
+			;;
+		--libs=*)
+			libs="$libs -L${1#*=}"
+			shift
+			;;
 		--) # End of all options
 			shift
 			break
@@ -333,6 +353,11 @@ do
 	disable=
 	TARGET=$target_device
 done
+
+INCLUDE_PATHS="$INCLUDE_PATHS $includes"
+LIBRARY_PATHS="$LIBRARY_PATHS $libs"
+CFLAGS="$CFLAGS $INCLUDE_PATHS"
+LFLAGS="$LFLAGS $LIBRARY_PATHS"
 
 test_compiler
 if [ $? = 0 ]; then

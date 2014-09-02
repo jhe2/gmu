@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: ui.c  Created: 121209
  *
@@ -86,18 +86,20 @@ static FooterButtons fb_cmd[] = {
 };
 
 static FooterButtons fb_lib[] = {
-	{ "Tab", "Window",   FUNC_NEXT_WINDOW, '\t', 0 },
-	{ "b",   "Prev",     FUNC_PREVIOUS,    'b', 0 },
-	{ "S",   "Stop",     FUNC_STOP,        'S', 0 },
-	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,  'p', 0 },
-	{ "n",   "Next",     FUNC_NEXT,        'n', 0 },
-	{ "s",   "Search",   FUNC_SEARCH,      's', 0 },
-	{ "R",   "Refresh",  FUNC_MLIB_REFRESH,'R', 0 },
-	{ "+",   "Vol+",     FUNC_VOLUME_UP,   '+', 0 },
-	{ "-",   "Vol-",     FUNC_VOLUME_DOWN, '-', 0 },
-	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
-	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
-	{ "t",   "Time",     FUNC_TOGGLE_TIME, 't', 0 },
+	{ "Tab", "Window",   FUNC_NEXT_WINDOW,    '\t', 0 },
+	{ "b",   "Prev",     FUNC_PREVIOUS,       'b', 0 },
+	{ "S",   "Stop",     FUNC_STOP,           'S', 0 },
+	{ "p",   "Pl/Pause", FUNC_PLAY_PAUSE,     'p', 0 },
+	{ "n",   "Next",     FUNC_NEXT,           'n', 0 },
+	{ "a",   "Artists",  FUNC_BROWSE_ARTISTS, 'a', 0 },
+	{ "g",   "Genres",   FUNC_BROWSE_GENRES,  'g', 0 },
+	{ "s",   "Search",   FUNC_SEARCH,         's', 0 },
+	{ "R",   "Refresh",  FUNC_MLIB_REFRESH,   'R', 0 },
+	{ "+",   "Vol+",     FUNC_VOLUME_UP,      '+', 0 },
+	{ "-",   "Vol-",     FUNC_VOLUME_DOWN,    '-', 0 },
+	{ "/",   "Command",  FUNC_TEXT_INPUT,     '/', 0 },
+	{ "q",   "Quit",     FUNC_QUIT,           'q', 0 },
+	{ "t",   "Time",     FUNC_TOGGLE_TIME,    't', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
@@ -226,6 +228,10 @@ void ui_init(UI *ui, int color)
 	listwidget_set_col_width(ui->lw_mlib_search, 1, 25);
 	listwidget_set_col_width(ui->lw_mlib_search, 2, -1);
 	listwidget_set_col_width(ui->lw_mlib_search, 3, 0);
+	ui->lw_mlib_artists = listwidget_new(1, "Media Library: Artists", 1, 0, ui->rows-2, ui->cols);
+	listwidget_set_col_width(ui->lw_mlib_artists, 0, -1);
+	ui->lw_mlib_genres  = listwidget_new(1, "Media Library: Genres", 1, 0, ui->rows-2, ui->cols);
+	listwidget_set_col_width(ui->lw_mlib_genres, 0, -1);
 	ui->fb_pl = fb_pl;
 	ui->fb_fb = fb_fb;
 	ui->fb_ti = fb_ti;
@@ -233,6 +239,7 @@ void ui_init(UI *ui, int color)
 	ui->fb_lib = fb_lib;
 	ui->fb_visible = fb_pl;
 	ui->text_input_enabled = 0;
+	ui->mlib_state = MLIB_STATE_BROWSE_ARTISTS;
 }
 
 void ui_draw_header(UI *ui)
@@ -327,8 +334,20 @@ void ui_refresh_active_window(UI *ui)
 			window_refresh(ui->win_ti);
 			break;
 		case WIN_LIB:
-			listwidget_draw(ui->lw_mlib_search);
-			listwidget_refresh(ui->lw_mlib_search);
+			switch (ui->mlib_state) {
+				case MLIB_STATE_RESULTS:
+					listwidget_draw(ui->lw_mlib_search);
+					listwidget_refresh(ui->lw_mlib_search);
+					break;
+				case MLIB_STATE_BROWSE_ARTISTS:
+					listwidget_draw(ui->lw_mlib_artists);
+					listwidget_refresh(ui->lw_mlib_artists);
+					break;
+				case MLIB_STATE_BROWSE_GENRES:
+					listwidget_draw(ui->lw_mlib_genres);
+					listwidget_refresh(ui->lw_mlib_genres);
+					break;
+			}
 			break;
 		case WIN_CMD:
 			window_refresh(ui->win_cmd);
@@ -393,6 +412,8 @@ void ui_resize(UI *ui)
 	listwidget_resize(ui->lw_pl, ui->rows-2, ui->cols);
 	listwidget_resize(ui->lw_fb, ui->rows-2, ui->cols);
 	listwidget_resize(ui->lw_mlib_search, ui->rows-2, ui->cols);
+	listwidget_resize(ui->lw_mlib_artists, ui->rows-2, ui->cols);
+	listwidget_resize(ui->lw_mlib_genres, ui->rows-2, ui->cols);
 	mvwin(ui->win_footer->win, ui->rows-1, 0);
 	ui_draw(ui);
 	if (ui->win_cmd && ui->win_cmd->win)
@@ -444,6 +465,8 @@ void ui_free(UI *ui)
 	listwidget_free(ui->lw_pl);
 	listwidget_free(ui->lw_fb);
 	listwidget_free(ui->lw_mlib_search);
+	listwidget_free(ui->lw_mlib_artists);
+	listwidget_free(ui->lw_mlib_genres);
 	endwin();
 }
 
@@ -463,4 +486,14 @@ void ui_busy_indicator(UI *ui, int busy)
 void ui_toggle_time_display(UI *ui)
 {
 	ui->time_display_remaining = !ui->time_display_remaining;
+}
+
+void ui_mlib_set_state(UI *ui, MLibState state)
+{
+	ui->mlib_state = state;
+}
+
+MLibState ui_mlib_get_state(UI *ui)
+{
+	return ui->mlib_state;
 }

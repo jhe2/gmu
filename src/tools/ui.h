@@ -25,8 +25,13 @@ typedef enum { FUNC_NONE, FUNC_HELP, FUNC_NEXT_WINDOW, FUNC_PLAY, FUNC_PAUSE,
                FUNC_PLAY_PAUSE, FUNC_STOP, FUNC_NEXT, FUNC_PREVIOUS,
                FUNC_PLAYMODE, FUNC_PL_CLEAR, FUNC_PL_DEL_ITEM, FUNC_SEARCH,
                FUNC_FB_ADD, FUNC_TEXT_INPUT, FUNC_VOLUME_UP, FUNC_VOLUME_DOWN,
-               FUNC_QUIT, FUNC_MLIB_REFRESH, FUNC_TOGGLE_TIME
+               FUNC_QUIT, FUNC_MLIB_REFRESH, FUNC_TOGGLE_TIME,
+               FUNC_BROWSE_ARTISTS, FUNC_BROWSE_GENRES
 } Function;
+
+typedef enum {
+	MLIB_STATE_RESULTS, MLIB_STATE_BROWSE_ARTISTS, MLIB_STATE_BROWSE_GENRES
+} MLibState;
 
 typedef struct FooterButtons {
 	char    *button_name, *button_desc;
@@ -38,6 +43,7 @@ typedef struct FooterButtons {
 typedef struct UI {
 	Window        *win_cmd, *win_ti, *win_lib, *win_header, *win_footer;
 	ListWidget    *lw_pl, *lw_fb, *lw_mlib_search;
+	ListWidget    *lw_mlib_artists, *lw_mlib_genres;
 	FooterButtons *fb_pl, *fb_fb, *fb_ti, *fb_lib, *fb_cmd;
 	FooterButtons *fb_visible;
 	int            rows, cols;
@@ -51,6 +57,7 @@ typedef struct UI {
 	int            pb_time, total_time, playmode, volume;
 	int            time_display_remaining;
 	int            busy;
+	MLibState      mlib_state;
 } UI;
 
 void ui_init(UI *ui, int color);
@@ -75,4 +82,6 @@ void ui_free(UI *ui);
 int  ui_has_color(UI *ui);
 void ui_busy_indicator(UI *ui, int busy);
 void ui_toggle_time_display(UI *ui);
+void ui_mlib_set_state(UI *ui, MLibState state);
+MLibState ui_mlib_get_state(UI *ui);
 #endif

@@ -9,13 +9,17 @@
  */
 #ifndef WEJ_MEDIALIB_H
 #define WEJ_MEDIALIB_H
+#ifdef GMU_MEDIALIB
 #include <sqlite3.h>
+#endif
 #include "trackinfo.h"
 
 typedef struct GmuMedialib {
+#ifdef GMU_MEDIALIB
 	sqlite3      *db;
-	int           refresh_in_progress;
 	sqlite3_stmt *pp_stmt_search, *pp_stmt_browse, *pp_stmt_path_list;
+#endif
+	int           refresh_in_progress;
 } GmuMedialib;
 
 typedef enum {

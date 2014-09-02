@@ -335,6 +335,33 @@ static void cmd_mlib_result(UI *ui, JSON_Object *json)
 	}
 }
 
+static void cmd_mlib_browse_result(UI *ui, JSON_Object *json)
+{
+	int pos = (int)json_get_number_value_for_key(json, "pos");
+
+	if (pos >= 0) {
+		int   row;
+		//int   id     = json_get_number_value_for_key(json, "id");
+		char *artist = json_get_string_value_for_key(json, "artist");
+		char *genre  = json_get_string_value_for_key(json, "genre");
+		//char  tmpid[8];
+
+		//snprintf(tmpid, 8, "%d", id);
+		if (artist) {
+			if (pos == 0) listwidget_clear_all_rows(ui->lw_mlib_artists);
+			row = listwidget_add_row(ui->lw_mlib_artists) - 1;
+			listwidget_set_cell_data(ui->lw_mlib_artists, row, 0, artist);
+			ui_mlib_set_state(ui, MLIB_STATE_BROWSE_ARTISTS);
+		} else if (genre) {
+			if (pos == 0) listwidget_clear_all_rows(ui->lw_mlib_genres);
+			row = listwidget_add_row(ui->lw_mlib_genres) - 1;
+			listwidget_set_cell_data(ui->lw_mlib_genres, row, 0, genre);
+			ui_mlib_set_state(ui, MLIB_STATE_BROWSE_GENRES);
+		}
+		ui_refresh_active_window(ui);
+	}
+}
+
 static void cmd_playmode_info(UI *ui, JSON_Object *json)
 {
 	ui_update_playmode(ui, (int)json_get_number_value_for_key(json, "mode"));
@@ -453,6 +480,8 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 							cmd_busy(ui, 1);
 						} else if (strcmp(cmd, "mlib_search_done") == 0) {
 							cmd_busy(ui, 0);
+						} else if (strcmp(cmd, "mlib_browse_result") == 0) {
+							cmd_mlib_browse_result(ui, json);
 						}
 						if (screen_update) ui_refresh_active_window(ui);
 						ui_cursor_text_input(ui, input);
@@ -543,13 +572,32 @@ static void file_browser_handle_return_key(UI *ui, int sock, char **cur_dir)
 
 static void media_library_handle_return_key(UI *ui, int sock)
 {
-	char  tmp[256];
-	int   s = listwidget_get_selection(ui->lw_mlib_search);
-	char *idstr = listwidget_get_row_data(ui->lw_mlib_search, s, 3);
-	int   id = idstr ? atoi(idstr) : -1;
-	wprintw(ui->win_cmd->win, "Add medialib ID %d to playlist...\n", id);
-	snprintf(tmp, 255, "{\"cmd\":\"medialib_add_id_to_playlist\", \"id\": %d}", id);
-	websocket_send_str(sock, tmp, 1);
+	char  tmp[256] = "";
+	switch (ui_mlib_get_state(ui)) {
+		case MLIB_STATE_RESULTS: {
+			int   s = listwidget_get_selection(ui->lw_mlib_search);
+			char *idstr = listwidget_get_row_data(ui->lw_mlib_search, s, 3);
+			int   id = idstr ? atoi(idstr) : -1;
+			wprintw(ui->win_cmd->win, "Add medialib ID %d to playlist...\n", id);
+			snprintf(tmp, 255, "{\"cmd\":\"medialib_add_id_to_playlist\", \"id\": %d}", id);
+			break;
+		}
+		case MLIB_STATE_BROWSE_ARTISTS: {
+			int   s = listwidget_get_selection(ui->lw_mlib_artists);
+			char *str = listwidget_get_row_data(ui->lw_mlib_artists, s, 0);
+			char *str_esc = json_string_escape_alloc(str);
+			if (snprintf(tmp, 255, "{\"cmd\":\"medialib_search\", \"type\": \"0\", \"str\": \"%s\"}", str_esc) < 255) {
+				ui_mlib_set_state(ui, MLIB_STATE_RESULTS);
+				ui_refresh_active_window(ui);
+			} else {
+				tmp[0] = '\0';
+			}
+			break;
+		}
+		case MLIB_STATE_BROWSE_GENRES:
+			break;
+	}
+	if (tmp[0]) websocket_send_str(sock, tmp, 1);
 }
 
 static void initiate_websocket_handshake(int sock, char *host)
@@ -846,6 +894,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								cpos = 7;
 								wchars[cpos] = L'\0';
 								input = wchars_to_utf8_str_realloc(input, wchars);
+								ui_mlib_set_state(&ui, MLIB_STATE_RESULTS);
 								ui_enable_text_input(&ui, 1);
 								break;
 							case FUNC_MLIB_REFRESH:
@@ -861,6 +910,14 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								ui_toggle_time_display(&ui);
 								ui_draw_header(&ui);
 								window_refresh(ui.win_header);
+								break;
+							case FUNC_BROWSE_ARTISTS:
+								ui_mlib_set_state(&ui, MLIB_STATE_BROWSE_ARTISTS);
+								websocket_send_str(sock, "{\"cmd\":\"medialib_browse\",\"column\":\"artist\"}", 1);
+								break;
+							case FUNC_BROWSE_GENRES:
+								ui_mlib_set_state(&ui, MLIB_STATE_BROWSE_GENRES);
+								websocket_send_str(sock, "{\"cmd\":\"medialib_browse\",\"column\":\"genre\"}", 1);
 								break;
 							case FUNC_QUIT:
 								quit = 1;
@@ -879,7 +936,17 @@ static int run_gmuc_ui(int color, char *host, char *password)
 										listwidget_move_cursor(ui.lw_fb, 1);
 										break;
 									case WIN_LIB:
-										listwidget_move_cursor(ui.lw_mlib_search, 1);
+										switch (ui_mlib_get_state(&ui)) {
+											case MLIB_STATE_RESULTS:
+												listwidget_move_cursor(ui.lw_mlib_search, 1);
+												break;
+											case MLIB_STATE_BROWSE_ARTISTS:
+												listwidget_move_cursor(ui.lw_mlib_artists, 1);
+												break;
+											case MLIB_STATE_BROWSE_GENRES:
+												listwidget_move_cursor(ui.lw_mlib_genres, 1);
+												break;
+										}
 										break;
 									default:
 										break;
@@ -895,7 +962,17 @@ static int run_gmuc_ui(int color, char *host, char *password)
 										listwidget_move_cursor(ui.lw_fb, -1);
 										break;
 									case WIN_LIB:
-										listwidget_move_cursor(ui.lw_mlib_search, -1);
+										switch (ui_mlib_get_state(&ui)) {
+											case MLIB_STATE_RESULTS:
+												listwidget_move_cursor(ui.lw_mlib_search, -1);
+												break;
+											case MLIB_STATE_BROWSE_ARTISTS:
+												listwidget_move_cursor(ui.lw_mlib_artists, -1);
+												break;
+											case MLIB_STATE_BROWSE_GENRES:
+												listwidget_move_cursor(ui.lw_mlib_genres, -1);
+												break;
+										}
 										break;
 									default:
 										break;
@@ -911,7 +988,17 @@ static int run_gmuc_ui(int color, char *host, char *password)
 										listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
 										break;
 									case WIN_LIB:
-										listwidget_move_cursor(ui.lw_mlib_search, ui.lw_mlib_search->win->height-2);
+										switch (ui_mlib_get_state(&ui)) {
+											case MLIB_STATE_RESULTS:
+												listwidget_move_cursor(ui.lw_mlib_search, ui.lw_mlib_search->win->height-2);
+												break;
+											case MLIB_STATE_BROWSE_ARTISTS:
+												listwidget_move_cursor(ui.lw_mlib_artists, ui.lw_mlib_search->win->height-2);
+												break;
+											case MLIB_STATE_BROWSE_GENRES:
+												listwidget_move_cursor(ui.lw_mlib_genres, ui.lw_mlib_search->win->height-2);
+												break;
+										}
 										break;
 									default:
 										break;
@@ -927,7 +1014,17 @@ static int run_gmuc_ui(int color, char *host, char *password)
 										listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
 										break;
 									case WIN_LIB:
-										listwidget_move_cursor(ui.lw_mlib_search, -(ui.lw_mlib_search->win->height-2));
+										switch (ui_mlib_get_state(&ui)) {
+											case MLIB_STATE_RESULTS:
+												listwidget_move_cursor(ui.lw_mlib_search, -(ui.lw_mlib_search->win->height-2));
+												break;
+											case MLIB_STATE_BROWSE_ARTISTS:
+												listwidget_move_cursor(ui.lw_mlib_artists, -(ui.lw_mlib_search->win->height-2));
+												break;
+											case MLIB_STATE_BROWSE_GENRES:
+												listwidget_move_cursor(ui.lw_mlib_genres, -(ui.lw_mlib_search->win->height-2));
+												break;
+										}
 										break;
 									default:
 										break;
@@ -942,7 +1039,17 @@ static int run_gmuc_ui(int color, char *host, char *password)
 										listwidget_set_cursor(ui.lw_fb, 0);
 										break;
 									case WIN_LIB:
-										listwidget_set_cursor(ui.lw_mlib_search, 0);
+										switch (ui_mlib_get_state(&ui)) {
+											case MLIB_STATE_RESULTS:
+												listwidget_set_cursor(ui.lw_mlib_search, 0);
+												break;
+											case MLIB_STATE_BROWSE_ARTISTS:
+												listwidget_set_cursor(ui.lw_mlib_artists, 0);
+												break;
+											case MLIB_STATE_BROWSE_GENRES:
+												listwidget_set_cursor(ui.lw_mlib_genres, 0);
+												break;
+										}
 										break;
 									default:
 										break;
@@ -951,13 +1058,23 @@ static int run_gmuc_ui(int color, char *host, char *password)
 							case KEY_END:
 								switch (ui.active_win) {
 									case WIN_PL:
-										listwidget_set_cursor(ui.lw_pl, listwidget_get_rows(ui.lw_pl)-1);
+										listwidget_set_cursor(ui.lw_pl, LW_CURSOR_POS_END);
 										break;
 									case WIN_FB:
-										listwidget_set_cursor(ui.lw_fb, listwidget_get_rows(ui.lw_fb)-1);
+										listwidget_set_cursor(ui.lw_fb, LW_CURSOR_POS_END);
 										break;
 									case WIN_LIB:
-										listwidget_set_cursor(ui.lw_mlib_search, listwidget_get_rows(ui.lw_mlib_search)-1);
+										switch (ui_mlib_get_state(&ui)) {
+											case MLIB_STATE_RESULTS:
+												listwidget_set_cursor(ui.lw_mlib_search, LW_CURSOR_POS_END);
+												break;
+											case MLIB_STATE_BROWSE_ARTISTS:
+												listwidget_set_cursor(ui.lw_mlib_artists, LW_CURSOR_POS_END);
+												break;
+											case MLIB_STATE_BROWSE_GENRES:
+												listwidget_set_cursor(ui.lw_mlib_genres, LW_CURSOR_POS_END);
+												break;
+										}
 										break;
 									default:
 										break;
