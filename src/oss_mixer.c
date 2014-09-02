@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include <linux/fb.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/soundcard.h>
