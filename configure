@@ -143,6 +143,9 @@ set_feature()
 		medialib)
 			feature_medialib=$on_off
 			;;
+		SDL_gfx)
+			feature_sdl_gfx=$on_off
+			;;
 	esac
 }
 
@@ -204,6 +207,10 @@ print_features_and_write_config()
 	if [ $fe_sdl = 1 ]; then
 		echo "SDL frontend enabled"
 		frn="$frn frontends/sdl.so"
+	fi
+	if [ $feature_sdl_gfx = 0 ]; then
+		echo "SDL_gfx support disabled"
+		echo "SDLFE_WITHOUT_SDL_GFX=1" >> config.mk
 	fi
 	if [ $fe_web = 1 ]; then
 		echo "Web frontend enabled"
