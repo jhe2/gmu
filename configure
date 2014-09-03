@@ -270,6 +270,7 @@ fe_web=-2
 fe_lirc=-2
 fe_log=-2
 feature_medialib=1
+feature_sdl_gfx=1
 target_device="unknown"
 sdk_path=
 includes=
