@@ -20,7 +20,7 @@ include config.mk
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -Wall -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\""
 
-LFLAGS_CORE=$(SDL_LIB) -ldl -lrt
+LFLAGS_CORE+=$(SDL_LIB) -lrt
 ifeq ($(GMU_MEDIALIB),1)
 LFLAGS_CORE+=-lsqlite3
 endif

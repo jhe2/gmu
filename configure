@@ -33,6 +33,7 @@ INCLUDE_PATHS="-I$BASE_INCLUDE_PATH"
 TARGET=unknown
 EXTRA_CFLAGS=
 BUILD_CONFIG_EXTRAS=
+LFLAGS_CORE=
 
 test_compiler()
 {
@@ -86,6 +87,24 @@ _WEJTEST
 		res=0
 	fi
 	rm -f /tmp/test.o /tmp/test.wej.c /tmp/test.exe
+	return $res
+}
+
+test_need_libdl()
+{
+	res=0
+	cat - <<_WEJTEST >/tmp/test.wej.c
+#include <dlfcn.h>
+int main(void)
+{
+	dlerror();
+  return 0;
+}
+_WEJTEST
+	$CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c
+	if [ $? != 0 ]; then
+		res=1
+	fi
 	return $res
 }
 
@@ -234,6 +253,7 @@ print_features_and_write_config()
 	fi
 	echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DDEBUG $EXTRA_CFLAGS" >>config.mk
 	echo "LFLAGS=$LFLAGS -Wl,-export-dynamic" >>config.mk
+	echo "LFLAGS_CORE=$LFLAGS_CORE" >>config.mk
 	echo "DECODERS_TO_BUILD=$dec" >>config.mk
 	echo "FRONTENDS_TO_BUILD=$frn" >>config.mk
 	echo "TARGET=$TARGET" >>config.mk
@@ -370,6 +390,12 @@ LFLAGS="$LFLAGS $LIBRARY_PATHS"
 test_compiler
 if [ $? = 0 ]; then
 	exit 2
+fi
+
+test_need_libdl
+if [ $? = 1 ]; then
+	echo "libdl needed."
+	LFLAGS_CORE="$LFLAGS_CORE -ldl"
 fi
 
 # Tests
