@@ -157,8 +157,9 @@ int playlist_add_file(Playlist *pl, const char *filename_with_path)
 		} else {
 			char *filename = strrchr(filename_with_path, '/');
 			if (filename) {
-				filename = filename + 1;
 				char buf[256];
+
+				filename = filename + 1;
 				if (charset_is_valid_utf8_string(filename)) {
 					strncpy(buf, filename, 255);
 				} else {

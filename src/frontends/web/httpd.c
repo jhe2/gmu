@@ -193,7 +193,7 @@ int connection_is_valid(Connection *c)
 
 void connection_close(Connection *c)
 {
-	// do stuff...
+	/* do stuff... */
 	if (c->http_request_header) {
 		free(c->http_request_header);
 		c->http_request_header = NULL;
@@ -577,7 +577,7 @@ static int process_command(int rfd, Connection *c)
 		char *str;
 		
 		str = malloc(len+1);
-		memset(str, 0, len); // Huh?
+		memset(str, 0, len); /* Huh? */
 		if (str) {
 			strncpy(str, c->http_request_header, len);
 			str[len] = '\0';
@@ -694,7 +694,7 @@ static int process_command(int rfd, Connection *c)
 							/* 3) Set flags in connection struct to WebSocket */
 							connection_set_state(c, CON_WEBSOCKET_OPEN);
 							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
-						} else if (!connection_file_is_open(c)) { // ?? open file (if not open already) ??
+						} else if (!connection_file_is_open(c)) { /* ?? open file (if not open already) ?? */
 							char filename[512];
 							memset(filename, 0, 512);
 							snprintf(filename, 511, "%s/htdocs%s", webserver_root, resource);
@@ -852,11 +852,11 @@ void gmu_http_send_initial_information(Connection *c)
 
 static void gmu_http_read_dir(const char *directory, Connection *c)
 {
-	Dir   dir;
-	char *base_dir;
+	Dir         dir;
+	char       *base_dir;
+	ConfigFile *cf = gmu_core_get_config();
 
 	dir_init(&dir);
-	ConfigFile *cf = gmu_core_get_config();
 	base_dir = cfg_get_key_value(*cf, "gmuhttp.BaseDir");
 	if (!base_dir) base_dir = "/";
 	if (strncmp(base_dir, directory, strlen(base_dir)) != 0)

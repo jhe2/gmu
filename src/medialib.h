@@ -23,7 +23,7 @@ typedef struct GmuMedialib {
 } GmuMedialib;
 
 typedef enum {
-	GMU_MLIB_ANY, GMU_MLIB_ARTIST, GMU_MLIB_TITLE, GMU_MLIB_ALBUM, 
+	GMU_MLIB_ANY, GMU_MLIB_ARTIST, GMU_MLIB_TITLE, GMU_MLIB_ALBUM
 } GmuMedialibDataType;
 
 int  medialib_create_db_and_open(GmuMedialib *gm);

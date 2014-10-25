@@ -87,9 +87,10 @@ int medialib_add_file(GmuMedialib *gm, const char *file)
 	trackinfo_init(&ti, 0);
 	if (new_file && metadatareader_read(file, filetype, &ti)) {
 		/* Add file with metadata to media library... */
+		int   a, b, c, d, e;
 		char *q = "INSERT INTO track (file, artist, title, album, comment) VALUES (?1, ?2, ?3, ?4, ?5)";
+
 		sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
-		int a, b, c, d, e;
 		a = sqlite3_bind_text(pp_stmt, 1, file,       -1, SQLITE_STATIC);
 		b = sqlite3_bind_text(pp_stmt, 2, ti.artist,  -1, SQLITE_STATIC);
 		c = sqlite3_bind_text(pp_stmt, 3, ti.title,   -1, SQLITE_STATIC);

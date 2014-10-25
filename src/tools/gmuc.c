@@ -184,12 +184,12 @@ static State do_websocket_handshake(RingBuffer *rb, State state)
 		if (buf[0] == '\n' || (buf[0] == '\0' && buf[1] == '\n')) { /* End of header */
 			/* Check for valid websocket server response */
 			wdprintf(V_DEBUG, "gmuc", "End of header detected!\n");
-			if (1) // temporary
+			if (1) /* temporary */
 				state = STATE_CONNECTION_ESTABLISHED;
 			else
 				state = STATE_WEBSOCKET_HANDSHAKE_FAILED;
 		}
-		//if (buf[i] == '\r' || buf[i] == '\n') buf[i] = '\0';
+		/*if (buf[i] == '\r' || buf[i] == '\n') buf[i] = '\0';*/
 		buf[i] = '\0';
 		if (i > 0) wdprintf(V_DEBUG, "gmuc", "i=%d LINE=[%s]\n", i, buf);
 	}
@@ -265,7 +265,7 @@ static void cmd_playlist_item(UI *ui, JSON_Object *json, int sock)
  * actually read directory */
 static char *cmd_dir_read(UI *ui, JSON_Object *json)
 {
-	int   i;
+	int   i, start;
 	JSON_Key *jk = json_get_key_object_for_key(json, "data");
 	JSON_Object *jo = jk ? jk->key_value_object : NULL;
 	char *tmp = json_get_string_value_for_key(json, "path");
@@ -279,17 +279,18 @@ static char *cmd_dir_read(UI *ui, JSON_Object *json)
 	tmp = NULL;
 
 	if (jo) tmp = json_get_first_key_string(jo);
-	int start = -1;
+	start = -1;
 	if (tmp) start = atoi(tmp);
 	if (!jk) wprintw(ui->win_cmd->win, "ERROR: No key for 'data'.\n");
 
 	if (start >= 0) {
 		for (i = start; ; i++) {
 			JSON_Object *j_file;
+			JSON_Key    *jk;
 			char tmp[16];
 			snprintf(tmp, 15, "%d", i);
 			if (!jo) wprintw(ui->win_cmd->win, "ERROR: No object.\n");
-			JSON_Key *jk = json_get_key_object_for_key(jo, tmp);
+			jk = json_get_key_object_for_key(jo, tmp);
 			j_file = jk ? jk->key_value_object : NULL;
 			if (j_file) {
 				char *jv     = json_get_string_value_for_key(j_file, "name");
@@ -341,12 +342,10 @@ static void cmd_mlib_browse_result(UI *ui, JSON_Object *json)
 
 	if (pos >= 0) {
 		int   row;
-		//int   id     = json_get_number_value_for_key(json, "id");
+		/*int   id     = json_get_number_value_for_key(json, "id");*/
 		char *artist = json_get_string_value_for_key(json, "artist");
 		char *genre  = json_get_string_value_for_key(json, "genre");
-		//char  tmpid[8];
 
-		//snprintf(tmpid, 8, "%d", id);
 		if (artist) {
 			if (pos == 0) listwidget_clear_all_rows(ui->lw_mlib_artists);
 			row = listwidget_add_row(ui->lw_mlib_artists) - 1;
@@ -1106,7 +1105,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 				}
 				if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
 					if (r) {
-						memset(buffer, 0, BUF); // we don't need that later
+						memset(buffer, 0, BUF); /* we don't need that later */
 						size = recv(sock, buffer, BUF-1, 0);
 						if (size <= 0) {
 							wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
