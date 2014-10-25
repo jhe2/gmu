@@ -189,11 +189,11 @@ gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
-decoders/%.so: src/decoders/%.c decodersdir
+decoders/%.so: src/decoders/%.c | decodersdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS) $(DEC_$(*)_CFLAGS)
 
-decoders/wavpack.so: src/decoders/wavpack.c util.o decodersdir
+decoders/wavpack.so: src/decoders/wavpack.c util.o | decodersdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) util.o src/decoders/wavpack/*.c
 
@@ -201,19 +201,19 @@ decoders/wavpack.so: src/decoders/wavpack.c util.o decodersdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) -Isrc/ -c -o $@ $<
 
-frontends/sdl.so: $(PLUGIN_FE_SDL_OBJECTFILES) frontendsdir
+frontends/sdl.so: $(PLUGIN_FE_SDL_OBJECTFILES) | frontendsdir
 	@echo -e "Linking \033[1m$@\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_SDL_OBJECTFILES)
 
-frontends/log.so: src/frontends/log.c util.o frontendsdir
+frontends/log.so: src/frontends/log.c util.o | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) util.o -lpthread
 
-frontends/lirc.so: src/frontends/lirc.c frontendsdir
+frontends/lirc.so: src/frontends/lirc.c | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread -llirc_client
 
-frontends/gmusrv.so: src/frontends/gmusrv.c frontendsdir
+frontends/gmusrv.so: src/frontends/gmusrv.c | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread
 
@@ -221,7 +221,7 @@ frontends/gmusrv.so: src/frontends/gmusrv.c frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $<
 
-frontends/gmuhttp.so: $(PLUGIN_FE_HTTP_OBJECTFILES) frontendsdir
+frontends/gmuhttp.so: $(PLUGIN_FE_HTTP_OBJECTFILES) | frontendsdir
 	@echo -e "Building \033[1m$@\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $(LFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread $(PLUGIN_FE_HTTP_OBJECTFILES)
 
