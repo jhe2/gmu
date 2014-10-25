@@ -19,13 +19,23 @@
 #include <sys/time.h>
 #include "eventqueue.h"
 
-void event_queue_init(EventQueue *eq)
+/**
+ * Returns 1 on success, 0 otherwise
+ */
+int event_queue_init(EventQueue *eq)
 {
+	int res = 0;
+	pthread_condattr_t attr;
 	eq->first = NULL;
 	eq->last = NULL;
 	pthread_mutex_init(&(eq->mutex), NULL);
 	pthread_mutex_init(&(eq->mutex_cond), NULL);
-	pthread_cond_init(&(eq->cond), NULL);
+	pthread_condattr_init(&attr);
+	if (pthread_condattr_setclock(&attr, CLOCK_MONOTONIC) == 0) {
+		if (pthread_cond_init(&(eq->cond), &attr) == 0)
+			res = 1;
+	}
+	return res;
 }
 
 int event_queue_push_with_parameter(EventQueue *eq, GmuEvent ev, int param)
@@ -126,7 +136,7 @@ void event_queue_wait_for_event(EventQueue *eq, int with_timeout)
 		pthread_cond_wait(&(eq->cond), &(eq->mutex_cond));
 	} else {
 		struct timespec ts, tsa, target_ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
+		clock_gettime(CLOCK_MONOTONIC, &ts);
 		tsa.tv_sec  = with_timeout / 1000;
 		tsa.tv_nsec = (with_timeout % 1000) * 1000L * 1000L;
 		timespec_add(&ts, &tsa, &target_ts);

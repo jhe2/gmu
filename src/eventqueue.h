@@ -36,7 +36,7 @@ struct _EventQueue
 
 typedef struct _EventQueue EventQueue;
 
-void     event_queue_init(EventQueue *eq);
+int      event_queue_init(EventQueue *eq);
 int      event_queue_push(EventQueue *eq, GmuEvent ev);
 int      event_queue_push_with_parameter(EventQueue *eq, GmuEvent ev, int param);
 /* Function to fetch the (optional) parameter that can be pushed with an event.

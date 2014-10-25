@@ -1008,7 +1008,10 @@ int main(int argc, char **argv)
 	wdprintf(V_INFO, "gmu", "Base directory: %s\n", base_dir);
 	wdprintf(V_INFO, "gmu", "System config directory: %s\n", sys_config_dir);
 
-	event_queue_init(&event_queue);
+	if (!event_queue_init(&event_queue)) {
+		wdprintf(V_ERROR, "gmu", "Failed to initialize event_queue.\n");
+		exit(11);
+	}
 	wdprintf(V_INFO, "gmu", "Loading configuration %s...\n", config_file_path);
 	if (pthread_mutex_init(&config_mutex, NULL) != 0) {
 		wdprintf(V_ERROR, "gmu", "Failed to initialize config mutex.\n");
