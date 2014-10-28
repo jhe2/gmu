@@ -26,7 +26,7 @@
 #define MAX_LINE_LENGTH 256
 
 /* Returns the complete path to ~/"filename" */
-char *cfg_get_path_to_config_file(char *filename)
+char *cfg_get_path_to_config_file(const char *filename)
 {
 	char *home_directory, *path_to_config_file;
 
@@ -46,7 +46,7 @@ void cfg_init_config_file_struct(ConfigFile *cf)
 }
 
 /* Checks wether the config file exists or not */
-int cfg_check_config_file(char *filename)
+int cfg_check_config_file(const char *filename)
 {
 	FILE *file;
 	int  result = CFG_SUCCESS;
@@ -59,7 +59,7 @@ int cfg_check_config_file(char *filename)
 }
 
 /* Add a new key to the configuration */
-int cfg_add_key(ConfigFile *cf, char *key, char *value)
+int cfg_add_key(ConfigFile *cf, const char *key, const char *value)
 {
 	int result = CFG_SUCCESS;
 	int strsize = 0;
@@ -123,7 +123,7 @@ void cfg_free_config_file_struct(ConfigFile *cf)
 }
 
 /* Loads a config file from disk */
-int cfg_read_config_file(ConfigFile *cf, char *filename)
+int cfg_read_config_file(ConfigFile *cf, const char *filename)
 {
 	int   result = CFG_SUCCESS;
 	FILE *file;
@@ -190,7 +190,7 @@ int cfg_read_config_file(ConfigFile *cf, char *filename)
 }
 
 /* Saves the configuration to file */
-int cfg_write_config_file(ConfigFile *cf, char *filename)
+int cfg_write_config_file(ConfigFile *cf, const char *filename)
 {
 	FILE *file;
 	int   i = 0, result = CFG_SUCCESS;
@@ -216,7 +216,7 @@ int cfg_write_config_file(ConfigFile *cf, char *filename)
 }
 
 /* Returns the value (as string) of "key" */
-char *cfg_get_key_value(ConfigFile cf, char *key)
+char *cfg_get_key_value(ConfigFile cf, const char *key)
 {
 	char *result = NULL;
 	int   i;
@@ -229,7 +229,7 @@ char *cfg_get_key_value(ConfigFile cf, char *key)
 	return result;
 }
 
-char *cfg_get_key_value_ignore_case(ConfigFile cf, char *key)
+char *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key)
 {
 	char *result = NULL;
 	int   i;
@@ -242,7 +242,7 @@ char *cfg_get_key_value_ignore_case(ConfigFile cf, char *key)
 	return result;
 }
 
-int cfg_is_key_available(ConfigFile cf, char *key)
+int cfg_is_key_available(ConfigFile cf, const char *key)
 {
 	int result = FALSE;
 	int i;
@@ -252,10 +252,10 @@ int cfg_is_key_available(ConfigFile cf, char *key)
 			result = TRUE;
 			break;
 		}
-	return result;	
+	return result;
 }
 
-int cfg_add_key_if_not_present(ConfigFile *cf, char *key, char *value)
+int cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *value)
 {
 	int success = 0;
 

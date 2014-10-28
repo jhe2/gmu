@@ -38,14 +38,14 @@ typedef struct
 } ConfigFile;
 
 void  cfg_init_config_file_struct(ConfigFile *cf);
-int   cfg_add_key(ConfigFile *cf, char *key, char *value);
+int   cfg_add_key(ConfigFile *cf, const char *key, const char *value);
 void  cfg_free_config_file_struct(ConfigFile *cf);
-int   cfg_read_config_file(ConfigFile *cf, char *filename);
-int   cfg_write_config_file(ConfigFile *cf, char *filename);
-char *cfg_get_key_value(ConfigFile cf, char *key);
-char *cfg_get_key_value_ignore_case(ConfigFile cf, char *key);
-int   cfg_check_config_file(char *filename);
-char *cfg_get_path_to_config_file(char *filename);
-int   cfg_is_key_available(ConfigFile cf, char *key);
-int   cfg_add_key_if_not_present(ConfigFile *cf, char *key, char *value);
+int   cfg_read_config_file(ConfigFile *cf, const char *filename);
+int   cfg_write_config_file(ConfigFile *cf, const char *filename);
+char *cfg_get_key_value(ConfigFile cf, const char *key);
+char *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key);
+int   cfg_check_config_file(const char *filename);
+char *cfg_get_path_to_config_file(const char *filename);
+int   cfg_is_key_available(ConfigFile cf, const char *key);
+int   cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *value);
 #endif
