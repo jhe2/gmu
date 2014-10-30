@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include "wejpconfig.h"
 #define MAX_LINE_LENGTH 256
@@ -42,7 +43,10 @@ char *cfg_get_path_to_config_file(const char *filename)
 /* Must be called before the first use of a ConfigFile struct element */
 void cfg_init_config_file_struct(ConfigFile *cf)
 {
+	int i;
 	cf->lastkey = 0;
+	for (i = 0; i < MAXKEYS; i++)
+		cf->presets[i] = NULL;
 }
 
 /* Checks wether the config file exists or not */
@@ -118,6 +122,13 @@ void cfg_free_config_file_struct(ConfigFile *cf)
 	for (i = 0; i < cf->lastkey; i++) {
 		if (cf->key[i]) free(cf->key[i]);
 		if (cf->value[i]) free(cf->value[i]);
+		if (cf->presets[i]) {
+			int j;
+			for (j = 0; cf->presets[i][j]; j++) {
+				free(cf->presets[i][j]);
+			}
+			free(cf->presets[i]);
+		}
 	}
 	cf->lastkey = -1;
 }
@@ -242,17 +253,25 @@ char *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key)
 	return result;
 }
 
-int cfg_is_key_available(ConfigFile cf, const char *key)
+/**
+ * If the supplied key is not found, -1 is returned
+ */
+static int int_cfg_get_key_id(ConfigFile *cf, const char *key)
 {
-	int result = FALSE;
+	int result = -1;
 	int i;
 
-	for (i = 0; i < cf.lastkey; i++)
-		if (strncmp(key, cf.key[i], MAX_LINE_LENGTH-1) == 0) {
-			result = TRUE;
+	for (i = 0; i < cf->lastkey; i++)
+		if (strncmp(key, cf->key[i], MAX_LINE_LENGTH-1) == 0) {
+			result = i;
 			break;
 		}
 	return result;
+}
+
+int cfg_is_key_available(ConfigFile cf, const char *key)
+{
+	return (int_cfg_get_key_id(&cf, key) >= 0) ? TRUE : FALSE;
 }
 
 int cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *value)
@@ -263,4 +282,55 @@ int cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *valu
 		success = (cfg_add_key(cf, key, value) == 0 ? 1 : 0);
 	}
 	return success;
+}
+
+/**
+ * Adds presets to an existing key, which can be used in an UI to allow
+ * the user to select a value for the key from a list of predefined
+ * values. The list of preset values must end with the NULL value.
+ * Returns 1 on success, 0 otherwise.
+ */
+int cfg_key_add_presets(ConfigFile *cf, const char *key, ...)
+{
+	int     res = 0, arg_count = 0;
+	va_list args;
+	char   *arg;
+
+	if (cfg_is_key_available(*cf, key)) {
+		int i, j;
+		for (i = 0; i < cf->lastkey; i++)
+			if (strncmp(key, cf->key[i], MAX_LINE_LENGTH-1) == 0) {
+				break;
+			}
+
+		va_start(args, key);
+		for (arg_count = 0, arg = va_arg(args, char *); arg; arg = va_arg(args, char *), arg_count++);
+		va_end(args);
+		if (arg_count > 0) {
+			cf->presets[i] = malloc((arg_count + 1) * sizeof(char *));
+			if (cf->presets[i]) {
+				cf->presets[i][arg_count] = NULL;
+				va_start(args, key);
+				for (j = 0, arg = va_arg(args, char *); arg; arg = va_arg(args, char *), j++) {
+					int size = strlen(arg);
+					if (size > 0) {
+						/* Add preset value to key's preset list... */
+						cf->presets[i][j] = malloc(size+1);
+						if (cf->presets[i][j]) {
+							strncpy(cf->presets[i][j], arg, size+1);
+						}
+					}
+				}
+				va_end(args);
+			}
+		}
+		res = 1;
+	}
+	return res;
+}
+
+char **cfg_key_get_presets(ConfigFile *cf, const char *key)
+{
+	int id = int_cfg_get_key_id(cf, key);
+	return cf->presets[id];
 }

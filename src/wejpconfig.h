@@ -32,20 +32,23 @@
 
 typedef struct
 {
-	char *key[MAXKEYS];
-	char *value[MAXKEYS];
-	int  lastkey;
+	char  *key[MAXKEYS];
+	char  *value[MAXKEYS];
+	char **presets[MAXKEYS];
+	int    lastkey;
 } ConfigFile;
 
-void  cfg_init_config_file_struct(ConfigFile *cf);
-int   cfg_add_key(ConfigFile *cf, const char *key, const char *value);
-void  cfg_free_config_file_struct(ConfigFile *cf);
-int   cfg_read_config_file(ConfigFile *cf, const char *filename);
-int   cfg_write_config_file(ConfigFile *cf, const char *filename);
-char *cfg_get_key_value(ConfigFile cf, const char *key);
-char *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key);
-int   cfg_check_config_file(const char *filename);
-char *cfg_get_path_to_config_file(const char *filename);
-int   cfg_is_key_available(ConfigFile cf, const char *key);
-int   cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *value);
+void   cfg_init_config_file_struct(ConfigFile *cf);
+int    cfg_add_key(ConfigFile *cf, const char *key, const char *value);
+int    cfg_key_add_presets(ConfigFile *cf, const char *key, ...);
+void   cfg_free_config_file_struct(ConfigFile *cf);
+int    cfg_read_config_file(ConfigFile *cf, const char *filename);
+int    cfg_write_config_file(ConfigFile *cf, const char *filename);
+char  *cfg_get_key_value(ConfigFile cf, const char *key);
+char  *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key);
+int    cfg_check_config_file(const char *filename);
+char  *cfg_get_path_to_config_file(const char *filename);
+int    cfg_is_key_available(ConfigFile cf, const char *key);
+int    cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *value);
+char **cfg_key_get_presets(ConfigFile *cf, const char *key);
 #endif
