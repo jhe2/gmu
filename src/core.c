@@ -170,25 +170,34 @@ static int play_previous(Playlist *pl)
 static void add_default_cfg_settings(ConfigFile *config)
 {
 	cfg_add_key(config, "DefaultPlayMode", "continue");
+	cfg_key_add_presets(config, "DefaultPlayMode", "continue", "random", "repeat", NULL);
 	cfg_add_key(config, "RememberLastPlaylist", "yes");
+	cfg_key_add_presets(config, "RememberLastPlaylist", "yes", "no", NULL);
 	cfg_add_key(config, "RememberSettings", "yes");
+	cfg_key_add_presets(config, "RememberSettings", "yes", "no", NULL);
 	cfg_add_key(config, "EnableCoverArtwork", "yes");
+	cfg_key_add_presets(config, "EnableCoverArtwork", "yes", "no", NULL);
 	cfg_add_key(config, "CoverArtworkFilePattern", "*.jpg");
 	cfg_add_key(config, "LoadEmbeddedCoverArtwork", "first");
 	cfg_add_key(config, "LyricsFilePattern", "$.txt;*.txt");
 	cfg_add_key(config, "FileSystemCharset", "UTF-8");
+	cfg_key_add_presets(config, "FileSystemCharset", "UTF-8", "ISO-8859-15", NULL);
 	cfg_add_key(config, "PlaylistSavePresets",
-						 "playlist1.m3u;playlist2.m3u;playlist3.m3u;playlist4.m3u");
+	                    "playlist1.m3u;playlist2.m3u;playlist3.m3u;playlist4.m3u");
 	cfg_add_key(config, "TimeDisplay", "elapsed");
+	cfg_key_add_presets(config, "TimeDisplay", "elapsed", "remaining", NULL);
 	cfg_add_key(config, "DefaultFileBrowserPath", ".");
 	cfg_add_key(config, "VolumeControl", "Software"); /* Software, Hardware, Hardware+Software */
 	cfg_add_key(config, "VolumeHardwareMixerChannel", "0");
 	cfg_add_key(config, "Volume", "7");
 	cfg_add_key(config, "DefaultSkin", "default-modern");
 	cfg_add_key(config, "AutoSelectCurrentPlaylistItem", "no");
+	cfg_key_add_presets(config, "AutoSelectCurrentPlaylistItem", "yes", "no", NULL);
 	cfg_add_key(config, "AutoPlayOnProgramStart", "no");
+	cfg_key_add_presets(config, "AutoPlayOnProgramStart", "yes", "no", NULL);
 	cfg_add_key(config, "Scroll", "always");
 	cfg_add_key(config, "FileBrowserFoldersFirst", "yes");
+	cfg_key_add_presets(config, "FileBrowserFoldersFirst", "yes", "no", NULL);
 	cfg_add_key(config, "BacklightPowerOnOnTrackChange", "no");
 	cfg_add_key(config, "KeyMap", "default.keymap");
 	cfg_add_key(config, "AllowVolumeControlInHoldState", "no");
@@ -197,8 +206,11 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "SmallCoverArtworkAlignment", "right");
 	cfg_add_key(config, "FirstRun", "yes");
 	cfg_add_key(config, "ResumePlayback", "yes");
+	cfg_key_add_presets(config, "ResumePlayback", "yes", "no", NULL);
 	cfg_add_key(config, "ReaderCache", "512");
+	cfg_key_add_presets(config, "ReaderCache", "256", "512", "1024", NULL);
 	cfg_add_key(config, "ReaderCachePrebufferSize", "256");
+	cfg_key_add_presets(config, "ReaderCachePrebufferSize", "128", "256", "512", "768", NULL);
 }
 
 int gmu_core_export_playlist(const char *file)
