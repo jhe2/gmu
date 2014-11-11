@@ -334,3 +334,11 @@ char **cfg_key_get_presets(ConfigFile *cf, const char *key)
 	int id = int_cfg_get_key_id(cf, key);
 	return cf->presets[id];
 }
+
+char *cfg_get_key(ConfigFile *cf, int n)
+{
+	char *res = NULL;
+	if (n < cf->lastkey)
+		res = cf->key[n];
+	return res;
+}

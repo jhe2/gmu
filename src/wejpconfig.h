@@ -51,4 +51,5 @@ char  *cfg_get_path_to_config_file(const char *filename);
 int    cfg_is_key_available(ConfigFile cf, const char *key);
 int    cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *value);
 char **cfg_key_get_presets(ConfigFile *cf, const char *key);
+char  *cfg_get_key(ConfigFile *cf, int n);
 #endif
