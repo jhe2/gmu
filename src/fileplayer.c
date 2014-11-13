@@ -58,9 +58,9 @@ static TrackInfo *ti;
 static pthread_mutex_t mutex;
 
 
-void file_player_set_lyrics_file_pattern(char *pattern)
+void file_player_set_lyrics_file_pattern(const char *pattern)
 {
-	strncpy(lyrics_file_pattern, pattern, 255);
+	strncpy(lyrics_file_pattern, pattern ? pattern : "", 255);
 }
 
 int file_player_playback_get_time(void)

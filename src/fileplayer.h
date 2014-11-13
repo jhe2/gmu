@@ -18,7 +18,7 @@
 #include "trackinfo.h"
 #include "pbstatus.h"
 
-void      file_player_set_lyrics_file_pattern(char *pattern);
+void      file_player_set_lyrics_file_pattern(const char *pattern);
 int       file_player_playback_get_time(void);
 PB_Status file_player_get_playback_status(void);
 PB_Status file_player_get_item_status(void);
