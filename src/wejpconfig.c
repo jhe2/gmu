@@ -29,11 +29,13 @@
 /* Returns the complete path to ~/"filename" */
 char *cfg_get_path_to_config_file(const char *filename)
 {
-	char *home_directory, *path_to_config_file;
+	char *home_directory, *path_to_config_file = NULL;
 
 	home_directory = getenv("HOME");
-	path_to_config_file = (char*)malloc((strlen(home_directory) + 
-	                                     strlen(filename) + 2) * sizeof(char));
+	if (home_directory)
+		path_to_config_file = (char*)malloc(
+			(strlen(home_directory) + strlen(filename) + 2) * sizeof(char)
+		);
 	
 	if (path_to_config_file)
 		sprintf(path_to_config_file, "%s/%s", home_directory, filename);
