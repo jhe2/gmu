@@ -1,7 +1,7 @@
 /* 
  * Gmu GP2X Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: about.c  Created: 061223
  *
@@ -40,6 +40,10 @@ int about_process_action(TextBrowser *tb_about, View *view, View old_view, int u
 	switch (user_key_action) {
 		case OKAY:
 			*view = old_view;
+			update = 1;
+			break;
+		case RUN_SETUP:
+			*view = SETUP;
 			update = 1;
 			break;
 		case MOVE_CURSOR_DOWN:

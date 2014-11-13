@@ -71,12 +71,12 @@ void key_action_mapping_init(KeyActionMapping *kam)
 	kam[PLMANAGER_LOAD_APPEND].description =      "Append to cur. list";
 	kam[OKAY].scope =                        ABOUT | HELP;
 	kam[OKAY].description =                       "Okay";
+	kam[RUN_SETUP].scope =                   ABOUT;
+	kam[RUN_SETUP].description =                  "Gmu setup";
 	kam[SETUP_SELECT].scope =                SETUP;
 	kam[SETUP_SELECT].description =               "Select item";
-	kam[SETUP_SAVE_AND_EXIT].scope =         SETUP;
-	kam[SETUP_SAVE_AND_EXIT].description =        "Save&Exit";
-	kam[SETUP_SAVE_AND_RUN_GMU].scope =      SETUP;
-	kam[SETUP_SAVE_AND_RUN_GMU].description =     "Save&Run Gmu";
+	kam[SETUP_CLOSE].scope =                 SETUP;
+	kam[SETUP_CLOSE].description =                "Close";
 	kam[SETUP_FB_SELECT].scope =             SETUP_FILE_BROWSER;
 	kam[SETUP_FB_SELECT].description =            "Select item";
 	kam[SETUP_FB_CHDIR].scope =              SETUP_FILE_BROWSER;
@@ -267,17 +267,17 @@ int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 			get_button(button_name, &kam[GLOBAL_FULLSCREEN].button, &kam[GLOBAL_FULLSCREEN].modifier, &kam[GLOBAL_FULLSCREEN].method);
 			if (button_name) strncpy(kam[GLOBAL_FULLSCREEN].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
 
+			button_name = cfg_get_key_value(keymapconf, "RunSetup");
+			get_button(button_name, &kam[RUN_SETUP].button, &kam[RUN_SETUP].modifier, &kam[RUN_SETUP].method);
+			if (button_name) strncpy(kam[RUN_SETUP].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
+
 			button_name = cfg_get_key_value(keymapconf, "SetupSelect");
 			get_button(button_name, &kam[SETUP_SELECT].button, &kam[SETUP_SELECT].modifier, &kam[SETUP_SELECT].method);
 			if (button_name) strncpy(kam[SETUP_SELECT].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
 
-			button_name = cfg_get_key_value(keymapconf, "SetupSaveAndExit");
-			get_button(button_name, &kam[SETUP_SAVE_AND_EXIT].button, &kam[SETUP_SAVE_AND_EXIT].modifier, &kam[SETUP_SAVE_AND_EXIT].method);
-			if (button_name) strncpy(kam[SETUP_SAVE_AND_EXIT].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
-
-			button_name = cfg_get_key_value(keymapconf, "SetupSaveAndRunGmu");
-			get_button(button_name, &kam[SETUP_SAVE_AND_RUN_GMU].button, &kam[SETUP_SAVE_AND_RUN_GMU].modifier, &kam[SETUP_SAVE_AND_RUN_GMU].method);
-			if (button_name) strncpy(kam[SETUP_SAVE_AND_RUN_GMU].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
+			button_name = cfg_get_key_value(keymapconf, "SetupClose");
+			get_button(button_name, &kam[SETUP_CLOSE].button, &kam[SETUP_CLOSE].modifier, &kam[SETUP_CLOSE].method);
+			if (button_name) strncpy(kam[SETUP_CLOSE].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
 
 			button_name = cfg_get_key_value(keymapconf, "SetupFileBrowserSelect");
 			get_button(button_name, &kam[SETUP_FB_SELECT].button, &kam[SETUP_FB_SELECT].modifier, &kam[SETUP_FB_SELECT].method);

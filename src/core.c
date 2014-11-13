@@ -169,48 +169,32 @@ static int play_previous(Playlist *pl)
 
 static void add_default_cfg_settings(ConfigFile *config)
 {
-	cfg_add_key(config, "DefaultPlayMode", "continue");
-	cfg_key_add_presets(config, "DefaultPlayMode", "continue", "random", "repeat", NULL);
-	cfg_add_key(config, "RememberLastPlaylist", "yes");
-	cfg_key_add_presets(config, "RememberLastPlaylist", "yes", "no", NULL);
-	cfg_add_key(config, "RememberSettings", "yes");
-	cfg_key_add_presets(config, "RememberSettings", "yes", "no", NULL);
-	cfg_add_key(config, "EnableCoverArtwork", "yes");
-	cfg_key_add_presets(config, "EnableCoverArtwork", "yes", "no", NULL);
-	cfg_add_key(config, "CoverArtworkFilePattern", "*.jpg");
-	cfg_add_key(config, "LoadEmbeddedCoverArtwork", "first");
-	cfg_add_key(config, "LyricsFilePattern", "$.txt;*.txt");
-	cfg_add_key(config, "FileSystemCharset", "UTF-8");
-	cfg_key_add_presets(config, "FileSystemCharset", "UTF-8", "ISO-8859-15", NULL);
-	cfg_add_key(config, "PlaylistSavePresets",
+	cfg_add_key(config, "Gmu.DefaultPlayMode", "continue");
+	cfg_add_key(config, "Gmu.RememberLastPlaylist", "yes");
+	cfg_key_add_presets(config, "Gmu.RememberLastPlaylist", "yes", "no", NULL);
+	cfg_add_key(config, "Gmu.RememberSettings", "yes");
+	cfg_key_add_presets(config, "Gmu.RememberSettings", "yes", "no", NULL);
+	cfg_add_key(config, "Gmu.FileSystemCharset", "UTF-8");
+	cfg_key_add_presets(config, "Gmu.FileSystemCharset", "UTF-8", "ISO-8859-15", NULL);
+	cfg_add_key(config, "Gmu.PlaylistSavePresets",
 	                    "playlist1.m3u;playlist2.m3u;playlist3.m3u;playlist4.m3u");
-	cfg_add_key(config, "TimeDisplay", "elapsed");
-	cfg_key_add_presets(config, "TimeDisplay", "elapsed", "remaining", NULL);
-	cfg_add_key(config, "DefaultFileBrowserPath", ".");
-	cfg_add_key(config, "VolumeControl", "Software"); /* Software, Hardware, Hardware+Software */
-	cfg_add_key(config, "VolumeHardwareMixerChannel", "0");
-	cfg_add_key(config, "Volume", "7");
-	cfg_add_key(config, "DefaultSkin", "default-modern");
-	cfg_add_key(config, "AutoSelectCurrentPlaylistItem", "no");
-	cfg_key_add_presets(config, "AutoSelectCurrentPlaylistItem", "yes", "no", NULL);
-	cfg_add_key(config, "AutoPlayOnProgramStart", "no");
-	cfg_key_add_presets(config, "AutoPlayOnProgramStart", "yes", "no", NULL);
-	cfg_add_key(config, "Scroll", "always");
-	cfg_add_key(config, "FileBrowserFoldersFirst", "yes");
-	cfg_key_add_presets(config, "FileBrowserFoldersFirst", "yes", "no", NULL);
-	cfg_add_key(config, "BacklightPowerOnOnTrackChange", "no");
-	cfg_add_key(config, "KeyMap", "default.keymap");
-	cfg_add_key(config, "AllowVolumeControlInHoldState", "no");
-	cfg_add_key(config, "SecondsUntilBacklightPowerOff", "30");
-	cfg_add_key(config, "CoverArtworkLarge", "no");
-	cfg_add_key(config, "SmallCoverArtworkAlignment", "right");
-	cfg_add_key(config, "FirstRun", "yes");
-	cfg_add_key(config, "ResumePlayback", "yes");
-	cfg_key_add_presets(config, "ResumePlayback", "yes", "no", NULL);
-	cfg_add_key(config, "ReaderCache", "512");
-	cfg_key_add_presets(config, "ReaderCache", "256", "512", "1024", NULL);
-	cfg_add_key(config, "ReaderCachePrebufferSize", "256");
-	cfg_key_add_presets(config, "ReaderCachePrebufferSize", "128", "256", "512", "768", NULL);
+	cfg_add_key(config, "Gmu.DefaultFileBrowserPath", ".");
+	cfg_add_key(config, "Gmu.VolumeControl", "Software"); /* Software, Hardware, Hardware+Software */
+	cfg_key_add_presets(config, "Gmu.VolumeControl", "Software", "Hardware", "Software+Hardware", NULL);
+	cfg_add_key(config, "Gmu.VolumeHardwareMixerChannel", "0");
+	cfg_add_key(config, "Gmu.Volume", "7");
+	cfg_add_key(config, "Gmu.AutoPlayOnProgramStart", "no");
+	cfg_key_add_presets(config, "Gmu.AutoPlayOnProgramStart", "yes", "no", NULL);
+	cfg_add_key(config, "Gmu.FileBrowserFoldersFirst", "yes");
+	cfg_key_add_presets(config, "Gmu.FileBrowserFoldersFirst", "yes", "no", NULL);
+	cfg_add_key(config, "Gmu.FirstRun", "yes");
+	cfg_add_key(config, "Gmu.ResumePlayback", "yes");
+	cfg_key_add_presets(config, "Gmu.ResumePlayback", "yes", "no", NULL);
+	cfg_add_key(config, "Gmu.ReaderCache", "512");
+	cfg_key_add_presets(config, "Gmu.ReaderCache", "256", "512", "1024", NULL);
+	cfg_add_key(config, "Gmu.ReaderCachePrebufferSize", "256");
+	cfg_key_add_presets(config, "Gmu.ReaderCachePrebufferSize", "128", "256", "512", "768", NULL);
+	cfg_add_key(config, "Gmu.LyricsFilePattern", "*.txt");
 }
 
 int gmu_core_export_playlist(const char *file)
@@ -239,13 +223,13 @@ int gmu_core_export_playlist(const char *file)
 static void set_default_play_mode(ConfigFile *config, Playlist *pl)
 {
 	playlist_get_lock(pl);
-	if (strncmp(cfg_get_key_value(*config, "DefaultPlayMode"), "random", 6) == 0)
+	if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "random", 6) == 0)
 		playlist_set_play_mode(pl, PM_RANDOM);
-	else if (strncmp(cfg_get_key_value(*config, "DefaultPlayMode"), "repeat1", 11) == 0)
+	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "repeat1", 11) == 0)
 		playlist_set_play_mode(pl, PM_REPEAT_1);
-	else if (strncmp(cfg_get_key_value(*config, "DefaultPlayMode"), "repeatall", 9) == 0)
+	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "repeatall", 9) == 0)
 		playlist_set_play_mode(pl, PM_REPEAT_ALL);
-	else if (strncmp(cfg_get_key_value(*config, "DefaultPlayMode"), "random+repeat", 13) == 0)
+	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "random+repeat", 13) == 0)
 		playlist_set_play_mode(pl, PM_RANDOM_REPEAT);
 	playlist_release_lock(pl);
 }
@@ -599,7 +583,7 @@ void gmu_core_set_volume(int vol) /* 0..gmu_core_get_volume_max() */
 {
 	if (vol >= 0 && vol <= gmu_core_get_volume_max()) {
 		volume = vol;
-		if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0) {
+		if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0) {
 			if (vol >= GMU_CORE_SW_VOLUME_MAX-1) {
 				audio_set_volume(GMU_CORE_SW_VOLUME_MAX-1);
 				hw_set_volume(vol-GMU_CORE_SW_VOLUME_MAX+2);
@@ -607,9 +591,9 @@ void gmu_core_set_volume(int vol) /* 0..gmu_core_get_volume_max() */
 				audio_set_volume(vol);
 				hw_set_volume(1);
 			}
-		} else if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Software", 8) == 0) {
+		} else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software", 8) == 0) {
 			audio_set_volume(vol);
-		} else if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0) {
+		} else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Hardware", 8) == 0) {
 			hw_set_volume(vol);
 		}
 	}
@@ -652,7 +636,7 @@ void gmu_core_set_shutdown_time(int value)
 	shutdown_timer = value;
 	remaining_time = (value > 0 ? value : 1);
 	snprintf(tmp, 31, "%d", shutdown_timer);
-	cfg_add_key(&config, "Shutdown", tmp);
+	cfg_add_key(&config, "Gmu.Shutdown", tmp);
 }
 
 /* Returns the remaining time until shutdown in minutes. Returns 0 if
@@ -821,7 +805,7 @@ static int init_user_config_dir(char *user_config_dir, const char *sys_config_di
 		}
 		cfg_init_config_file_struct(&cf);
 		if (cfg_read_config_file(&cf, target) == 0) {
-			char *file = cfg_get_key_value(cf, "KeyMap");
+			char *file = cfg_get_key_value(cf, "SDL.KeyMap");
 			if (file) {
 				snprintf(target, 383, "%s/%s", user_config_dir, file);
 				if (!file_exists(target)) {
@@ -832,7 +816,7 @@ static int init_user_config_dir(char *user_config_dir, const char *sys_config_di
 					result = 1;
 				}
 			}
-			file = cfg_get_key_value(cf, "InputConfigFile");
+			file = cfg_get_key_value(cf, "SDL.InputConfigFile");
 			if (result) {
 				if (!file) file = "gmuinput.conf";
 				snprintf(target, 383, "%s/%s", user_config_dir, file);
@@ -1041,31 +1025,31 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	if (skin_file[0] != '\0') cfg_add_key(&config, "DefaultSkin", skin_file);
+	if (skin_file[0] != '\0') cfg_add_key(&config, "SDL.DefaultSkin", skin_file);
 
 	/* Check for shutdown timer */
 	{
-		char *tmp = cfg_get_key_value(config, "Shutdown");
+		char *tmp = cfg_get_key_value(config, "Gmu.Shutdown");
 		if (tmp) shutdown_timer = atoi(tmp);
 		remaining_time = shutdown_timer > 0 ? shutdown_timer : 1;
 	}
 
 	/* Reader cache size */
 	{
-		char *tmp = cfg_get_key_value(config, "ReaderCache");
+		char *tmp = cfg_get_key_value(config, "Gmu.ReaderCache");
 		if (tmp) {
 			int size = atoi(tmp), prebuffer_size = size / 2;
-			tmp = cfg_get_key_value(config, "ReaderCachePrebufferSize");
+			tmp = cfg_get_key_value(config, "Gmu.ReaderCachePrebufferSize");
 			if (tmp) prebuffer_size = atoi(tmp);
 			reader_set_cache_size_kb(size, prebuffer_size);
 		}
 	}
 
-	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0)
+	if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0)
 		volume_max = GMU_CORE_HW_VOLUME_MAX + GMU_CORE_SW_VOLUME_MAX - 1;
-	else if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Software", 8) == 0)
+	else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software", 8) == 0)
 		volume_max = GMU_CORE_SW_VOLUME_MAX - 1;
-	else if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0)
+	else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Hardware", 8) == 0)
 		volume_max = GMU_CORE_HW_VOLUME_MAX;
 
 #if STATIC
@@ -1079,10 +1063,10 @@ int main(int argc, char **argv)
 	/* Put available file extensions in an array */
 	file_extensions_load();
 
-	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0 ||
-	    strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0) {
-		if (cfg_get_key_value(config, "VolumeHardwareMixerChannel"))
-			hw_open_mixer(atoi(cfg_get_key_value(config, "VolumeHardwareMixerChannel")));
+	if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Hardware", 8) == 0 ||
+	    strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0) {
+		if (cfg_get_key_value(config, "Gmu.VolumeHardwareMixerChannel"))
+			hw_open_mixer(atoi(cfg_get_key_value(config, "Gmu.VolumeHardwareMixerChannel")));
 	}
 	gmu_core_config_release_lock();
 
@@ -1121,19 +1105,19 @@ int main(int argc, char **argv)
 #endif
 
 	file_player_init(&current_track_ti);
-	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "LyricsFilePattern"));
+	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "Gmu.LyricsFilePattern"));
 
 	gmu_core_config_acquire_lock();
 	set_default_play_mode(&config, &pl);
-	gmu_core_set_volume(atoi(cfg_get_key_value(config, "Volume")));
+	gmu_core_set_volume(atoi(cfg_get_key_value(config, "Gmu.Volume")));
 
-	if (strncmp(cfg_get_key_value(config, "AutoPlayOnProgramStart"), "yes", 3) == 0) {
+	if (strncmp(cfg_get_key_value(config, "Gmu.AutoPlayOnProgramStart"), "yes", 3) == 0) {
 		global_command = NEXT;
 	}
 
-	if (strncmp(cfg_get_key_value(config, "ResumePlayback"), "yes", 3) == 0) {
-		char *itemstr =  cfg_get_key_value(config, "LastPlayedPlaylistItem");
-		char *seekposstr = cfg_get_key_value(config, "LastPlayedPlaylistItemTime");
+	if (strncmp(cfg_get_key_value(config, "Gmu.ResumePlayback"), "yes", 3) == 0) {
+		char *itemstr =  cfg_get_key_value(config, "Gmu.LastPlayedPlaylistItem");
+		char *seekposstr = cfg_get_key_value(config, "Gmu.LastPlayedPlaylistItemTime");
 		int   item = (itemstr ? atoi(itemstr) : 0);
 		int   seekpos = (seekposstr ? atoi(seekposstr) : 0);
 		if (item > 0) {
@@ -1261,12 +1245,12 @@ int main(int argc, char **argv)
 	gmu_core_config_acquire_lock();
 	if (file_player_get_item_status() == PLAYING) {
 		snprintf(temp, 10, "%d", gmu_core_playlist_get_current_position()+1);
-		cfg_add_key(&config, "LastPlayedPlaylistItem", temp);
+		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItem", temp);
 		snprintf(temp, 10, "%d", file_player_playback_get_time() / 1000);
-		cfg_add_key(&config, "LastPlayedPlaylistItemTime", temp);
+		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItemTime", temp);
 	} else {
-		cfg_add_key(&config, "LastPlayedPlaylistItem", "None");
-		cfg_add_key(&config, "LastPlayedPlaylistItemTime", "0");
+		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItem", "None");
+		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItemTime", "0");
 	}
 	gmu_core_config_release_lock();
 
@@ -1280,18 +1264,18 @@ int main(int argc, char **argv)
 	audio_buffer_free();
 
 	gmu_core_config_acquire_lock();
-	if (strncmp(cfg_get_key_value(config, "VolumeControl"), "Hardware", 8) == 0 ||
-	    strncmp(cfg_get_key_value(config, "VolumeControl"), "Software+Hardware", 17) == 0)
+	if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Hardware", 8) == 0 ||
+	    strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0)
 		hw_close_mixer();
 
-	if (strncmp(cfg_get_key_value(config, "RememberLastPlaylist"), "yes", 3) == 0) {
+	if (strncmp(cfg_get_key_value(config, "Gmu.RememberLastPlaylist"), "yes", 3) == 0) {
 		wdprintf(V_INFO, "gmu", "Saving playlist...\n");
 		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
 		wdprintf(V_INFO, "gmu", "Playlist file: %s\n", temp);
 		gmu_core_export_playlist(temp);
 		disksync = 1;
 	}
-	if (strncmp(cfg_get_key_value(config, "RememberSettings"), "yes", 3) == 0) {
+	if (strncmp(cfg_get_key_value(config, "Gmu.RememberSettings"), "yes", 3) == 0) {
 		char *playmode = NULL;
 		char  volume_str[20];
 
@@ -1314,12 +1298,12 @@ int main(int argc, char **argv)
 				playmode = "random+repeat";
 				break;
 		}
-		cfg_add_key(&config, "DefaultPlayMode", playmode);
+		cfg_add_key(&config, "Gmu.DefaultPlayMode", playmode);
 
 		snprintf(volume_str, 19, "%d", gmu_core_get_volume());
-		cfg_add_key(&config, "Volume", volume_str);
+		cfg_add_key(&config, "Gmu.Volume", volume_str);
 
-		cfg_add_key(&config, "FirstRun", "no");
+		cfg_add_key(&config, "Gmu.FirstRun", "no");
 		cfg_write_config_file(&config, config_file_path);
 		disksync = 1;
 	}
@@ -1343,7 +1327,7 @@ int main(int argc, char **argv)
 
 	gmu_core_config_acquire_lock();
 	if (auto_shutdown) {
-		char *tmp = cfg_get_key_value(config, "ShutdownCommand");
+		char *tmp = cfg_get_key_value(config, "Gmu.ShutdownCommand");
 		if (tmp) {
 			wdprintf(V_INFO, "gmu", "Executing shutdown command: \'%s\'\n", tmp);
 			wdprintf(V_INFO, "gmu", "Shutdown command completed with return code %d.\n", system(tmp));
