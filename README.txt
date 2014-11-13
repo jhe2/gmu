@@ -1,8 +1,8 @@
 The Gmu Music Player
 
-Version 0.9.1
+Version 0.9.9
 
-Copyright (c) 2006-2013 Johannes 'wej' Heimansberg
+Copyright (c) 2006-2014 Johannes 'wej' Heimansberg
 http://wejp.k.vu/projects/gmu/
 
 Gmu is a music player for portable handheld consoles. It comes
@@ -94,6 +94,7 @@ the following file formats there are decoder plugins available:
 - Musepack (.mpc)
 - FLAC (.flac)
 - Speex (.spx)
+- Ogg Opus (.opus)
 - WavPack (.wv)
 - Several module formats (MOD, IT, STM, S3M, XM, 669, ULT)
 - M3U (Gmu can read and write .m3u playlists)
@@ -146,8 +147,8 @@ button mappings and functions. Also see chapter 3 in this file.
 To play internet audio streams, you need to download a playlist file 
 from the audio stream's website and open that file with Gmu. Both 
 common playlist file formats (m3u and pls) are supported. Currently
-Gmu supports MPEG audio for internet audio streams only. More audio 
-file formats (Ogg Vorbis, ...) will be supported in the next versions.
+Gmu supports MPEG audio, Ogg Vorbis and Ogg Opus for internet audio
+streams. More audio file formats might be supported in future versions.
 
 
 3. Controls
@@ -394,11 +395,12 @@ Wordpad.
 Please note: Most of the following options can be changed 
 through the Gmu setup tool (up to Gmu version 0.6.3) without editing 
 the config file. In the 0.7.0 and later series the setup tool is 
-currently not available.
+currently not available. Versions after 0.9.1 once again include a
+setup dialog for changing many of the available options.
 
 Supported options:
 
-* DefaultFileBrowserPath
+* Gmu.DefaultFileBrowserPath
 
 You can use this to define the path where the file browser
 will start. It is set to "." by default, which is the
@@ -407,7 +409,7 @@ Both absolute and relative paths can be used. Make sure
 the path exists otherwise gmu will fall back to its current
 directory.
 
-* DefaultSkin
+* SDL.DefaultSkin
 
 With this option you can specify the default skin which Gmu
 loads if no -s parameter is used. By default it is set to
@@ -417,12 +419,12 @@ Please note that from Gmu 0.7.0_BETA8 onwards, Gmu uses a new
 more advanced theme format. Versions 0.7.0_BETA8 and newer are
 no longer compatible with the classic skin file format.
 
-* KeyMap
+* SDL.KeyMap
 
 With this option you can specify the key map file Gmu loads
 on start up. By default it is set to default.keymap.
 
-* RememberLastPlaylist
+* Gmu.RememberLastPlaylist
 
 This option can be set to "yes" or "no". If set to yes
 (which is the default) gmu will save its playlist on exit
@@ -431,19 +433,19 @@ the playlist in a file called "playlist.m3u" located in
 Gmu's directory.
 You can disable this behaviour by setting it to "no".
 
-* AutoSelectCurrentPlaylistItem
+* SDL.AutoSelectCurrentPlaylistItem
 
 This option can be set to "yes" or "no". If set to yes
 Gmu moves the cursor to the current playlist item each
 time a new track begins.
 
-* AllowVolumeControlInHoldState
+* SDL.AllowVolumeControlInHoldState
 
 This option can be set to "yes" or "no". When set to yes
 you can adjust the volume even if the player is in the
 hold state. The default is "no".
 
-* SecondsUntilBacklightPowerOff
+* SDL.SecondsUntilBacklightPowerOff
 
 When this option is set to any number greater than zero,
 the screen backlight will be turned of after the given
@@ -452,13 +454,13 @@ back on again. The action of the key you used to turn
 it on again is executed normally. If you just want to 
 turn the screen on again, press the stick button.
 
-* EnableCoverArtwork
+* SDL.EnableCoverArtwork
 
 This option can be set to "yes" or "no". If set to "yes"
 Gmu tries to find a cover artwork for the current track
 and displays it in the track info view.
 
-* CoverArtworkFilePattern
+* SDL.CoverArtworkFilePattern
 
 This option tells Gmu for what files it should search as
 a cover image. It is set to "cover.jpg;*.jpg" by default.
@@ -511,7 +513,7 @@ if the jpg file is much smaller in file size). Recent Gmu
 versions no longer run out of memory but refuse to load files
 with large dimensions.
 
-* CoverArtworkLarge
+* SDL.CoverArtworkLarge
 
 This option can be set to "yes" or "no". If set to "yes"
 Gmu scales the cover image to fit the screen's width.
@@ -522,7 +524,7 @@ scales the image so that its width is at most half the
 screen width. The actual width depends on the image 
 proportions as Gmu keeps the aspect ratio of the image.
 
-* SmallCoverArtworkAlignment
+* SDL.SmallCoverArtworkAlignment
 
 This option can be set to "left" or "right". If set to
 "left" and large cover artwork is disabled, the cover 
@@ -530,7 +532,7 @@ artwork will be aligned on the left side and the text
 on the right side. When set to "right" it is the other
 way round. It is set to "right" by default.
 
-* LoadEmbeddedCoverArtwork
+* SDL.LoadEmbeddedCoverArtwork
 
 This option can be set to "first", "last" or "no". If set
 to "first" Gmu tries to load a cover image embedded in 
@@ -545,7 +547,7 @@ This option has no effect if EnableCoverArtwork is set to
 "no".
 LoadEmbeddedCoverArtwork is set to "first" by default.
 
-* LyricsFilePattern
+* Gmu.LyricsFilePattern
 
 This option tells Gmu for what files it should search as
 a lyrics text file. It is set to "$.txt;*.txt" by default.
@@ -563,7 +565,7 @@ or ISO-8859-1.
 For examples how to use this option have a look at the examples
 in the CoverArtworkFilePattern section.
 
-* FileSystemCharset
+* Gmu.FileSystemCharset
 
 This option can be either set to UTF-8 or ISO-8859-1. It
 selects the charset of the file system. By default it is
@@ -571,14 +573,14 @@ set to UTF-8. If file names appear with weird characters
 in Gmu's file browser you might want to try setting it
 to ISO-8859-1.
 
-* PlaylistSavePresets
+* Gmu.PlaylistSavePresets
 
 This option is a semicolon separated list of .m3u 
 file names. Up to ten file names can be specified here.
 When saving a playlist in Gmu you can choose one filename
 out of this list as the target file name.
 
-* DefaultPlayMode
+* Gmu.DefaultPlayMode
 
 This option can be set to "continue", "repeatall", "repeat1",
 "random" or "random+repeat".
@@ -597,7 +599,7 @@ you can still select another play mode from within Gmu. When
 "RemeberSettings" is set to "yes" Gmu stores the selected play
 mode on exit as the new "DefaultPlayMode".
 
-* TimeDisplay
+* SDL.TimeDisplay
 
 This option can be either set to "elapsed" or "remaining".
 When set to "elapsed" Gmu shows the elapsed time of each
@@ -608,7 +610,7 @@ set to, you can always toggle the time display from
 within Gmu. The default keymapping for this is 
 STICK_CLICK + VOL-.
 
-* Scroll
+* SDL.Scroll
 
 This option can be set to "auto", "always or "never". 
 If it is set to "auto" Gmu decides if it is neccessary to
@@ -618,26 +620,26 @@ title scrolls no matter if it fits into the display's
 width or not. If it is set to "never" the title never 
 scrolls, even if it does not fit into the display's width.
 
-* BacklightPowerOnOnTrackChange
+* SDL.BacklightPowerOnOnTrackChange
 
 This option can be set to either "yes" or "no". When set
 to "yes" that display backlight is turned on again each
 time a new track starts. If "SecondsUntilBacklightPowerOff"
 is set to 0 this option does not do anything.
 
-* FileBrowserFoldersFirst
+* Gmu.FileBrowserFoldersFirst
 
 This option can be set to either "yes" or "no". When set
 to "yes" all folder will be shown before the regular files.
 When set to "no" all files are shown in alphabetical order.
 
-* RememberSettings
+* Gmu.RememberSettings
 
 This option can be set to either "yes" or "no". When set
 to "yes" Gmu remembers settings such as the time display
 setting and the selected play mode.
 
-* VolumeControl
+* Gmu.VolumeControl
 
 This option can be set to "Software", "Hardware" or
 "Software+Hardware". In software volume control mode Gmu
@@ -658,7 +660,7 @@ lowest volume steps. For everything above a the minimum
 hardware volume level, only hardware volume control is being
 used.
 
-* Volume
+* Gmu.Volume
 
 This option can be set to an positive integer value. The
 largest valid value depends on which volume control method
@@ -670,7 +672,7 @@ set this manually in the config file. Gmu remembers its
 volume setting on exit when the "RememberSettings" option
 is set to "yes".
 
-* AutoPlayOnProgramStart
+* Gmu.AutoPlayOnProgramStart
 
 This option can be set to either "yes" or "no". When set
 to "yes" Gmu starts playback right after the program has 
@@ -679,7 +681,7 @@ playlist is empty. When using this option, Gmu plays the
 first track in the playlist, or an arbitrary track when in
 random playmode.
 
-* ResumePlayback
+* Gmu.ResumePlayback
 
 This option can be set to either "yes" or "no". When set
 to "yes" Gmu starts playback right after the program has 
@@ -690,7 +692,7 @@ next run. You probably want to enable this feature when
 listening to large files such as podcasts.
 ResumePlayback is enabled by default.
 
-* Shutdown
+* Gmu.Shutdown
 
 With the shutdown option it is possible to tell Gmu to
 shutdown itself either after a number of minutes or after
@@ -712,7 +714,7 @@ After shutting down Gmu can execute a command to power down
 the device. This command can be configured through the
 ShutdownCommand option.
 
-* ShutdownCommand
+* Gmu.ShutdownCommand
 
 With this option you can set the command to be executed when
 Gmu shuts itself down (see Shutdown option). By default it is
@@ -722,20 +724,20 @@ set to:
 Powering down the device does not work on the GP2X-F100 and -F200
 as these devices have a mechanical power switch.
 
-* SDL_frontend.FileBrowserSelectNextAfterAdd
+* SDL.FileBrowserSelectNextAfterAdd
 
 This option allows you to decide wether you want the selection in 
 the file browser to advance to the next file after adding a file to
 the playlist. It can be set to "yes" or "no".
 
-* SDL_frontend.Fullscreen
+* SDL.Fullscreen
 
 With this option the fullscreen mode can be enabled or disabled
 on start-up.  It can be set to "yes" or "no". On some devices
 disabling fullscreen is useless. This is the case for most devices
 running SDL on a framebuffer device instead of an X server.
 
-* ReaderCache
+* Gmu.ReaderCache
 
 This option is used to set the HTTP read cache size. It is set in
 values of KB (kilo bytes). The minimum size is 256 KB, while the
@@ -746,7 +748,7 @@ Usually you should leave it at its default value, although on
 rather unstable network connections increasing the size might help
 permitting playback of http audio streams without interruption.
 
-* ReaderCachePrebufferSize
+* Gmu.ReaderCachePrebufferSize
 
 This option is used to set the amount of data to be prebuffered,
 before starting playback of an http audio stream. The minimum
@@ -841,13 +843,13 @@ removed in future versions of Gmu in favor of the new gmuhttp frontend.
 
 gmuc is a new ncurses based interface for Gmu. It works over the network,
 so it can be used to control Gmu running on another computer. The UI
-should be pretty self-explanatory, as it is closely modeled aroud Gmu's
+should be pretty self-explanatory, as it is closely modeled around Gmu's
 SDL interface. The keys can/will differ from the SDL interface, though.
 The actual key bindings are shown on the last line in the terminal.
 The most imporant ones are:
 
 Global:
-q - Quit gmuc
+q - Quit gmuc (Ctrl+C also quits gmuc)
 n - Play next track
 b - Play previous track
 p - Play/Pause
@@ -943,10 +945,12 @@ See "libs/information" directory for further details.
 - SDL_gfx >=2.0.13 (optional for SDL_frontend)
 - tremor >=1.0.0 (optional, required by Vorbis decoder)
 - libmikmod >=3.1.11 (optional, required by Module decoder)
+- libmodplug (optional, required by the alternative module decoder)
 - libmpg123 >=1.8.1 (optional, required by MPEG decoder)
 - libmpcdec >=1.2.6 (optional, required by Musepack decoder)
 - libFLAC >=1.2.1 (optional, required by FLAC decoder)
 - WavPack 4.4.0 (optional, included, required by WavPack decoder)
 - speex >= 1.2_rc1 (optional, required by speex decoder)
+- libopus and libopusfile (optional, required by the Opus decoder)
 - libjpeg and libpng (used by SDL_image)
 - ncurses 5.9 (used by gmuc)
