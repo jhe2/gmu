@@ -161,7 +161,7 @@ void medialib_refresh(GmuMedialib *gm)
 			char *path = (char *)sqlite3_column_text(pp_stmt, 0);
 			wdprintf(V_INFO, "medialib", "Scanning '%s'...\n", path);
 			/* Scan path recursively... */
-			dirparser_walk_through_directory_tree(path, _medialib_add_file, (void *)gm);
+			dirparser_walk_through_directory_tree(path, _medialib_add_file, (void *)gm, 0);
 		}
 	}
 	sqlite3_finalize(pp_stmt);

@@ -10,5 +10,7 @@
 #ifndef WEJ_DIRPARSER_H
 #define WEJ_DIRPARSER_H
 
-int dirparser_walk_through_directory_tree(const char *directory, int (fn(void *arg, const char *filename)), void *arg);
+#define DIRPARSER_MAX_DEPTH (10)
+
+int dirparser_walk_through_directory_tree(const char *directory, int (fn(void *arg, const char *filename)), void *arg, int dir_depth);
 #endif

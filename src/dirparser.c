@@ -15,7 +15,7 @@
 #include "dirparser.h"
 #include "core.h"
 
-int dirparser_walk_through_directory_tree(const char *directory, int (fn(void *arg, const char *filename)), void *arg)
+int dirparser_walk_through_directory_tree(const char *directory, int (fn(void *arg, const char *filename)), void *arg, int dir_depth)
 {
 	Dir       dir;
 	int       i;
@@ -33,7 +33,16 @@ int dirparser_walk_through_directory_tree(const char *directory, int (fn(void *a
 				if (dir_get_filename(&dir, i)[0] != '.') {
 					char *f = dir_get_filename_with_full_path_alloc(&dir, i);
 					if (f) {
-						dirparser_walk_through_directory_tree(f, fn, arg);
+						if (dir_depth < DIRPARSER_MAX_DEPTH) {
+							dirparser_walk_through_directory_tree(f, fn, arg, dir_depth + 1);
+						} else {
+							wdprintf(
+								V_WARNING,
+								"dirparser",
+								"Maximum directory depth of %d exceeded for directory: %s\n",
+								DIRPARSER_MAX_DEPTH,
+								f);
+						}
 						free(f);
 					}
 				}

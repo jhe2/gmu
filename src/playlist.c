@@ -194,7 +194,7 @@ static void *thread_add_dir(void *udata)
 	int                    prev_len = playlist_get_length(tp->pl);
 
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread created.\n");
-	dirparser_walk_through_directory_tree(tp->directory, internal_add_file, (void *)tp->pl);
+	dirparser_walk_through_directory_tree(tp->directory, internal_add_file, (void *)tp->pl, 0);
 	free(tp->directory);
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread finished.\n");
 	recursive_directory_add_in_progress = 0;
