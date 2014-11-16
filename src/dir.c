@@ -92,7 +92,7 @@ int dir_read(Dir *dir, const char *path, int directories_first)
 				char        tmp[256];
 				
 				snprintf(tmp, 255, "%s/%s", dir->path, dir->ep[i]->d_name);
-				if (lstat(tmp, &attr) != -1) {
+				if (stat(tmp, &attr) != -1) {
 					if (S_ISREG(attr.st_mode))
 						dir->flag_tmp[i] = REG_FILE;
 					else if (S_ISDIR(attr.st_mode) && !S_ISLNK(attr.st_mode))
