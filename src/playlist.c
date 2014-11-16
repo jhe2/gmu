@@ -28,6 +28,7 @@
 #include "debug.h"
 #include "core.h"
 #include "metadatareader.h"
+#include "dirparser.h"
 
 #define PLAYLIST_MAX_LENGTH 9999
 
@@ -176,52 +177,16 @@ int playlist_add_file(Playlist *pl, const char *filename_with_path)
 	return result;
 }
 
-static int internal_playlist_add_dir(Playlist *pl, const char *directory)
-{
-	Dir       dir;
-	int       i;
-	char      filetype[16];
-	int       result = 1;
-
-	wdprintf(V_INFO, "playlist", "Adding '%s'...\n", directory);
-
-	dir_init(&dir);
-	dir_set_ext_filter(&dir, (const char **)gmu_core_get_file_extensions(), 1);
-	dir_set_base_dir(&dir, "/");
-	if (dir_read(&dir, directory, 1)) {
-		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
-			if (dir_get_flag(&dir, i) == DIRECTORY) {
-				if (dir_get_filename(&dir, i)[0] != '.') {
-					char *f = dir_get_filename_with_full_path_alloc(&dir, i);
-					if (f) {
-						internal_playlist_add_dir(pl, f);
-						free(f);
-					}
-				}
-			} else {
-				const char *tmp = get_file_extension(dir_get_filename(&dir, i));
-				char       *f   = dir_get_filename_with_full_path_alloc(&dir, i);
-				filetype[0] = '\0';
-				if (tmp != NULL) strtoupper(filetype, tmp, 15);
-				if (f) {
-					playlist_add_file(pl, f);
-					free(f);
-				}
-				/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
-			}
-		}
-	}
-	dir_free(&dir);
-
-	wdprintf(V_INFO, "playlist", "Done adding %s.\n", directory);
-	return result;
-}
-
 typedef struct _thread_params {
 	Playlist *pl;
 	char     *directory;
 	void     (*finished_callback)(int pl_len);
 } _thread_params;
+
+static int internal_add_file(void *pl, const char *file)
+{
+	return playlist_add_file((Playlist *)pl, file);
+}
 
 static void *thread_add_dir(void *udata)
 {
@@ -229,7 +194,7 @@ static void *thread_add_dir(void *udata)
 	int                    prev_len = playlist_get_length(tp->pl);
 
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread created.\n");
-	internal_playlist_add_dir(tp->pl, tp->directory);
+	dirparser_walk_through_directory_tree(tp->directory, internal_add_file, (void *)tp->pl);
 	free(tp->directory);
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread finished.\n");
 	recursive_directory_add_in_progress = 0;
@@ -684,7 +649,6 @@ Entry *playlist_get_entry(Playlist *pl, int item)
 	}
 	return entry;
 }
-
 
 int playlist_entry_set_name(Entry *entry, const char *name)
 {
