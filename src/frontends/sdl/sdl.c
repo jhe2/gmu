@@ -584,6 +584,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	int              seconds_until_backlight_poweroff = 0, backlight_poweroff_timer = -1;
 	int              backlight_poweron_on_track_change = 0;
 	int              seek_step = 10;
+	int              trackinfo_change = 1;
 
 	KeyActionMapping kam[LAST_ACTION];
 	int              user_key_action = -1;
@@ -729,7 +730,6 @@ static void run_player(char *skin_name, char *decoders_str)
 	}
 
 	while (quit == DONT_QUIT && SDL_WaitEvent(&event)) {
-		int trackinfo_change = 1;
 		switch (event.type) {
 			case SDL_VIDEORESIZE: {
 				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE,
