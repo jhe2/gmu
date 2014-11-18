@@ -33,7 +33,7 @@ static TrackInfo            ti, ti_metaonly;
 
 static const char *get_name(void)
 {
-	return "FLAC decoder v0.4";
+	return "FLAC decoder v0.5";
 }
 
 static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder, 
