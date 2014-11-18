@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: flac.c  Created: 081104
  *
@@ -43,29 +43,35 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 {
 	unsigned int length = frame->header.blocksize * frame->header.channels
 	                                              * frame->header.bits_per_sample / 8;
-	unsigned int sample, channel, pos = 0;
-	FLAC__int8  *packed = alloca(length);
-	FLAC__int16 *packed16 = (FLAC__int16 *) packed;
+	unsigned int sample, channel, pos = 0, byte_count = 0;
+	FLAC__int16 *packed16 = (FLAC__int16 *)alloca(length);
+	FLAC__int8  *packed   = (FLAC__int8 *)packed16;
 
 	for (sample = 0; sample < frame->header.blocksize; sample++) {
 		for (channel = 0; channel < frame->header.channels; channel++) {
 			switch (frame->header.bits_per_sample) {
 				case 8:
 					packed[pos] = (FLAC__int8)buffer[channel][sample];
+					byte_count++;
 					break;
 				case 16:
 					packed16[pos] = (FLAC__int16)buffer[channel][sample];
+					byte_count+=2;
+					break;
+				case 24:
+					packed16[pos] = (FLAC__int16)(buffer[channel][sample] / 256);
+					byte_count+=2;
 					break;
 			}
 			pos++;
 		}
 	}
 
-	if (length <= BUF_SIZE) {
-		memcpy(buf, (char *)packed, length);
-		size = length;
+	if (byte_count <= BUF_SIZE) {
+		memcpy(buf, (char *)packed, byte_count);
+		size = byte_count;
 	} else {
-		wdprintf(V_DEBUG, "flac", "length=%d\n", length);
+		wdprintf(V_DEBUG, "flac", "Sample size > buffer size: %d bytes\n", byte_count);
 	}
 	return 0;
 }
@@ -83,15 +89,22 @@ static void metadata_callback(const FLAC__StreamDecoder  *decoder,
 			channels           = metadata->data.stream_info.channels;
 			track_length       = metadata->data.stream_info.total_samples / sample_rate;
 			bitrate            = (int)((FLAC__int64)file_size * 8 * sample_rate / metadata->data.stream_info.total_samples);
-			
+
 			ti->samplerate     = metadata->data.stream_info.sample_rate;
 			ti->channels       = metadata->data.stream_info.channels;
-			
+
 			ti->recent_bitrate = ti->bitrate;
 			ti->length         = metadata->data.stream_info.total_samples / ti->samplerate;
 			ti->vbr            = 1;
-			wdprintf(V_DEBUG, "flac", "Bitstream is %d channel, %ld kbps, %d Hz\n",
-			         ti->channels, ti->bitrate / 1000, ti->samplerate);
+			wdprintf(
+				V_DEBUG,
+				"flac",
+				"Bitstream is %d channel(s), %d bits per sample, %ld kbps, %d Hz\n",
+				ti->channels,
+				metadata->data.stream_info.bits_per_sample,
+				bitrate / 1000,
+				ti->samplerate
+			);
 			break;
 		case FLAC__METADATA_TYPE_VORBIS_COMMENT:
 			wdprintf(V_DEBUG, "flac", "Vorbis comment detected.\n");
