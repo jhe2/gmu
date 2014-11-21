@@ -193,7 +193,10 @@ int connection_is_valid(Connection *c)
 
 void connection_close(Connection *c)
 {
-	/* do stuff... */
+	if (c->fd) {
+		wdprintf(V_DEBUG, "httpd", "Closing connection %d...", c->fd);
+		wdprintf(V_DEBUG, "httpd", close(c->fd) == 0 ? "ok.\n" : "failed.\n");
+	}
 	if (c->http_request_header) {
 		free(c->http_request_header);
 		c->http_request_header = NULL;
