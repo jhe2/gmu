@@ -194,8 +194,9 @@ int connection_is_valid(Connection *c)
 void connection_close(Connection *c)
 {
 	if (c->fd) {
+		int cres = close(c->fd);
 		wdprintf(V_DEBUG, "httpd", "Closing connection %d...", c->fd);
-		wdprintf(V_DEBUG, "httpd", close(c->fd) == 0 ? "ok.\n" : "failed.\n");
+		wdprintf(V_DEBUG, "httpd", cres == 0 ? "ok.\n" : "failed.\n");
 	}
 	if (c->http_request_header) {
 		free(c->http_request_header);
