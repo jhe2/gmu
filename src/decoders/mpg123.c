@@ -124,7 +124,6 @@ static int decode_data(char *target, int max_size)
 				metacount -= readsize;
 			}
 			if (readsize > 0) {
-				wdprintf(V_DEBUG, "mpg123", "Reading more data: %d bytes\n", readsize);
 				if (reader_read_bytes(r, readsize)) {
 					int size = reader_get_number_of_bytes_in_buffer(r);
 					if (size > 0) {
