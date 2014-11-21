@@ -175,6 +175,7 @@ static int mpg123_play_file(char *mpeg_file)
 				int   size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
 				char *metaint_str = cfg_get_key_value(r->streaminfo, "icy-metaint");
 				long  file_size = reader_get_file_size(r);
+				int   need_more_debug = 0;
 				
 				if (file_size > 0) mpg123_set_filesize(player, file_size);
 				if (metaint_str) metaint = atoi(metaint_str); else metaint = -1;
@@ -189,7 +190,10 @@ static int mpg123_play_file(char *mpeg_file)
 
 					status = mpg123_getformat(player, &rate, &channels, &encoding);
 					if (status == MPG123_NEED_MORE) {
-						wdprintf(V_DEBUG, "mpg123", "Need more data to determine format.\n");
+						if (!need_more_debug) {
+							wdprintf(V_DEBUG, "mpg123", "Need more data to determine format.\n");
+							need_more_debug = 1;
+						}
 						reader_read_bytes(r, 1024);
 						size = reader_get_number_of_bytes_in_buffer(r);
 						metacount -= size;
