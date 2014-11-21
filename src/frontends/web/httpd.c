@@ -382,7 +382,7 @@ static int  tcp_server_init(int port, int local_only);
 
 void *httpd_run_server(void *data)
 {
-	int                port = SERVER_PORT, local_only = 1, fd;
+	int                port = SERVER_PORT, local_only = 1, fd, errsv;
 	HTTPD_Init_Params *ip = (HTTPD_Init_Params *)data;
 
 	if (ip && ip->webserver_root)
@@ -402,13 +402,14 @@ void *httpd_run_server(void *data)
 	server_running = 1;
 	do {
 		fd = tcp_server_init(port, local_only);
+		errsv = errno;
 		if (fd != ERROR) {
 			webserver_main_loop(fd);
 		} else {
 			wdprintf(V_WARNING, "httpd", "Unable to listen on port %d: %s\n", port, strerror(errno));
-			usleep(1000000); /* Wait a second before retrying */
+			if (errsv == EADDRINUSE) usleep(1000000); /* Wait a second before retrying */
 		}
-	} while (server_running && fd == ERROR);
+	} while (server_running && fd == ERROR && errsv == EADDRINUSE);
 	wdprintf(V_DEBUG, "httpd", "Shutdown.\n");
 	return NULL;
 }
@@ -446,10 +447,6 @@ static int tcp_server_init(int port, int local_only)
 					listen_fd = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
 					if (listen_fd != -1) {
 						ret = bind(listen_fd, r->ai_addr, r->ai_addrlen);
-						if (ret == 0)
-							wdprintf(V_INFO, "httpd", "Socket created successfully.\n");
-						else
-							wdprintf(V_WARNING, "httpd", "Error creating socket!\n");
 						break;
 					} else {
 						ret = -1;
