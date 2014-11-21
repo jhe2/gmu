@@ -399,11 +399,17 @@ void *httpd_run_server(void *data)
 	         local_only ? "LOCAL interface only" : "ALL available interfaces");
 	wdprintf(V_INFO, "httpd", "Webserver root directory: %s\n", webserver_root);
 	if (ip) free(ip);
-	fd = tcp_server_init(port, local_only);
-	if (fd != ERROR)
-		webserver_main_loop(fd);
-	else
-		wdprintf(V_ERROR, "httpd", "Unable to listen on port %d: %s\n", port, strerror(errno));
+	server_running = 1;
+	do {
+		fd = tcp_server_init(port, local_only);
+		if (fd != ERROR) {
+			webserver_main_loop(fd);
+		} else {
+			wdprintf(V_WARNING, "httpd", "Unable to listen on port %d: %s\n", port, strerror(errno));
+			usleep(1000000); /* Wait a second before retrying */
+		}
+	} while (server_running && fd == ERROR);
+	wdprintf(V_DEBUG, "httpd", "Shutdown.\n");
 	return NULL;
 }
 
@@ -440,7 +446,7 @@ static int tcp_server_init(int port, int local_only)
 					listen_fd = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
 					if (listen_fd != -1) {
 						ret = bind(listen_fd, r->ai_addr, r->ai_addrlen);
-						wdprintf(V_INFO, "httpd", "Socket created successfully. Listening now.\n");
+						wdprintf(V_INFO, "httpd", "Socket created successfully.\n");
 						break;
 					} else {
 						ret = -1;
@@ -1095,7 +1101,6 @@ static void webserver_main_loop(int listen_fd)
 
 	assign_signal_handler(SIGPIPE, SIG_IGN);
 
-	server_running = 1;
 	while (server_running) {
 		fd_set         readfds, exceptfds;
 		int            ret, rfd;
