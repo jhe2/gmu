@@ -422,7 +422,7 @@ static int tcp_server_init(int port, int local_only)
 	if (listen_fd >= 0) {
 		/* Avoid "Address already in use" error: */
 		ret = setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-		if (ret >= 0) {
+		if (ret == 0) {
 			char   port_str[6];
 			struct addrinfo hints, *res;
 
