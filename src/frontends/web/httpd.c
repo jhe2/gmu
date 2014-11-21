@@ -446,7 +446,10 @@ static int tcp_server_init(int port, int local_only)
 					listen_fd = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
 					if (listen_fd != -1) {
 						ret = bind(listen_fd, r->ai_addr, r->ai_addrlen);
-						wdprintf(V_INFO, "httpd", "Socket created successfully.\n");
+						if (ret == 0)
+							wdprintf(V_INFO, "httpd", "Socket created successfully.\n");
+						else
+							wdprintf(V_WARNING, "httpd", "Error creating socket!\n");
 						break;
 					} else {
 						ret = -1;
