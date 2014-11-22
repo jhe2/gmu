@@ -1105,9 +1105,10 @@ int main(int argc, char **argv)
 #endif
 
 	file_player_init(&current_track_ti);
-	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "Gmu.LyricsFilePattern"));
 
 	gmu_core_config_acquire_lock();
+	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "Gmu.LyricsFilePattern"));
+
 	set_default_play_mode(&config, &pl);
 	gmu_core_set_volume(atoi(cfg_get_key_value(config, "Gmu.Volume")));
 

@@ -108,9 +108,9 @@ static void input_device_config(void)
 	char tmp[256], *inputconf = NULL;
 	gmu_core_config_acquire_lock();
 	inputconf = cfg_get_key_value(*config, "SDL.InputConfigFile");
-	gmu_core_config_release_lock();
 	if (!inputconf) inputconf = "gmuinput.conf";
 	snprintf(tmp, 255, "%s/%s", gmu_core_get_config_dir(), inputconf);
+	gmu_core_config_release_lock();
 	input_config_init(tmp);
 }
 
@@ -615,12 +615,17 @@ static void run_player(char *skin_name, char *decoders_str)
 	/* Initialize and load button mapping */
 	{
 		char tmp[256], *keymap_file;
+		int  filename_ok = 0;
 		key_action_mapping_init(kam);
 		gmu_core_config_acquire_lock();
 		keymap_file = cfg_get_key_value(*config, "SDL.KeyMap");
-		gmu_core_config_release_lock();
 		if (keymap_file) {
-			snprintf(tmp, 255, "%s/%s", gmu_core_get_config_dir(), keymap_file);
+			int r = snprintf(tmp, 256, "%s/%s", gmu_core_get_config_dir(), keymap_file);
+			if (r > 0 && r < 256)
+				filename_ok = 1;
+		}
+		gmu_core_config_release_lock();
+		if (filename_ok) {
 			if (!key_action_mapping_load_config(kam, tmp)) {
 				quit = QUIT_WITH_ERROR;
 				wdprintf(V_ERROR, "sdl_frontend", "Error while loading keymap config.\n");
@@ -1277,12 +1282,13 @@ static void run_player(char *skin_name, char *decoders_str)
 
 static void *start_player(void *arg)
 {
-	int             start = 1, setup = 0;
+	int             start = 1;
 	char            skin_name[128] = "";
 
 	if (!getcwd(base_dir, 255)) start = 0;
 
 	/* Add default values for SDL frontend plugin config keys */
+	gmu_core_config_acquire_lock();
 	cfg_add_key_if_not_present(config, "SDL.EnableCoverArtwork", "yes");
 	cfg_key_add_presets(config, "SDL.EnableCoverArtwork", "yes", "no", NULL);
 	cfg_add_key_if_not_present(config, "SDL.CoverArtworkFilePattern", "*.jpg");
@@ -1306,8 +1312,12 @@ static void *start_player(void *arg)
 	cfg_add_key_if_not_present(config, "SDL.SmallCoverArtworkAlignment", "right");
 	cfg_key_add_presets(config, "SDL.SmallCoverArtworkAlignment", "left", "right", NULL);
 	cfg_add_key_if_not_present(config, "SDL.TimeDisplay", "elapsed");
+	gmu_core_config_release_lock();
 
-	if (start || setup) {
+	if (start) {
+		char       *decoders_str = NULL;
+		GmuDecoder *gd = NULL;
+
 		gmu_core_config_acquire_lock();
 		if (skin_name[0] == '\0') {
 			char *skinname = cfg_get_key_value(*config, "SDL.DefaultSkin");
@@ -1315,11 +1325,6 @@ static void *start_player(void *arg)
 			skin_name[127] = '\0';
 		}
 		gmu_core_config_release_lock();
-	}
-
-	if (start) {
-		char       *decoders_str = NULL;
-		GmuDecoder *gd = NULL;
 
 		/* SDL_EnableKeyRepeat(200, 80); */
 
