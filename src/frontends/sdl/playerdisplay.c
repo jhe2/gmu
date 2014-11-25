@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playerdisplay.c  Created: 061109
  *
@@ -26,10 +26,23 @@
 
 extern const Skin skin;
 
-static char  notice_message[MAX_LENGTH+1];
-static int   notice_time_left;
-static int   scrolling = SCROLL_AUTO;
-static int   playback_symbol_blinking = 0;
+static char       notice_message[MAX_LENGTH+1];
+static int        notice_time_left;
+static SDL_mutex *notice_mutex = NULL;
+
+static int        scrolling = SCROLL_AUTO;
+static int        playback_symbol_blinking = 0;
+
+int player_display_init(void)
+{
+	notice_mutex = SDL_CreateMutex();
+	return notice_mutex ? 1 : 0;
+}
+
+void player_display_free(void)
+{
+	SDL_DestroyMutex(notice_mutex);
+}
 
 void player_display_set_scrolling(int s)
 {
@@ -140,6 +153,7 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 		charset_fix_broken_utf8_string(text);
 		str_len = charset_utf8_len(text)+1;
 
+		SDL_LockMutex(notice_mutex);
 		if (notice_time_left == 0) {
 			if (-display_message_pos < (str_len + str_max_visible_len)) {
 				display_message_pos--;
@@ -177,7 +191,8 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 			free(lcd_text_cp);
 		}
 		if (notice_time_left) notice_time_left--;
-		
+		SDL_UnlockMutex(notice_mutex);
+
 		if (busy && len > 2) { /* show busy indicator when busy */
 			char       busy_ch[] = { '-', '\\', 'I', '/' };
 			static int ch_sel = 0;
@@ -229,7 +244,9 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 
 void player_display_set_notice_message(const char *message, int timeout)
 {
+	SDL_LockMutex(notice_mutex);
 	strncpy(notice_message, message, MAX_LENGTH);
 	notice_message[MAX_LENGTH] = '\0';
 	notice_time_left = timeout;
+	SDL_UnlockMutex(notice_mutex);
 }

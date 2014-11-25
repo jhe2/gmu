@@ -610,6 +610,7 @@ static void run_player(char *skin_name, char *decoders_str)
 		gmu_core_config_release_lock();
 	}
 	m_init(&m);
+	player_display_init();
 
 	quit = DONT_QUIT;
 	/* Initialize and load button mapping */
@@ -1250,6 +1251,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	if (tid) SDL_RemoveTimer(tid);
 	input_config_free();
 	setup_shutdown(&setup_dlg);
+	player_display_free();
 
 	if (quit != QUIT_WITH_ERROR) {
 		gmu_core_config_acquire_lock();

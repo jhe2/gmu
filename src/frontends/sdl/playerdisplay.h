@@ -23,6 +23,8 @@
 
 enum { SCROLL_AUTO, SCROLL_ALWAYS, SCROLL_NEVER };
 
+int  player_display_init(void);
+void player_display_free(void);
 void player_display_draw(TextRenderer *tr, TrackInfo *ti,PB_Status player_status,
                          int ptime_msec, int ptime_remaining, int volume,
                          int busy, int shutdown_time, SDL_Surface *buffer);
