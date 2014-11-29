@@ -17,7 +17,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <signal.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -139,18 +138,6 @@ static const char *get_next_key_value_pair(const char *str, char *key, int key_l
 static Connection connection[MAX_CONNECTIONS];
 
 static int server_running = 0;
-
-static int assign_signal_handler(int sig_num, void (*signalhandler)(int))
-{
-	int              res = 1;
-	struct sigaction new_sig;
-
-	new_sig.sa_handler = signalhandler;
-	sigemptyset(&new_sig.sa_mask);
-	new_sig.sa_flags = SA_RESTART;
-	if (sigaction(sig_num, &new_sig, NULL) < 0) res = 0;
-	return res;
-}
 
 static int websocket_send_string(Connection *c, const char *str)
 {

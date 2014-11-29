@@ -58,6 +58,7 @@ static unsigned int    player_status = STOPPED;
 static int             shutdown_timer = 0;
 static int             remaining_time;
 static char            base_dir[256], *config_dir;
+static volatile sig_atomic_t signal_received = 0;
 #ifdef GMU_MEDIALIB
 static GmuMedialib     gm;
 #endif
@@ -836,8 +837,7 @@ static int init_user_config_dir(char *user_config_dir, const char *sys_config_di
 
 static void sig_handler(int sig)
 {
-	wdprintf(V_DEBUG, "gmu", "Exit requested.\n");
-	gmu_core_quit();
+	signal_received = 1;
 }
 
 static void file_extensions_load(void)
@@ -888,8 +888,8 @@ int main(int argc, char **argv)
 		frontend_plugin_by_cmd_arg[i] = NULL;
 	hw_detect_device_model();
 
-	signal(SIGINT, sig_handler);
-	signal(SIGTERM, sig_handler);
+	assign_signal_handler(SIGINT, sig_handler);
+	assign_signal_handler(SIGTERM, sig_handler);
 
 	if (!getcwd(base_dir, 255)) snprintf(base_dir, 255, ".");
 	sys_config_dir = base_dir;
@@ -1134,6 +1134,8 @@ int main(int argc, char **argv)
 	gmu_running = 1;
 	while (gmu_running || event_queue_is_event_waiting(&event_queue)) {
 		GmuFrontend *fe = NULL;
+
+		if (signal_received) gmu_core_quit();
 
 		if (global_command == NO_CMD)
 			event_queue_wait_for_event(&event_queue, 500);

@@ -39,4 +39,5 @@ int   strncpy_charset_conv(char *target, const char* source, int target_size,
  * through, left unchanged. In case of error, the function might return NULL.
  */
 char *expand_path_alloc(const char *path);
+int assign_signal_handler(int sig_num, void (*signalhandler)(int));
 #endif

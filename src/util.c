@@ -18,6 +18,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "charset.h"
 #include "debug.h"
 #include "util.h"
@@ -295,5 +296,17 @@ char *expand_path_alloc(const char *path)
 			         path[0] == '~' ? path + 1 : path);
 		}
 	}
+	return res;
+}
+
+int assign_signal_handler(int sig_num, void (*signalhandler)(int))
+{
+	int              res = 1;
+	struct sigaction new_sig;
+
+	new_sig.sa_handler = signalhandler;
+	sigemptyset(&new_sig.sa_mask);
+	new_sig.sa_flags = SA_RESTART;
+	if (sigaction(sig_num, &new_sig, NULL) < 0) res = 0;
 	return res;
 }
