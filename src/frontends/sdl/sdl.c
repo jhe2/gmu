@@ -201,22 +201,6 @@ static Uint32 timer_callback(Uint32 interval, void *param)
 	return interval;
 }
 
-static PB_Status play_file(char *file, TrackInfo *ti, CoverViewer *cv)
-{
-	gmu_core_play_file(file);
-	return file_player_get_playback_status();
-}
-
-static int play_next(TrackInfo *ti, CoverViewer *cv)
-{
-	return gmu_core_next();
-}
-
-static int play_previous(TrackInfo *ti, CoverViewer *cv)
-{
-	return gmu_core_previous();
-}
-
 static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb, 
                                        TrackInfo   *ti, CoverViewer *cv,
                                        int          user_key_action,
@@ -231,7 +215,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 				gmu_core_playlist_set_current(NULL);
 				path = file_browser_get_selected_file_full_path_alloc(fb);
 				if (path) {
-					play_file(path, ti, cv);
+					gmu_core_play_file(path);
 					free(path);
 				}
 			}
@@ -368,7 +352,7 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 			break;					
 		case PL_REMOVE_ITEM:
 			if (pl_browser_are_selection_and_current_entry_equal(pb)) {
-				if (!play_next(ti, cv)) {
+				if (!gmu_core_next()) {
 					gmu_core_stop();
 				}
 			}
@@ -950,7 +934,7 @@ static void run_player(char *skin_name, char *decoders_str)
 						update = UPDATE_ALL;
 						break;
 					case GLOBAL_NEXT:
-						if (play_next(ti, &cv)) {
+						if (gmu_core_next()) {
 							if (auto_select_cur_item)
 								pl_browser_set_selection(&pb, gmu_core_playlist_get_current_position());
 						} else {
@@ -959,7 +943,7 @@ static void run_player(char *skin_name, char *decoders_str)
 						update = UPDATE_ALL;
 						break;
 					case GLOBAL_PREV:
-						if (play_previous(ti, &cv)) {
+						if (gmu_core_previous()) {
 							if (auto_select_cur_item)
 								pl_browser_set_selection(&pb, gmu_core_playlist_get_current_position());
 						} else {
