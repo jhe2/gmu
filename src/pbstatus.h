@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
  *
  * File: pbstatus.h  Created: ?
  *
@@ -18,4 +18,8 @@
 enum _PB_Status { STOPPED, PLAYING, PAUSED, FINISHED };
 
 typedef enum _PB_Status PB_Status;
+
+typedef enum _PB_Status_Request {
+	PBRQ_NONE, PBRQ_STOP, PBRQ_PLAY, PBRQ_PAUSE
+} PB_Status_Request;
 #endif

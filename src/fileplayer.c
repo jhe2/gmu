@@ -40,17 +40,33 @@ static long      seek_second;
 static int       thread_running = 0;
 static int       file_player_shut_down = 0;
 
-/* Overall playback status. When this is set to PLAYING, it indicates that 
+/**
+ * Overall playback status. When this is set to PLAYING, it indicates that
  * the file player should continue playing with the next track in the
- * playlist, after the current one has finished. */
+ * playlist, after the current one has finished.
+ */
 static PB_Status playback_status = STOPPED;
 
-/* Playback status for current item. This is set to PLAYING as soon as a
+/**
+ * Playback status for current item. This is set to PLAYING as soon as a
  * track starts playing (decode_audio_thread is started) and is set to
  * STOPPED as soon as the track finishes. When setting this to STOPPED
  * the decoder thread stops as soon as possible. Use 
- * file_player_stop_playback() to stop playback. */
+ * file_player_stop_playback() to stop playback.
+ */
+/* DEPRECATED/TODO To be removed. We only want one playback status and one 
+ * request for a playback status (see below). */
 static PB_Status item_status;
+
+/**
+ * The requested playback status. This changes when the user requests
+ * a status change, e.g. pushes the 'play', 'pause' oder 'stop' button.
+ * It is only ever to be set by a user interaction (which can include the
+ * user's request to resume playback on program start, but other than
+ * that usually corresponds directly to a button press/mouse click of
+ * the user).
+ */
+static PB_Status_Request user_pb_request = PBRQ_NONE;
 
 static char      *file = NULL;
 static TrackInfo *ti;
@@ -312,7 +328,7 @@ static void *decode_audio_thread(void *udata)
 							event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
 						trackinfo_release_lock(ti);
 
-						audio_set_pause(0);
+						if (user_pb_request == PBRQ_PLAY) audio_set_pause(0);
 
 						if (r && !reader_is_ready(r)) {
 							int check_count = 20, prev_buf_fill = 0;
@@ -344,9 +360,8 @@ static void *decode_audio_thread(void *udata)
 							if (seek_second) {
 								if (item_status == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
 									if (seek_second < 0) seek_second = 0;
-									if (*gd->seek)
-										if ((*gd->seek)(seek_second))
-											audio_set_sample_counter(seek_second * ti->samplerate);
+									if (*gd->seek && (*gd->seek)(seek_second))
+										audio_set_sample_counter(seek_second * ti->samplerate);
 								}
 								seek_second = 0;
 							}
@@ -376,10 +391,15 @@ static void *decode_audio_thread(void *udata)
 										audio_wait_until_more_data_is_needed();
 									ret = audio_fill_buffer(pcmout, size);
 									if (!ret) SDL_Delay(10);
+									if (item_status == PLAYING && user_pb_request == PBRQ_PLAY && audio_get_pause()) {
+										wdprintf(V_DEBUG, "fileplayer", "Unpause audio due to user request...\n");
+										audio_set_pause(0);
+									}
 								}
 								if (SDL_GetAudioStatus() != SDL_AUDIO_PLAYING &&
 									!audio_get_pause() && playback_status == PLAYING &&
-									audio_buffer_get_fill() > audio_buffer_get_size() / 2) {
+									audio_buffer_get_fill() > audio_buffer_get_size() / 2 &&
+									user_pb_request == PBRQ_PLAY) {
 									wdprintf(V_DEBUG, "fileplayer", "Unpausing audio...\n");
 									SDL_PauseAudio(0);
 								}
@@ -449,4 +469,24 @@ int file_player_seek(long offset)
 TrackInfo *file_player_get_trackinfo_ref(void)
 {
 	return ti;
+}
+
+int fileplayer_request_playback_state_change(PB_Status_Request request)
+{
+	int res = 0;
+	user_pb_request = request;
+	wdprintf(V_DEBUG, "fileplayer", "Requested playback state: %d\n", request);
+	switch (user_pb_request) {
+		case PBRQ_PAUSE:
+			audio_set_pause(1);
+			break;
+		case PBRQ_STOP:
+			file_player_stop_playback();
+			audio_set_pause(1);
+			break;
+		case PBRQ_PLAY:
+		default:
+			break;
+	}
+	return res;
 }

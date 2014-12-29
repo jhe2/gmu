@@ -257,8 +257,9 @@ int gmu_core_play(void)
 	if (file_player_get_playback_status() == STOPPED)
 		res = gmu_core_next();
 	else
-		audio_set_pause(0);
+		fileplayer_request_playback_state_change(PBRQ_PLAY);
 	player_status = PLAYING;
+	fileplayer_request_playback_state_change(PBRQ_PLAY);
 	event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 	return res;
 }
@@ -276,7 +277,7 @@ int gmu_core_play_pause(void)
 /* Pause playback */
 int gmu_core_pause(void)
 {
-	audio_set_pause(1);
+	fileplayer_request_playback_state_change(PBRQ_PAUSE);
 	player_status = PAUSED;
 	event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 	return 0;
@@ -284,6 +285,7 @@ int gmu_core_pause(void)
 
 int gmu_core_next(void)
 {
+	fileplayer_request_playback_state_change(PBRQ_PLAY);
 	return play_next(&pl, 1);
 }
 
@@ -296,7 +298,7 @@ static int stop_playback(void)
 {
 	int res = 0;
 	if (player_status != STOPPED) {
-		file_player_stop_playback();
+		fileplayer_request_playback_state_change(PBRQ_STOP);
 		gmu_core_playlist_reset_random();
 		gmu_core_playlist_set_current(NULL);
 		player_status = STOPPED;
@@ -308,7 +310,6 @@ static int stop_playback(void)
 
 int gmu_core_stop(void)
 {
-	audio_set_pause(1);
 	return stop_playback();
 }
 
@@ -317,6 +318,7 @@ int gmu_core_play_pl_item(int item)
 	global_command = PLAY_ITEM;
 	global_param = item;
 	player_status = PLAYING;
+	fileplayer_request_playback_state_change(PBRQ_PLAY);
 	event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 	return 0;
 }
@@ -326,6 +328,7 @@ int gmu_core_play_file(const char *filename)
 	strncpy(global_filename, filename, 255);
 	global_command = PLAY_FILE;
 	player_status = PLAYING;
+	fileplayer_request_playback_state_change(PBRQ_PLAY);
 	event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 	return 0;
 }
@@ -1226,7 +1229,7 @@ int main(int argc, char **argv)
 			int      event_param = event_queue_get_parameter(&event_queue);
 			GmuEvent event = event_queue_pop(&event_queue);
 
-			wdprintf(V_DEBUG, "gmu", "Got event %d with param %d\n", event, event_param);
+			/*wdprintf(V_DEBUG, "gmu", "Got event %d with param %d\n", event, event_param);*/
 			/*wdprintf(V_DEBUG, "gmu", "Pushing event to frontends:\n");*/
 			fe = feloader_frontend_list_get_next_frontend(1);
 			while (fe) {

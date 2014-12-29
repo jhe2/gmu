@@ -380,6 +380,6 @@ long audio_get_sample_count(void)
 void audio_wait_until_more_data_is_needed(void)
 {
 	SDL_mutexP(cond_mutex);
-	SDL_CondWaitTimeout(cond_data_needed, cond_mutex, 1000);
+	SDL_CondWaitTimeout(cond_data_needed, cond_mutex, 200);
 	SDL_mutexV(cond_mutex);
 }
