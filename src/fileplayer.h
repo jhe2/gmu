@@ -23,7 +23,7 @@ int       file_player_playback_get_time(void);
 PB_Status file_player_get_playback_status(void);
 PB_Status file_player_get_item_status(void);
 void      file_player_stop_playback(void);
-int       file_player_play_file(char *file, int skip_current);
+int       file_player_play_file(char *file, int skip_current, int fade_out_on_skip);
 int       file_player_read_tags(char *file, char *file_type, TrackInfo *ti);
 int       file_player_seek(long offset);
 int       file_player_is_thread_running(void);

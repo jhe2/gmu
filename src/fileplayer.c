@@ -271,6 +271,7 @@ static void *decode_audio_thread(void *udata)
 				if (gd->set_reader_handle) (*gd->set_reader_handle)(r);
 				playback_status = PLAYING;
 
+				audio_reset_fade_volume();
 				if (item_status == PLAYING && !file_player_shut_down && (*gd->open_file)(filename)) {
 					int channels = 0;
 					if (trackinfo_acquire_lock(ti)) {
@@ -354,7 +355,7 @@ static void *decode_audio_thread(void *udata)
 							}
 						}
 
-						while (ret && item_status == PLAYING && !file_player_shut_down) {
+						while (ret && (item_status == PLAYING || audio_fade_out_in_progress()) && !file_player_shut_down) {
 							int size = 0, ret = 1, br = 0;
 
 							if (seek_second) {
@@ -364,6 +365,9 @@ static void *decode_audio_thread(void *udata)
 										audio_set_sample_counter(seek_second * ti->samplerate);
 								}
 								seek_second = 0;
+							}
+							if (audio_fade_out_in_progress()) {
+								if (audio_fade_out_step(12)) item_status = STOPPED;
 							}
 							while (ret > 0 && size < BUF_SIZE / 2 && item_status == PLAYING) {
 								ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
@@ -449,9 +453,12 @@ static void *decode_audio_thread(void *udata)
 	return NULL;
 }
 
-int file_player_play_file(char *filename, int skip_current)
+int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip)
 {
-	item_status = skip_current ? STOPPED : FINISHED;
+	if (skip_current && fade_out_on_skip)
+		audio_fade_out_step(16); /* Initiate fade-out and decrease volume by 16 % */
+	else
+		item_status = skip_current ? STOPPED : FINISHED;
 	playback_status = PLAYING;
 
 	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);

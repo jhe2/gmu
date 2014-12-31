@@ -59,6 +59,7 @@ static int             shutdown_timer = 0;
 static int             remaining_time;
 static char            base_dir[256], *config_dir;
 static volatile sig_atomic_t signal_received = 0;
+
 #ifdef GMU_MEDIALIB
 static GmuMedialib     gm;
 #endif
@@ -137,12 +138,27 @@ void gmu_core_add_pls_contents_to_playlist(const char *filename)
 	playlist_release_lock(&pl);
 }
 
+/**
+ * Checks if the 'Gmu.FadeOutOnSkip' option has been enabled and returns
+ * 1 if that is the case. The function acquires a lock on the global
+ * Gmu config.
+ */
+static int check_fade_out_on_skip(void)
+{
+	int res = 0;
+	gmu_core_config_acquire_lock();
+	if (strncmp(cfg_get_key_value(config, "Gmu.FadeOutOnSkip"), "yes", 3) == 0)
+		res = 1;
+	gmu_core_config_release_lock();
+	return res;
+}
+
 static int play_next(Playlist *pl, int skip_current)
 {
 	int result = 0;
 	playlist_get_lock(pl);
 	if (playlist_next(pl)) {
-		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), skip_current);
+		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), skip_current, check_fade_out_on_skip());
 		result = 1;
 		event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 		player_status = PLAYING;
@@ -158,7 +174,7 @@ static int play_previous(Playlist *pl)
 	if (playlist_prev(pl)) {
 		Entry *entry = playlist_get_current(pl);
 		if (entry != NULL) {
-			file_player_play_file(playlist_get_entry_filename(pl, entry), 1);
+			file_player_play_file(playlist_get_entry_filename(pl, entry), 1, check_fade_out_on_skip());
 			result = 1;
 			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 			player_status = PLAYING;
@@ -196,6 +212,8 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "Gmu.ReaderCachePrebufferSize", "256");
 	cfg_key_add_presets(config, "Gmu.ReaderCachePrebufferSize", "128", "256", "512", "768", NULL);
 	cfg_add_key(config, "Gmu.LyricsFilePattern", "*.txt");
+	cfg_add_key(config, "Gmu.FadeOutOnSkip", "no");
+	cfg_key_add_presets(config, "Gmu.FadeOutOnSkip", "yes", "no", NULL);
 }
 
 int gmu_core_export_playlist(const char *file)
@@ -1150,7 +1168,7 @@ int main(int argc, char **argv)
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);
 			if (tmp_item != NULL) {
 				playlist_set_current(&pl, tmp_item);
-				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), 1);
+				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), 1, check_fade_out_on_skip());
 			}
 			playlist_release_lock(&pl);
 			global_command = NO_CMD;
@@ -1160,7 +1178,7 @@ int main(int argc, char **argv)
 			playlist_get_lock(&pl);
 			playlist_set_current(&pl, NULL);
 			playlist_release_lock(&pl);
-			file_player_play_file(global_filename, 1);
+			file_player_play_file(global_filename, 1, check_fade_out_on_skip());
 			global_command = NO_CMD;
 		} else if ((file_player_get_item_status() == FINISHED && 
 		            file_player_get_playback_status() == PLAYING) || 

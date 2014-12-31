@@ -33,7 +33,7 @@ static int           have_samplerate, have_channels;
 static int           device_open;
 static int           paused, done;
 static char          buf[65536];
-static int           volume, volume_internal;
+static int           volume, volume_internal, volume_fade_percent = 100;
 static int           spectrum_reg = 0;
 
 int audio_fill_buffer(char *data, int size)
@@ -165,7 +165,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 		SDL_mutexV(spectrum_mutex);
 	}
 
-	SDL_MixAudio(stream, (unsigned char *)buf, len, volume);
+	SDL_MixAudio(stream, (unsigned char *)buf, len, volume * volume_fade_percent / 100);
 	SDL_mutexV(audio_mutex);
 }
 
@@ -382,4 +382,34 @@ void audio_wait_until_more_data_is_needed(void)
 	SDL_mutexP(cond_mutex);
 	SDL_CondWaitTimeout(cond_data_needed, cond_mutex, 200);
 	SDL_mutexV(cond_mutex);
+}
+
+void audio_set_fade_volume(int percent)
+{
+	if (percent >= 0 && percent <= 100)
+		volume_fade_percent = percent;
+}
+
+/**
+ * Fades out one step. To be called multiple times until the volume has
+ * reached 0. Returns 1 when the volume is zero, and 0 otherwise.
+ */
+int audio_fade_out_step(unsigned int step_size)
+{
+	if (volume_fade_percent > 0 && volume_fade_percent >= step_size)
+		volume_fade_percent -= step_size;
+	else
+		volume_fade_percent = 0;
+	wdprintf(V_DEBUG, "audio", "fadeout: %d\n", volume_fade_percent);
+	return volume_fade_percent == 0 ? 1 : 0;
+}
+
+void audio_reset_fade_volume(void)
+{
+	volume_fade_percent = 100;
+}
+
+int audio_fade_out_in_progress(void)
+{
+	return (volume_fade_percent < 100 && volume_fade_percent > 0) ? 1 : 0;
 }
