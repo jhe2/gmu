@@ -37,7 +37,6 @@
 
 static char      lyrics_file_pattern[256];
 static long      seek_second;
-static int       thread_running = 0;
 static int       file_player_shut_down = 0;
 
 /**
@@ -92,11 +91,6 @@ PB_Status file_player_get_playback_status(void)
 PB_Status file_player_get_item_status(void)
 {
 	return item_status;
-}
-
-int file_player_is_thread_running(void)
-{
-	return thread_running;
 }
 
 static void *decode_audio_thread(void *udata);
@@ -218,10 +212,8 @@ static void *decode_audio_thread(void *udata)
 	static char pcmout[BUF_SIZE];
 	GmuCharset  charset = M_CHARSET_AUTODETECT;
 
-	thread_running = 1;
-
 	wdprintf(V_INFO, "fileplayer", "File player thread initialized.\n");
-	while (thread_running && !file_player_shut_down) {
+	while (!file_player_shut_down) {
 		char *filename = NULL;
 		int   len = 0;
 		pthread_mutex_lock(&mutex);
@@ -449,7 +441,6 @@ static void *decode_audio_thread(void *udata)
 		usleep(100000);
 	}
 	wdprintf(V_DEBUG, "fileplayer", "Decoder thread finished.\n");
-	thread_running = 0;
 	return NULL;
 }
 
