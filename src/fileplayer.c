@@ -455,7 +455,7 @@ static void *decode_audio_thread(void *udata)
 
 int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip)
 {
-	if (skip_current && fade_out_on_skip)
+	if (skip_current && fade_out_on_skip && !audio_get_pause())
 		audio_fade_out_step(16); /* Initiate fade-out and decrease volume by 16 % */
 	else
 		item_status = skip_current ? STOPPED : FINISHED;
