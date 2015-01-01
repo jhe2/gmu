@@ -478,9 +478,14 @@ TrackInfo *file_player_get_trackinfo_ref(void)
 	return ti;
 }
 
+/**
+ * Returns 1 if the requested playback state differs from the current
+ * state, 0 otherwise.
+ */
 int fileplayer_request_playback_state_change(PB_Status_Request request)
 {
 	int res = 0;
+	if (user_pb_request != request) res = 1;
 	user_pb_request = request;
 	wdprintf(V_DEBUG, "fileplayer", "Requested playback state: %d\n", request);
 	switch (user_pb_request) {

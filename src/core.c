@@ -303,13 +303,20 @@ int gmu_core_pause(void)
 
 int gmu_core_next(void)
 {
-	fileplayer_request_playback_state_change(PBRQ_PLAY);
-	return play_next(&pl, 1);
+	int res;
+	int pbsc = fileplayer_request_playback_state_change(PBRQ_PLAY);
+	res = play_next(&pl, 1);
+	if (pbsc) event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
+	return res;
 }
 
 int gmu_core_previous(void)
 {
-	return play_previous(&pl);
+	int res;
+	int pbsc = fileplayer_request_playback_state_change(PBRQ_PLAY);
+	res = play_previous(&pl);
+	if (pbsc) event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
+	return res;
 }
 
 static int stop_playback(void)
