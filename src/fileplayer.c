@@ -359,7 +359,7 @@ static void *decode_audio_thread(void *udata)
 								seek_second = 0;
 							}
 							if (audio_fade_out_in_progress()) {
-								if (audio_fade_out_step(12)) item_status = STOPPED;
+								if (audio_fade_out_step(15)) item_status = STOPPED;
 							}
 							while (ret > 0 && size < BUF_SIZE / 2 && item_status == PLAYING) {
 								ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
@@ -447,7 +447,7 @@ static void *decode_audio_thread(void *udata)
 int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip)
 {
 	if (skip_current && fade_out_on_skip && !audio_get_pause())
-		audio_fade_out_step(16); /* Initiate fade-out and decrease volume by 16 % */
+		audio_fade_out_step(20); /* Initiate fade-out and decrease volume by 20 % */
 	else
 		item_status = skip_current ? STOPPED : FINISHED;
 	playback_status = PLAYING;
