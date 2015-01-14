@@ -31,6 +31,7 @@ int  medialib_open(GmuMedialib *gm);
 void medialib_close(GmuMedialib *gm);
 int  medialib_start_refresh(GmuMedialib *gm, void (*finished_callback)(void));
 int  medialib_is_refresh_in_progress(GmuMedialib *gm);
+void medialib_flag_track_as_bad(GmuMedialib *gm, unsigned int id, int bad);
 void medialib_refresh(GmuMedialib *gm);
 int  medialib_add_file(GmuMedialib *gm, const char *file);
 void medialib_path_add(GmuMedialib *gm, const char *path);

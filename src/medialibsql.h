@@ -17,7 +17,8 @@ const char *medialib_sql =
 	license varchar(32), \
 	type integer, \
 	play_count integer, \
-	skip_count integer \
+	skip_count integer, \
+	file_missing integer \
 ); \
 \
 CREATE TABLE aditional_trackinfo \

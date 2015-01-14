@@ -88,7 +88,7 @@ int medialib_add_file(GmuMedialib *gm, const char *file)
 	if (new_file && metadatareader_read(file, filetype, &ti)) {
 		/* Add file with metadata to media library... */
 		int   a, b, c, d, e;
-		char *q = "INSERT INTO track (file, artist, title, album, comment) VALUES (?1, ?2, ?3, ?4, ?5)";
+		char *q = "INSERT INTO track (file, artist, title, album, comment, file_missing) VALUES (?1, ?2, ?3, ?4, ?5, 0)";
 
 		sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 		a = sqlite3_bind_text(pp_stmt, 1, file,       -1, SQLITE_STATIC);
@@ -151,6 +151,24 @@ int medialib_is_refresh_in_progress(GmuMedialib *gm)
 	return gm->refresh_in_progress;
 }
 
+void medialib_flag_track_as_bad(GmuMedialib *gm, unsigned int id, int bad)
+{
+	sqlite3_stmt *pp_stmt = NULL;
+	const char *q = "UPDATE track SET file_missing = ?1 WHERE id = ?2";
+	if (sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL) == SQLITE_OK) {
+		if (sqlite3_bind_int(pp_stmt, 1, bad) == SQLITE_OK &&
+		    sqlite3_bind_int(pp_stmt, 2, id) == SQLITE_OK) {
+			int sqres = sqlite3_step(pp_stmt);
+			if (sqres != SQLITE_DONE) {
+				wdprintf(V_ERROR, "medialib", "ERROR while updating database: ERROR %d\n", sqres);
+			}
+		} else {
+			wdprintf(V_ERROR, "medialib", "ERROR while updating database!\n");
+		}
+	}
+	sqlite3_finalize(pp_stmt);
+}
+
 void medialib_refresh(GmuMedialib *gm)
 {
 	sqlite3_stmt *pp_stmt = NULL;
@@ -166,6 +184,34 @@ void medialib_refresh(GmuMedialib *gm)
 	}
 	sqlite3_finalize(pp_stmt);
 	sqlite3_exec(gm->db, "COMMIT", 0, 0, 0);
+	/*
+	 * Fetch all medialib entries from DB and check if the corresponding
+	 * files exist on disk. If a file doesn't exist, flag the entry as
+	 * broken. Entries flagged as broken where the file is found again
+	 * should have the broken flag removed.
+	 * Broken entries can be cleaned from the DB with another command.
+	 */
+	if (sqlite3_prepare_v2(gm->db, "SELECT id,file,file_missing FROM track", -1, &pp_stmt, NULL) == SQLITE_OK) {
+		for (; sqlite3_step(pp_stmt) == SQLITE_ROW; ) {
+			/* Check entry against file system... */
+			int   id           = sqlite3_column_int(pp_stmt, 0);
+			char *file         = (char *)sqlite3_column_text(pp_stmt, 1);
+			int   file_missing = sqlite3_column_int(pp_stmt, 2);
+			if (!file_exists(file)) {
+				/* Flag as broken... */
+				wdprintf(
+					V_INFO,
+					"medialib", "Broken track with ID %d detected: '%s' missing.\n",
+					id,
+					file
+				);
+				medialib_flag_track_as_bad(gm, id, 1);
+			} else if (file_missing) {
+				medialib_flag_track_as_bad(gm, id, 0);
+			}
+		}
+		sqlite3_finalize(pp_stmt);
+	}
 }
 
 void medialib_path_add(GmuMedialib *gm, const char *path)
@@ -227,16 +273,16 @@ int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, const char *
 	switch (type) {
 		case GMU_MLIB_ANY:
 		default:
-			q = "SELECT * FROM track WHERE title LIKE ?1 OR artist LIKE ?1 OR album LIKE ?1";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND (title LIKE ?1 OR artist LIKE ?1 OR album LIKE ?1)";
 			break;
 		case GMU_MLIB_ARTIST:
-			q = "SELECT * FROM track WHERE artist LIKE ?1";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND artist LIKE ?1";
 			break;
 		case GMU_MLIB_ALBUM:
-			q = "SELECT * FROM track WHERE album LIKE ?1";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND album LIKE ?1";
 			break;
 		case GMU_MLIB_TITLE:
-			q = "SELECT * FROM track WHERE title LIKE ?1";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND title LIKE ?1";
 			break;
 	}
 	len = str ? strlen(str) : 0;
@@ -298,7 +344,7 @@ int medialib_browse(GmuMedialib *gm, const char *sel_column, ...)
 
 	va_start(args, sel_column);
 
-	qtmp = sqlite3_mprintf("SELECT DISTINCT %s FROM track WHERE 1=1", sel_column);
+	qtmp = sqlite3_mprintf("SELECT DISTINCT %s FROM track WHERE file_missing = 0", sel_column);
 	for (arg = va_arg(args, char *); arg; arg = va_arg(args, char *)) {
 		char *fcol = NULL;
 		char *fvalue = va_arg(args, char *);
