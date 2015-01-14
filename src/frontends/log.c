@@ -115,7 +115,6 @@ static int event_callback(GmuEvent event, int param)
 	if (logging_enabled) {
 		static int pt = 0, mtp = 0;
 
-		wdprintf(V_DEBUG, "logbot", "Received event %d.\n", event);
 		switch (event) {
 			case GMU_QUIT:
 				break;
