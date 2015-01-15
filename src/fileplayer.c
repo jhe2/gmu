@@ -35,9 +35,11 @@
 
 #define BUF_SIZE 65536
 
-static char      lyrics_file_pattern[256];
-static long      seek_second;
-static int       file_player_shut_down = 0;
+static char            lyrics_file_pattern[256];
+static long            seek_second;
+
+static int             file_player_shut_down = 0;
+static pthread_mutex_t shut_down_mutex;
 
 /**
  * Overall playback status. When this is set to PLAYING, it indicates that
@@ -72,6 +74,14 @@ static TrackInfo *ti;
 
 static pthread_mutex_t mutex;
 
+int file_player_check_shutdown(void)
+{
+	int res;
+	pthread_mutex_lock(&shut_down_mutex);
+	res = file_player_shut_down;
+	pthread_mutex_unlock(&shut_down_mutex);
+	return res;
+}
 
 void file_player_set_lyrics_file_pattern(const char *pattern)
 {
@@ -100,12 +110,15 @@ void file_player_shutdown(void)
 {
 	playback_status = STOPPED;
 	item_status = STOPPED;
+	pthread_mutex_lock(&shut_down_mutex);
 	file_player_shut_down = 1;
+	pthread_mutex_unlock(&shut_down_mutex);
 	file_player_set_filename(NULL);
 	file_player_start_playback(); /* Release waiting lock in thread */
 	pthread_join(thread, NULL);
 	if (file) free(file);
 	pthread_mutex_destroy(&mutex);
+	pthread_mutex_destroy(&shut_down_mutex);
 }
 
 static int locked = 0;
@@ -132,6 +145,7 @@ void file_player_start_playback(void)
 int file_player_init(TrackInfo *ti_ref)
 {
 	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_init(&shut_down_mutex, NULL);
 	file_player_set_filename(NULL);
 	ti = ti_ref;
 	pthread_create(&thread, NULL, decode_audio_thread, NULL);
@@ -213,9 +227,10 @@ static void *decode_audio_thread(void *udata)
 	GmuCharset  charset = M_CHARSET_AUTODETECT;
 
 	wdprintf(V_INFO, "fileplayer", "File player thread initialized.\n");
-	while (!file_player_shut_down) {
+	while (!file_player_check_shutdown()) {
 		char *filename = NULL;
 		int   len = 0;
+
 		pthread_mutex_lock(&mutex);
 		if (file) len = strlen(file);
 		if (len > 0) {
@@ -230,7 +245,7 @@ static void *decode_audio_thread(void *udata)
 		pthread_mutex_unlock(&mutex);
 		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
 		r = NULL;
-		if (!file_player_shut_down && filename && item_status == PLAYING) {
+		if (!file_player_check_shutdown() && filename && item_status == PLAYING) {
 			const char *tmp = get_file_extension(filename);
 			wdprintf(V_INFO, "fileplayer", "Playing %s...\n", filename);
 			if (tmp) gd = decloader_get_decoder_for_extension(tmp);
@@ -245,7 +260,7 @@ static void *decode_audio_thread(void *udata)
 						gd = decloader_get_decoder_for_data_chunk(reader_get_buffer(r), reader_get_number_of_bytes_in_buffer(r));
 				}
 			}
-			if (gd && gd->identifier && !file_player_shut_down) {
+			if (gd && gd->identifier && !file_player_check_shutdown()) {
 				wdprintf(V_INFO, "fileplayer", "Selected decoder: %s\n", gd->identifier);
 				if (gd->set_reader_handle) {
 					if (!r) {
@@ -264,7 +279,7 @@ static void *decode_audio_thread(void *udata)
 				playback_status = PLAYING;
 
 				audio_reset_fade_volume();
-				if (item_status == PLAYING && !file_player_shut_down && (*gd->open_file)(filename)) {
+				if (item_status == PLAYING && !file_player_check_shutdown() && (*gd->open_file)(filename)) {
 					int channels = 0;
 					if (trackinfo_acquire_lock(ti)) {
 						trackinfo_clear(ti);
@@ -347,7 +362,7 @@ static void *decode_audio_thread(void *udata)
 							}
 						}
 
-						while (ret && (item_status == PLAYING || audio_fade_out_in_progress()) && !file_player_shut_down) {
+						while (ret && (item_status == PLAYING || audio_fade_out_in_progress()) && !file_player_check_shutdown()) {
 							int size = 0, ret = 1, br = 0;
 
 							if (seek_second) {
