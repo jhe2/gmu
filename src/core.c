@@ -1317,11 +1317,13 @@ int main(int argc, char **argv)
 		hw_close_mixer();
 
 	if (strncmp(cfg_get_key_value(config, "Gmu.RememberLastPlaylist"), "yes", 3) == 0) {
+		gmu_core_config_release_lock();
 		wdprintf(V_INFO, "gmu", "Saving playlist...\n");
 		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
 		wdprintf(V_INFO, "gmu", "Playlist file: %s\n", temp);
 		gmu_core_export_playlist(temp);
 		disksync = 1;
+		gmu_core_config_acquire_lock();
 	}
 	if (strncmp(cfg_get_key_value(config, "Gmu.RememberSettings"), "yes", 3) == 0) {
 		char *playmode = NULL;
