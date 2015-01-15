@@ -47,6 +47,7 @@ static GlobalCommand   global_command = NO_CMD;
 static int             global_param = 0;
 static char            global_filename[256];
 static int             gmu_running = 0;
+static pthread_mutex_t gmu_running_mutex;
 static Playlist        pl;
 static TrackInfo       current_track_ti;
 static EventQueue      event_queue;
@@ -594,11 +595,27 @@ EventQueue *gmu_core_get_event_queue(void)
 	return &event_queue;
 }
 
+static void set_gmu_running(int bool)
+{
+	pthread_mutex_lock(&gmu_running_mutex);
+	gmu_running = bool;
+	pthread_mutex_unlock(&gmu_running_mutex);
+}
+
 void gmu_core_quit(void)
 {
 	wdprintf(V_INFO, "gmu", "Shutting down...\n");
 	event_queue_push(&event_queue, GMU_QUIT);
-	gmu_running = 0;
+	set_gmu_running(0);
+}
+
+static int gmu_is_running(void)
+{
+	int res;
+	pthread_mutex_lock(&gmu_running_mutex);
+	res = gmu_running;
+	pthread_mutex_unlock(&gmu_running_mutex);
+	return res;
 }
 
 TrackInfo *gmu_core_get_current_trackinfo_ref(void)
@@ -1041,6 +1058,10 @@ int main(int argc, char **argv)
 		wdprintf(V_ERROR, "gmu", "Failed to initialize config mutex.\n");
 		exit(10);
 	}
+	if (pthread_mutex_init(&gmu_running_mutex, NULL) != 0) {
+		wdprintf(V_ERROR, "gmu", "Failed to initialize gmu_running_mutex.\n");
+		exit(10);
+	}
 	gmu_core_config_acquire_lock();
 	cfg_init_config_file_struct(&config);
 	add_default_cfg_settings(&config);
@@ -1159,8 +1180,8 @@ int main(int argc, char **argv)
 
 	time(&start);
 	/* Main loop */
-	gmu_running = 1;
-	while (gmu_running || event_queue_is_event_waiting(&event_queue)) {
+	set_gmu_running(1);
+	while (gmu_is_running() || event_queue_is_event_waiting(&event_queue)) {
 		GmuFrontend *fe = NULL;
 
 		if (signal_received) gmu_core_quit();
@@ -1195,8 +1216,7 @@ int main(int argc, char **argv)
 				stop_playback();
 				if (shutdown_timer == -1) { /* Shutdown after last track */
 					auto_shutdown = 1;
-					event_queue_push(&event_queue, GMU_QUIT);
-					gmu_running = 0;
+					gmu_core_quit();
 				}
 			}
 			global_filename[0] = '\0';
@@ -1241,8 +1261,7 @@ int main(int argc, char **argv)
 
 		if (remaining_time == 0) {
 			auto_shutdown = 1;
-			event_queue_push(&event_queue, GMU_QUIT);
-			gmu_running = 0;
+			gmu_core_quit();
 		}
 
 		if (pb_time != file_player_playback_get_time()) {
@@ -1365,6 +1384,7 @@ int main(int argc, char **argv)
 	cfg_free_config_file_struct(&config);
 	gmu_core_config_release_lock();
 	pthread_mutex_destroy(&config_mutex);
+	pthread_mutex_destroy(&gmu_running_mutex);
 	SDL_Quit();
 	event_queue_free(&event_queue);
 	wdprintf(V_INFO, "gmu", "Shutdown complete.\n");
