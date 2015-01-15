@@ -259,11 +259,18 @@ ConfigFile *gmu_core_get_config(void)
 	return &config;
 }
 
+/**
+ * Used for locking the config for access. Within a config lock region,
+ * NO other locks MUST be acquired or released.
+ */
 int gmu_core_config_acquire_lock(void)
 {
 	return pthread_mutex_lock(&config_mutex);
 }
 
+/**
+ * Used for releasing the config lock.
+ */
 int gmu_core_config_release_lock(void)
 {
 	return pthread_mutex_unlock(&config_mutex);
