@@ -616,6 +616,182 @@ static void initiate_websocket_handshake(int sock, char *host)
 	}
 }
 
+static void handle_key_press(wint_t ch, UI *ui, int sock, char **cur_dir)
+{
+	switch (ch) {
+		case KEY_DOWN:
+			flushinp();
+			switch (ui->active_win) {
+				case WIN_PL:
+					listwidget_move_cursor(ui->lw_pl, 1);
+					break;
+				case WIN_FB:
+					listwidget_move_cursor(ui->lw_fb, 1);
+					break;
+				case WIN_LIB:
+					switch (ui_mlib_get_state(ui)) {
+						case MLIB_STATE_RESULTS:
+							listwidget_move_cursor(ui->lw_mlib_search, 1);
+							break;
+						case MLIB_STATE_BROWSE_ARTISTS:
+							listwidget_move_cursor(ui->lw_mlib_artists, 1);
+							break;
+						case MLIB_STATE_BROWSE_GENRES:
+							listwidget_move_cursor(ui->lw_mlib_genres, 1);
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case KEY_UP:
+			flushinp();
+			switch (ui->active_win) {
+				case WIN_PL:
+					listwidget_move_cursor(ui->lw_pl, -1);
+					break;
+				case WIN_FB:
+					listwidget_move_cursor(ui->lw_fb, -1);
+					break;
+				case WIN_LIB:
+					switch (ui_mlib_get_state(ui)) {
+						case MLIB_STATE_RESULTS:
+							listwidget_move_cursor(ui->lw_mlib_search, -1);
+							break;
+						case MLIB_STATE_BROWSE_ARTISTS:
+							listwidget_move_cursor(ui->lw_mlib_artists, -1);
+							break;
+						case MLIB_STATE_BROWSE_GENRES:
+							listwidget_move_cursor(ui->lw_mlib_genres, -1);
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case KEY_NPAGE:
+			flushinp();
+			switch (ui->active_win) {
+				case WIN_PL:
+					listwidget_move_cursor(ui->lw_pl, ui->lw_pl->win->height-2);
+					break;
+				case WIN_FB:
+					listwidget_move_cursor(ui->lw_fb, ui->lw_pl->win->height-2);
+					break;
+				case WIN_LIB:
+					switch (ui_mlib_get_state(ui)) {
+						case MLIB_STATE_RESULTS:
+							listwidget_move_cursor(ui->lw_mlib_search, ui->lw_mlib_search->win->height-2);
+							break;
+						case MLIB_STATE_BROWSE_ARTISTS:
+							listwidget_move_cursor(ui->lw_mlib_artists, ui->lw_mlib_search->win->height-2);
+							break;
+						case MLIB_STATE_BROWSE_GENRES:
+							listwidget_move_cursor(ui->lw_mlib_genres, ui->lw_mlib_search->win->height-2);
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case KEY_PPAGE:
+			flushinp();
+			switch (ui->active_win) {
+				case WIN_PL:
+					listwidget_move_cursor(ui->lw_pl, -(ui->lw_pl->win->height-2));
+					break;
+				case WIN_FB:
+					listwidget_move_cursor(ui->lw_fb, -(ui->lw_pl->win->height-2));
+					break;
+				case WIN_LIB:
+					switch (ui_mlib_get_state(ui)) {
+						case MLIB_STATE_RESULTS:
+							listwidget_move_cursor(ui->lw_mlib_search, -(ui->lw_mlib_search->win->height-2));
+							break;
+						case MLIB_STATE_BROWSE_ARTISTS:
+							listwidget_move_cursor(ui->lw_mlib_artists, -(ui->lw_mlib_search->win->height-2));
+							break;
+						case MLIB_STATE_BROWSE_GENRES:
+							listwidget_move_cursor(ui->lw_mlib_genres, -(ui->lw_mlib_search->win->height-2));
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case KEY_HOME:
+			switch (ui->active_win) {
+				case WIN_PL:
+					listwidget_set_cursor(ui->lw_pl, 0);
+					break;
+				case WIN_FB:
+					listwidget_set_cursor(ui->lw_fb, 0);
+					break;
+				case WIN_LIB:
+					switch (ui_mlib_get_state(ui)) {
+						case MLIB_STATE_RESULTS:
+							listwidget_set_cursor(ui->lw_mlib_search, 0);
+							break;
+						case MLIB_STATE_BROWSE_ARTISTS:
+							listwidget_set_cursor(ui->lw_mlib_artists, 0);
+							break;
+						case MLIB_STATE_BROWSE_GENRES:
+							listwidget_set_cursor(ui->lw_mlib_genres, 0);
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case KEY_END:
+			switch (ui->active_win) {
+				case WIN_PL:
+					listwidget_set_cursor(ui->lw_pl, LW_CURSOR_POS_END);
+					break;
+				case WIN_FB:
+					listwidget_set_cursor(ui->lw_fb, LW_CURSOR_POS_END);
+					break;
+				case WIN_LIB:
+					switch (ui_mlib_get_state(ui)) {
+						case MLIB_STATE_RESULTS:
+							listwidget_set_cursor(ui->lw_mlib_search, LW_CURSOR_POS_END);
+							break;
+						case MLIB_STATE_BROWSE_ARTISTS:
+							listwidget_set_cursor(ui->lw_mlib_artists, LW_CURSOR_POS_END);
+							break;
+						case MLIB_STATE_BROWSE_GENRES:
+							listwidget_set_cursor(ui->lw_mlib_genres, LW_CURSOR_POS_END);
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case '\n': {
+			switch (ui->active_win) {
+				case WIN_PL:
+					playlist_handle_return_key(ui, sock);
+					break;
+				case WIN_FB:
+					file_browser_handle_return_key(ui, sock, cur_dir);
+					break;
+				case WIN_LIB:
+					media_library_handle_return_key(ui, sock);
+					break;
+				default:
+					break;
+			}
+			break;
+		}
+	}
+}
+
 static int run_gmuc_ui(int color, char *host, char *password)
 {
 	int     res = EXIT_FAILURE;
@@ -925,178 +1101,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 								break;
 						}
 
-						switch (ch) {
-							case KEY_DOWN:
-								flushinp();
-								switch (ui.active_win) {
-									case WIN_PL:
-										listwidget_move_cursor(ui.lw_pl, 1);
-										break;
-									case WIN_FB:
-										listwidget_move_cursor(ui.lw_fb, 1);
-										break;
-									case WIN_LIB:
-										switch (ui_mlib_get_state(&ui)) {
-											case MLIB_STATE_RESULTS:
-												listwidget_move_cursor(ui.lw_mlib_search, 1);
-												break;
-											case MLIB_STATE_BROWSE_ARTISTS:
-												listwidget_move_cursor(ui.lw_mlib_artists, 1);
-												break;
-											case MLIB_STATE_BROWSE_GENRES:
-												listwidget_move_cursor(ui.lw_mlib_genres, 1);
-												break;
-										}
-										break;
-									default:
-										break;
-								}
-								break;
-							case KEY_UP:
-								flushinp();
-								switch (ui.active_win) {
-									case WIN_PL:
-										listwidget_move_cursor(ui.lw_pl, -1);
-										break;
-									case WIN_FB:
-										listwidget_move_cursor(ui.lw_fb, -1);
-										break;
-									case WIN_LIB:
-										switch (ui_mlib_get_state(&ui)) {
-											case MLIB_STATE_RESULTS:
-												listwidget_move_cursor(ui.lw_mlib_search, -1);
-												break;
-											case MLIB_STATE_BROWSE_ARTISTS:
-												listwidget_move_cursor(ui.lw_mlib_artists, -1);
-												break;
-											case MLIB_STATE_BROWSE_GENRES:
-												listwidget_move_cursor(ui.lw_mlib_genres, -1);
-												break;
-										}
-										break;
-									default:
-										break;
-								}
-								break;
-							case KEY_NPAGE:
-								flushinp();
-								switch (ui.active_win) {
-									case WIN_PL:
-										listwidget_move_cursor(ui.lw_pl, ui.lw_pl->win->height-2);
-										break;
-									case WIN_FB:
-										listwidget_move_cursor(ui.lw_fb, ui.lw_pl->win->height-2);
-										break;
-									case WIN_LIB:
-										switch (ui_mlib_get_state(&ui)) {
-											case MLIB_STATE_RESULTS:
-												listwidget_move_cursor(ui.lw_mlib_search, ui.lw_mlib_search->win->height-2);
-												break;
-											case MLIB_STATE_BROWSE_ARTISTS:
-												listwidget_move_cursor(ui.lw_mlib_artists, ui.lw_mlib_search->win->height-2);
-												break;
-											case MLIB_STATE_BROWSE_GENRES:
-												listwidget_move_cursor(ui.lw_mlib_genres, ui.lw_mlib_search->win->height-2);
-												break;
-										}
-										break;
-									default:
-										break;
-								}
-								break;
-							case KEY_PPAGE:
-								flushinp();
-								switch (ui.active_win) {
-									case WIN_PL:
-										listwidget_move_cursor(ui.lw_pl, -(ui.lw_pl->win->height-2));
-										break;
-									case WIN_FB:
-										listwidget_move_cursor(ui.lw_fb, -(ui.lw_pl->win->height-2));
-										break;
-									case WIN_LIB:
-										switch (ui_mlib_get_state(&ui)) {
-											case MLIB_STATE_RESULTS:
-												listwidget_move_cursor(ui.lw_mlib_search, -(ui.lw_mlib_search->win->height-2));
-												break;
-											case MLIB_STATE_BROWSE_ARTISTS:
-												listwidget_move_cursor(ui.lw_mlib_artists, -(ui.lw_mlib_search->win->height-2));
-												break;
-											case MLIB_STATE_BROWSE_GENRES:
-												listwidget_move_cursor(ui.lw_mlib_genres, -(ui.lw_mlib_search->win->height-2));
-												break;
-										}
-										break;
-									default:
-										break;
-								}
-								break;
-							case KEY_HOME:
-								switch (ui.active_win) {
-									case WIN_PL:
-										listwidget_set_cursor(ui.lw_pl, 0);
-										break;
-									case WIN_FB:
-										listwidget_set_cursor(ui.lw_fb, 0);
-										break;
-									case WIN_LIB:
-										switch (ui_mlib_get_state(&ui)) {
-											case MLIB_STATE_RESULTS:
-												listwidget_set_cursor(ui.lw_mlib_search, 0);
-												break;
-											case MLIB_STATE_BROWSE_ARTISTS:
-												listwidget_set_cursor(ui.lw_mlib_artists, 0);
-												break;
-											case MLIB_STATE_BROWSE_GENRES:
-												listwidget_set_cursor(ui.lw_mlib_genres, 0);
-												break;
-										}
-										break;
-									default:
-										break;
-								}
-								break;
-							case KEY_END:
-								switch (ui.active_win) {
-									case WIN_PL:
-										listwidget_set_cursor(ui.lw_pl, LW_CURSOR_POS_END);
-										break;
-									case WIN_FB:
-										listwidget_set_cursor(ui.lw_fb, LW_CURSOR_POS_END);
-										break;
-									case WIN_LIB:
-										switch (ui_mlib_get_state(&ui)) {
-											case MLIB_STATE_RESULTS:
-												listwidget_set_cursor(ui.lw_mlib_search, LW_CURSOR_POS_END);
-												break;
-											case MLIB_STATE_BROWSE_ARTISTS:
-												listwidget_set_cursor(ui.lw_mlib_artists, LW_CURSOR_POS_END);
-												break;
-											case MLIB_STATE_BROWSE_GENRES:
-												listwidget_set_cursor(ui.lw_mlib_genres, LW_CURSOR_POS_END);
-												break;
-										}
-										break;
-									default:
-										break;
-								}
-								break;
-							case '\n': {
-								switch (ui.active_win) {
-									case WIN_PL:
-										playlist_handle_return_key(&ui, sock);
-										break;
-									case WIN_FB:
-										file_browser_handle_return_key(&ui, sock, &cur_dir);
-										break;
-									case WIN_LIB:
-										media_library_handle_return_key(&ui, sock);
-										break;
-									default:
-										break;
-								}
-								break;
-							}
-						}
+						handle_key_press(ch, &ui, sock, &cur_dir);
 						ui_refresh_active_window(&ui);
 						ui_cursor_text_input(&ui, input);
 						window_refresh(ui.win_footer);
