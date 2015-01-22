@@ -746,6 +746,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 																	str = NULL;
 																}
 																free(params_esc);
+																listwidget_clear_all_rows(ui.lw_mlib_search);
 															}
 															free_str = 1;
 														}
