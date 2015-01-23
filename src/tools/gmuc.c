@@ -616,6 +616,156 @@ static void initiate_websocket_handshake(int sock, char *host)
 	}
 }
 
+/**
+ * Used to set the text of the command/search text input element
+ */
+static int set_input_text(
+	const char  *input_text,
+	wchar_t     *wchars,
+	unsigned int wchars_max_length,
+	char       **input
+)
+{
+	unsigned int len = strlen(input_text);
+	if (len < wchars_max_length) {
+		mbstowcs(wchars, "search ", len);
+		wchars[len] = L'\0';
+		*input = wchars_to_utf8_str_realloc(*input, wchars);
+	} else {
+		len = 0;
+	}
+	return len;
+}
+
+/**
+ * Returns pointer to string if input has been changed, or NULL otherwise
+ */
+static char *handle_function_based_on_key_press(
+	wint_t      ch,      /* Pressed key */
+	UI         *ui,
+	int         sock,
+	const char *cur_dir,
+	int         res,
+	State       state,
+	wchar_t    *wchars,
+	int        *cpos     /* Cursor position in input field */
+)
+{
+	char *input = NULL;
+	Function func = get_function_from_button(ui, res, ch);
+	switch (func) {
+		case FUNC_NEXT_WINDOW:
+			ui_active_win_next(ui);
+			break;
+		case FUNC_FB_ADD: {
+			char  cmd[256];
+			int   sel_row = listwidget_get_selection(ui->lw_fb);
+			char *ftype = listwidget_get_row_data(ui->lw_fb, sel_row, 0);
+			char *file = listwidget_get_row_data(ui->lw_fb, sel_row, 1);
+			char *type = strcmp(ftype, "[DIR]") == 0 ? "dir" : "file";
+			char *cur_dir_esc = json_string_escape_alloc(cur_dir);
+			char *file_esc = json_string_escape_alloc(file);
+			if (cur_dir_esc && file_esc) {
+				snprintf(
+					cmd,
+					255, 
+					"{\"cmd\":\"playlist_add\",\"path\":\"%s/%s\",\"type\":\"%s\"}",
+					cur_dir_esc,
+					file_esc,
+					type
+				);
+				websocket_send_str(sock, cmd, 1);
+			}
+			free(cur_dir_esc);
+			free(file_esc);
+			break;
+		}
+		case FUNC_PREVIOUS:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"prev\"}", 1);
+			}
+			break;
+		case FUNC_NEXT:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"next\"}", 1);
+			}
+			break;
+		case FUNC_STOP:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"stop\"}", 1);
+			}
+			break;
+		case FUNC_PAUSE:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"pause\"}", 1);
+			}
+			break;
+		case FUNC_PLAY:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"play\"}", 1);
+			}
+			break;
+		case FUNC_PLAY_PAUSE:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"play_pause\"}", 1);
+			}
+			break;
+		case FUNC_PLAYMODE:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_cycle\"}", 1);
+			}
+			break;
+		case FUNC_PL_CLEAR:
+			if (state == STATE_CONNECTION_ESTABLISHED) {
+				websocket_send_str(sock, "{\"cmd\":\"playlist_clear\"}", 1);
+			}
+			break;
+		case FUNC_PL_DEL_ITEM: {
+			char str[128];
+			snprintf(str, 127, "{\"cmd\":\"playlist_item_delete\",\"item\":%d}", 
+					 listwidget_get_selection(ui->lw_pl));
+			websocket_send_str(sock, str, 1);
+			break;
+		}
+		case FUNC_TEXT_INPUT:
+			ui_enable_text_input(ui, 1);
+			break;
+		case FUNC_SEARCH:
+			/* Set text to "search " */
+			*cpos = set_input_text("search ", wchars, 256, &input);
+			ui_mlib_set_state(ui, MLIB_STATE_RESULTS);
+			ui_enable_text_input(ui, 1);
+			break;
+		case FUNC_MLIB_REFRESH:
+			websocket_send_str(sock, "{\"cmd\":\"medialib_refresh\"}", 1);
+			break;
+		case FUNC_VOLUME_UP:
+			websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);
+			break;
+		case FUNC_VOLUME_DOWN:
+			websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":-1}", 1);
+			break;
+		case FUNC_TOGGLE_TIME:
+			ui_toggle_time_display(ui);
+			ui_draw_header(ui);
+			window_refresh(ui->win_header);
+			break;
+		case FUNC_BROWSE_ARTISTS:
+			ui_mlib_set_state(ui, MLIB_STATE_BROWSE_ARTISTS);
+			websocket_send_str(sock, "{\"cmd\":\"medialib_browse\",\"column\":\"artist\"}", 1);
+			break;
+		case FUNC_BROWSE_GENRES:
+			ui_mlib_set_state(ui, MLIB_STATE_BROWSE_GENRES);
+			websocket_send_str(sock, "{\"cmd\":\"medialib_browse\",\"column\":\"genre\"}", 1);
+			break;
+		case FUNC_QUIT:
+			quit = 1;
+		default:
+			break;
+	}
+	return input;
+}
+
 static void handle_key_press(wint_t ch, UI *ui, int sock, char **cur_dir)
 {
 	switch (ch) {
@@ -991,116 +1141,8 @@ static int run_gmuc_ui(int color, char *host, char *password)
 							}
 						}
 					} else if (res == OK || res == KEY_CODE_YES) {
-						Function func = get_function_from_button(&ui, res, ch);
-						switch (func) {
-							case FUNC_NEXT_WINDOW:
-								ui_active_win_next(&ui);
-								break;
-							case FUNC_FB_ADD: {
-								char  cmd[256];
-								int   sel_row = listwidget_get_selection(ui.lw_fb);
-								char *ftype = listwidget_get_row_data(ui.lw_fb, sel_row, 0);
-								char *file = listwidget_get_row_data(ui.lw_fb, sel_row, 1);
-								char *type = strcmp(ftype, "[DIR]") == 0 ? "dir" : "file";
-								char *cur_dir_esc = json_string_escape_alloc(cur_dir);
-								char *file_esc = json_string_escape_alloc(file);
-								if (cur_dir_esc && file_esc) {
-									snprintf(cmd, 255, 
-											 "{\"cmd\":\"playlist_add\",\"path\":\"%s/%s\",\"type\":\"%s\"}",
-											 cur_dir_esc, file_esc, type);
-									websocket_send_str(sock, cmd, 1);
-								}
-								free(cur_dir_esc);
-								free(file_esc);
-								break;
-							}
-							case FUNC_PREVIOUS:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"prev\"}", 1);
-								}
-								break;
-							case FUNC_NEXT:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"next\"}", 1);
-								}
-								break;
-							case FUNC_STOP:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"stop\"}", 1);
-								}
-								break;
-							case FUNC_PAUSE:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"pause\"}", 1);
-								}
-								break;
-							case FUNC_PLAY:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"play\"}", 1);
-								}
-								break;
-							case FUNC_PLAY_PAUSE:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"play_pause\"}", 1);
-								}
-								break;
-							case FUNC_PLAYMODE:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_cycle\"}", 1);
-								}
-								break;
-							case FUNC_PL_CLEAR:
-								if (state == STATE_CONNECTION_ESTABLISHED) {
-									websocket_send_str(sock, "{\"cmd\":\"playlist_clear\"}", 1);
-								}
-								break;
-							case FUNC_PL_DEL_ITEM: {
-								char str[128];
-								snprintf(str, 127, "{\"cmd\":\"playlist_item_delete\",\"item\":%d}", 
-										 listwidget_get_selection(ui.lw_pl));
-								websocket_send_str(sock, str, 1);
-								break;
-							}
-							case FUNC_TEXT_INPUT:
-								ui_enable_text_input(&ui, 1);
-								break;
-							case FUNC_SEARCH:
-								/* set text to "search " */
-								mbstowcs(wchars, "search ", 7);
-								cpos = 7;
-								wchars[cpos] = L'\0';
-								input = wchars_to_utf8_str_realloc(input, wchars);
-								ui_mlib_set_state(&ui, MLIB_STATE_RESULTS);
-								ui_enable_text_input(&ui, 1);
-								break;
-							case FUNC_MLIB_REFRESH:
-								websocket_send_str(sock, "{\"cmd\":\"medialib_refresh\"}", 1);
-								break;
-							case FUNC_VOLUME_UP:
-								websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);
-								break;
-							case FUNC_VOLUME_DOWN:
-								websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":-1}", 1);
-								break;
-							case FUNC_TOGGLE_TIME:
-								ui_toggle_time_display(&ui);
-								ui_draw_header(&ui);
-								window_refresh(ui.win_header);
-								break;
-							case FUNC_BROWSE_ARTISTS:
-								ui_mlib_set_state(&ui, MLIB_STATE_BROWSE_ARTISTS);
-								websocket_send_str(sock, "{\"cmd\":\"medialib_browse\",\"column\":\"artist\"}", 1);
-								break;
-							case FUNC_BROWSE_GENRES:
-								ui_mlib_set_state(&ui, MLIB_STATE_BROWSE_GENRES);
-								websocket_send_str(sock, "{\"cmd\":\"medialib_browse\",\"column\":\"genre\"}", 1);
-								break;
-							case FUNC_QUIT:
-								quit = 1;
-							default:
-								break;
-						}
-
+						char *in = handle_function_based_on_key_press(ch, &ui, sock, cur_dir, res, state, wchars, &cpos);
+						if (in) input = in;
 						handle_key_press(ch, &ui, sock, &cur_dir);
 						ui_refresh_active_window(&ui);
 						ui_cursor_text_input(&ui, input);
