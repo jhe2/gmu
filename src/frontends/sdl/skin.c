@@ -270,12 +270,24 @@ static int skin_init_offscreen(Skin *skin, SDL_Surface *target)
 	int initialized = 0;
 
 	if (!skin->buffer) { /* new surface */
-		SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, target->w, target->h, HW_COLOR_DEPTH, 0, 0, 0, 0);
+		SDL_Surface *tmp = SDL_CreateRGBSurface(
+			SDL_SWSURFACE,
+			target->w,
+			target->h,
+			target->format->BitsPerPixel,
+			0, 0, 0, 0
+		);
 		if (tmp) skin->buffer = SDL_DisplayFormat(tmp); else skin->buffer = NULL;
 		SDL_FreeSurface(tmp);
 		initialized = 1;
 	} else if (skin->buffer->w != target->w || skin->buffer->h != target->h) { /* reinit surface */
-		SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, target->w, target->h, HW_COLOR_DEPTH, 0, 0, 0, 0);
+		SDL_Surface *tmp = SDL_CreateRGBSurface(
+			SDL_SWSURFACE,
+			target->w,
+			target->h,
+			target->format->BitsPerPixel,
+			0, 0, 0, 0
+		);
 		SDL_FreeSurface(skin->buffer);
 		if (tmp) skin->buffer = SDL_DisplayFormat(tmp); else skin->buffer = NULL;
 		SDL_FreeSurface(tmp);
