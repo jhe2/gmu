@@ -107,6 +107,7 @@ static GmuFrontend gf = {
 	init,
 	shut_down,
 	NULL,
+	NULL,
 	NULL
 };
 
