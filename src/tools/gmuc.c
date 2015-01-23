@@ -149,8 +149,8 @@ static int parse_input_alloc(char *input, Command *cmd, char **params)
 
 static char *wchars_to_utf8_str_realloc(char *input, wchar_t *wchars)
 {
-	int len = wcstombs(NULL, wchars, 0);
-	if (len >= 0) {
+	size_t len = wcstombs(NULL, wchars, 0);
+	if (len != (size_t) -1) {
 		input = realloc(input, len + 1);
 		if (input) {
 			if (wcstombs(input, wchars, len) != len) {
@@ -521,7 +521,7 @@ static void gmuc_help(char *str)
 	exit(0);
 }
 
-static Function get_function_from_button(UI *ui, int res, wchar_t ch)
+static Function get_function_from_button(UI *ui, int res, wint_t ch)
 {
 	int      i;
 	Function func = FUNC_NONE;
