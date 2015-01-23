@@ -1023,12 +1023,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 	ssize_t size;
 	char   *buffer = malloc(BUF);
 
-	/* Setup SIGWINCH */
-	struct sigaction act;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = SA_RESTART;
-	act.sa_handler = sig_handler_sigwinch;
-	sigaction(SIGWINCH, &act, NULL);
+	assign_signal_handler(SIGWINCH, sig_handler_sigwinch);
 
 	ui_init(&ui, color);
 	ui_draw(&ui);
