@@ -254,11 +254,13 @@ void ui_draw_header(UI *ui)
 		if (ui->color) wattroff(ui->win_header->win, COLOR_PAIR(1));
 		if (ui->color) wbkgdset(ui->win_header->win, COLOR_PAIR(4));
 		wclrtoeol(ui->win_header->win);
-		wprintw(ui->win_header->win, " %s %s%s%s",
-		        ui->status != NULL ? ui->status : "  ", 
-		        ui->ti_artist != NULL ? ui->ti_artist : "", 
-		        ui->ti_artist && ui->ti_artist[0] != '\0' ? " - " : "",
-		        ui->ti_title != NULL ? ui->ti_title : "");
+		wprintw(
+			ui->win_header->win, " %s %s%s%s",
+			ui->status,
+			ui->ti_artist,
+			ui->ti_artist[0] != '\0' ? " - " : "",
+			ui->ti_title
+		);
 		t = ui->time_display_remaining ? ui->total_time - ui->pb_time / 1000 : ui->pb_time / 1000;
 		min = t / 60;
 		sec = t - min * 60;
