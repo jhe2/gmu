@@ -50,7 +50,7 @@
 
 typedef enum { STATE_WEBSOCKET_HANDSHAKE, STATE_CONNECTION_ESTABLISHED, STATE_WEBSOCKET_HANDSHAKE_FAILED } State;
 
-static int resized = 0;
+static volatile sig_atomic_t resized = 0;
 
 static void sig_handler_sigwinch(int sig)
 {
