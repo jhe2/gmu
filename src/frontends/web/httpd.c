@@ -271,7 +271,7 @@ int connection_file_read_chunk(Connection *c)
 			/* read CHUNK_SIZE bytes from file */
 			fread(blob, size, 1, c->local_file);
 			/* write bytes to socket */
-			net_send_block(c->fd, (unsigned char *)blob, size);
+			net_send_block(c->fd, (unsigned char *)blob, size); /* TODO: Check return value, close connection on failure! */
 			/* decrement remaining bytes counter */
 			c->remaining_bytes_to_send -= size;
 			c->connection_time = time(NULL);
