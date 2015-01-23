@@ -161,8 +161,9 @@ int input_config_init(char *inputconf_file)
 
 int input_config_get_val(char *button_name, ActivateMethod *am)
 {
-	int w, result = 0;
-	int bnl = strlen(button_name);
+	int          w;
+	int          result = 0;
+	unsigned int bnl = strlen(button_name);
 
 	for (w = 0; w < number_of_buttons; w++) {
 		if (strlen(hw_button_name[w]) == bnl) {
