@@ -67,6 +67,7 @@ static GmuMedialib     gm;
 
 static void init_sdl(void)
 {
+	setenv("SDL_VIDEO_ALLOW_SCREENSAVER", "1", 0);
 #ifndef CORE_WITH_SDL_VIDEO
 	if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER) < 0) {
 #else
