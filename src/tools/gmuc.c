@@ -508,7 +508,7 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 	return network_error;
 }
 
-static int quit = 0;
+static volatile sig_atomic_t quit = 0;
 
 static void sig_handler(int sig)
 {
