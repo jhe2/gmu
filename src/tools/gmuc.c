@@ -602,12 +602,13 @@ static void media_library_handle_return_key(UI *ui, int sock)
 static void initiate_websocket_handshake(int sock, char *host)
 {
 	char        str2[1024];
-	char *key, *str = "GET /gmu HTTP/1.1\r\n"
-				"Host: %s\r\n"
-				"Upgrade: websocket\r\n"
-				"Connection: Upgrade\r\n"
-				"Sec-WebSocket-Key: %s\r\n"
-				"Sec-WebSocket-Version: 13\r\n\r\n";
+	char       *key;
+	const char *str = "GET /gmu HTTP/1.1\r\n"
+	                  "Host: %s\r\n"
+	                  "Upgrade: websocket\r\n"
+	                  "Connection: Upgrade\r\n"
+	                  "Sec-WebSocket-Key: %s\r\n"
+	                  "Sec-WebSocket-Version: 13\r\n\r\n";
 	key = websocket_client_generate_sec_websocket_key_alloc();
 	if (key) {
 		snprintf(str2, 1023, str, host, key);
