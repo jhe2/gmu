@@ -80,8 +80,8 @@ static void metadata_callback(const FLAC__StreamDecoder  *decoder,
                               const FLAC__StreamMetadata *metadata,
                               void                       *client_data)
 {
-	TrackInfo *ti = (TrackInfo *)client_data;
-	int        i;
+	TrackInfo   *ti = (TrackInfo *)client_data;
+	unsigned int i;
 
 	switch (metadata->type) {
 		case FLAC__METADATA_TYPE_STREAMINFO:
@@ -196,7 +196,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, int max_size)
+static int decode_data(char *target, unsigned int max_size)
 {
 	if (seek_to_sample) {
 		if (seek_to_sample < 0) seek_to_sample = 0;

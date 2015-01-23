@@ -32,7 +32,7 @@ static const char *get_name(void)
 	return "ModPlug module decoder v0.8";
 }
 
-static int decode_data(char *stream, int len)
+static int decode_data(char *stream, unsigned int len)
 {
 	return ModPlug_Read(mpf, stream, len);
 }

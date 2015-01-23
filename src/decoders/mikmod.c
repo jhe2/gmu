@@ -110,7 +110,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, int max_size)
+static int decode_data(char *target, unsigned int max_size)
 {
 	int mlen = VC_WriteBytes((SBYTE*)target, BUF_SIZE);
 	if (!Player_Active()) mlen = 0;

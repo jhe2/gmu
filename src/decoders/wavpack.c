@@ -97,7 +97,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, int max_size)
+static int decode_data(char *target, unsigned int max_size)
 {
 	int      bps, channels;
 	uint32_t samples_unpacked = 0;

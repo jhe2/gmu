@@ -39,7 +39,7 @@ static const char *get_name(void)
 	return "mpg123 MPEG decoder v1.0";
 }
 
-static int decode_data(char *target, int max_size)
+static int decode_data(char *target, unsigned int max_size)
 {
 	int                     ret = 1;
 	struct mpg123_frameinfo mi;

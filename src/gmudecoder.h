@@ -60,7 +60,7 @@ typedef struct _GmuDecoder {
 	int          (*close_file)(void);
 	/* Decodes up to max_size bytes of audio data and writes it to target,
 	 * returns actual size */
-	int          (*decode_data)(char *target, int max_size);
+	int          (*decode_data)(char *target, unsigned int max_size);
 	/* Seeks in the audio stream, can be NULL if seeking is not supported.
 	 * Returns TRUE on success. "second" is the second in the stream to seek to
 	 * from the beginning, that is second=0 would be the beginning of the track */

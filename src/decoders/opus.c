@@ -130,7 +130,7 @@ static void read_tags(int li, struct _trackinfo_mapping *tim)
 	}
 }
 
-static int decode_data(char *target, int max_size)
+static int decode_data(char *target, unsigned int max_size)
 {
 	int        res = 0;
 	static int prev_li = -1;
