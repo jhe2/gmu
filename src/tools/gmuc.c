@@ -43,6 +43,7 @@
 #include "listwidget.h"
 #include "ui.h"
 #include "../nethelper.h"
+#include "../util.h"
 
 #define BUF 1024
 #define PORT 4680
@@ -1218,9 +1219,9 @@ int main(int argc, char **argv)
 	char      *password, *host;
 	char       config_file_path[256] = "", *homedir;
 
-	signal(SIGINT, sig_handler);
-	signal(SIGTERM, sig_handler);
-	signal(SIGPIPE, SIG_IGN);
+	assign_signal_handler(SIGINT, sig_handler);
+	assign_signal_handler(SIGTERM, sig_handler);
+	assign_signal_handler(SIGPIPE, SIG_IGN);
 
 	cfg_init_config_file_struct(&config);
 	cfg_add_key(&config, "Host", "127.0.0.1");
