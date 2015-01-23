@@ -943,6 +943,75 @@ static void handle_key_press(wint_t ch, UI *ui, int sock, char **cur_dir)
 	}
 }
 
+static void execute_command(int sock, Command cmd, char *params, UI *ui)
+{
+	char *str = NULL;
+	int   free_str = 0;
+	switch (cmd) {
+		case PLAY:
+			str = "{\"cmd\":\"play\"}";
+			break;
+		case PAUSE:
+			str = "{\"cmd\":\"pause\"}";
+			break;
+		case NEXT:
+			str = "{\"cmd\":\"next\"}";
+			break;
+		case PREVIOUS:
+			str = "{\"cmd\":\"prev\"}";
+			break;
+		case STOP:
+			str = "{\"cmd\":\"stop\"}";
+			break;
+		case FILES:
+			str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
+			break;
+		case ADD:
+			str = malloc(320);
+			if (str) {
+				char *params_esc = json_string_escape_alloc(params);
+				if (params_esc) {
+					if (snprintf(str, 320, "{\"cmd\":\"playlist_add\",\"path\":\"%s\",\"type\":\"file\"}", params_esc) == 320) {
+						free(str);
+						str = NULL;
+					}
+					free(params_esc);
+				} else {
+					free(str);
+					str = NULL;
+				}
+				free_str = 1;
+			}
+			break;
+		case SEARCH:
+			str = malloc(320);
+			if (str) {
+				char *params_esc = json_string_escape_alloc(params);
+				if (params_esc) {
+					if (snprintf(str, 320, "{\"cmd\":\"medialib_search\",\"type\":\"0\",\"str\":\"%s\"}", params_esc) == 320) {
+						free(str);
+						str = NULL;
+					}
+					free(params_esc);
+					listwidget_clear_all_rows(ui->lw_mlib_search);
+				} else {
+					free(str);
+					str = NULL;
+				}
+				free_str = 1;
+			}
+			ui_active_win_set(ui, WIN_LIB);
+			break;
+		case RAW:
+			str = params;
+			break;
+		default:
+			break;
+	}
+	if (str) websocket_send_str(sock, str, 1);
+	if (free_str) free(str);
+}
+
 static int run_gmuc_ui(int color, char *host, char *password)
 {
 	int     res = EXIT_FAILURE;
@@ -1028,71 +1097,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 											cpos = 0;
 											parse_input_alloc(input, &cmd, &params);
 											if (state == STATE_CONNECTION_ESTABLISHED) {
-												char *str = NULL;
-												int   free_str = 0;
-												switch (cmd) {
-													case PLAY:
-														str = "{\"cmd\":\"play\"}";
-														break;
-													case PAUSE:
-														str = "{\"cmd\":\"pause\"}";
-														break;
-													case NEXT:
-														str = "{\"cmd\":\"next\"}";
-														break;
-													case PREVIOUS:
-														str = "{\"cmd\":\"prev\"}";
-														break;
-													case STOP:
-														str = "{\"cmd\":\"stop\"}";
-														break;
-													case FILES:
-														str = "{\"cmd\":\"dir_read\", \"dir\": \"/\"}";
-														break;
-													case ADD:
-														str = malloc(320);
-														if (str) {
-															char *params_esc = json_string_escape_alloc(params);
-															if (params_esc) {
-																if (snprintf(str, 320, "{\"cmd\":\"playlist_add\",\"path\":\"%s\",\"type\":\"file\"}", params_esc) == 320) {
-																	free(str);
-																	str = NULL;
-																}
-																free(params_esc);
-															} else {
-																free(str);
-																str = NULL;
-															}
-															free_str = 1;
-														}
-														break;
-													case SEARCH:
-														str = malloc(320);
-														if (str) {
-															char *params_esc = json_string_escape_alloc(params);
-															if (params_esc) {
-																if (snprintf(str, 320, "{\"cmd\":\"medialib_search\",\"type\":\"0\",\"str\":\"%s\"}", params_esc) == 320) {
-																	free(str);
-																	str = NULL;
-																}
-																free(params_esc);
-																listwidget_clear_all_rows(ui.lw_mlib_search);
-															} else {
-																free(str);
-																str = NULL;
-															}
-															free_str = 1;
-														}
-														ui_active_win_set(&ui, WIN_LIB);
-														break;
-													case RAW:
-														str = params;
-														break;
-													default:
-														break;
-												}
-												if (str) websocket_send_str(sock, str, 1);
-												if (free_str) free(str);
+												execute_command(sock, cmd, params, &ui);
 											} else {
 												wdprintf(V_INFO, "gmuc", "Connection not established. Cannot send command.\n");
 											}
