@@ -23,10 +23,6 @@
 #include <linux/fb.h>
 #include <unistd.h>
 
-#define HW_COLOR_DEPTH 16
-#define HW_SCREEN_WIDTH 320
-#define HW_SCREEN_HEIGHT 240
-
 #define SAMPLE_BUFFER_SIZE 4096
 
 #define MAX_COVER_IMAGE_PIXELS 400000
