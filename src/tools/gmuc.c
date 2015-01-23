@@ -1059,6 +1059,9 @@ static int run_gmuc_ui(int color, char *host, char *password)
 																	str = NULL;
 																}
 																free(params_esc);
+															} else {
+																free(str);
+																str = NULL;
 															}
 															free_str = 1;
 														}
