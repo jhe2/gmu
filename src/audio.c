@@ -33,7 +33,7 @@ static int           have_samplerate, have_channels;
 static int           device_open;
 static int           paused, done;
 static char          buf[65536];
-static int           volume, volume_internal, volume_fade_percent = 100;
+static unsigned int  volume, volume_internal, volume_fade_percent = 100;
 static int           spectrum_reg = 0;
 
 int audio_fill_buffer(char *data, int size)
