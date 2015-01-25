@@ -131,7 +131,7 @@ static int skip_variable(ImageSize *is)
 	return res;
 }
 
-static void get_image_dimensions(ImageSize *is, int *width, int *height)
+static void get_image_dimensions(ImageSize *is, unsigned int *width, unsigned int *height)
 {
 	unsigned int length;
 	unsigned int image_height, image_width;
@@ -159,7 +159,7 @@ static void get_image_dimensions(ImageSize *is, int *width, int *height)
 	}
 }
 
-static int get_jpeg_image_dimensions(ImageSize *is, int *width, int *height)
+static int get_jpeg_image_dimensions(ImageSize *is, unsigned int *width, unsigned int *height)
 {
 	int marker = -1, jpeg_ok = 0;
 
@@ -202,7 +202,7 @@ static int get_jpeg_image_dimensions(ImageSize *is, int *width, int *height)
 	return jpeg_ok;
 }
 
-int jpeg_get_dimensions_from_file(ImageSize *is, char *filename, int *width, int *height)
+int jpeg_get_dimensions_from_file(ImageSize *is, char *filename, unsigned int *width, unsigned int *height)
 {
 	int res = 0;
 	is->file = 1;
@@ -214,7 +214,7 @@ int jpeg_get_dimensions_from_file(ImageSize *is, char *filename, int *width, int
 	return res;
 }
 
-int jpeg_get_dimensions_from_memory(ImageSize *is, char *mem, int memsize, int *width, int *height)
+int jpeg_get_dimensions_from_memory(ImageSize *is, char *mem, unsigned int memsize, unsigned int *width, unsigned int *height)
 {
 	int res = 0;
 	is->memptr = mem;

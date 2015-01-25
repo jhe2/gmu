@@ -71,7 +71,7 @@ static int calculate_int(unsigned char *four_bytes)
 	return res;
 }
 
-static int get_bmp_image_dimensions(ImageSize *is, int *width, int *height)
+static int get_bmp_image_dimensions(ImageSize *is, unsigned int *width, unsigned int *height)
 {
 	int   i, header_ok = 1;
 	unsigned char size[4];
@@ -94,7 +94,7 @@ static int get_bmp_image_dimensions(ImageSize *is, int *width, int *height)
 	return header_ok;
 }
 
-int bmp_get_dimensions_from_file(ImageSize *is, char *filename, int *width, int *height)
+int bmp_get_dimensions_from_file(ImageSize *is, char *filename, unsigned int *width, unsigned int *height)
 {
 	int res = 0;
 	is->file = 1;
@@ -106,7 +106,7 @@ int bmp_get_dimensions_from_file(ImageSize *is, char *filename, int *width, int 
 	return res;
 }
 
-int bmp_get_dimensions_from_memory(ImageSize *is, char *mem, int memsize, int *width, int *height)
+int bmp_get_dimensions_from_memory(ImageSize *is, char *mem, unsigned int memsize, unsigned int *width, unsigned int *height)
 {
 	int res = 0;
 	is->memptr = mem;

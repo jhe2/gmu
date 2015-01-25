@@ -18,6 +18,6 @@
 #ifndef _PNG_H
 #define _PNG_H
 /* functions return 1 if a valid png header was found, otherwise 0 */
-int png_get_dimensions_from_file(ImageSize *is, char *filename, int *width, int *height);
-int png_get_dimensions_from_memory(ImageSize *is, char *mem, int memsize, int *width, int *height);
+int png_get_dimensions_from_file(ImageSize *is, char *filename, unsigned int *width, unsigned int *height);
+int png_get_dimensions_from_memory(ImageSize *is, char *mem, unsigned int memsize, unsigned int *width, unsigned int *height);
 #endif

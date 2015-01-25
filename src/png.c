@@ -43,7 +43,7 @@ static int check_png_header(ImageSize *is)
 	return res;
 }
 
-static int get_png_image_dimensions(ImageSize *is, int *width, int *height)
+static int get_png_image_dimensions(ImageSize *is, unsigned int *width, unsigned int *height)
 {
 	int   i, header_ok = 1;
 	const unsigned char ihdr_header[] = { 73, 72, 68, 82 };
@@ -74,7 +74,7 @@ static int get_png_image_dimensions(ImageSize *is, int *width, int *height)
 	return header_ok;
 }
 
-int png_get_dimensions_from_file(ImageSize *is, char *filename, int *width, int *height)
+int png_get_dimensions_from_file(ImageSize *is, char *filename, unsigned int *width, unsigned int *height)
 {
 	int res = 0;
 	is->file = 1;
@@ -86,7 +86,7 @@ int png_get_dimensions_from_file(ImageSize *is, char *filename, int *width, int 
 	return res;
 }
 
-int png_get_dimensions_from_memory(ImageSize *is, char *mem, int memsize, int *width, int *height)
+int png_get_dimensions_from_memory(ImageSize *is, char *mem, unsigned int memsize, unsigned int *width, unsigned int *height)
 {
 	int res = 0;
 	is->memptr = mem;
