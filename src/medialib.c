@@ -273,16 +273,16 @@ int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, const char *
 	switch (type) {
 		case GMU_MLIB_ANY:
 		default:
-			q = "SELECT * FROM track WHERE file_missing = 0 AND (title LIKE ?1 OR artist LIKE ?1 OR album LIKE ?1)";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND (title LIKE ?1 OR artist LIKE ?1 OR album LIKE ?1) LIMIT 200";
 			break;
 		case GMU_MLIB_ARTIST:
-			q = "SELECT * FROM track WHERE file_missing = 0 AND artist LIKE ?1";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND artist LIKE ?1 LIMIT 200";
 			break;
 		case GMU_MLIB_ALBUM:
-			q = "SELECT * FROM track WHERE file_missing = 0 AND album LIKE ?1";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND album LIKE ?1 LIMIT 200";
 			break;
 		case GMU_MLIB_TITLE:
-			q = "SELECT * FROM track WHERE file_missing = 0 AND title LIKE ?1";
+			q = "SELECT * FROM track WHERE file_missing = 0 AND title LIKE ?1 LIMIT 200";
 			break;
 	}
 	len = str ? strlen(str) : 0;
