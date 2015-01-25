@@ -26,8 +26,6 @@
 
 #define SAMPLE_BUFFER_SIZE 4096
 
-#define MAX_COVER_IMAGE_PIXELS 400000
-
 typedef enum GP2XModel { MODEL_UNKNOWN, MODEL_F100, MODEL_F200, MODEL_WIZ } GP2XModel;
 
 void          gp2x_set_cpu_clock(unsigned int MHz);

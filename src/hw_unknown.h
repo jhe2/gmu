@@ -19,8 +19,6 @@
 
 #define SAMPLE_BUFFER_SIZE 4096
 
-#define MAX_COVER_IMAGE_PIXELS 400000
-
 #define SHOW_MOUSE_CURSOR 1
 
 int           hw_open_mixer(int mixer_channel);

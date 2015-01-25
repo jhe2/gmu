@@ -25,8 +25,6 @@
 
 #define SAMPLE_BUFFER_SIZE 4096
 
-#define MAX_COVER_IMAGE_PIXELS 400000
-
 int         hw_open_mixer(int mixer_channel);
 void        hw_close_mixer(void);
 void        hw_set_volume(int volume);
