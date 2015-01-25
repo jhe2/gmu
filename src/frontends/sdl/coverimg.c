@@ -25,21 +25,29 @@
 #include "../../png.h"
 #include "../../jpeg.h"
 #include "../../bmp.h"
+#include "../../wejpconfig.h"
+#include "../../core.h"
 #include "debug.h"
-#include FILE_HW_H /* MAX_COVER_IMAGE_PIXELS */
 
 static int cover_image_thread(void *udata)
 {
 #ifndef SDLFE_WITHOUT_SDL_GFX
 	CoverImage  *ci = (CoverImage *)udata;
 	ImageSize    is;
-	int          width = 0, height = 0;
+	unsigned int width = 0, height = 0;
 
 	wdprintf(V_DEBUG, "coverimg", "Loader thread.\n");
 	ci->thread_running = 1;
 	while (ci->thread_running) {
 		if (ci->loading) {
 			SDL_Surface *cover_fullsize = NULL;
+			unsigned int max_cover_image_pixels = 0;
+			ConfigFile  *config = gmu_core_get_config();
+			char        *tmp;
+			gmu_core_config_acquire_lock();
+			tmp = cfg_get_key_value(*config, "SDL.MaxCoverImageKPixels");
+			if (tmp) max_cover_image_pixels = atoi(tmp) * 1000;
+			gmu_core_config_release_lock();
 
 			while (SDL_mutexP(ci->mutex1) == -1) SDL_Delay(50);
 			if (ci->filename[0] != '\0')
@@ -58,7 +66,7 @@ static int cover_image_thread(void *udata)
 					if (!jpeg_get_dimensions_from_file(&is, fn, &width, &height))
 						bmp_get_dimensions_from_file(&is, fn, &width, &height);
 				wdprintf(V_DEBUG, "coverimg", "image size = %d x %d\n", width, height);
-				if (width * height < MAX_COVER_IMAGE_PIXELS && width > 0 && height > 0) {
+				if (width * height < max_cover_image_pixels && width > 0 && height > 0) {
 					cover_fullsize = IMG_Load(fn);
 					wdprintf(V_DEBUG, "coverimg", "Cover image \"%s\" loaded. Now resizing...\n", fn);
 				} else {
@@ -80,7 +88,7 @@ static int cover_image_thread(void *udata)
 						break;
 				}
 				wdprintf(V_DEBUG, "coverimg", "image dimensions: %d x %d\n", width, height);
-				if (width * height < MAX_COVER_IMAGE_PIXELS && width > 0 && height > 0)
+				if (width * height < max_cover_image_pixels && width > 0 && height > 0)
 					cover_fullsize = IMG_Load_RW(SDL_RWFromConstMem(ci->image_data, ci->image_data_size), 1);
 				else
 					wdprintf(V_WARNING, "coverimg", "Cover image too large or bad image data.\n");

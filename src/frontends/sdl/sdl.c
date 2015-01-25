@@ -1298,6 +1298,8 @@ static void *start_player(void *arg)
 	cfg_add_key_if_not_present(config, "SDL.SmallCoverArtworkAlignment", "right");
 	cfg_key_add_presets(config, "SDL.SmallCoverArtworkAlignment", "left", "right", NULL);
 	cfg_add_key_if_not_present(config, "SDL.TimeDisplay", "elapsed");
+	cfg_add_key_if_not_present(config, "SDL.MaxCoverImageKPixels", "400");
+	cfg_key_add_presets(config, "SDL.MaxCoverImageKPixels", "400", "800", "2000", "4000", "16000", NULL);
 	gmu_core_config_release_lock();
 
 	if (start) {
