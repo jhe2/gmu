@@ -828,7 +828,11 @@ static void print_cmd_help(const char *prog_name)
 	printf("You can add as many files as you like.\n\n");
 }
 
-static int init_user_config_dir(char *user_config_dir, const char *sys_config_dir, const char *config_file)
+static int init_user_config_dir(
+	char       *user_config_dir,
+	const char *sys_config_dir,
+	const char *config_file
+)
 {
 	int   result = 0;
 	char *home = getenv("HOME");
@@ -844,7 +848,7 @@ static int init_user_config_dir(char *user_config_dir, const char *sys_config_di
 		wdprintf(V_DEBUG, "gmu", "User config directory: %s\n", user_config_dir);
 		mkdir(user_config_dir, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 
-		/* Copy all missing config files from system config dirto home config dir */
+		/* Copy all missing config files from system config dir to home config dir */
 		if (config_file[0] == '/') {
 			filename = strrchr(config_file, '/');
 			filename++;
@@ -879,7 +883,7 @@ static int init_user_config_dir(char *user_config_dir, const char *sys_config_di
 					snprintf(source, 383, "%s/%s", sys_config_dir, file);
 					if (!file_copy(target, source)) result = 0;
 				}
-			}				
+			}
 		}
 		cfg_free_config_file_struct(&cf);
 	} else {
