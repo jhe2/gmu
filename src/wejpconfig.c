@@ -205,7 +205,6 @@ int cfg_read_config_file(ConfigFile *cf, const char *filename)
 		}
 		fclose(file);
 	} else {
-		/*printf("config: Cannot open config file: %s\n", filename);*/
 		result = CFG_ERROR;
 	}
 	return result;
@@ -230,14 +229,12 @@ int cfg_write_config_file(ConfigFile *cf, const char *filename)
 			snprintf(buffer, MAX_LINE_LENGTH, "%s=%s\n", cf->key[i], cf->value[i]);
 			if (!fwrite(buffer, strlen(buffer) * sizeof(char), 1, file)) {
 				result = CFG_ERROR;
-				printf("config: ERROR: Failed writing configuration file.\n");
 				break;
 			}
 			i++;
 		}
 		fclose(file);
 	} else {
-		printf("config: Failed opening %s for write access.\n", filename);
 		result = CFG_ERROR;
 	}
 	return result;
