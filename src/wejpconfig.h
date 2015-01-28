@@ -36,6 +36,7 @@ typedef struct
 	char  *value[MAXKEYS];
 	char **presets[MAXKEYS];
 	int    lastkey;
+	char  *file;
 } ConfigFile;
 
 void   cfg_init_config_file_struct(ConfigFile *cf);

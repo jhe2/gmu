@@ -3,7 +3,7 @@
  *
  * File: wejpconfig.c
  *
- * Copyright (c) 2003-2010 Johannes Heimansberg
+ * Copyright (c) 2003-2015 Johannes Heimansberg
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -47,6 +47,7 @@ void cfg_init_config_file_struct(ConfigFile *cf)
 {
 	int i;
 	cf->lastkey = 0;
+	cf->file = NULL;
 	for (i = 0; i < MAXKEYS; i++)
 		cf->presets[i] = NULL;
 }
@@ -133,9 +134,12 @@ void cfg_free_config_file_struct(ConfigFile *cf)
 		}
 	}
 	cf->lastkey = -1;
+	free(cf->file);
 }
 
-/* Loads a config file from disk */
+/**
+ * Loads a config file from disk.
+ */
 int cfg_read_config_file(ConfigFile *cf, const char *filename)
 {
 	int   result = CFG_SUCCESS;
@@ -147,6 +151,11 @@ int cfg_read_config_file(ConfigFile *cf, const char *filename)
 	/* parse config file and read keys+key values */
 	file = fopen(filename, "r");
 	if (file) {
+		size_t lf = strlen(filename);
+		if (lf > 0) cf->file = malloc(lf+1);
+		if (cf->file) {
+			memcpy(cf->file, filename, lf+1);
+		}
 		while(!feof(file)) {
 			ch = fgetc(file);
 			/* Skip blanks... */
@@ -202,14 +211,20 @@ int cfg_read_config_file(ConfigFile *cf, const char *filename)
 	return result;
 }
 
-/* Saves the configuration to file */
+/**
+ * Saves the configuration to file.
+ * If 'filename' is NULL, the function tries to save to the same file
+ * that was used to load the configuration. Obviously, this won't work
+ * if the configuration has not been loaded from file.
+ */
 int cfg_write_config_file(ConfigFile *cf, const char *filename)
 {
-	FILE *file;
+	FILE *file = NULL;
 	int   i = 0, result = CFG_SUCCESS;
 	char  buffer[MAX_LINE_LENGTH];
 
-	file = fopen(filename, "w");
+	if (filename || cf->file)
+		file = fopen(filename ? filename : cf->file, "w");
 	if (file) {
 		while (i < cf->lastkey) {
 			snprintf(buffer, MAX_LINE_LENGTH, "%s=%s\n", cf->key[i], cf->value[i]);

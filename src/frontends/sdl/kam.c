@@ -76,7 +76,7 @@ void key_action_mapping_init(KeyActionMapping *kam)
 	kam[SETUP_SELECT].scope =                SETUP;
 	kam[SETUP_SELECT].description =               "Select item";
 	kam[SETUP_CLOSE].scope =                 SETUP;
-	kam[SETUP_CLOSE].description =                "Close";
+	kam[SETUP_CLOSE].description =                "Save&Close";
 	kam[SETUP_FB_SELECT].scope =             SETUP_FILE_BROWSER;
 	kam[SETUP_FB_SELECT].description =            "Select item";
 	kam[SETUP_FB_CHDIR].scope =              SETUP_FILE_BROWSER;
