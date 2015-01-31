@@ -48,7 +48,8 @@ static pthread_mutex_t shut_down_mutex;
  * the decoder thread stops as soon as possible. Use 
  * file_player_stop_playback() to stop playback.
  */
-static PB_Status item_status;
+static PB_Status         item_status;
+static pthread_mutex_t   item_status_mutex;
 
 /**
  * The requested playback status. This changes when the user requests
@@ -60,10 +61,28 @@ static PB_Status item_status;
  */
 static PB_Status_Request user_pb_request = PBRQ_NONE;
 
-static char      *file = NULL;
-static TrackInfo *ti;
+static char             *file = NULL;
+static pthread_mutex_t   file_mutex;
 
-static pthread_mutex_t mutex;
+static TrackInfo        *ti;
+
+static pthread_mutex_t   mutex;
+
+static void set_item_status(PB_Status status)
+{
+	pthread_mutex_lock(&item_status_mutex);
+	item_status = status;
+	pthread_mutex_unlock(&item_status_mutex);
+}
+
+static PB_Status get_item_status(void)
+{
+	PB_Status status;
+	pthread_mutex_lock(&item_status_mutex);
+	status = item_status;
+	pthread_mutex_unlock(&item_status_mutex);
+	return status;
+}
 
 int file_player_check_shutdown(void)
 {
@@ -91,9 +110,10 @@ int file_player_playback_get_time(void)
  */
 PB_Status file_player_get_item_status(void)
 {
-	return item_status == PLAYING ?
+	PB_Status item_status_temp = get_item_status();
+	return item_status_temp == PLAYING ?
 		(user_pb_request != PBRQ_PAUSE ? PLAYING : PAUSED) :
-		item_status;
+		item_status_temp;
 }
 
 static void *decode_audio_thread(void *udata);
@@ -102,7 +122,7 @@ static pthread_t thread;
 void file_player_shutdown(void)
 {
 	wdprintf(V_DEBUG, "fileplayer", "Initiating shutdown.\n");
-	item_status = STOPPED;
+	set_item_status(STOPPED);
 	pthread_mutex_lock(&shut_down_mutex);
 	file_player_shut_down = 1;
 	pthread_mutex_unlock(&shut_down_mutex);
@@ -110,8 +130,10 @@ void file_player_shutdown(void)
 	file_player_start_playback(); /* Release waiting lock in thread */
 	pthread_join(thread, NULL);
 	if (file) free(file);
-	pthread_mutex_destroy(&mutex);
+	pthread_mutex_destroy(&item_status_mutex);
 	pthread_mutex_destroy(&shut_down_mutex);
+	pthread_mutex_destroy(&file_mutex);
+	pthread_mutex_destroy(&mutex);
 	wdprintf(V_DEBUG, "fileplayer", "Shutdown complete.\n");
 }
 
@@ -121,6 +143,7 @@ void file_player_set_filename(char *filename)
 {
 	if (!locked) pthread_mutex_lock(&mutex);
 	locked = 1;
+	pthread_mutex_lock(&file_mutex);
 	if (filename) {
 		int len = strlen(filename);
 		if (len > 0) {
@@ -128,6 +151,7 @@ void file_player_set_filename(char *filename)
 			if (file) memcpy(file, filename, len+1);
 		}
 	}
+	pthread_mutex_unlock(&file_mutex);
 }
 
 void file_player_start_playback(void)
@@ -139,7 +163,9 @@ void file_player_start_playback(void)
 int file_player_init(TrackInfo *ti_ref)
 {
 	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_init(&file_mutex, NULL);
 	pthread_mutex_init(&shut_down_mutex, NULL);
+	pthread_mutex_init(&item_status_mutex, NULL);
 	file_player_set_filename(NULL);
 	ti = ti_ref;
 	pthread_create(&thread, NULL, decode_audio_thread, NULL);
@@ -148,7 +174,7 @@ int file_player_init(TrackInfo *ti_ref)
 
 void file_player_stop_playback(void)
 {
-	item_status = STOPPED;
+	set_item_status(STOPPED);
 	wdprintf(V_INFO, "fileplayer", "Stop playback!\n");
 	file_player_set_filename(NULL);
 }
@@ -222,23 +248,26 @@ static void *decode_audio_thread(void *udata)
 	wdprintf(V_INFO, "fileplayer", "File player thread initialized.\n");
 	while (!file_player_check_shutdown()) {
 		char *filename = NULL;
-		int   len = 0;
+		int   len = 0, set_playing = 0;
 
-		pthread_mutex_lock(&mutex);
+		pthread_mutex_lock(&file_mutex);
 		if (file) len = strlen(file);
 		if (len > 0) {
 			filename = malloc(len+1);
 			if (filename) {
 				strncpy(filename, file, len);
 				filename[len] = '\0';
-				item_status = PLAYING;
+				set_playing = 1;
 			}
 			free(file); file = NULL;
 		}
-		pthread_mutex_unlock(&mutex);
+		pthread_mutex_unlock(&file_mutex);
+		if (set_playing) set_item_status(PLAYING);
+		pthread_mutex_lock(&mutex);
 		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
+		pthread_mutex_unlock(&mutex);
 		r = NULL;
-		if (!file_player_check_shutdown() && filename && item_status == PLAYING) {
+		if (!file_player_check_shutdown() && filename && get_item_status() == PLAYING) {
 			const char *tmp = get_file_extension(filename);
 			wdprintf(V_INFO, "fileplayer", "Playing %s...\n", filename);
 			if (tmp) gd = decloader_get_decoder_for_extension(tmp);
@@ -271,7 +300,7 @@ static void *decode_audio_thread(void *udata)
 				if (gd->set_reader_handle) (*gd->set_reader_handle)(r);
 
 				audio_reset_fade_volume();
-				if (item_status == PLAYING && !file_player_check_shutdown() && (*gd->open_file)(filename)) {
+				if (get_item_status() == PLAYING && !file_player_check_shutdown() && (*gd->open_file)(filename)) {
 					int channels = 0;
 					if (trackinfo_acquire_lock(ti)) {
 						trackinfo_clear(ti);
@@ -335,7 +364,7 @@ static void *decode_audio_thread(void *udata)
 							/* Wait for the reader to pre-buffer the requested amount of data (if necessary) */
 							wdprintf(V_DEBUG, "fileplayer", "Prebuffering...\n");
 							event_queue_push(gmu_core_get_event_queue(), GMU_BUFFERING);
-							while (r && !reader_is_ready(r) && !reader_is_eof(r) && item_status == PLAYING && check_count > 0) {
+							while (r && !reader_is_ready(r) && !reader_is_eof(r) && get_item_status() == PLAYING && check_count > 0) {
 								int buf_fill = reader_get_cache_fill(r);
 								if (prev_buf_fill != buf_fill) {
 									prev_buf_fill = buf_fill;
@@ -346,7 +375,7 @@ static void *decode_audio_thread(void *udata)
 								SDL_Delay(200);
 							}
 							if (check_count <= 0) {
-								item_status = FINISHED;
+								set_item_status(FINISHED);
 								wdprintf(V_DEBUG, "fileplayer", "Prebuffering failed.\n");
 								event_queue_push(gmu_core_get_event_queue(), GMU_BUFFERING_FAILED);
 							} else {
@@ -355,14 +384,14 @@ static void *decode_audio_thread(void *udata)
 						}
 
 						while (
-							( (ret && (item_status == PLAYING || audio_fade_out_in_progress()))
+							( (ret && (get_item_status() == PLAYING || audio_fade_out_in_progress()))
 							|| (item_status != STOPPED && audio_buffer_get_fill() > 0) )
 							&& !file_player_check_shutdown()
 						) {
 							int size = 0, ret = 1, br = 0;
 
 							if (seek_second) {
-								if (item_status == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
+								if (get_item_status() == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
 									if (seek_second < 0) seek_second = 0;
 									if (*gd->seek && (*gd->seek)(seek_second))
 										audio_set_sample_counter(seek_second * ti->samplerate);
@@ -370,7 +399,7 @@ static void *decode_audio_thread(void *udata)
 								seek_second = 0;
 							}
 							if (audio_fade_out_in_progress()) {
-								if (audio_fade_out_step(15)) item_status = STOPPED;
+								if (audio_fade_out_step(15)) set_item_status(STOPPED);
 							}
 							while (ret > 0 && size < BUF_SIZE / 2 && item_status != STOPPED) {
 								ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
@@ -391,12 +420,12 @@ static void *decode_audio_thread(void *udata)
 								break;
 							} else {
 								int ret = 0;
-								while (!ret && item_status == PLAYING) {
+								while (!ret && get_item_status() == PLAYING) {
 									if (audio_buffer_get_fill() > MIN_BUFFER_FILL * 3)
 										audio_wait_until_more_data_is_needed();
 									ret = audio_fill_buffer(pcmout, size);
 									if (!ret) SDL_Delay(10);
-									if (item_status == PLAYING && user_pb_request == PBRQ_PLAY && audio_get_pause()) {
+									if (get_item_status() == PLAYING && user_pb_request == PBRQ_PLAY && audio_get_pause()) {
 										wdprintf(V_DEBUG, "fileplayer", "Unpause audio due to user request...\n");
 										audio_set_pause(0);
 									}
@@ -435,9 +464,9 @@ static void *decode_audio_thread(void *udata)
 													GMU_ERROR_CANNOT_OPEN_FILE);
 				}
 			}
-			if (item_status == STOPPED) audio_buffer_clear();
+			if (get_item_status() == STOPPED) audio_buffer_clear();
 			audio_set_done();
-			if (item_status != STOPPED) item_status = FINISHED;
+			if (item_status != STOPPED) set_item_status(FINISHED);
 			wdprintf(V_DEBUG, "fileplayer", "Decoder thread: Playback done.\n");
 		}
 		if (filename) {
@@ -459,7 +488,7 @@ int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip
 	if (skip_current && fade_out_on_skip && !audio_get_pause())
 		audio_fade_out_step(20); /* Initiate fade-out and decrease volume by 20 % */
 	else
-		item_status = skip_current ? STOPPED : FINISHED;
+		set_item_status(skip_current ? STOPPED : FINISHED);
 
 	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
 	file_player_set_filename(filename);
