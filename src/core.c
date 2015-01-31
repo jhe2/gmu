@@ -158,9 +158,14 @@ static int check_fade_out_on_skip(void)
 static int play_next(Playlist *pl, int skip_current)
 {
 	int result = 0;
+	int fade_out_on_skip = check_fade_out_on_skip();
 	playlist_get_lock(pl);
 	if (playlist_next(pl)) {
-		file_player_play_file(playlist_get_entry_filename(pl, playlist_get_current(pl)), skip_current, check_fade_out_on_skip());
+		file_player_play_file(
+			playlist_get_entry_filename(pl, playlist_get_current(pl)),
+			skip_current,
+			fade_out_on_skip
+		);
 		result = 1;
 		event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 		player_status = PLAYING;
@@ -172,11 +177,16 @@ static int play_next(Playlist *pl, int skip_current)
 static int play_previous(Playlist *pl)
 {
 	int result = 0;
+	int fade_out_on_skip = check_fade_out_on_skip();
 	playlist_get_lock(pl);
 	if (playlist_prev(pl)) {
 		Entry *entry = playlist_get_current(pl);
 		if (entry != NULL) {
-			file_player_play_file(playlist_get_entry_filename(pl, entry), 1, check_fade_out_on_skip());
+			file_player_play_file(
+				playlist_get_entry_filename(pl, entry),
+				1,
+				fade_out_on_skip
+			);
 			result = 1;
 			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
 			player_status = PLAYING;
@@ -1205,13 +1215,14 @@ int main(int argc, char **argv)
 			event_queue_wait_for_event(&event_queue, 500);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item;
-			
+			int    fade_out_on_skip = check_fade_out_on_skip();
+
 			playlist_get_lock(&pl);
 			tmp_item = playlist_get_entry(&pl, global_param);
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);
 			if (tmp_item != NULL) {
 				playlist_set_current(&pl, tmp_item);
-				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), 1, check_fade_out_on_skip());
+				file_player_play_file(playlist_get_entry_filename(&pl, tmp_item), 1, fade_out_on_skip);
 			}
 			playlist_release_lock(&pl);
 			global_command = NO_CMD;
@@ -1319,17 +1330,20 @@ int main(int argc, char **argv)
 		file_player_playback_get_time()
 	);
 
-	gmu_core_config_acquire_lock();
 	if (file_player_get_item_status() == PLAYING) {
+		unsigned int item_time = file_player_playback_get_time() / 1000;
 		snprintf(temp, 10, "%d", gmu_core_playlist_get_current_position()+1);
+		gmu_core_config_acquire_lock();
 		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItem", temp);
-		snprintf(temp, 10, "%d", file_player_playback_get_time() / 1000);
+		snprintf(temp, 10, "%d", item_time);
 		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItemTime", temp);
+		gmu_core_config_release_lock();
 	} else {
+		gmu_core_config_acquire_lock();
 		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItem", "None");
 		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItemTime", "0");
+		gmu_core_config_release_lock();
 	}
-	gmu_core_config_release_lock();
 
 	wdprintf(V_INFO, "gmu", "Unloading frontends...\n");
 	feloader_free();
