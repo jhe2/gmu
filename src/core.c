@@ -243,15 +243,19 @@ int gmu_core_export_playlist(const char *file)
 
 static void set_default_play_mode(ConfigFile *config, Playlist *pl)
 {
-	playlist_get_lock(pl);
+	PlayMode pmode = PM_CONTINUE;
+	gmu_core_config_acquire_lock();
 	if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "random", 6) == 0)
-		playlist_set_play_mode(pl, PM_RANDOM);
+		pmode = PM_RANDOM;
 	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "repeat1", 11) == 0)
-		playlist_set_play_mode(pl, PM_REPEAT_1);
+		pmode = PM_REPEAT_1;
 	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "repeatall", 9) == 0)
-		playlist_set_play_mode(pl, PM_REPEAT_ALL);
+		pmode = PM_REPEAT_ALL;
 	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "random+repeat", 13) == 0)
-		playlist_set_play_mode(pl, PM_RANDOM_REPEAT);
+		pmode = PM_RANDOM_REPEAT;
+	gmu_core_config_release_lock();
+	playlist_get_lock(pl);
+	playlist_set_play_mode(pl, pmode);
 	playlist_release_lock(pl);
 }
 
@@ -1165,11 +1169,11 @@ int main(int argc, char **argv)
 #endif
 
 	file_player_init(&current_track_ti);
+	set_default_play_mode(&config, &pl);
 
 	gmu_core_config_acquire_lock();
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "Gmu.LyricsFilePattern"));
 
-	set_default_play_mode(&config, &pl);
 	gmu_core_set_volume(atoi(cfg_get_key_value(config, "Gmu.Volume")));
 
 	if (strncmp(cfg_get_key_value(config, "Gmu.AutoPlayOnProgramStart"), "yes", 3) == 0) {
