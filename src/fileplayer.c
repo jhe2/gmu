@@ -84,6 +84,15 @@ static PB_Status get_item_status(void)
 	return status;
 }
 
+static PB_Status_Request get_pb_request(void)
+{
+	PB_Status_Request status;
+	pthread_mutex_lock(&item_status_mutex);
+	status = user_pb_request;
+	pthread_mutex_unlock(&item_status_mutex);
+	return status;
+}
+
 int file_player_check_shutdown(void)
 {
 	int res;
@@ -111,8 +120,9 @@ int file_player_playback_get_time(void)
 PB_Status file_player_get_item_status(void)
 {
 	PB_Status item_status_temp = get_item_status();
+	PB_Status_Request pb_req = get_pb_request();
 	return item_status_temp == PLAYING ?
-		(user_pb_request != PBRQ_PAUSE ? PLAYING : PAUSED) :
+		(pb_req != PBRQ_PAUSE ? PLAYING : PAUSED) :
 		item_status_temp;
 }
 
@@ -357,7 +367,7 @@ static void *decode_audio_thread(void *udata)
 							event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
 						trackinfo_release_lock(ti);
 
-						if (user_pb_request == PBRQ_PLAY) audio_set_pause(0);
+						if (get_pb_request() == PBRQ_PLAY) audio_set_pause(0);
 
 						if (r && !reader_is_ready(r)) {
 							int check_count = 20, prev_buf_fill = 0;
@@ -425,7 +435,7 @@ static void *decode_audio_thread(void *udata)
 										audio_wait_until_more_data_is_needed();
 									ret = audio_fill_buffer(pcmout, size);
 									if (!ret) SDL_Delay(10);
-									if (get_item_status() == PLAYING && user_pb_request == PBRQ_PLAY && audio_get_pause()) {
+									if (get_item_status() == PLAYING && get_pb_request() == PBRQ_PLAY && audio_get_pause()) {
 										wdprintf(V_DEBUG, "fileplayer", "Unpause audio due to user request...\n");
 										audio_set_pause(0);
 									}
@@ -433,7 +443,7 @@ static void *decode_audio_thread(void *udata)
 								if (audio_get_status() != SDL_AUDIO_PLAYING &&
 									!audio_get_pause() &&
 									audio_buffer_get_fill() > audio_buffer_get_size() / 2 &&
-									user_pb_request == PBRQ_PLAY) {
+									get_pb_request() == PBRQ_PLAY) {
 									wdprintf(V_DEBUG, "fileplayer", "Unpausing audio...\n");
 									audio_force_pause(0);
 								}
@@ -514,10 +524,12 @@ TrackInfo *file_player_get_trackinfo_ref(void)
 int fileplayer_request_playback_state_change(PB_Status_Request request)
 {
 	int res = 0;
+	pthread_mutex_lock(&item_status_mutex);
 	if (user_pb_request != request) res = 1;
 	user_pb_request = request;
+	pthread_mutex_unlock(&item_status_mutex);
 	wdprintf(V_DEBUG, "fileplayer", "Requested playback state: %d\n", request);
-	switch (user_pb_request) {
+	switch (request) {
 		case PBRQ_PAUSE:
 			audio_set_pause(1);
 			break;
