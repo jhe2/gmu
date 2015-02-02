@@ -425,8 +425,10 @@ void audio_wait_until_more_data_is_needed(void)
 
 void audio_set_fade_volume(int percent)
 {
+	SDL_LockMutex(audio_mutex);
 	if (percent >= 0 && percent <= 100)
 		volume_fade_percent = percent;
+	SDL_UnlockMutex(audio_mutex);
 }
 
 /**
@@ -435,20 +437,30 @@ void audio_set_fade_volume(int percent)
  */
 int audio_fade_out_step(unsigned int step_size)
 {
+	int res;
+	SDL_LockMutex(audio_mutex);
 	if (volume_fade_percent > 0 && volume_fade_percent >= step_size)
 		volume_fade_percent -= step_size;
 	else
 		volume_fade_percent = 0;
 	wdprintf(V_DEBUG, "audio", "fadeout: %d\n", volume_fade_percent);
-	return volume_fade_percent == 0 ? 1 : 0;
+	res = (volume_fade_percent == 0 ? 1 : 0);
+	SDL_UnlockMutex(audio_mutex);
+	return res;
 }
 
 void audio_reset_fade_volume(void)
 {
+	SDL_LockMutex(audio_mutex);
 	volume_fade_percent = 100;
+	SDL_UnlockMutex(audio_mutex);
 }
 
 int audio_fade_out_in_progress(void)
 {
-	return (volume_fade_percent < 100 && volume_fade_percent > 0) ? 1 : 0;
+	int res;
+	SDL_LockMutex(audio_mutex);
+	res = (volume_fade_percent < 100 && volume_fade_percent > 0) ? 1 : 0;
+	SDL_UnlockMutex(audio_mutex);
+	return res;
 }
