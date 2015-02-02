@@ -27,6 +27,8 @@ void audio_buffer_free(void);
 void audio_device_close(void);
 int  audio_buffer_get_fill(void);
 int  audio_buffer_get_size(void);
+int  audio_get_status(void);
+void audio_force_pause(int pause);
 int  audio_set_pause(int pause_state);
 int  audio_get_pause(void);
 void audio_set_volume(int vol); /* 0..15 */

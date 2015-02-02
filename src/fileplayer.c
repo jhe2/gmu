@@ -430,12 +430,12 @@ static void *decode_audio_thread(void *udata)
 										audio_set_pause(0);
 									}
 								}
-								if (SDL_GetAudioStatus() != SDL_AUDIO_PLAYING &&
+								if (audio_get_status() != SDL_AUDIO_PLAYING &&
 									!audio_get_pause() &&
 									audio_buffer_get_fill() > audio_buffer_get_size() / 2 &&
 									user_pb_request == PBRQ_PLAY) {
 									wdprintf(V_DEBUG, "fileplayer", "Unpausing audio...\n");
-									SDL_PauseAudio(0);
+									audio_force_pause(0);
 								}
 							}
 							if (*gd->get_meta_data_int) {
