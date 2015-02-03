@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <time.h>
 #include "debug.h"
 
 static Verbosity wdprintf_verbosity = V_DEBUG;
@@ -28,9 +29,16 @@ void wdprintf_set_verbosity(Verbosity v)
 
 int wdprintf(Verbosity v, char *module, char *fmt, ...)
 {
-	va_list ap;
+	va_list    ap;
+	char       timestr[200];
+	time_t     t;
+	struct tm *lt;
 
 	if (v <= wdprintf_verbosity) {
+		t  = time(NULL);
+		lt = localtime(&t);
+		if (lt && strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", lt) > 0)
+			printf("%s ", timestr);
 		if (module) printf("%s: ", module);
 		va_start(ap, fmt);
 		vprintf(fmt, ap);
