@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: debug.h  Created: 110107
  *
@@ -38,11 +38,3 @@ int wdprintf(Verbosity v, char *module, char *fmt, ...)
 	}
 	return 0;
 }
-
-/*int main(void)
-{
-	wdprintf_set_verbosity(V_INFO);
-	wdprintf(V_ERROR, "module", "Something is missing. Counted only %d items, expected %d\n", 3, 7);
-	wdprintf(V_DEBUG, NULL, "Here we go... %c %d %d %f %f %c\n", 'X', 6, 6, 6.0, 6.0, 'z');
-	return 0;
-}*/
