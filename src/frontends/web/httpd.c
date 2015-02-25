@@ -850,12 +850,19 @@ void gmu_http_send_initial_information(Connection *c)
 static void gmu_http_read_dir(const char *directory, Connection *c)
 {
 	Dir         dir;
-	char       *base_dir;
+	char        base_dir[256];
+	char       *tmp;
 	ConfigFile *cf = gmu_core_get_config();
 
 	dir_init(&dir);
-	base_dir = cfg_get_key_value(*cf, "gmuhttp.BaseDir");
-	if (!base_dir) base_dir = "/";
+	gmu_core_config_acquire_lock();
+	tmp = cfg_get_key_value(*cf, "gmuhttp.BaseDir");
+	if (tmp && strlen(tmp) < 256) {
+		strcpy(base_dir, tmp);
+	} else {
+		strcpy(base_dir, "/");
+	}
+	gmu_core_config_release_lock();
 	if (strncmp(base_dir, directory, strlen(base_dir)) != 0)
 		directory = base_dir;
 	dir_set_base_dir(&dir, base_dir);
