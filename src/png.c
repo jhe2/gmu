@@ -32,8 +32,10 @@ static int read_1_byte(ImageSize *is)
 
 static int check_png_header(ImageSize *is)
 {
-	int i, res = 1;
+	size_t              i;
+	int                 res = 1;
 	const unsigned char pngsig[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+
 	for (i = 0; i < 8; i++) {
 		if (read_1_byte(is) != pngsig[i]) {
 			res = 0;
@@ -45,9 +47,10 @@ static int check_png_header(ImageSize *is)
 
 static int get_png_image_dimensions(ImageSize *is, unsigned int *width, unsigned int *height)
 {
-	int   i, header_ok = 1;
+	size_t              i;
+	int                 header_ok = 1;
 	const unsigned char ihdr_header[] = { 73, 72, 68, 82 };
-	unsigned char size[4];
+	unsigned char       size[4];
 
 	*width = *height = -1;
 
