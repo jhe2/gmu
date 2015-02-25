@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: pls.c  Created: 110420
  *
@@ -22,20 +22,24 @@
 
 int pls_open_file(PLS *pls, const char *filename)
 {
-	int  result = 0, i, j;
+	int    result = 0;
 
 	pls->current_item_title[0]    = '\0';
 	pls->current_item_filename[0] = '\0';
 	pls->current_item_path[0]     = '\0';
 	pls->current_item_length      = 0;
 
-	for (i = strlen(filename) - 1; i >= 0 && filename[i] != '/'; i--);
-	for (j = 0; j <= i && j < MAX_PATH - 1; j++)
-		pls->pls_path[j] = filename[j];
-	pls->pls_path[j] = '\0';
+	/* Extract path component from filename, if possible */
+	{
+		char  *c = strrchr(filename, '/');
+		size_t size = c ? c - filename + 1 : 0;
+		if (size >= MAX_PATH) size = 0;
+		if (size > 0) strncpy(pls->pls_path, filename, size);
+		pls->pls_path[size] = '\0';
+	}
 
 	if (strlen(pls->pls_path) == 0) {
-		int len;
+		size_t len;
 		if (getcwd(pls->pls_path, MAX_PATH - 3)) {
 			len = strlen(pls->pls_path);
 			pls->pls_path[len] = '/';
@@ -43,7 +47,8 @@ int pls_open_file(PLS *pls, const char *filename)
 		} else {
 			wdprintf(V_WARNING, "pls", "WARNING: Unable to get current directory.\n");
 			pls->pls_path[0] = '.';
-			pls->pls_path[1] = '\0';
+			pls->pls_path[1] = '/';
+			pls->pls_path[2] = '\0';
 		}
 	}
 	wdprintf(V_DEBUG, "pls", "Path = %s\n", pls->pls_path); 
@@ -71,12 +76,17 @@ void pls_close_file(PLS *pls)
 	fclose(pls->pl_file);
 }
 
-static int read_key_value_pair(PLS *pls, char *key, int key_size, 
-                               char *value, int value_size)
+static int read_key_value_pair(
+	PLS   *pls,
+	char  *key,
+	size_t key_size, 
+	char  *value,
+	size_t value_size
+)
 {
 	if (pls->pl_file && !feof(pls->pl_file)) {
-		int  bufcnt;
-		char ch = fgetc(pls->pl_file);
+		size_t bufcnt;
+		char   ch = fgetc(pls->pl_file);
 		/* Skip blanks... */
 		if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n')
 			while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') ch = fgetc(pls->pl_file);
@@ -130,7 +140,7 @@ int pls_read_next_item(PLS *pls)
 {
 	char     key_buffer[MAX_LINE_LENGTH] = "", value_buffer[MAX_LINE_LENGTH] = "";
 	PLSSTate state = PLS_STATE_NONE;
-	long     pos;
+	size_t   pos;
 
 	if (pls->pl_file) {
 		int read_ok = 1;
@@ -139,7 +149,7 @@ int pls_read_next_item(PLS *pls)
 		pls->current_item_title[0] = '\0';
 		pls->current_item_filename[0] = '\0';
 		while (!(state == PLS_STATE_FILE + PLS_STATE_TITLE + PLS_STATE_LENGTH) && read_ok) {
-			int size;
+			size_t size;
 			pos = ftell(pls->pl_file);
 			read_ok = read_key_value_pair(pls, key_buffer, MAX_LINE_LENGTH, value_buffer, MAX_LINE_LENGTH);
 			if (strncasecmp(key_buffer, "File", 4) == 0) { /* Playlist entry found */
@@ -202,7 +212,7 @@ char *pls_current_item_get_filename(PLS *pls)
 	return pls->current_item_filename;
 }
 
-int pls_current_item_get_length(PLS *pls)
+size_t pls_current_item_get_length(PLS *pls)
 {
 	return pls->current_item_length;
 }

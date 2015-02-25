@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: pls.h  Created: 110420
  *
@@ -22,20 +22,20 @@
 
 typedef struct PLS
 {
-	FILE *pl_file;
-	char  pls_path[MAX_PATH];
-	short version;
-	char  current_item_title[MAX_LINE_LENGTH];
-	char  current_item_filename[MAX_PATH];
-	char  current_item_path[MAX_PATH];
-	int   current_item_length;
+	FILE  *pl_file;
+	char   pls_path[MAX_PATH];
+	short  version;
+	char   current_item_title[MAX_LINE_LENGTH];
+	char   current_item_filename[MAX_PATH];
+	char   current_item_path[MAX_PATH];
+	size_t current_item_length;
 } PLS;
 
-int   pls_open_file(PLS *pls, const char *filename);
-void  pls_close_file(PLS *pls);
-int   pls_read_next_item(PLS *pls);
-char *pls_current_item_get_title(PLS *pls);
-char *pls_current_item_get_filename(PLS *pls);
-char *pls_current_item_get_full_path(PLS *pls);
-int   pls_current_item_get_length(PLS *pls);
+int    pls_open_file(PLS *pls, const char *filename);
+void   pls_close_file(PLS *pls);
+int    pls_read_next_item(PLS *pls);
+char  *pls_current_item_get_title(PLS *pls);
+char  *pls_current_item_get_filename(PLS *pls);
+char  *pls_current_item_get_full_path(PLS *pls);
+size_t pls_current_item_get_length(PLS *pls);
 #endif
