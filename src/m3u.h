@@ -21,24 +21,24 @@
 
 typedef struct M3u
 {
-	FILE *pl_file;
-	char  m3u_path[MAX_PATH];
-	short extended;
-	char  current_item_title[256];
-	char  current_item_filename[MAX_PATH];
-	char  current_item_path[MAX_PATH];
-	int   current_item_length;
+	FILE  *pl_file;
+	char   m3u_path[MAX_PATH];
+	short  extended;
+	char   current_item_title[256];
+	char   current_item_filename[MAX_PATH];
+	char   current_item_path[MAX_PATH];
+	size_t current_item_length;
 } M3u;
 
-int   m3u_open_file(M3u *m3u, const char *filename);
-void  m3u_close_file(M3u *m3u);
-int   m3u_read_next_item(M3u *m3u);
-char *m3u_current_item_get_title(M3u *m3u);
-char *m3u_current_item_get_filename(M3u *m3u);
-char *m3u_current_item_get_full_path(M3u *m3u);
-int   m3u_current_item_get_length(M3u *m3u);
-int   m3u_is_extended(M3u *m3u);
-int   m3u_export_file(M3u *m3u, const char *filename);
-int   m3u_export_write_entry(M3u *m3u, const char *file, const char *title, int length);
-void  m3u_export_close_file(M3u *m3u);
+int    m3u_open_file(M3u *m3u, const char *filename);
+void   m3u_close_file(M3u *m3u);
+int    m3u_read_next_item(M3u *m3u);
+char  *m3u_current_item_get_title(M3u *m3u);
+char  *m3u_current_item_get_filename(M3u *m3u);
+char  *m3u_current_item_get_full_path(M3u *m3u);
+size_t m3u_current_item_get_length(M3u *m3u);
+int    m3u_is_extended(M3u *m3u);
+int    m3u_export_file(M3u *m3u, const char *filename);
+int    m3u_export_write_entry(M3u *m3u, const char *file, const char *title, int length);
+void   m3u_export_close_file(M3u *m3u);
 #endif

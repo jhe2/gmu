@@ -23,7 +23,7 @@
 
 int m3u_open_file(M3u *m3u, const char *filename)
 {
-	int  result = 0, i, j;
+	int    result = 0;
 
 	m3u->current_item_title[0]    = '\0';
 	m3u->current_item_filename[0] = '\0';
@@ -31,10 +31,14 @@ int m3u_open_file(M3u *m3u, const char *filename)
 	m3u->current_item_length      = 0;
 	m3u->extended                 = 0;
 
-	for (i = strlen(filename) - 1; i >= 0 && filename[i] != '/'; i--);
-	for (j = 0; j <= i && j < MAX_PATH - 1; j++)
-		m3u->m3u_path[j] = filename[j];
-	m3u->m3u_path[j] = '\0';
+	/* Extract path component from filename, if possible */
+	{
+		char  *c = strrchr(filename, '/');
+		size_t size = c ? c - filename + 1 : 0;
+		if (size >= MAX_PATH) size = 0;
+		if (size > 0) strncpy(m3u->m3u_path, filename, size);
+		m3u->m3u_path[size] = '\0';
+	}
 
 	if (strlen(m3u->m3u_path) == 0) {
 		int len;
@@ -87,8 +91,9 @@ int m3u_read_next_item(M3u *m3u)
 		       !(entry_found = (strncmp(buf, "#EXTINF", 7) == 0)));
 		
 		if (entry_found) {
-			char mini_buffer[64] = "";
-			int  i;
+			char   mini_buffer[64] = "";
+			size_t i;
+
 			for (i = 8; i < 255 && buf[i] != ','; i++);
 			if (i < 255) { /* ok, we found a , that delimits length and title */
 				char *rn = NULL;
@@ -160,7 +165,7 @@ char *m3u_current_item_get_filename(M3u *m3u)
 	return m3u->current_item_filename;
 }
 
-int m3u_current_item_get_length(M3u *m3u)
+size_t m3u_current_item_get_length(M3u *m3u)
 {
 	return m3u->current_item_length;
 }
