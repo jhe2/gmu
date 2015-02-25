@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: playlist.c  Created: 060930
  *
@@ -180,7 +180,7 @@ int playlist_add_file(Playlist *pl, const char *filename_with_path)
 typedef struct _thread_params {
 	Playlist *pl;
 	char     *directory;
-	void     (*finished_callback)(int pl_len);
+	void     (*finished_callback)(size_t pl_len);
 } _thread_params;
 
 static int internal_add_file(void *pl, const char *file)
@@ -191,7 +191,7 @@ static int internal_add_file(void *pl, const char *file)
 static void *thread_add_dir(void *udata)
 {
 	struct _thread_params *tp = (struct _thread_params *)udata;
-	int                    prev_len = playlist_get_length(tp->pl);
+	size_t                 prev_len = playlist_get_length(tp->pl);
 
 	wdprintf(V_INFO, "playlist", "Recursive directory add thread created.\n");
 	dirparser_walk_through_directory_tree(tp->directory, internal_add_file, (void *)tp->pl, 0);
@@ -202,14 +202,18 @@ static void *thread_add_dir(void *udata)
 	return NULL;
 }
 
-int playlist_add_dir(Playlist *pl, const char *directory, void (*finished_callback)(int pl_len))
+int playlist_add_dir(
+	Playlist   *pl,
+	const char *directory,
+	void       (*finished_callback)(size_t pl_len)
+)
 {
 	static pthread_t       thread;
 	static _thread_params  tp;
 	int                    res = 0;
 
 	if (!recursive_directory_add_in_progress) {
-		int len = strlen(directory);
+		size_t len = strlen(directory);
 		recursive_directory_add_in_progress = 1;
 		tp.directory = malloc(len+1);
 		if (tp.directory) {
@@ -387,10 +391,11 @@ int playlist_entry_delete(Playlist *pl, Entry *entry)
 	return result;
 }
 
-Entry *playlist_item_delete(Playlist *pl, int item)
+Entry *playlist_item_delete(Playlist *pl, size_t item)
 {
-	int    i;
+	size_t i;
 	Entry *entry = pl->first, *next = NULL;
+
 	for (i = 0; entry != NULL && i != item; i++) {
 		entry = playlist_get_next(entry);
 	}
@@ -417,13 +422,13 @@ char *playlist_get_entry_filename(Playlist *pl, Entry *entry)
 	return result;
 }
 
-char *playlist_get_name(Playlist *pl, int item)
+char *playlist_get_name(Playlist *pl, size_t item)
 {
 	char  *result = NULL;
 	Entry *entry = pl->first;
 
 	if (item < pl->length) {
-		int i;
+		size_t i;
 		for (i = 0; i < item && entry->next != NULL; i++)
 			entry = entry->next;
 		result = entry->name;
@@ -431,13 +436,13 @@ char *playlist_get_name(Playlist *pl, int item)
 	return result;
 }
 
-char *playlist_get_filename(Playlist *pl, int item)
+char *playlist_get_filename(Playlist *pl, size_t item)
 {
 	char  *result = NULL;
 	Entry *entry = pl->first;
 
 	if (item < pl->length) {
-		int i;
+		size_t i;
 		for (i = 0; i < item && entry->next != NULL; i++)
 			entry = entry->next;
 		result = entry->filename;
@@ -445,17 +450,15 @@ char *playlist_get_filename(Playlist *pl, int item)
 	return result;
 }
 
-int playlist_get_length(Playlist *pl)
+size_t playlist_get_length(Playlist *pl)
 {
-	int len;
-	len = pl->length;
-	return len;
+	return pl->length;
 }
 
 int playlist_next(Playlist *pl)
 {
-	int result = 0;
-	int    i, next_item;
+	int    result = 0;
+	size_t i, next_item;
 	Entry *entry;
 
 	if (pl->queue_start != NULL) { /* Queue not empty? */
@@ -586,7 +589,7 @@ int playlist_get_played(Entry *entry)
 	return entry->played;
 }
 
-int playlist_entry_get_queue_pos(Entry *entry)
+size_t playlist_entry_get_queue_pos(Entry *entry)
 {
 	return entry->queue_pos;
 }
@@ -635,10 +638,10 @@ int playlist_entry_enqueue(Playlist *pl, Entry *entry)
 	return 0;
 }
 
-Entry *playlist_get_entry(Playlist *pl, int item)
+Entry *playlist_get_entry(Playlist *pl, size_t item)
 {
 	Entry *entry;
-	int    i = 0;
+	size_t i = 0;
 
 	entry = pl->first;
 	if (entry != NULL) {

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: core.c  Created: 081115
  *
@@ -426,7 +426,7 @@ PlayMode gmu_core_playlist_get_play_mode(void)
 	return pm;
 }
 
-static void add_dir_finish_callback(int pos)
+static void add_dir_finish_callback(size_t pos)
 {
 	wdprintf(V_DEBUG, "gmu", "In callback: Recursive directory add done.\n");
 	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, pos);
