@@ -751,7 +751,7 @@ void gmu_http_playlist_get_info(Connection *c)
 {
 	char msg[MSG_MAX_LEN];
 	int  r = snprintf(msg, MSG_MAX_LEN,
-	                  "{ \"cmd\": \"playlist_info\", \"changed_at_position\" : 0, \"length\" : %d }",
+	                  "{ \"cmd\": \"playlist_info\", \"changed_at_position\" : 0, \"length\" : %ld }",
 	                  gmu_core_playlist_get_length());
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
@@ -832,7 +832,7 @@ void gmu_http_send_initial_information(Connection *c)
 {
 	char msg[MSG_MAX_LEN];
 	int  r = snprintf(msg, MSG_MAX_LEN,
-	                  "{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %d }",
+	                  "{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %ld }",
 	                  gmu_core_playlist_get_length());
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 	r = snprintf(msg, MSG_MAX_LEN,

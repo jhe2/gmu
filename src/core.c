@@ -93,8 +93,7 @@ static int add_m3u_contents_to_playlist(Playlist *pl, const char *filename)
 	M3u m3u;
 	int res = 0;
 	if (m3u_open_file(&m3u, filename)) {
-		int len;
-		len = playlist_get_length(pl);
+		size_t len = playlist_get_length(pl);
 		while (m3u_read_next_item(&m3u)) {
 			playlist_add_item(pl,
 			                  m3u_current_item_get_full_path(&m3u),
@@ -119,8 +118,7 @@ static int add_pls_contents_to_playlist(Playlist *pl, const char *filename)
 	PLS pls;
 	int res = 0;
 	if (pls_open_file(&pls, filename)) {
-		int len;
-		len = playlist_get_length(pl);
+		size_t len = playlist_get_length(pl);
 		while (pls_read_next_item(&pls)) {
 		   playlist_add_item(pl,
 		                     pls_current_item_get_full_path(&pls),
@@ -401,7 +399,8 @@ int gmu_core_playlist_set_current(Entry *entry)
 
 int gmu_core_playlist_add_item(const char *file, const char *name)
 {
-	int res, len;
+	int    res;
+	size_t len;
 	playlist_get_lock(&pl);
 	len = playlist_get_length(&pl);
 	res = playlist_add_item(&pl, file, name);
@@ -446,9 +445,9 @@ Entry *gmu_core_playlist_get_first(void)
 	return playlist_get_first(&pl);
 }
 
-int gmu_core_playlist_get_length(void)
+size_t gmu_core_playlist_get_length(void)
 {
-	int len;
+	size_t len;
 	playlist_get_lock(&pl);
 	len = playlist_get_length(&pl);
 	playlist_release_lock(&pl);
@@ -465,9 +464,11 @@ int gmu_core_playlist_insert_file_after(Entry *entry, const char *filename_with_
 
 int gmu_core_playlist_add_file(const char *filename_with_path)
 {
-	int   res, len;
-	char  filetype[16] = "(none)";
+	int         res;
+	size_t      len;
+	char        filetype[16] = "(none)";
 	const char *tmp = filename_with_path ? get_file_extension(filename_with_path) : NULL;
+
 	if (tmp != NULL) strtoupper(filetype, tmp, 15);
 	filetype[15] = '\0';
 	playlist_get_lock(&pl);
@@ -773,7 +774,7 @@ void gmu_core_medialib_search_finish(void)
 #endif
 }
 
-int gmu_core_medialib_add_id_to_playlist(int id)
+int gmu_core_medialib_add_id_to_playlist(size_t id)
 {
 	int res = 0;
 #ifdef GMU_MEDIALIB
@@ -913,7 +914,7 @@ static void sig_handler(int sig)
 static void file_extensions_load(void)
 {
 	const char *exts = decloader_get_all_extensions();
-	int start, item, i;
+	size_t      start, item, i;
 	file_extensions[0] = ".m3u";
 	file_extensions[1] = ".pls";
 	for (i = 0, start = 0, item = 2; exts[i] != '\0' && item < MAX_FILE_EXTENSIONS; i++) {
@@ -930,7 +931,7 @@ static void file_extensions_load(void)
 
 static void file_extensions_free(void)
 {
-	int i;
+	size_t i;
 	for (i = 2; file_extensions[i]; i++)
 		free(file_extensions[i]);
 }
@@ -944,13 +945,13 @@ int main(int argc, char **argv)
 	char        *config_file = "gmu.conf", *config_file_path, *sys_config_dir = NULL;
 	char         temp[512];
 	int          disksync = 0;
-	int          i;
+	size_t       i;
 	PB_Status    current_file_player_status = STOPPED;
 	int          auto_shutdown = 0;
 	time_t       start, end;
 	Verbosity    v = V_INFO;
 	char        *frontend_plugin_by_cmd_arg[MAX_FRONTEND_PLUGIN_BY_CMD_ARG];
-	int          frontend_plugin_by_cmd_arg_counter = 0;
+	size_t       frontend_plugin_by_cmd_arg_counter = 0;
 	int          pb_time = -1;
 	char        *alt_playlist = NULL;
 
