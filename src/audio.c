@@ -26,16 +26,29 @@
 #define RINGBUFFER_SIZE 131072
 
 static RingBuffer    audio_rb;
-static SDL_mutex    *audio_mutex, *spectrum_mutex, *cond_mutex, *audio_mutex2;
-static SDL_mutex    *pause_mutex;
+static unsigned int  volume_fade_percent = 100;
+static SDL_mutex    *audio_mutex;
+
+static SDL_mutex    *cond_mutex;
 static SDL_cond     *cond_data_needed;
+
 static unsigned long buf_read_counter;
+static int           done;
 static int           have_samplerate, have_channels;
-static int           device_open;
-static int           paused, done;
-static char          buf[65536];
-static unsigned int  volume, volume_internal, volume_fade_percent = 100;
+static SDL_mutex    *audio_mutex2;
+
+static int           paused;
+static SDL_mutex    *pause_mutex;
+
 static int           spectrum_reg = 0;
+static int16_t       amplitudes[16];
+static SDL_mutex    *spectrum_mutex;
+
+static int           device_open;
+
+static char          buf[65536];
+static unsigned int  volume, volume_internal;
+
 
 int audio_fill_buffer(char *data, int size)
 {
@@ -70,8 +83,6 @@ static void calculate_dft(int16_t *input_signal, int input_signal_size, int *rex
 	}
 }
 
-static int16_t amplitudes[16];
-
 int16_t *audio_spectrum_get_current_amplitudes(void)
 {
 	return amplitudes;
@@ -99,83 +110,98 @@ void audio_spectrum_read_unlock(void)
 
 static void fill_audio(void *udata, Uint8 *stream, int len)
 {
-	SDL_mutexP(audio_mutex);
+	int check;
+
+	SDL_LockMutex(audio_mutex);
 	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL * 3) {
 		SDL_CondSignal(cond_data_needed);
 	}
-	if (ringbuffer_get_fill(&audio_rb) < MIN_BUFFER_FILL) {
-		wdprintf(V_WARNING, "audio", "Buffer %sempty! Buffer fill: %d bytes\n",
-		         ringbuffer_get_fill(&audio_rb) > 0 ? "almost " : "",
-		         ringbuffer_get_fill(&audio_rb));
-		if (ringbuffer_get_fill(&audio_rb) == 0) {
-			if (SDL_mutexV(audio_mutex) == 0) {
-				int tmp_done = 0;
-				audio_force_pause(1);
-				if (SDL_mutexP(audio_mutex2) != -1) {
-					tmp_done = done;
-					SDL_mutexV(audio_mutex2);
-				}
-				if (tmp_done) {
-					audio_set_pause(1);
-				} else {
-					int loop = 1;
-					while (loop) {
-						int p = 0;
-						if (SDL_LockMutex(pause_mutex) != -1) {
-							p = paused;
-							SDL_UnlockMutex(pause_mutex);
-						}
-						if (SDL_mutexP(audio_mutex2) != -1) {
-							if (p || done) loop = 0;
-							SDL_mutexV(audio_mutex2);
-						}
-						if (SDL_mutexP(audio_mutex) != -1) {
-							if (ringbuffer_get_free(&audio_rb) <= 65536) loop = 0;
-							SDL_mutexV(audio_mutex);
-						}
-						wdprintf(V_DEBUG, "audio", "Waiting for buffer to refill...\n");
-						SDL_Delay(100);
-					}
-				}
-				SDL_mutexP(audio_mutex);
+	check = ringbuffer_get_fill(&audio_rb);
+	SDL_UnlockMutex(audio_mutex);
+
+	if (check < MIN_BUFFER_FILL) {
+		wdprintf(
+			V_WARNING, "audio", "Buffer %sempty! Buffer fill: %d bytes\n",
+			check > 0 ? "almost " : "",
+			check
+		);
+		if (check == 0) {
+			int tmp_done = 0;
+			audio_force_pause(1);
+			if (SDL_LockMutex(audio_mutex2) != -1) {
+				tmp_done = done;
+				SDL_UnlockMutex(audio_mutex2);
 			}
+			if (tmp_done) {
+				audio_set_pause(1);
+			} else {
+				int loop = 1;
+				while (loop) {
+					int p = 0;
+					if (SDL_LockMutex(pause_mutex) != -1) {
+						p = paused;
+						SDL_UnlockMutex(pause_mutex);
+					}
+					if (SDL_LockMutex(audio_mutex2) != -1) {
+						if (p || done) loop = 0;
+						SDL_UnlockMutex(audio_mutex2);
+					}
+					if (SDL_LockMutex(audio_mutex) != -1) {
+						if (ringbuffer_get_free(&audio_rb) <= 65536) loop = 0;
+						SDL_UnlockMutex(audio_mutex);
+					}
+					wdprintf(V_DEBUG, "audio", "Waiting for buffer to refill...\n");
+					SDL_Delay(100);
+				}
+			}
+
 			if (SDL_LockMutex(pause_mutex) != -1) {
 				if (!paused) SDL_PauseAudio(0);
 				SDL_UnlockMutex(pause_mutex);
 			}
 		}
 	}
-	if (!ringbuffer_read(&audio_rb, buf, len)) {
-		int avail = ringbuffer_get_fill(&audio_rb);
-		memset(buf, 0, 65536);
-		if (ringbuffer_read(&audio_rb, buf, avail)) {
-			if (SDL_mutexP(audio_mutex2) != -1) {
-				buf_read_counter += avail;
-				SDL_mutexV(audio_mutex2);
-			}
+
+	if (SDL_LockMutex(audio_mutex) != -1) {
+		int add = 0;
+		if (!ringbuffer_read(&audio_rb, buf, len)) {
+			int avail = ringbuffer_get_fill(&audio_rb);
+			memset(buf, 0, 65536);
+			if (ringbuffer_read(&audio_rb, buf, avail))
+				add = avail;
+		} else {
+			add = len;
 		}
-	} else if (SDL_mutexP(audio_mutex2) != -1) {
-		buf_read_counter += len;
-		SDL_mutexV(audio_mutex2);
+		SDL_UnlockMutex(audio_mutex);
+
+		if (SDL_LockMutex(audio_mutex2) != -1) {
+			buf_read_counter += add;
+			SDL_UnlockMutex(audio_mutex2);
+		}
 	}
 
 	/* When requested, run DFT on a few samples of each block of data for visualization purposes */
 	if (spectrum_reg > 0) {
-		int rex[9], imx[9];
-		int i, j; 
+		int     rex[9], imx[9];
+		int     i, j;
 		int16_t samples_l[16];
+		int     channels = 0;
 
-		for (i = 0, j = 0; i < 16 * 2 * have_channels; i += (2 * have_channels), j++) {
+		if (SDL_LockMutex(audio_mutex2) != -1) {
+			channels = have_channels;
+			SDL_UnlockMutex(audio_mutex2);
+		}
+
+		for (i = 0, j = 0; i < 16 * 2 * channels; i += (2 * channels), j++) {
 			samples_l[j] = (buf[i+1] << 8) + buf[i];
 		}
 		calculate_dft(samples_l, 16, rex, imx);
-		SDL_mutexP(spectrum_mutex);
+		SDL_LockMutex(spectrum_mutex);
 		for (i = 1; i < 9; i++) amplitudes[i-1] = (imx[i] < 0 ? -imx[i] : imx[i]);
-		SDL_mutexV(spectrum_mutex);
+		SDL_UnlockMutex(spectrum_mutex);
 	}
 
 	SDL_MixAudio(stream, (unsigned char *)buf, len, volume * volume_fade_percent / 100);
-	SDL_mutexV(audio_mutex);
 }
 
 int audio_device_open(int samplerate, int channels)
