@@ -45,7 +45,7 @@ char *cfg_get_path_to_config_file(const char *filename)
 /* Must be called before the first use of a ConfigFile struct element */
 void cfg_init_config_file_struct(ConfigFile *cf)
 {
-	int i;
+	size_t i;
 	cf->lastkey = 0;
 	cf->file = NULL;
 	for (i = 0; i < MAXKEYS; i++)
@@ -68,9 +68,9 @@ int cfg_check_config_file(const char *filename)
 /* Add a new key to the configuration */
 int cfg_add_key(ConfigFile *cf, const char *key, const char *value)
 {
-	int result = CFG_SUCCESS;
-	int strsize = 0;
-	int i;
+	int    result = CFG_SUCCESS;
+	size_t strsize = 0;
+	size_t i;
 	
 	if (cfg_get_key_value(*cf, key) != NULL) { /* Key already exists->overwrite */
 		for (i = 0; i < cf->lastkey; i++)
@@ -121,12 +121,12 @@ int cfg_add_key(ConfigFile *cf, const char *key, const char *value)
 /* Frees all memory allocated by read_config_file() */
 void cfg_free_config_file_struct(ConfigFile *cf)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < cf->lastkey; i++) {
 		if (cf->key[i]) free(cf->key[i]);
 		if (cf->value[i]) free(cf->value[i]);
 		if (cf->presets[i]) {
-			int j;
+			size_t j;
 			for (j = 0; cf->presets[i][j]; j++) {
 				free(cf->presets[i][j]);
 			}
@@ -243,9 +243,9 @@ int cfg_write_config_file(ConfigFile *cf, const char *filename)
 /* Returns the value (as string) of "key" */
 char *cfg_get_key_value(ConfigFile cf, const char *key)
 {
-	char *result = NULL;
-	int   i;
-	
+	char  *result = NULL;
+	size_t i;
+
 	for (i = 0; i < cf.lastkey; i++)
 		if (strncmp(key, cf.key[i], MAX_LINE_LENGTH-1) == 0) {
 			result = cf.value[i];
@@ -256,9 +256,9 @@ char *cfg_get_key_value(ConfigFile cf, const char *key)
 
 char *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key)
 {
-	char *result = NULL;
-	int   i;
-	
+	char  *result = NULL;
+	size_t i;
+
 	for (i = 0; i < cf.lastkey; i++)
 		if (strncasecmp(key, cf.key[i], MAX_LINE_LENGTH-1) == 0) {
 			result = cf.value[i];
@@ -272,8 +272,8 @@ char *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key)
  */
 static int int_cfg_get_key_id(ConfigFile *cf, const char *key)
 {
-	int result = -1;
-	int i;
+	int    result = -1;
+	size_t i;
 
 	for (i = 0; i < cf->lastkey; i++)
 		if (strncmp(key, cf->key[i], MAX_LINE_LENGTH-1) == 0) {
@@ -306,16 +306,17 @@ int cfg_add_key_if_not_present(ConfigFile *cf, const char *key, const char *valu
  */
 int cfg_key_add_presets(ConfigFile *cf, const char *key, ...)
 {
-	int     res = 0, arg_count = 0;
+	int     res = 0;
+	size_t  arg_count = 0;
 	va_list args;
 	char   *arg;
 
 	if (cfg_is_key_available(*cf, key)) {
-		int i, j;
-		for (i = 0; i < cf->lastkey; i++)
-			if (strncmp(key, cf->key[i], MAX_LINE_LENGTH-1) == 0) {
+		size_t i, j;
+		for (i = 0; i < cf->lastkey; i++) {
+			if (strncmp(key, cf->key[i], MAX_LINE_LENGTH-1) == 0)
 				break;
-			}
+		}
 
 		va_start(args, key);
 		for (arg_count = 0, arg = va_arg(args, char *); arg; arg = va_arg(args, char *), arg_count++);
