@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: util.c  Created: 060929
  *
@@ -23,18 +23,18 @@
 #include "debug.h"
 #include "util.h"
 
-void strtoupper(char *target, const char *src, int len)
+void strtoupper(char *target, const char *src, size_t len)
 {
-	int i, srclen = strlen(src);
+	size_t i, srclen = strlen(src);
 
 	for (i = 0; i < (srclen < len - 1 ? srclen : len - 1); i++)
 		target[i] = toupper(src[i]);
 	target[i] = '\0';
 }
 
-void strtolower(char *target, const char *src, int len)
+void strtolower(char *target, const char *src, size_t len)
 {
-	int i, srclen = strlen(src);
+	size_t i, srclen = strlen(src);
 
 	for (i = 0; i < (srclen < len - 1 ? srclen : len - 1); i++)
 		target[i] = tolower(src[i]);
@@ -55,7 +55,7 @@ int file_exists(const char *filename)
 
 int file_copy(const char *destination_file, const char *source_file)
 {
-	int result = 1;
+	int   result = 1;
 	FILE *inf, *ouf;
 
 	wdprintf(V_INFO, "util", "Copying %s to %s.\n", source_file, destination_file);
@@ -85,9 +85,9 @@ int file_copy(const char *destination_file, const char *source_file)
 
 const char *get_file_extension(const char *filename)
 {
-	int l = filename ? strlen(filename) : 0;
-	while (filename[l] != '.' && l > 0) l--;
-	return (l == 0 ? NULL : filename+l+1);
+	size_t len = filename ? strlen(filename) : 0;
+	while (filename[len] != '.' && len > 0) len--;
+	return (len == 0 ? NULL : filename + len + 1);
 }
 
 const char *extract_filename_from_path(const char *path)
@@ -100,9 +100,11 @@ const char *extract_filename_from_path(const char *path)
 	return filename_without_path;
 }
 
-static int match_pattern(const char *string, const char *pattern)
+static unsigned match_pattern(const char *string, const char *pattern)
 {
-	unsigned int result = 1, i, j = 0;
+	unsigned result = 1;
+	size_t   i, j = 0;
+
 	for (i = 0; i < strlen(pattern); i++) {
 		if (pattern[i] == '*' && i+1 < strlen(pattern)) {
 			while (pattern[i+1] != string[j] && j < strlen(string))
@@ -120,7 +122,12 @@ static int match_pattern(const char *string, const char *pattern)
 	return result;
 }
 
-int get_first_matching_file(char *target, int target_length, const char *path, const char *pattern)
+int get_first_matching_file(
+	char       *target,
+	size_t      target_length,
+	const char *path,
+	const char *pattern
+)
 {
 	struct dirent **ep = NULL;
 	int             result = 0, entries = 0;
@@ -142,8 +149,14 @@ int get_first_matching_file(char *target, int target_length, const char *path, c
 	return result;
 }
 
-static int check_pattern(char *target, int target_length, const char *path,
-                         const char *pattern_list, int pattern_offset, int pattern_length)
+static int check_pattern(
+	char       *target,
+	size_t      target_length,
+	const char *path,
+	const char *pattern_list,
+	size_t      pattern_offset,
+	size_t      pattern_length
+)
 {
 	int res = 0;
 	if (pattern_length > 0) {
@@ -162,10 +175,16 @@ static int check_pattern(char *target, int target_length, const char *path,
 }
 
 /* pattern_list is a string with a list of patterns seperated by semicolons ';' */
-int get_first_matching_file_pattern_list(char *target, int target_length,
-                                         const char *path, const char *pattern_list)
+int get_first_matching_file_pattern_list(
+	char       *target,
+	size_t      target_length,
+	const char *path,
+	const char *pattern_list
+)
 {
-	int i, j, res = 0;
+	size_t i, j;
+	int    res = 0;
+
 	for (i = 0, j = 0; pattern_list[i] != '\0'; i++) { /* bug */
 		if (pattern_list[i] == ';') {
 			res = check_pattern(target, target_length, path,
@@ -182,14 +201,18 @@ int get_first_matching_file_pattern_list(char *target, int target_length,
 }
 
 #define MAX_REPLACE_STR_LENGTH 256
-static char *replace_char_with_string_alloc(const char *str, const char char_to_replace, const char *str_to_insert)
+static char *replace_char_with_string_alloc(
+	const char *str,
+	const char char_to_replace,
+	const char *str_to_insert
+)
 {
-	int   i, k, l = strlen(str);
-	int   len_str_to_insert = strlen(str_to_insert);
-	char *res_str = malloc(MAX_REPLACE_STR_LENGTH);
+	size_t i, k, len = strlen(str);
+	size_t len_str_to_insert = strlen(str_to_insert);
+	char  *res_str = malloc(MAX_REPLACE_STR_LENGTH);
 
 	if (res_str) {
-		for (i = 0, k = 0; i < l && k < MAX_REPLACE_STR_LENGTH; i++)
+		for (i = 0, k = 0; i < len && k < MAX_REPLACE_STR_LENGTH; i++)
 			if (str[i] == char_to_replace) {
 				int copy_len = len_str_to_insert > MAX_REPLACE_STR_LENGTH - k ?
 												   MAX_REPLACE_STR_LENGTH - k : len_str_to_insert;
@@ -207,13 +230,13 @@ static char *replace_char_with_string_alloc(const char *str, const char char_to_
 char *get_file_matching_given_pattern_alloc(const char *original_file,
                                             const char *file_pattern)
 {
-	int   path_length = 0, filename_without_ext_length = 0;
-	char *d = strrchr(original_file, '/');
-	char *ext = (d ? strrchr(d, '.') : strrchr(original_file, '.'));
-	char  path[256] = "", filename_without_ext[256] = "";
-	char  new_file[256] = "";
-	char *pattern = NULL;
-	char *res_str = NULL;
+	size_t path_length = 0, filename_without_ext_length = 0;
+	char  *d = strrchr(original_file, '/');
+	char  *ext = (d ? strrchr(d, '.') : strrchr(original_file, '.'));
+	char   path[256] = "", filename_without_ext[256] = "";
+	char   new_file[256] = "";
+	char  *pattern = NULL;
+	char  *res_str = NULL;
 
 	if (d != NULL) {
 		path_length = d - original_file;
@@ -242,8 +265,13 @@ char *get_file_matching_given_pattern_alloc(const char *original_file,
 	return res_str;
 }
 
-int strncpy_charset_conv(char *target, const char* source, int target_size,
-                         int source_size, GmuCharset charset)
+int strncpy_charset_conv(
+	char       *target,
+	const char *source,
+	size_t      target_size,
+	size_t      source_size,
+	GmuCharset  charset
+)
 {
 	int res = 0;
 	switch (charset) {
@@ -287,8 +315,8 @@ char *expand_path_alloc(const char *path)
 	char *res = NULL;
 	char *home = getenv("HOME");
 	if (home && path) {
-		int len_p = strlen(path);
-		int len_h = strlen(home);
+		size_t len_p = strlen(path);
+		size_t len_h = strlen(home);
 		res = malloc(len_p + (path[0] == '~' ? len_h : 0) + 1);
 		if (res) {
 			snprintf(res, len_p + len_h + 1, "%s%s",
