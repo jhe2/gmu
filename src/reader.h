@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: reader.h  Created: 110406
  *
@@ -26,39 +26,39 @@
 
 typedef struct
 {
-	FILE *file;
-	int   eof;
-	int   seekable;
-	long  file_size;
+	FILE           *file;
+	int             eof;
+	int             seekable;
+	long            file_size;
 
-	int   sockfd;
+	int             sockfd;
 
-	char *buf; /* Dynamic read buffer */
-	int   buf_size;
-	int   buf_data_size;
+	char           *buf; /* Dynamic read buffer */
+	size_t          buf_size;
+	size_t          buf_data_size;
 
-	ConfigFile streaminfo;
+	ConfigFile      streaminfo;
 
-	RingBuffer rb_http;
+	RingBuffer      rb_http;
 	pthread_mutex_t mutex;
 	pthread_t       thread;
 
-	unsigned long stream_pos;
+	unsigned long   stream_pos;
 
-	int   is_ready;
+	int             is_ready;
 } Reader;
 
 /* Opens a local file or HTTP URL for reading */
-int     reader_set_cache_size_kb(int size, int prebuffer_size);
+int     reader_set_cache_size_kb(size_t size, size_t prebuffer_size);
 int     reader_get_cache_fill(Reader *r);
 Reader *reader_open(char *url);
 int     reader_close(Reader *r);
 int     reader_is_ready(Reader *r);
 int     reader_is_eof(Reader *r);
 char    reader_read_byte(Reader *r);
-int     reader_read_bytes(Reader *r, int size);
+int     reader_read_bytes(Reader *r, size_t size);
 char   *reader_get_buffer(Reader *r);
-int     reader_get_number_of_bytes_in_buffer(Reader *r);
+size_t  reader_get_number_of_bytes_in_buffer(Reader *r);
 /* Resets the stream to the beginning (if possible), returns 1 on success, 0 otherwise */
 int     reader_reset_stream(Reader *r);
 int     reader_is_seekable(Reader *r);

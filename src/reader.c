@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: reader.c  Created: 110406
  *
@@ -32,10 +32,10 @@
 #include "debug.h"
 #include "core.h" /* for VERSION_NUMBER */
 
-static int http_cache_size = 512 * 1024;
-static int http_cache_prebuffer_size = 256 * 1024;
+static size_t http_cache_size           = 512 * 1024;
+static size_t http_cache_prebuffer_size = 256 * 1024;
 
-int reader_set_cache_size_kb(int size, int prebuffer_size)
+int reader_set_cache_size_kb(size_t size, size_t prebuffer_size)
 {
 	size = size < HTTP_CACHE_SIZE_MIN_KB ? HTTP_CACHE_SIZE_MIN_KB : size;
 	size = size > HTTP_CACHE_SIZE_MAX_KB ? HTTP_CACHE_SIZE_MAX_KB : size;
@@ -63,12 +63,13 @@ static void *get_in_addr(struct sockaddr *sa)
 
 static int http_url_split_alloc(char *url, char **hostname, int *port, char **path)
 {
-	int len = url ? strlen(url) : 0;
+	size_t len = url ? strlen(url) : 0;
+
 	if (len > 7) {
-		char *host_begin = url+7;
-		char *port_begin = strchr(host_begin, ':');
-		char *path_tmp = NULL;
-		int   path_len = 0, host_len;
+		char  *host_begin = url+7;
+		char  *port_begin = strchr(host_begin, ':');
+		char  *path_tmp = NULL;
+		size_t path_len = 0, host_len;
 
 		if (port_begin) {
 			*port = atoi(port_begin+1);
@@ -98,8 +99,8 @@ static int http_url_split_alloc(char *url, char **hostname, int *port, char **pa
 static void *http_reader_thread(void *arg)
 {
 	Reader *r = (Reader *)arg;
-	int numbytes = 1, err = 0;
-	char buf[4096];
+	int     numbytes = 1, err = 0;
+	char    buf[4096];
 
 	while (numbytes != -1 && numbytes > 0 && !r->eof) {
 		do {
@@ -277,9 +278,10 @@ static Reader *_reader_open(char *url, int max_redirects)
 
 						/* Skip http response header */
 						{
-							int  header_end_found = 0, cnt = 0, i = 0;
-							char ch, key[256], value[512];
-							
+							int    header_end_found = 0;
+							size_t cnt = 0, i = 0;
+							char   ch, key[256], value[512];
+
 							key[0] = '\0'; value[0] = '\0';
 							/* Search for http header end sequence "\r\n\r\n" (or "\n\n"); I assume http headers to be no longer than 32 kB. */
 							while (!header_end_found && !reader_is_eof(r) && cnt < 32768) {
@@ -339,8 +341,8 @@ static Reader *_reader_open(char *url, int max_redirects)
 			if (r) {
 				char *v = cfg_get_key_value_ignore_case(r->streaminfo, "Location");
 				if (v) {
-					int   len = strlen(v);
-					char *vc = NULL;
+					size_t len = strlen(v);
+					char  *vc = NULL;
 					
 					if (len > 0 && (vc = malloc(len+1))) {
 						strncpy(vc, v, len);
@@ -432,14 +434,15 @@ char reader_read_byte(Reader *r)
 	return (char)ch;
 }
 
-int reader_get_number_of_bytes_in_buffer(Reader *r)
+size_t reader_get_number_of_bytes_in_buffer(Reader *r)
 {
 	return r->buf_data_size;
 }
 
-int reader_read_bytes(Reader *r, int size)
+int reader_read_bytes(Reader *r, size_t size)
 {
 	int read_okay = 0;
+
 	if (size > r->buf_size) r->buf = realloc(r->buf, size+1);
 	if (r->buf) r->buf_size = size;
 	if (r->file) {
