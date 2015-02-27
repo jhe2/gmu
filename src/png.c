@@ -52,7 +52,7 @@ static int get_png_image_dimensions(ImageSize *is, unsigned int *width, unsigned
 	const unsigned char ihdr_header[] = { 73, 72, 68, 82 };
 	unsigned char       size[4];
 
-	*width = *height = -1;
+	*width = *height = 0;
 
 	if (check_png_header(is)) {
 		for (i = 0; i < 4; i++)

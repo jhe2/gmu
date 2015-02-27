@@ -163,7 +163,7 @@ static int get_jpeg_image_dimensions(ImageSize *is, unsigned int *width, unsigne
 {
 	int marker = -1, jpeg_ok = 0;
 
-	*width = *height = -1;
+	*width = *height = 0;
 
 	if (is->infile || !is->file) {
 		/* Expect SOI at start of file */
