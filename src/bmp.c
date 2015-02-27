@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: bmp.c  Created: 070616
  *
@@ -73,20 +73,22 @@ static int calculate_int(unsigned char *four_bytes)
 
 static int get_bmp_image_dimensions(ImageSize *is, unsigned int *width, unsigned int *height)
 {
-	int   i, header_ok = 1;
+	size_t        i;
+	int           header_ok = 1;
 	unsigned char size[4];
 
-	*width = *height = -1;
+	*width = *height = 0;
 
 	if (check_bmp_header(is)) {
 		for (i = 0; i < 4; i++)
 			read_1_byte(is); /* skip size info */
 		if (header_ok) {
+			int h;
 			for (i = 0; i < 4; i++) size[i] = read_1_byte(is); /* width  */
 			*width = calculate_int(size);
 			for (i = 0; i < 4; i++) size[i] = read_1_byte(is); /* height */
-			*height = calculate_int(size);
-			if (*height < 0) *height = -*height;
+			h = calculate_int(size);
+			*height = h < 0 ? -h : h;
 		}
 	} else {
 		header_ok = 0;
