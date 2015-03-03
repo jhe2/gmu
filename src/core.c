@@ -159,6 +159,8 @@ static int play_next(Playlist *pl, int skip_current)
 	int fade_out_on_skip = check_fade_out_on_skip();
 	playlist_get_lock(pl);
 	if (playlist_next(pl)) {
+		int ppos = playlist_get_current_position(pl);
+		if (ppos >= 0) ppos++;
 		file_player_play_file(
 			playlist_get_entry_filename(pl, playlist_get_current(pl)),
 			skip_current,
@@ -168,7 +170,7 @@ static int play_next(Playlist *pl, int skip_current)
 		event_queue_push_with_parameter(
 			&event_queue,
 			GMU_TRACK_CHANGE,
-			playlist_get_current_position(pl)
+			ppos
 		);
 		player_status = PLAYING;
 	}
