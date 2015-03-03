@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: httpd.c  Created: 111209
  *
@@ -301,11 +301,14 @@ int connection_is_local(Connection *c)
 
 int connection_authenticate(Connection *c, const char *password)
 {
-	int no_local_password_required = 0;
+	int         no_local_password_required = 0;
 	ConfigFile *cf = gmu_core_get_config();
-	char *tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
+	char       *tmp;
 
+	gmu_core_config_acquire_lock();
+	tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
 	if (tmp && strcmp(tmp, "yes") == 0) no_local_password_required = 1;
+	gmu_core_config_release_lock();
 
 	c->authentication_okay = 0;
 	if (password && c->password_ref &&
