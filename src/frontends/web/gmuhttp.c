@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: gmuhttp.c  Created: 120118
  *
@@ -71,6 +71,16 @@ static int event_callback(GmuEvent event, int param)
 	switch (event) {
 		case GMU_QUIT:
 			break;
+		case GMU_TRACK_CHANGE: {
+			r = snprintf(
+				msg,
+				MSG_MAX_LEN,
+				"{ \"cmd\": \"track_change\", \"playlist_pos\": %d }",
+				param
+			);
+			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
+			break;
+		}
 		case GMU_TRACKINFO_CHANGE: {
 			TrackInfo *ti = gmu_core_get_current_trackinfo_ref();
 			char *tmp_title, *tmp_artist, *tmp_album;
@@ -79,13 +89,17 @@ static int event_callback(GmuEvent event, int param)
 				tmp_title  = json_string_escape_alloc(trackinfo_get_title(ti));
 				tmp_artist = json_string_escape_alloc(trackinfo_get_artist(ti));
 				tmp_album  = json_string_escape_alloc(trackinfo_get_album(ti));
-				r = snprintf(msg, MSG_MAX_LEN,
-							 "{ \"cmd\": \"trackinfo\", \"title\" : \"%s\", \"artist\" : \"%s\", " \
-							 "\"album\" : \"%s\", \"length_min\": %d, \"length_sec\": %d }",
-							 tmp_title ? tmp_title : "", tmp_artist ? tmp_artist : "", tmp_album ? tmp_album : "",
-							 trackinfo_get_length_minutes(ti),
-							 trackinfo_get_length_seconds(ti)
-							);
+				r = snprintf(
+					msg,
+					MSG_MAX_LEN,
+					"{ \"cmd\": \"trackinfo\", \"title\" : \"%s\", \"artist\" : \"%s\", " \
+					"\"album\" : \"%s\", \"length_min\": %d, \"length_sec\": %d }",
+					tmp_title ? tmp_title : "",
+					tmp_artist ? tmp_artist : "",
+					tmp_album ? tmp_album : "",
+					trackinfo_get_length_minutes(ti),
+					trackinfo_get_length_seconds(ti)
+				);
 				if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 				if (tmp_title)  free(tmp_title);
 				if (tmp_artist) free(tmp_artist);
@@ -95,38 +109,53 @@ static int event_callback(GmuEvent event, int param)
 			break;
 		}
 		case GMU_PLAYBACK_STATE_CHANGE: {
-			r = snprintf(msg, MSG_MAX_LEN,
-			             "{ \"cmd\": \"playback_state\", \"state\" : %d }",
-			             gmu_core_get_status());
+			r = snprintf(
+				msg,
+				MSG_MAX_LEN,
+				"{ \"cmd\": \"playback_state\", \"state\" : %d }",
+				gmu_core_get_status()
+			);
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
 		case GMU_PLAYLIST_CHANGE: {
-			r = snprintf(msg, MSG_MAX_LEN,
-			             "{ \"cmd\": \"playlist_change\", \"changed_at_position\" : %d, \"length\" : %ld }",
-			             param,
-			             gmu_core_playlist_get_length());
+			r = snprintf(
+				msg,
+				MSG_MAX_LEN,
+				"{ \"cmd\": \"playlist_change\", \"changed_at_position\" : %d, \"length\" : %ld }",
+				param,
+				gmu_core_playlist_get_length()
+			);
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
 		case GMU_PLAYBACK_TIME_CHANGE: {
-			r = snprintf(msg, MSG_MAX_LEN,
-			             "{ \"cmd\": \"playback_time\", \"time\" : %d }",
-			             param);
+			r = snprintf(
+				msg,
+				MSG_MAX_LEN,
+				"{ \"cmd\": \"playback_time\", \"time\" : %d }",
+				param
+			);
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
 		case GMU_PLAYMODE_CHANGE: {
-			r = snprintf(msg, MSG_MAX_LEN,
-			             "{ \"cmd\": \"playmode_info\", \"mode\" : %d }",
-			             gmu_core_playlist_get_play_mode());
+			r = snprintf(
+				msg,
+				MSG_MAX_LEN,
+				"{ \"cmd\": \"playmode_info\", \"mode\" : %d }",
+				gmu_core_playlist_get_play_mode()
+			);
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
 		case GMU_VOLUME_CHANGE: {
-			r = snprintf(msg, MSG_MAX_LEN,
-			             "{ \"cmd\": \"volume_info\", \"volume\" : %d }",
-			             gmu_core_get_volume());
+			r = snprintf(
+				msg,
+				MSG_MAX_LEN,
+				"{ \"cmd\": \"volume_info\", \"volume\" : %d }",
+				gmu_core_get_volume()
+			);
 			if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 			break;
 		}
