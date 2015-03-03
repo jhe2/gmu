@@ -88,7 +88,7 @@ static char *get_mime_type(const char *url)
 	char *ext, *res = "text/html";
 	ext = strrchr(url, '.');
 	if (ext) {
-		int i;
+		size_t i;
 		for (i = 0; mime_type[i]; i+=2) {
 			if (strcmp(ext+1, mime_type[i]) == 0) {
 				res = mime_type[i+1];
@@ -100,9 +100,16 @@ static char *get_mime_type(const char *url)
 }
 
 /* Returns pointer to next char after value */
-static const char *get_next_key_value_pair(const char *str, char *key, int key_len, char *value, int value_len)
+static const char *get_next_key_value_pair(
+	const char *str,
+	char       *key,
+	size_t      key_len,
+	char       *value,
+	size_t      value_len
+)
 {
-	int sc = 0, i = 0, eoh = 0;
+	size_t sc = 0, i = 0;
+	int    eoh = 0;
 
 	/* Check for end of header: "\n\r\n\r" */
 	if ((str[sc] == '\r' && str[sc+1] == '\n') || str[sc] == '\n') {
@@ -114,8 +121,7 @@ static const char *get_next_key_value_pair(const char *str, char *key, int key_l
 	value[0] = '\0';
 	if (!eoh) {
 		/* extract key */
-		char ch = 0;
-		ch = str[0];
+		char ch = str[0];
 		while (ch != '\r' && ch != '\n' && ch != ':' && ch != '\0') {
 			ch = str[sc++];
 			if (i < key_len-1 && ch != ':' && ch != '=' && ch != '\r' && ch != '\n') key[i++] = ch;
@@ -237,7 +243,12 @@ int connection_file_open(Connection *c, const char *filename)
 	c->local_file = NULL;
 	if (stat(filename, &fst) == 0) {
 		if (S_ISREG(fst.st_mode)) {
-			wdprintf(V_DEBUG, "httpd", "Connection: Opening file %s (%d bytes)...\n", filename, (int)fst.st_size);
+			wdprintf(
+				V_DEBUG,
+				"httpd", "Connection: Opening file %s (%ld bytes)...\n",
+				filename,
+				fst.st_size
+			);
 			c->local_file = fopen(filename, "r");
 			c->total_size = fst.st_size;
 		}
@@ -265,7 +276,7 @@ int connection_file_read_chunk(Connection *c)
 	if (c->local_file) {
 		char blob[CHUNK_SIZE];
 		if (c->fd && c->local_file && c->remaining_bytes_to_send > 0) {
-			int size = CHUNK_SIZE;
+			size_t size = CHUNK_SIZE;
 			if (c->remaining_bytes_to_send < CHUNK_SIZE) size = c->remaining_bytes_to_send;
 			wdprintf(V_DEBUG, "httpd", "Connection %d: Reading chunk of data: %d bytes\n", c->fd, size);
 			/* read CHUNK_SIZE bytes from file */
@@ -328,15 +339,19 @@ int connection_authenticate(Connection *c, const char *password)
 	return c->authentication_okay;
 }
 
-static void send_http_header(int soc, const char *code,
-                             int length, time_t *time_modified,
-                             const char *content_type)
+static void send_http_header(
+	int         soc,
+	const char *code,
+	size_t      length,
+	time_t     *time_modified,
+	const char *content_type
+)
 {
 	char       msg[255] = {0};
 	struct tm *ptm = NULL;
 	time_t     stime;
 	char      *code_text = "";
-	int        i;
+	size_t     i;
 
 	for (i = 0; http_status[i]; i += 2) {
 		if (strcmp(http_status[i], code) == 0) {
@@ -359,7 +374,7 @@ static void send_http_header(int soc, const char *code,
 	}
 
 	net_send_buf(soc, "Accept-Ranges: none\r\n");
-	snprintf(msg, 254, "Content-Length: %d\r\n", length);
+	snprintf(msg, 254, "Content-Length: %ld\r\n", length);
 	net_send_buf(soc, msg);
 	/*send_buf(soc, "Connection: close\r\n");*/
 	snprintf(msg, 254, "Content-Type: %s\r\n", content_type);
@@ -368,11 +383,12 @@ static void send_http_header(int soc, const char *code,
 }
 
 static void webserver_main_loop(int listen_fd);
-static int  tcp_server_init(int port, int local_only);
+static int  tcp_server_init(unsigned port, int local_only);
 
 void *httpd_run_server(void *data)
 {
-	int                port = SERVER_PORT, local_only = 1, fd, errsv;
+	unsigned           port = SERVER_PORT;
+	int                local_only = 1, fd, errsv;
 	HTTPD_Init_Params *ip = (HTTPD_Init_Params *)data;
 
 	if (ip && ip->webserver_root)
@@ -410,7 +426,7 @@ void *httpd_run_server(void *data)
  * Open server listen port 'port'
  * Returns socket fd or ERROR
  */
-static int tcp_server_init(int port, int local_only)
+static int tcp_server_init(unsigned port, int local_only)
 {
 	int listen_fd, ret, yes = 1;
 
@@ -466,7 +482,7 @@ static int tcp_server_init(int port, int local_only)
  */
 static Connection tcp_server_client_init(int listen_fd)
 {
-	int                     ipver = 4;
+	unsigned                ipver = 4;
 	struct sockaddr_storage sock;
 	socklen_t               socklen;
 	Connection              conn;
@@ -489,7 +505,7 @@ static Connection tcp_server_client_init(int listen_fd)
  * Write to client socket
  * Returns OKAY when the message could be written completely, ERROR otherwise
  */
-static int tcp_server_write(int fd, const char buf[], int buflen)
+static int tcp_server_write(int fd, const char buf[], size_t buflen)
 {
 	return write(fd, buf, buflen) == buflen ? OKAY : ERROR;
 }
@@ -498,7 +514,7 @@ static int tcp_server_write(int fd, const char buf[], int buflen)
  * Read from client socket
  * Returns OKAY when reading was successful, ERROR otherwise
  */
-static int tcp_server_read(int fd, char buf[], int *buflen)
+static int tcp_server_read(int fd, char buf[], size_t *buflen)
 {
 	int res = OKAY;
 	*buflen = read(fd, buf, *buflen);
@@ -511,7 +527,9 @@ static int tcp_server_read(int fd, char buf[], int *buflen)
 
 static int is_valid_resource(const char *str)
 {
-	int res = 1, i, len = 0;
+	int    res = 1;
+	size_t i, len = 0;
+
 	/* Resource strings MUST NOT contain substrings containing ".." */
 	if (str) {
 		len = strlen(str);
@@ -572,10 +590,11 @@ static int process_command(int rfd, Connection *c)
 	char *host = NULL, websocket_key[32] = "";
 
 	if (c->http_request_header) {
-		int   len = strlen(c->http_request_header);
-		int   i, state = 1;
-		char *str;
-		
+		size_t len = strlen(c->http_request_header);
+		size_t i;
+		int    state = 1;
+		char  *str;
+
 		str = malloc(len+1);
 		memset(str, 0, len); /* Huh? */
 		if (str) {
@@ -667,10 +686,11 @@ static int process_command(int rfd, Connection *c)
 					int file_okay = 0;
 					if (host) { /* If no Host has been supplied, the query is invalid, thus repond with 400 */
 						if (websocket_key[0]) { /* Websocket connection upgrade */
-							char *websocket_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-							char str[61], str2[61];
+							char    *websocket_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+							char     str[61], str2[61];
 							SHA1_CTX sha;
 							uint8_t  digest[SHA1_DIGEST_SIZE];
+
 							wdprintf(V_DEBUG, "httpd", "%04d Proceeding with websocket connection upgrade...\n", rfd);
 							/* 1) Calculate response key (SHA1, Base64) */
 							snprintf(str, 61, "%s%s", websocket_key, websocket_magic);
@@ -695,8 +715,8 @@ static int process_command(int rfd, Connection *c)
 							connection_set_state(c, CON_WEBSOCKET_OPEN);
 							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
 						} else if (!connection_file_is_open(c)) { /* ?? open file (if not open already) ?? */
-							char filename[512];
-							memset(filename, 0, 512);
+							char filename[512] = {0};
+
 							snprintf(filename, 511, "%s/htdocs%s", webserver_root, resource);
 							file_okay = connection_file_open(c, filename);
 							if (!file_okay) {
@@ -706,12 +726,16 @@ static int process_command(int rfd, Connection *c)
 							if (file_okay) {
 								int         time_ok = 0;
 								struct stat st;
+
 								if (stat(filename, &st) == 0) time_ok = 1;
 								if (!head_only) connection_set_state(c, CON_HTTP_BUSY);
-								send_http_header(rfd, "200",
-												 connection_get_number_of_bytes_to_send(c),
-												 time_ok ? &(st.st_ctime) : NULL,
-												 get_mime_type(resource));
+								send_http_header(
+									rfd,
+									"200",
+									connection_get_number_of_bytes_to_send(c),
+									time_ok ? &(st.st_ctime) : NULL,
+									get_mime_type(resource)
+								);
 								if (head_only) connection_file_close(c);
 							} else { /* 404 */
 								http_response_not_found(rfd, head_only);
@@ -753,9 +777,12 @@ void httpd_send_websocket_broadcast(const char *str)
 void gmu_http_playlist_get_info(Connection *c)
 {
 	char msg[MSG_MAX_LEN];
-	int  r = snprintf(msg, MSG_MAX_LEN,
-	                  "{ \"cmd\": \"playlist_info\", \"changed_at_position\" : 0, \"length\" : %ld }",
-	                  gmu_core_playlist_get_length());
+	int  r = snprintf(
+		msg,
+		MSG_MAX_LEN,
+		"{ \"cmd\": \"playlist_info\", \"changed_at_position\" : 0, \"length\" : %ld }",
+		gmu_core_playlist_get_length()
+	);
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
 
@@ -769,14 +796,23 @@ void gmu_http_playlist_get_item(int id, Connection *c)
 	item = gmu_core_playlist_get_entry(id);
 	tmp_title = json_string_escape_alloc(gmu_core_playlist_get_entry_name(item));
 	gmu_core_playlist_release_lock();
-	r = snprintf(msg, MSG_MAX_LEN,
-	             "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
-	             id, tmp_title ? tmp_title : "??", 0);
+	r = snprintf(
+		msg,
+		MSG_MAX_LEN,
+		"{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"%s\", \"length\": %d }",
+		id,
+		tmp_title ? tmp_title : "??",
+		0
+	);
 	if (tmp_title) free(tmp_title);
 	if (r > 0 && !charset_is_valid_utf8_string(msg)) {
-		r = snprintf(msg, MSG_MAX_LEN,
-		             "{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"(Invalid UTF-8)\", \"length\": %d }",
-		             id, 0);
+		r = snprintf(
+			msg,
+			MSG_MAX_LEN,
+			"{ \"cmd\": \"playlist_item\", \"position\" : %d, \"title\": \"(Invalid UTF-8)\", \"length\": %d }",
+			id,
+			0
+		);
 	}
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
 }
@@ -792,30 +828,36 @@ void gmu_http_get_current_trackinfo(Connection *c)
 		char *ti_title  = json_string_escape_alloc(trackinfo_get_title(ti));
 		char *ti_album  = json_string_escape_alloc(trackinfo_get_album(ti));
 		char *ti_date   = json_string_escape_alloc(trackinfo_get_date(ti));
-		r = snprintf(msg, MSG_MAX_LEN,
-		             "{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", " \
-		             "\"album\": \"%s\", \"date\": \"%s\", " \
-		             "\"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
-		             ti_artist ? ti_artist : "",
-		             ti_title  ? ti_title  : "",
-		             ti_album  ? ti_album  : "",
-		             ti_date   ? ti_date   : "",
-		             trackinfo_get_length_minutes(ti),
-		             trackinfo_get_length_seconds(ti),
-		             0);
+		r = snprintf(
+			msg,
+			MSG_MAX_LEN,
+			"{ \"cmd\": \"trackinfo\", \"artist\": \"%s\", \"title\": \"%s\", " \
+			"\"album\": \"%s\", \"date\": \"%s\", " \
+			"\"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+			ti_artist ? ti_artist : "",
+			ti_title  ? ti_title  : "",
+			ti_album  ? ti_album  : "",
+			ti_date   ? ti_date   : "",
+			trackinfo_get_length_minutes(ti),
+			trackinfo_get_length_seconds(ti),
+			0
+		);
 		if (ti_artist) free(ti_artist);
 		if (ti_title)  free(ti_title);
 		if (ti_album)  free(ti_album);
 		if (ti_date)   free(ti_date);
 		if (r > 0 && !charset_is_valid_utf8_string(msg)) {
-			snprintf(msg, MSG_MAX_LEN,
-					 "{ \"cmd\": \"trackinfo\", \"artist\": \"(Invalid UTF-8)\", " \
-					 "\"title\": \"(Invalid UTF-8)\", \"album\": \"(Invalid UTF-8)\", " \
-					 "\"date\": \"(Invalid UTF-8)\", " \
-					 "\"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
-					 trackinfo_get_length_minutes(ti),
-					 trackinfo_get_length_seconds(ti),
-					 0);
+			snprintf(
+				msg,
+				MSG_MAX_LEN,
+				"{ \"cmd\": \"trackinfo\", \"artist\": \"(Invalid UTF-8)\", " \
+				"\"title\": \"(Invalid UTF-8)\", \"album\": \"(Invalid UTF-8)\", " \
+				"\"date\": \"(Invalid UTF-8)\", " \
+				"\"length_min\": %d, \"length_sec\": %d, \"pl_pos\": %d  }",
+				trackinfo_get_length_minutes(ti),
+				trackinfo_get_length_seconds(ti),
+				0
+			);
 		}
 		trackinfo_release_lock(ti);
 	}
@@ -834,17 +876,26 @@ void gmu_http_playmode_get_info(Connection *c)
 void gmu_http_send_initial_information(Connection *c)
 {
 	char msg[MSG_MAX_LEN];
-	int  r = snprintf(msg, MSG_MAX_LEN,
-	                  "{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %ld }",
-	                  gmu_core_playlist_get_length());
+	int  r = snprintf(
+		msg,
+		MSG_MAX_LEN,
+		"{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %ld }",
+		gmu_core_playlist_get_length()
+	);
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
-	r = snprintf(msg, MSG_MAX_LEN,
-	             "{ \"cmd\": \"playback_state\", \"state\" : %d }",
-	             gmu_core_get_status());
+	r = snprintf(
+		msg,
+		MSG_MAX_LEN,
+		"{ \"cmd\": \"playback_state\", \"state\" : %d }",
+		gmu_core_get_status()
+	);
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
-	r = snprintf(msg, MSG_MAX_LEN,
-	             "{ \"cmd\": \"volume_info\", \"volume\" : %d }",
-	             gmu_core_get_volume());
+	r = snprintf(
+		msg,
+		MSG_MAX_LEN,
+		"{ \"cmd\": \"volume_info\", \"volume\" : %d }",
+		gmu_core_get_volume()
+	);
 	if (r < MSG_MAX_LEN && r > 0) httpd_send_websocket_broadcast(msg);
 }
 
@@ -872,10 +923,11 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 	dir_set_ext_filter(&dir, (const char **)gmu_core_get_file_extensions(), 1);
 
 	if (dir_read(&dir, directory, 1)) {
-		int i = 0, num_files = dir_get_number_of_files(&dir);
+		size_t i = 0;
+		int    num_files = dir_get_number_of_files(&dir);
 		while (i < num_files) {
-			char res[MAX_LEN], *jpath = NULL, *spath;
-			int  pos;
+			char   res[MAX_LEN], *jpath = NULL, *spath;
+			size_t pos;
 
 			spath = dir_get_new_dir_alloc("/", directory);
 			if (spath) {
@@ -883,15 +935,28 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 				free(spath);
 			}
 			if (jpath) {
-				snprintf(res, MAX_LEN, "{ \"cmd\": \"dir_read\", \"res\": \"ok\", \"path\": \"%s\", \"data\": {", jpath);
+				snprintf(
+					res,
+					MAX_LEN,
+					"{ \"cmd\": \"dir_read\", \"res\": \"ok\", \"path\": \"%s\", \"data\": {",
+					jpath
+				);
 				free(jpath);
 				for (pos = strlen(res); i < num_files; i++) {
-					char *tmp = json_string_escape_alloc(dir_get_filename(&dir, i));
-					int   filesize = dir_get_filesize(&dir, i);
-					int   pos_prev = pos;
+					char  *tmp = json_string_escape_alloc(dir_get_filename(&dir, i));
+					long   filesize = dir_get_filesize(&dir, i);
+					size_t pos_prev = pos;
+
 					if (tmp) {
-						snprintf(res+pos, MAX_LEN-pos, "\"%d\": { \"name\": \"%s\", \"size\": %d, \"is_dir\": %d },",
-								 i, tmp, filesize, dir_get_flag(&dir, i) == DIRECTORY);
+						snprintf(
+							res+pos,
+							MAX_LEN-pos,
+							"\"%ld\": { \"name\": \"%s\", \"size\": %ld, \"is_dir\": %d },",
+							i,
+							tmp,
+							filesize,
+							dir_get_flag(&dir, i) == DIRECTORY
+						);
 						free(tmp);
 					}
 					pos = strlen(res);
@@ -924,7 +989,7 @@ static void gmu_http_ping(Connection *c)
 static void gmu_http_medialib_search(Connection *c, const char *type, const char *str)
 {
 	TrackInfo ti;
-	int       i = 0;
+	size_t    i = 0;
 	char      rstr[1024];
 	int       res = gmu_core_medialib_search_find(GMU_MLIB_ANY, str);
 
@@ -939,9 +1004,17 @@ static void gmu_http_medialib_search(Connection *c, const char *type, const char
 			char *album  = json_string_escape_alloc(ti.album);
 			char *date   = json_string_escape_alloc(ti.date);
 			char *file   = json_string_escape_alloc(ti.file_name);
-			snprintf(rstr, 1023,
-			         "{\"cmd\":\"mlib_result\", \"pos\":%d,\"id\":%d,\"artist\":\"%s\",\"title\":\"%s\",\"album\":\"%s\",\"date\":\"%s\",\"file\":\"%s\"}",
-					 i, ti.id, artist, title, album, date, file
+			snprintf(
+				rstr,
+				1023,
+				"{\"cmd\":\"mlib_result\", \"pos\":%ld,\"id\":%d,\"artist\":\"%s\",\"title\":\"%s\",\"album\":\"%s\",\"date\":\"%s\",\"file\":\"%s\"}",
+				i,
+				ti.id,
+				artist,
+				title,
+				album,
+				date,
+				file
 			);
 			free(artist);
 			free(title);
@@ -957,19 +1030,22 @@ static void gmu_http_medialib_search(Connection *c, const char *type, const char
 
 static void gmu_http_medialib_browse_artists(Connection *c)
 {
-	char *str = NULL;
-	int   i = 0;
-	char  rstr[1024];
-	int   res = gmu_core_medialib_browse_artists();
+	char  *str = NULL;
+	size_t i = 0;
+	char   rstr[1024];
+	int    res = gmu_core_medialib_browse_artists();
 
 	if (res) {
 		for (str = gmu_core_medialib_browse_fetch_next_result();
 			 str;
 			 str = gmu_core_medialib_browse_fetch_next_result(), i++) {
 			char *artist = json_string_escape_alloc(str);
-			snprintf(rstr, 1023,
-			         "{\"cmd\":\"mlib_browse_result\", \"pos\":%d,\"artist\":\"%s\"}",
-					 i, artist
+			snprintf(
+				rstr,
+				1023,
+				"{\"cmd\":\"mlib_browse_result\", \"pos\":%ld,\"artist\":\"%s\"}",
+				i,
+				artist
 			);
 			free(artist);
 			websocket_send_string(c, rstr);
@@ -1168,8 +1244,9 @@ static void webserver_main_loop(int listen_fd)
 					}
 				}
 				if (FD_ISSET(rfd, &readfds)) { /* Data received on connection socket */
-					char msgbuf[MAXLEN+1];
-					int  msgbuflen, request_header_complete = 0;
+					char   msgbuf[MAXLEN+1];
+					size_t msgbuflen;
+					int    request_header_complete = 0;
 
 					/* Read message from client */
 					msgbuf[MAXLEN] = '\0';
@@ -1180,8 +1257,8 @@ static void webserver_main_loop(int listen_fd)
 						FD_CLR(rfd, &the_state); /* remove dead client */
 						wdprintf(V_DEBUG, "httpd", "Connection count: --\n");
 					} else {
-						int len = msgbuflen;
-						int len_header = 0;
+						size_t len = msgbuflen;
+						size_t len_header = 0;
 
 						if (connection[conn_num].state != CON_WEBSOCKET_OPEN) {
 							wdprintf(V_DEBUG, "httpd", "%04d http message.\n", rfd);
@@ -1198,8 +1275,9 @@ static void webserver_main_loop(int listen_fd)
 								request_header_complete = 1;
 							}
 						} else {
-							char tmp_buf[16];
-							int  size = 0, loop = 1;
+							char   tmp_buf[16];
+							size_t size = 0;
+							int    loop = 1;
 
 							wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", rfd);
 							if (msgbuflen > 0) {
