@@ -165,7 +165,11 @@ static int play_next(Playlist *pl, int skip_current)
 			fade_out_on_skip
 		);
 		result = 1;
-		event_queue_push(&event_queue, GMU_TRACK_CHANGE);
+		event_queue_push_with_parameter(
+			&event_queue,
+			GMU_TRACK_CHANGE,
+			playlist_get_current_position(pl)
+		);
 		player_status = PLAYING;
 	}
 	playlist_release_lock(pl);
