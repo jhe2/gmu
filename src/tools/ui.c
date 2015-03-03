@@ -131,6 +131,10 @@ void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *d
 	}
 }
 
+void ui_update_playlist_pos(UI *ui, int playlist_pos)
+{
+	ui->playlist_pos = playlist_pos;
+}
 void ui_update_playmode(UI *ui, int playmode)
 {
 	ui->playmode = playmode;
@@ -255,8 +259,9 @@ void ui_draw_header(UI *ui)
 		if (ui->color) wbkgdset(ui->win_header->win, COLOR_PAIR(4));
 		wclrtoeol(ui->win_header->win);
 		wprintw(
-			ui->win_header->win, " %s %s%s%s",
+			ui->win_header->win, " %s (%d) %s%s%s",
 			ui->status,
+			ui->playlist_pos > 0 ? ui->playlist_pos : 0,
 			ui->ti_artist,
 			ui->ti_artist[0] != '\0' ? " - " : "",
 			ui->ti_title

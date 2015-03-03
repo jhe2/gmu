@@ -53,6 +53,7 @@ typedef struct UI {
 	int            color;
 	/* Track information & playback status */
 	char           ti_title[128], ti_artist[128], ti_album[128], ti_date[64];
+	int            playlist_pos; /* Position in playlist or negative when not in playlist */
 	char           status[32];
 	int            pb_time, total_time, playmode, volume;
 	int            time_display_remaining;
@@ -66,6 +67,7 @@ void ui_refresh_active_window(UI *ui);
 void ui_draw_footer(UI *ui);
 void ui_draw(UI *ui);
 void ui_update_trackinfo(UI *ui, char *title, char *artist, char *album, char *date);
+void ui_update_playlist_pos(UI *ui, int playlist_pos);
 void ui_update_playmode(UI *ui, int playmode);
 void ui_update_volume(UI *ui, int volume);
 void ui_update_playback_time(UI *ui, int time);

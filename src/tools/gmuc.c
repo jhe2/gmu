@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: gmuc.c  Created: 120920
  *
@@ -201,6 +201,12 @@ static void cmd_playback_time_change(UI *ui, JSON_Object *json)
 {
 	ui_update_playback_time(ui, (int)json_get_number_value_for_key(json, "time"));
 	ui_draw_header(ui);
+}
+
+static void cmd_track_change(UI *ui, JSON_Object *json)
+{
+	int ppos = (int)json_get_number_value_for_key(json, "playlist_pos");
+	ui_update_playlist_pos(ui, ppos);
 }
 
 static void cmd_trackinfo(UI *ui, JSON_Object *json)
@@ -450,6 +456,8 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 						int screen_update = 0;
 						if (strcmp(cmd, "trackinfo") == 0) {
 							cmd_trackinfo(ui, json);
+						} else if (strcmp(cmd, "track_change") == 0) {
+							cmd_track_change(ui, json);
 						} else if (strcmp(cmd, "playback_time") == 0) {
 							cmd_playback_time_change(ui, json);
 						} else if (strcmp(cmd, "playback_state") == 0) {
