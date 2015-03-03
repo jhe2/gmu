@@ -190,7 +190,11 @@ static int play_previous(Playlist *pl)
 				fade_out_on_skip
 			);
 			result = 1;
-			event_queue_push(&event_queue, GMU_TRACK_CHANGE);
+			event_queue_push_with_parameter(
+				&event_queue,
+				GMU_TRACK_CHANGE,
+				playlist_get_current_position(pl)
+			);
 			player_status = PLAYING;
 		}
 	}
@@ -368,7 +372,11 @@ int gmu_core_play_pl_item(int item)
 	global_param = item;
 	player_status = PLAYING;
 	fileplayer_request_playback_state_change(PBRQ_PLAY);
-	event_queue_push(&event_queue, GMU_TRACK_CHANGE);
+	event_queue_push_with_parameter(
+		&event_queue,
+		GMU_TRACK_CHANGE,
+		item
+	);
 	return 0;
 }
 
@@ -378,7 +386,7 @@ int gmu_core_play_file(const char *filename)
 	global_command = PLAY_FILE;
 	player_status = PLAYING;
 	fileplayer_request_playback_state_change(PBRQ_PLAY);
-	event_queue_push(&event_queue, GMU_TRACK_CHANGE);
+	event_queue_push_with_parameter(&event_queue, GMU_TRACK_CHANGE, -1);
 	return 0;
 }
 
