@@ -24,7 +24,6 @@
 #include "trackinfo.h"
 #include "util.h"
 #include "charset.h"
-#include "fileplayer.h" /* file_player_read_tags() */
 #include "debug.h"
 #include "core.h"
 #include "metadatareader.h"
