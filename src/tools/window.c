@@ -37,12 +37,10 @@ Window *window_create(int height, int width, int starty, int startx, char *title
 				scrollok(win->win_outer, 1);
 				idlok(win->win_outer, 1); /* enable hardware scrolling (if available) */
 				win->win = derwin(win->win_outer, height-2, width-2, 1, 1);
-				box(win->win_outer, 0, 0); /* 0, 0 gives default characters 
-											* for the vertical and horizontal
-											* lines                           */
+				box(win->win_outer, 0, 0);
 				window_update_title(win, title);
 				if (win->win) {
-					scrollok(win->win, 1);
+					scrollok(win->win, 0);
 					idlok(win->win, 1); /* enable hardware scrolling (if available) */
 					wsetscrreg(win->win, 1, height-2);
 				}
@@ -88,7 +86,7 @@ void window_resize(Window *win, int height, int width)
 			if (ok) {
 				win->width = width;
 				win->height = height;
-				scrollok(win->win, 1);
+				scrollok(win->win, 0);
 				idlok(win->win, 1);
 				wsetscrreg(win->win, 1, height-2);
 				if (win->title) {

@@ -207,6 +207,7 @@ void ui_init(UI *ui, int color)
 			init_pair(2, COLOR_GREEN, COLOR_BLACK);
 			init_pair(3, COLOR_BLUE, COLOR_BLACK);
 			init_pair(4, COLOR_WHITE, COLOR_BLACK);
+			init_pair(5, COLOR_BLACK, COLOR_WHITE);
 		} else {
 			ui->color = 0;
 		}

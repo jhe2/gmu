@@ -164,6 +164,15 @@ int listwidget_clear_all_rows(ListWidget *lw)
 	return listwidget_set_length(lw, 0);
 }
 
+static void clear_row(ListWidget *lw, size_t row)
+{
+	char spaces[256];
+	size_t w = lw->win->width - 2 < 255 ? lw->win->width - 2 : 255;
+	memset(spaces, ' ', w);
+	spaces[w] = '\0';
+	mvwaddstr(lw->win->win, row, 0, spaces);
+}
+
 int listwidget_draw(ListWidget *lw)
 {
 	int row = 0, col, new_pos;
@@ -172,7 +181,10 @@ int listwidget_draw(ListWidget *lw)
 		for (row = lw->first_visible_row; row - lw->first_visible_row < lw->win->height && row < lw->rows; row++) {
 			ListCell *lrc = lw->rows_ref[row];
 			int       col_pos = 0;
-			if (row == lw->cursor_pos) wattron(lw->win->win, A_BOLD);
+
+			if (row == lw->cursor_pos) wattron(lw->win->win, A_REVERSE);
+			clear_row(lw, row - lw->first_visible_row);
+
 			for (col = 0; col < lw->cols && lrc; col++) {
 				int col_w = lw->col_width[col];
 				if (col_w < 0) {
@@ -182,10 +194,14 @@ int listwidget_draw(ListWidget *lw)
 						if (lw->col_width[i] > 0) col_w -= lw->col_width[i];
 				}
 				if (col_w > 1) {
-					mvwaddnstr(lw->win->win, row - lw->first_visible_row, col_pos,
-							   lrc && lrc->text[0] != '\0' ? lrc->text : "", col_w - 1);
+					mvwaddnstr(
+						lw->win->win,
+						row - lw->first_visible_row,
+						col_pos,
+						lrc && lrc->text[0] != '\0' ? lrc->text : "",
+						col_w - 1
+					);
 				}
-				wclrtoeol(lw->win->win);
 				if (lw->col_width[col] > 0) { /* Normal column width */
 					col_pos += lw->col_width[col];
 				} else { /* negative column width = fill available space */
@@ -197,13 +213,12 @@ int listwidget_draw(ListWidget *lw)
 				}
 				lrc = lrc->next_column;
 			}
-			if (row == lw->cursor_pos) wattroff(lw->win->win, A_BOLD);
+			if (row == lw->cursor_pos) wattroff(lw->win->win, A_REVERSE);
 		}
 	}
 	/* Blank remaining rows (if any) */
 	for (; row - lw->first_visible_row < lw->win->height; row++) {
-		wmove(lw->win->win, row - lw->first_visible_row, 0);
-		wclrtoeol(lw->win->win);
+		clear_row(lw, row - lw->first_visible_row);
 	}
 
 	new_pos = (lw->win->height-4) * ((float)lw->cursor_pos / lw->rows);
