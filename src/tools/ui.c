@@ -259,9 +259,19 @@ void ui_draw_header(UI *ui)
 		if (ui->color) wbkgdset(ui->win_header->win, COLOR_PAIR(4));
 		wclrtoeol(ui->win_header->win);
 		wprintw(
-			ui->win_header->win, " %s (%d) %s%s%s",
-			ui->status,
-			ui->playlist_pos > 0 ? ui->playlist_pos : 0,
+			ui->win_header->win, " %s ",
+			ui->status
+		);
+		if (ui->playlist_pos > 0) {
+			if (ui->color) wattron(ui->win_header->win, COLOR_PAIR(2));
+			wprintw(
+				ui->win_header->win, "%d ",
+				ui->playlist_pos
+			);
+			if (ui->color) wattroff(ui->win_header->win, COLOR_PAIR(2));
+		}
+		wprintw(
+			ui->win_header->win, "%s%s%s",
 			ui->ti_artist,
 			ui->ti_artist[0] != '\0' ? " - " : "",
 			ui->ti_title
