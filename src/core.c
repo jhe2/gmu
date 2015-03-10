@@ -185,6 +185,8 @@ static int play_previous(Playlist *pl)
 	playlist_get_lock(pl);
 	if (playlist_prev(pl)) {
 		Entry *entry = playlist_get_current(pl);
+		int    ppos = playlist_get_current_position(pl);
+		if (ppos >= 0) ppos++;
 		if (entry != NULL) {
 			file_player_play_file(
 				playlist_get_entry_filename(pl, entry),
@@ -195,7 +197,7 @@ static int play_previous(Playlist *pl)
 			event_queue_push_with_parameter(
 				&event_queue,
 				GMU_TRACK_CHANGE,
-				playlist_get_current_position(pl)
+				ppos
 			);
 			player_status = PLAYING;
 		}
@@ -377,7 +379,7 @@ int gmu_core_play_pl_item(int item)
 	event_queue_push_with_parameter(
 		&event_queue,
 		GMU_TRACK_CHANGE,
-		item
+		item >= 0 ? item + 1 : 0
 	);
 	return 0;
 }
