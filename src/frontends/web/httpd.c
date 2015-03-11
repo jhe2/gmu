@@ -514,7 +514,7 @@ static int tcp_server_write(int fd, const char buf[], size_t buflen)
  * Read from client socket
  * Returns OKAY when reading was successful, ERROR otherwise
  */
-static int tcp_server_read(int fd, char buf[], size_t *buflen)
+static int tcp_server_read(int fd, char buf[], ssize_t *buflen)
 {
 	int res = OKAY;
 	*buflen = read(fd, buf, *buflen);
@@ -1244,9 +1244,9 @@ static void webserver_main_loop(int listen_fd)
 					}
 				}
 				if (FD_ISSET(rfd, &readfds)) { /* Data received on connection socket */
-					char   msgbuf[MAXLEN+1];
-					size_t msgbuflen;
-					int    request_header_complete = 0;
+					char    msgbuf[MAXLEN+1];
+					ssize_t msgbuflen;
+					int     request_header_complete = 0;
 
 					/* Read message from client */
 					msgbuf[MAXLEN] = '\0';
