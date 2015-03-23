@@ -307,7 +307,7 @@ int connection_file_read_chunk(Connection *c)
 /* Returns true if connection originates from localhost */
 int connection_is_local(Connection *c)
 {
-	return c->client_ip && strcmp(c->client_ip, "127.0.0.1") == 0;
+	return (strcmp(c->client_ip, "127.0.0.1") == 0);
 }
 
 int connection_authenticate(Connection *c, const char *password)
