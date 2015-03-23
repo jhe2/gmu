@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: net.h  Created: 121005
  *
@@ -17,7 +17,7 @@
 #ifndef WEJ_NET_H
 #define WEJ_NET_H
 /* Send data of specified length 'size' to the client socket */
-int net_send_block(int sock, unsigned char *buf, int size);
+int net_send_block(int sock, const unsigned char *buf, size_t size);
 /* Send a null-terminated string of arbitrary length to the client socket */
-int net_send_buf(int sock, char *buf);
+int net_send_buf(int sock, const char *buf);
 #endif

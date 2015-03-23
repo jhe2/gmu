@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: net.c  Created: 121005
  *
@@ -25,11 +25,11 @@
  * Send data of specified length 'size' to the client socket
  * Returns 1 on success, 0 on error
  */
-int net_send_block(int sock, unsigned char *buf, int size)
+int net_send_block(int sock, const unsigned char *buf, size_t size)
 {
-	unsigned char *r = buf;
-	int            len = 0, res = 1;
-	int            tries = 3;
+	const unsigned char *r = buf;
+	ssize_t              len = 0;
+	int                  res = 1, tries = 3;
 
 	while (size > 0 && tries > 0) {
 		errno = 0;
@@ -68,11 +68,11 @@ int net_send_block(int sock, unsigned char *buf, int size)
  * Send a null-terminated string of arbitrary length to the client socket
  * Returns 1 on success, 0 on error
  */
-int net_send_buf(int sock, char *buf)
+int net_send_buf(int sock, const char *buf)
 {
-	char *r = buf;
-	int   len = 0;
-	int   rlen = strlen(buf);
+	const char *r = buf;
+	ssize_t     len = 0;
+	size_t      rlen = strlen(buf);
 
 	if (sock) {
 		while (rlen > 0) {
