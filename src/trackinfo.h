@@ -37,29 +37,29 @@ typedef struct Image
 
 struct _TrackInfo
 {
-	char  artist[SIZE_ARTIST];
-	char  title[SIZE_TITLE];
-	char  album[SIZE_ALBUM];
-	char  comment[SIZE_COMMENT];
-	char  date[SIZE_DATE];
-	char  file_type[SIZE_FILE_TYPE];
-	char  file_name[SIZE_FILE_NAME];
-	char  tracknr[SIZE_TRACKNR];
-	char  lyrics[SIZE_LYRICS];
-	Image image;
+	char   artist[SIZE_ARTIST];
+	char   title[SIZE_TITLE];
+	char   album[SIZE_ALBUM];
+	char   comment[SIZE_COMMENT];
+	char   date[SIZE_DATE];
+	char   file_type[SIZE_FILE_TYPE];
+	char   file_name[SIZE_FILE_NAME];
+	char   tracknr[SIZE_TRACKNR];
+	char   lyrics[SIZE_LYRICS];
+	Image  image;
 
-	long  bitrate, recent_bitrate;
-	int   samplerate;
-	int   channels;
-	int   length;
-	int   vbr;
-	int   has_cover_artwork, has_lyrics;
-	long  file_size;
-	int   updated;
+	long   bitrate, recent_bitrate;
+	int    samplerate;
+	int    channels;
+	size_t length;
+	int    vbr;
+	int    has_cover_artwork, has_lyrics;
+	size_t file_size;
+	int    updated;
 
-	int   id;
+	int    id;
 	pthread_mutex_t mutex;
-	int   with_locking;
+	int    with_locking;
 };
 
 typedef struct _TrackInfo TrackInfo;
@@ -69,13 +69,21 @@ void  trackinfo_init(TrackInfo *ti, int with_locking);
  * called when done with the TrackInfo object to clean up properly */
 void  trackinfo_destroy(TrackInfo *ti);
 void  trackinfo_clear(TrackInfo *ti);
-void  trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
-                    char *tracknr, long bitrate, int samplerate, int channels);
-void  trackinfo_set_artist(TrackInfo *ti, char *artist);
-void  trackinfo_set_title(TrackInfo *ti, char *title);
-void  trackinfo_set_album(TrackInfo *ti, char *album);
+void  trackinfo_set(
+	TrackInfo  *ti,
+	const char *artist,
+	const char *title,
+	const char *album,
+	const char *tracknr,
+	long        bitrate,
+	int         samplerate,
+	int         channels
+);
+void  trackinfo_set_artist(TrackInfo *ti, const char *artist);
+void  trackinfo_set_title(TrackInfo *ti, const char *title);
+void  trackinfo_set_album(TrackInfo *ti, const char *album);
 void  trackinfo_set_trackid(TrackInfo *ti, int id);
-void  trackinfo_set_filename(TrackInfo *ti, char *file);
+void  trackinfo_set_filename(TrackInfo *ti, const char *file);
 char *trackinfo_get_artist(TrackInfo *ti);
 char *trackinfo_get_title(TrackInfo *ti);
 char *trackinfo_get_album(TrackInfo *ti);
@@ -87,14 +95,19 @@ char *trackinfo_get_lyrics(TrackInfo *ti);
 long  trackinfo_get_bitrate(TrackInfo *ti);
 int   trackinfo_get_samplerate(TrackInfo *ti);
 int   trackinfo_get_channels(TrackInfo *ti);
-void  trackinfo_get_full_title(TrackInfo *ti, char *target, int length);
+void  trackinfo_get_full_title(TrackInfo *ti, char *target, size_t length);
 int   trackinfo_has_lyrics(TrackInfo *ti);
-void  trackinfo_set_image(TrackInfo *ti, char *image_data, int image_data_size, char *mime_type);
+void  trackinfo_set_image(
+	TrackInfo  *ti,
+	const char *image_data,
+	size_t      image_data_size,
+	const char *mime_type
+);
 int   trackinfo_is_vbr(TrackInfo *ti);
 int   trackinfo_has_cover_artwork(TrackInfo *ti);
 int   trackinfo_get_length_minutes(TrackInfo *ti);
 int   trackinfo_get_length_seconds(TrackInfo *ti);
-int   trackinfo_load_lyrics_from_file(TrackInfo *ti, char *file_name);
+int   trackinfo_load_lyrics_from_file(TrackInfo *ti, const char *file_name);
 int   trackinfo_is_updated(TrackInfo *ti);
 void  trackinfo_set_updated(TrackInfo *ti);
 char *trackinfo_get_image_data(TrackInfo *ti);

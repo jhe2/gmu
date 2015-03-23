@@ -21,8 +21,16 @@
 #include "debug.h"
 #include <pthread.h>
 
-void trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
-                   char *tracknr, long bitrate, int samplerate, int channels)
+void trackinfo_set(
+	TrackInfo  *ti,
+	const char *artist,
+	const char *title,
+	const char *album,
+	const char *tracknr,
+	long        bitrate,
+	int         samplerate,
+	int         channels
+)
 {
 	strncpy(ti->artist, artist, SIZE_ARTIST-1);
 	strncpy(ti->title, title, SIZE_TITLE-1);
@@ -35,17 +43,17 @@ void trackinfo_set(TrackInfo *ti, char *artist, char *title, char *album,
 	ti->updated = 1;
 }
 
-void trackinfo_set_artist(TrackInfo *ti, char *artist)
+void trackinfo_set_artist(TrackInfo *ti, const char *artist)
 {
 	strncpy(ti->artist, artist, SIZE_ARTIST-1);
 }
 
-void trackinfo_set_title(TrackInfo *ti, char *title)
+void trackinfo_set_title(TrackInfo *ti, const char *title)
 {
 	strncpy(ti->title, title, SIZE_TITLE-1);
 }
 
-void trackinfo_set_album(TrackInfo *ti, char *album)
+void trackinfo_set_album(TrackInfo *ti, const char *album)
 {
 	strncpy(ti->album, album, SIZE_ALBUM-1);
 }
@@ -113,7 +121,12 @@ void trackinfo_clear(TrackInfo *ti)
 	ti->updated = 0;
 }
 
-void trackinfo_set_image(TrackInfo *ti, char *image_data, int image_data_size, char *mime_type)
+void trackinfo_set_image(
+	TrackInfo  *ti,
+	const char *image_data,
+	size_t      image_data_size,
+	const char *mime_type
+)
 {
 	if ((ti->image.data = malloc(image_data_size)) != NULL) {
 		strncpy(ti->image.mime_type, mime_type, SIZE_MIME_TYPE);
@@ -189,12 +202,16 @@ int trackinfo_get_channels(TrackInfo *ti)
 	return ti->channels;
 }
 
-void trackinfo_get_full_title(TrackInfo *ti, char *target, int length)
+void trackinfo_get_full_title(TrackInfo *ti, char *target, size_t length)
 {
-	snprintf(target, length, "%s%s%s",
-	         ti->artist,
-	         (strlen(ti->artist) > 0 && strlen(ti->title) > 0 ? " - " : ""),
-	         ti->title);
+	snprintf(
+		target,
+		length,
+		"%s%s%s",
+		ti->artist,
+		(strlen(ti->artist) > 0 && strlen(ti->title) > 0 ? " - " : ""),
+		ti->title
+	);
 }
 
 int trackinfo_is_vbr(TrackInfo *ti)
@@ -227,7 +244,7 @@ char *trackinfo_get_date(TrackInfo *ti)
 	return ti->date;
 }
 
-int trackinfo_load_lyrics_from_file(TrackInfo *ti, char *file_name)
+int trackinfo_load_lyrics_from_file(TrackInfo *ti, const char *file_name)
 {
 	int   result = 1;
 	FILE *file;
@@ -286,7 +303,7 @@ void trackinfo_set_trackid(TrackInfo *ti, int id)
 	ti->id = id;
 }
 
-void trackinfo_set_filename(TrackInfo *ti, char *file)
+void trackinfo_set_filename(TrackInfo *ti, const char *file)
 {
 	strncpy(ti->file_name, file, SIZE_FILE_NAME-1);
 }
