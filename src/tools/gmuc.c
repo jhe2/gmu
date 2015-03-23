@@ -388,6 +388,7 @@ static int cmd_login(UI *ui, JSON_Object *json, int sock, char *cur_dir)
 		websocket_send_str(sock, "{\"cmd\":\"trackinfo\"}", 1);
 		websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_get_info\"}", 1);
 		listwidget_clear_all_rows(ui->lw_fb);
+		ui_update_playlist_pos(ui, 0);
 		if (!cur_dir) {
 			websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
 		} else {
