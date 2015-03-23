@@ -104,6 +104,6 @@ void             gmu_core_medialib_search_finish(void);
 int              gmu_core_medialib_add_id_to_playlist(size_t id);
 int              gmu_core_medialib_browse_artists(void);
 int              gmu_core_medialib_browse_albums_by_artist(const char *artist);
-char            *gmu_core_medialib_browse_fetch_next_result(void);
+const char      *gmu_core_medialib_browse_fetch_next_result(void);
 void             gmu_core_medialib_browse_finish(void);
 #endif

@@ -822,9 +822,9 @@ int gmu_core_medialib_browse_albums_by_artist(const char *artist)
 	return res;
 }
 
-char *gmu_core_medialib_browse_fetch_next_result(void)
+const char *gmu_core_medialib_browse_fetch_next_result(void)
 {
-	char *res = NULL;
+	const char *res = NULL;
 #ifdef GMU_MEDIALIB
 	res = medialib_browse_fetch_next_result(&gm);
 #endif
@@ -868,8 +868,9 @@ static int init_user_config_dir(
 	char *home = getenv("HOME");
 
 	if (home) {
-		char       target[384], source[384], *filename = NULL;
-		ConfigFile cf;
+		char        target[384], source[384];
+		const char *filename = NULL;
+		ConfigFile  cf;
 
 		/* Try to create the config directory */
 		snprintf(user_config_dir, 255, "%s/.config", home);
@@ -883,7 +884,7 @@ static int init_user_config_dir(
 			filename = strrchr(config_file, '/');
 			filename++;
 		} else {
-			filename = (char *)config_file;
+			filename = config_file;
 		}
 		snprintf(target, 383, "%s/%s", user_config_dir, filename);
 		if (!file_exists(target)) {
