@@ -96,16 +96,16 @@ int websocket_send_str(int sock, const char *str, int mask)
 
 		buf = malloc(len+10); /* data length + 1 byte for flags + 9 bytes for length (1+8) */
 		if (buf) {
-			char *msg = (char *)str;
+			char *msg = NULL;
 			if (mask) msg = mask_message_alloc(str, len, mask_key);
 			memset(buf, 0, len);
 			if (len <= 125) {
 				if (mask) {
 					snprintf(buf, len+10, "%c%c%c%c%c%c", 0x80+0x01, len+0x80,
 					         mask_key[0], mask_key[1], mask_key[2], mask_key[3]);
-					memcpy(buf+6, msg, len);
+					memcpy(buf+6, msg ? msg : str, len);
 				} else {
-					snprintf(buf, len+10, "%c%c%s", 0x80+0x01, len, msg);
+					snprintf(buf, len+10, "%c%c%s", 0x80+0x01, len, msg ? msg : str);
 				}
 				res = net_send_block(sock, (unsigned char *)buf, len+2+(mask ? 4 : 0));
 			} else if (len > 125 && len < 65535) {
@@ -113,10 +113,10 @@ int websocket_send_str(int sock, const char *str, int mask)
 					snprintf(buf, len+10, "%c%c%c%c%c%c%c%c", 0x80+0x01, 126+0x80, 
 					         (unsigned char)(len >> 8), (unsigned char)(len & 0xFF),
 					         mask_key[0], mask_key[1], mask_key[2], mask_key[3]);
-					memcpy(buf+8, msg, len);
+					memcpy(buf+8, msg ? msg : str, len);
 				} else {
 					snprintf(buf, len+10, "%c%c%c%c%s", 0x80+0x01, 126, 
-					         (unsigned char)(len >> 8), (unsigned char)(len & 0xFF), msg);
+					         (unsigned char)(len >> 8), (unsigned char)(len & 0xFF), msg ? msg : str);
 				}
 				res = net_send_block(sock, (unsigned char *)buf, len+4+(mask ? 4 : 0));
 			} else { /* More than 64k bytes */
