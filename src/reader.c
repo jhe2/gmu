@@ -61,15 +61,15 @@ static void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-static int http_url_split_alloc(char *url, char **hostname, int *port, char **path)
+static int http_url_split_alloc(const char *url, char **hostname, int *port, char **path)
 {
 	size_t len = url ? strlen(url) : 0;
 
 	if (len > 7) {
-		char  *host_begin = url+7;
-		char  *port_begin = strchr(host_begin, ':');
-		char  *path_tmp = NULL;
-		size_t path_len = 0, host_len;
+		const char  *host_begin = url+7;
+		char        *port_begin = strchr(host_begin, ':');
+		char        *path_tmp = NULL;
+		size_t       path_len = 0, host_len;
 
 		if (port_begin) {
 			*port = atoi(port_begin+1);
@@ -140,7 +140,7 @@ int reader_is_ready(Reader *r)
 }
 
 /* Opens a local file or HTTP URL for reading */
-static Reader *_reader_open(char *url, int max_redirects)
+static Reader *_reader_open(const char *url, int max_redirects)
 {
 	Reader *r = malloc(sizeof(Reader));
 	if (r) {
@@ -379,7 +379,7 @@ static Reader *_reader_open(char *url, int max_redirects)
 	return r;
 }
 
-Reader *reader_open(char *url)
+Reader *reader_open(const char *url)
 {
 	return _reader_open(url, 3);
 }

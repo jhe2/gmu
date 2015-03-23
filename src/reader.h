@@ -51,7 +51,7 @@ typedef struct
 /* Opens a local file or HTTP URL for reading */
 int     reader_set_cache_size_kb(size_t size, size_t prebuffer_size);
 int     reader_get_cache_fill(Reader *r);
-Reader *reader_open(char *url);
+Reader *reader_open(const char *url);
 int     reader_close(Reader *r);
 int     reader_is_ready(Reader *r);
 int     reader_is_eof(Reader *r);
