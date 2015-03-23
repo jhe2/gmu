@@ -316,7 +316,7 @@ static int meta_data_load(const char *filename)
 	ofc.tell  = tell_func;
 	ofc.close = close_func;
 
-	re = reader_open((char *)filename);
+	re = reader_open(filename);
 	if (re) {
 		oof_tmp = op_open_callbacks(re, &ofc, (unsigned char *)reader_get_buffer(re), 0, &error);
 
