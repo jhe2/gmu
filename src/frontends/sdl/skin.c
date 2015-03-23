@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: skin.c  Created: 061107
  *
@@ -22,7 +22,12 @@
 #include "gmuwidget.h"
 #include "debug.h"
 
-static int skin_init_widget(char *skin_name, ConfigFile *skinconf, char *prefix, GmuWidget *w)
+static int skin_init_widget(
+	const char *skin_name,
+	ConfigFile *skinconf,
+	const char *prefix,
+	GmuWidget  *w
+)
 {
 	int   tmp_x1 = 0, tmp_y1 = 0, tmp_x2 = 0, tmp_y2 = 0;
 	char *tmp_img_prefix = NULL;
@@ -52,7 +57,7 @@ static int skin_init_widget(char *skin_name, ConfigFile *skinconf, char *prefix,
 	return result;
 }
 
-static int skin_config_load(Skin *skin, char *skin_name)
+static int skin_config_load(Skin *skin, const char *skin_name)
 {
 	int        result = 1;
 	ConfigFile skinconf;
@@ -237,7 +242,7 @@ static int skin_config_load(Skin *skin, char *skin_name)
 	return result;
 }
 
-int skin_init(Skin *skin, char *skin_name)
+int skin_init(Skin *skin, const char *skin_name)
 {
 	int res = skin_config_load(skin, skin_name);
 	if (!res && strncmp(skin_name, "default", 7) != 0) {
@@ -369,23 +374,23 @@ void skin_draw_footer_bg(Skin *skin, SDL_Surface *buffer)
 	skin_draw_widget(skin, &skin->footer, buffer);
 }
 
-void skin_update_bg(Skin *skin, SDL_Surface *display, SDL_Surface *buffer)
+void skin_update_bg(const Skin *skin, SDL_Surface *display, SDL_Surface *buffer)
 {
 	SDL_BlitSurface(buffer, NULL, display, NULL);
 	SDL_UpdateRect(display, 0, 0, 0, 0);
 }
 
-int skin_textarea_get_number_of_lines(Skin *skin)
+int skin_textarea_get_number_of_lines(const Skin *skin)
 {
-	return gmu_widget_get_height((GmuWidget *)&skin->lv, 1) / (skin->font2_char_height+1);
+	return gmu_widget_get_height(&skin->lv, 1) / (skin->font2_char_height+1);
 }
 
-int skin_textarea_get_characters_per_line(Skin *skin)
+int skin_textarea_get_characters_per_line(const Skin *skin)
 {
-	return gmu_widget_get_width((GmuWidget *)&skin->lv, 1) / (skin->font2_char_width+1);
+	return gmu_widget_get_width(&skin->lv, 1) / (skin->font2_char_width+1);
 }
 
-void skin_draw_header_text(Skin *skin, char *text, SDL_Surface *target)
+void skin_draw_header_text(const Skin *skin, char *text, SDL_Surface *target)
 {
 	textrenderer_draw_string(&skin->font1, text, target, 
 	                         gmu_widget_get_pos_x(&skin->header, 1),
@@ -394,7 +399,7 @@ void skin_draw_header_text(Skin *skin, char *text, SDL_Surface *target)
 			                 skin->font1_char_height) / 2);
 }
 
-void skin_draw_footer_text(Skin *skin, char *text, SDL_Surface *target)
+void skin_draw_footer_text(const Skin *skin, char *text, SDL_Surface *target)
 {
 	int len = skin_textarea_get_characters_per_line(skin);
 	textrenderer_draw_string_with_highlight(&skin->font1, &skin->font2, text, 0, target,
@@ -405,7 +410,7 @@ void skin_draw_footer_text(Skin *skin, char *text, SDL_Surface *target)
 			                                len, RENDER_CROP);
 }
 
-void skin_draw_scroll_arrow_up(Skin *skin, SDL_Surface *target)
+void skin_draw_scroll_arrow_up(const Skin *skin, SDL_Surface *target)
 {
 	SDL_Rect srect, drect;
 	int ox = gmu_widget_get_pos_x(&skin->lv, 1);
@@ -423,7 +428,7 @@ void skin_draw_scroll_arrow_up(Skin *skin, SDL_Surface *target)
 		SDL_BlitSurface(skin->arrow_up, &srect, target, &drect);
 }
 
-void skin_draw_scroll_arrow_down(Skin *skin, SDL_Surface *target)
+void skin_draw_scroll_arrow_down(const Skin *skin, SDL_Surface *target)
 {
 	SDL_Rect srect, drect;
 	int ox = gmu_widget_get_pos_x(&skin->lv, 1);
@@ -441,7 +446,7 @@ void skin_draw_scroll_arrow_down(Skin *skin, SDL_Surface *target)
 		SDL_BlitSurface(skin->arrow_down, &srect, target, &drect);
 }
 
-void skin_draw_display_symbol(Skin *skin, SDL_Surface *target, SkinDisplaySymbol symbol)
+void skin_draw_display_symbol(const Skin *skin, SDL_Surface *target, SkinDisplaySymbol symbol)
 {
 	SDL_Rect srect, drect;
 	int ox = gmu_widget_get_pos_x(&skin->display, 0);
