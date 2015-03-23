@@ -236,10 +236,14 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 			if (*gd->get_meta_data_int) {
 				if ((*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1) &&
 				   ((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)) &&
-				   (*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1))
-					trackinfo_set_image(ti, (char *)((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)),
-										(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
-										(char *)((*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1)));
+				   (*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1)) {
+					trackinfo_set_image(
+						ti,
+						((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)),
+						(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
+						((*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1))
+					);
+				}
 			}
 			trackinfo_set_updated(ti);
 		}
