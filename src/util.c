@@ -92,11 +92,11 @@ const char *get_file_extension(const char *filename)
 
 const char *extract_filename_from_path(const char *path)
 {
-	char *filename_without_path = strrchr(path, '/');
+	const char *filename_without_path = strrchr(path, '/');
 	if (filename_without_path != NULL)
 		filename_without_path++;
 	else
-		filename_without_path = (char *)path;
+		filename_without_path = path;
 	return filename_without_path;
 }
 
@@ -227,16 +227,18 @@ static char *replace_char_with_string_alloc(
 	return res_str;
 }
 
-char *get_file_matching_given_pattern_alloc(const char *original_file,
-                                            const char *file_pattern)
+char *get_file_matching_given_pattern_alloc(
+	const char *original_file,
+	const char *file_pattern
+)
 {
-	size_t path_length = 0, filename_without_ext_length = 0;
-	char  *d = strrchr(original_file, '/');
-	char  *ext = (d ? strrchr(d, '.') : strrchr(original_file, '.'));
-	char   path[256] = "", filename_without_ext[256] = "";
-	char   new_file[256] = "";
-	char  *pattern = NULL;
-	char  *res_str = NULL;
+	size_t       path_length = 0, filename_without_ext_length = 0;
+	char        *d = strrchr(original_file, '/');
+	char        *ext = (d ? strrchr(d, '.') : strrchr(original_file, '.'));
+	char         path[256] = "", filename_without_ext[256] = "";
+	char         new_file[256] = "";
+	char        *pattern = NULL;
+	char        *res_str = NULL;
 
 	if (d != NULL) {
 		path_length = d - original_file;
@@ -249,12 +251,10 @@ char *get_file_matching_given_pattern_alloc(const char *original_file,
 	if (filename_without_ext[0] != '\0') {
 		pattern = replace_char_with_string_alloc(file_pattern, '$', filename_without_ext);
 		/*printf("Pattern new = %s\nPattern old = %s\n", pattern, image_file_pattern);*/
-	} else {
-		pattern = (char *)file_pattern;
 	}
 
 	wdprintf(V_DEBUG, "util", "path = %s\n", path);
-	if (get_first_matching_file_pattern_list(new_file, 256, path, pattern)) {
+	if (get_first_matching_file_pattern_list(new_file, 256, path, pattern ? pattern : file_pattern)) {
 		res_str = malloc(256);
 		if (res_str) {
 			snprintf(res_str, 255, "%s/%s", path, new_file);

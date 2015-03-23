@@ -24,14 +24,29 @@ int   file_exists(const char *filename);
 int   file_copy(const char *destination_file, const char *source_file);
 const char *get_file_extension(const char *filename);
 const char *extract_filename_from_path(const char *path);
-int   get_first_matching_file(char *target, size_t target_length,
-                              const char *path, const char *pattern);
-int   get_first_matching_file_pattern_list(char *target, size_t target_length, 
-                                           const char *path, const char *pattern_list);
-char *get_file_matching_given_pattern_alloc(const char *original_file,
-                                            const char *file_pattern);
-int   strncpy_charset_conv(char *target, const char* source, size_t target_size,
-                           size_t source_size, GmuCharset charset);
+int   get_first_matching_file(
+	char       *target,
+	size_t      target_length,
+	const char *path,
+	const char *pattern
+);
+int   get_first_matching_file_pattern_list(
+	char       *target,
+	size_t      target_length, 
+	const char *path,
+	const char *pattern_list
+);
+char *get_file_matching_given_pattern_alloc(
+	const char *original_file,
+	const char *file_pattern
+);
+int   strncpy_charset_conv(
+	char       *target,
+	const char *source,
+	size_t      target_size,
+	size_t      source_size,
+	GmuCharset  charset
+);
 /**
  * expand_path_alloc() takes a file system path string as input and if it
  * begins with a '~', it expands that to the user's home directory to
