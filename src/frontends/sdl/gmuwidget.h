@@ -48,8 +48,8 @@ void gmu_widget_new(GmuWidget *gw, char *images_prefix, int x1, int y1, int x2, 
 void gmu_widget_init(GmuWidget *gw, int x1, int y1, int x2, int y2);
 void gmu_widget_free(GmuWidget *gw);
 void gmu_widget_draw(GmuWidget *gw, SDL_Surface *target);
-int  gmu_widget_get_width(GmuWidget *gw, int get_usable_size);
-int  gmu_widget_get_height(GmuWidget *gw, int get_usable_size);
-int  gmu_widget_get_pos_x(GmuWidget *gw, int get_usable_pos);
-int  gmu_widget_get_pos_y(GmuWidget *gw, int get_usable_pos);
+int  gmu_widget_get_width(const GmuWidget *gw, int get_usable_size);
+int  gmu_widget_get_height(const GmuWidget *gw, int get_usable_size);
+int  gmu_widget_get_pos_x(const GmuWidget *gw, int get_usable_pos);
+int  gmu_widget_get_pos_y(const GmuWidget *gw, int get_usable_pos);
 #endif

@@ -269,24 +269,24 @@ void gmu_widget_draw(GmuWidget *gw, SDL_Surface *target)
 	}
 }
 
-int gmu_widget_get_width(GmuWidget *gw, int get_usable_size)
+int gmu_widget_get_width(const GmuWidget *gw, int get_usable_size)
 {
 	return gw->actual_x2 - gw->pos_x1 -
 	       (get_usable_size ? (gw->border_left + gw->border_right) : 0);
 }
 
-int gmu_widget_get_height(GmuWidget *gw, int get_usable_size)
+int gmu_widget_get_height(const GmuWidget *gw, int get_usable_size)
 {
 	return gw->actual_y2 - gw->actual_y1 -
 	       (get_usable_size ? (gw->border_top + gw->border_bottom) : 0);
 }
 
-int gmu_widget_get_pos_x(GmuWidget *gw, int get_usable_pos)
+int gmu_widget_get_pos_x(const GmuWidget *gw, int get_usable_pos)
 {
 	return gw->pos_x1 + (get_usable_pos ? gw->border_left : 0);
 }
 
-int gmu_widget_get_pos_y(GmuWidget *gw, int get_usable_pos)
+int gmu_widget_get_pos_y(const GmuWidget *gw, int get_usable_pos)
 {
 	return gw->actual_y1 + (get_usable_pos ? gw->border_top : 0);
 }
