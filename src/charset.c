@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: charset.c  Created: 061115
  *
@@ -238,43 +238,6 @@ int charset_utf16_to_utf8(
 	target[j] = '\0';
 	return valid;
 }
-
-/*int charset_convert_string_autodetect(const char *source, char *target,
-                                      Charset     target_charset,
-                                      int         target_size)
-{*/
-	/* Try to convert from UTF-8 first: */
-	
-	/* When everything else failed, assume ISO-8859-1: */
-/*	return 0;
-}*/
-
-/*int charset_convert_string(const char *source, Charset source_charset,
-                           char       *target, Charset target_charset,
-                           int         target_size)
-{
-	int result = 0;
-	if (target_charset == ISO_8859_1 || target_charset == ISO_8859_15) {
-		switch (source_charset) {
-			case ASCII:
-			case ISO_8859_1:
-			case ISO_8859_15:
-				strncpy(target, source, target_size);
-				result = 1;
-				break;
-			case UTF_8:
-				result = charset_utf8_to_iso8859_1(target, source, target_size);
-				break;
-			case UNKNOWN_CHARSET:
-			default:
-				wdprintf(V_WARNING, "charset", "Source charset not supported.\n");
-				break;
-		}
-	} else {
-		wdprintf(V_WARNING, "charset", "Target charset not supported.\n");
-	}
-	return result;
-}*/
 
 int charset_is_valid_utf8_string(const char *str)
 {
