@@ -250,7 +250,6 @@ char *get_file_matching_given_pattern_alloc(
 
 	if (filename_without_ext[0] != '\0') {
 		pattern = replace_char_with_string_alloc(file_pattern, '$', filename_without_ext);
-		/*printf("Pattern new = %s\nPattern old = %s\n", pattern, image_file_pattern);*/
 	}
 
 	wdprintf(V_DEBUG, "util", "path = %s\n", path);
