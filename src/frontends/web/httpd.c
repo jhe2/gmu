@@ -1030,10 +1030,10 @@ static void gmu_http_medialib_search(Connection *c, const char *type, const char
 
 static void gmu_http_medialib_browse_artists(Connection *c)
 {
-	char  *str = NULL;
-	size_t i = 0;
-	char   rstr[1024];
-	int    res = gmu_core_medialib_browse_artists();
+	const char  *str = NULL;
+	size_t       i = 0;
+	char         rstr[1024];
+	int          res = gmu_core_medialib_browse_artists();
 
 	if (res) {
 		for (str = gmu_core_medialib_browse_fetch_next_result();
