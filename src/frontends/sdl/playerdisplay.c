@@ -89,7 +89,7 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 	int  min = 0, sec = 0;
 	char buf[MAX_LENGTH+1];
 	int  title_scroller_chars = ((skin.title_scroller_offset_x2 > 0 ? skin.title_scroller_offset_x2 :
-	                             (gmu_widget_get_width((GmuWidget *)&skin.display, 0) + skin.title_scroller_offset_x2))
+	                             (gmu_widget_get_width(&skin.display, 0) + skin.title_scroller_offset_x2))
 	                             - skin.title_scroller_offset_x1) / (skin.font_display_char_width+1);
 	static int blink_state = BLINK_DELAY;
 
@@ -109,12 +109,12 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 		                            player_status == PAUSED  ? SYMBOL_PAUSE : SYMBOL_NONE);
 		if (symbol != SYMBOL_NONE) {
 			if ((playback_symbol_blinking && blink_state < BLINK_DELAY / 2) || !playback_symbol_blinking)
-				skin_draw_display_symbol((Skin *)&skin, buffer, symbol);
+				skin_draw_display_symbol(&skin, buffer, symbol);
 		}
 
 		if (trackinfo_acquire_lock(ti)) {
 			if (trackinfo_get_channels(ti) > 1)
-				skin_draw_display_symbol((Skin *)&skin, buffer, SYMBOL_STEREO);
+				skin_draw_display_symbol(&skin, buffer, SYMBOL_STEREO);
 			trackinfo_release_lock(ti);
 		}
 
