@@ -41,7 +41,7 @@ int  medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, const char 
 TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm);
 void medialib_search_finish(GmuMedialib *gm);
 int  medialib_browse(GmuMedialib *gm, const char *sel_column, ...);
-char *medialib_browse_fetch_next_result(GmuMedialib *gm);
+const char *medialib_browse_fetch_next_result(GmuMedialib *gm);
 void medialib_browse_finish(GmuMedialib *gm);
 TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id);
 /* Increase/decrease/set rating for a given track */
@@ -49,6 +49,6 @@ int  medialib_rate_track_up(GmuMedialib *gm, int id);
 int  medialib_rate_track_down(GmuMedialib *gm, int id);
 int  medialib_rate_track(GmuMedialib *gm, int id, int rating);
 int  medialib_path_list(GmuMedialib *gm);
-char *medialib_path_list_fetch_next_result(GmuMedialib *gm);
+const char *medialib_path_list_fetch_next_result(GmuMedialib *gm);
 void medialib_path_list_finish(GmuMedialib *gm);
 #endif

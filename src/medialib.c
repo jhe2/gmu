@@ -176,7 +176,7 @@ void medialib_refresh(GmuMedialib *gm)
 	/* Fetch all medialib filesystem paths */
 	if (sqlite3_prepare_v2(gm->db, "SELECT path FROM path", -1, &pp_stmt, NULL) == SQLITE_OK) {
 		for (; sqlite3_step(pp_stmt) == SQLITE_ROW; ) {
-			char *path = (char *)sqlite3_column_text(pp_stmt, 0);
+			const char *path = (const char *)sqlite3_column_text(pp_stmt, 0);
 			wdprintf(V_INFO, "medialib", "Scanning '%s'...\n", path);
 			/* Scan path recursively... */
 			dirparser_walk_through_directory_tree(path, _medialib_add_file, (void *)gm, 0);
@@ -195,7 +195,7 @@ void medialib_refresh(GmuMedialib *gm)
 		for (; sqlite3_step(pp_stmt) == SQLITE_ROW; ) {
 			/* Check entry against file system... */
 			int   id           = sqlite3_column_int(pp_stmt, 0);
-			char *file         = (char *)sqlite3_column_text(pp_stmt, 1);
+			const char *file   = (const char *)sqlite3_column_text(pp_stmt, 1);
 			int   file_missing = sqlite3_column_int(pp_stmt, 2);
 			if (!file_exists(file)) {
 				/* Flag as broken... */
@@ -249,11 +249,11 @@ int medialib_path_list(GmuMedialib *gm)
 	return (sqres == SQLITE_OK);
 }
 
-char *medialib_path_list_fetch_next_result(GmuMedialib *gm)
+const char *medialib_path_list_fetch_next_result(GmuMedialib *gm)
 {
-	char *path = NULL;
+	const char *path = NULL;
 	if (sqlite3_step(gm->pp_stmt_path_list) == SQLITE_ROW) {
-		path = (char *)sqlite3_column_text(gm->pp_stmt_path_list, 0);
+		path = (const char *)sqlite3_column_text(gm->pp_stmt_path_list, 0);
 	}
 	return path;
 }
@@ -305,11 +305,11 @@ TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm)
 	trackinfo_init(&ti, 0);
 
 	if (sqlite3_step(gm->pp_stmt_search) == SQLITE_ROW) {
-		int   id     =         sqlite3_column_int(gm->pp_stmt_search, 0);
-		char *file   = (char *)sqlite3_column_text(gm->pp_stmt_search, 1);
-		char *artist = (char *)sqlite3_column_text(gm->pp_stmt_search, 3);
-		char *title  = (char *)sqlite3_column_text(gm->pp_stmt_search, 4);
-		char *album  = (char *)sqlite3_column_text(gm->pp_stmt_search, 5);
+		int         id     =               sqlite3_column_int(gm->pp_stmt_search, 0);
+		const char *file   = (const char *)sqlite3_column_text(gm->pp_stmt_search, 1);
+		const char *artist = (const char *)sqlite3_column_text(gm->pp_stmt_search, 3);
+		const char *title  = (const char *)sqlite3_column_text(gm->pp_stmt_search, 4);
+		const char *album  = (const char *)sqlite3_column_text(gm->pp_stmt_search, 5);
 		trackinfo_set_trackid(&ti, id);
 		trackinfo_set_filename(&ti, file);
 		trackinfo_set_artist(&ti, artist);
@@ -375,11 +375,11 @@ int medialib_browse(GmuMedialib *gm, const char *sel_column, ...)
 	return (sqres == SQLITE_OK);
 }
 
-char *medialib_browse_fetch_next_result(GmuMedialib *gm)
+const char *medialib_browse_fetch_next_result(GmuMedialib *gm)
 {
-	char *res = NULL;
+	const char *res = NULL;
 	if (sqlite3_step(gm->pp_stmt_browse) == SQLITE_ROW) {
-		res = (char *)sqlite3_column_text(gm->pp_stmt_browse, 0);
+		res = (const char *)sqlite3_column_text(gm->pp_stmt_browse, 0);
 	}
 	return res;
 }
