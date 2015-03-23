@@ -795,7 +795,7 @@ int gmu_core_medialib_add_id_to_playlist(size_t id)
 	int res = 0;
 #ifdef GMU_MEDIALIB
 	TrackInfo ti = medialib_get_data_for_id(&gm, id);
-	if (ti.id > 0 && ti.file_name) {
+	if (ti.id > 0 && ti.file_name[0]) {
 		gmu_core_playlist_add_file(ti.file_name);
 		res = 1;
 	}
