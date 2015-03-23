@@ -401,10 +401,10 @@ TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id)
 	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
 	if (sqres == SQLITE_OK && sqlite3_step(pp_stmt) == SQLITE_ROW) {
-		char *file   = (char *)sqlite3_column_text(pp_stmt, 1);
-		char *artist = (char *)sqlite3_column_text(pp_stmt, 3);
-		char *title  = (char *)sqlite3_column_text(pp_stmt, 4);
-		char *album  = (char *)sqlite3_column_text(pp_stmt, 5);
+		const char *file   = (const char *)sqlite3_column_text(pp_stmt, 1);
+		const char *artist = (const char *)sqlite3_column_text(pp_stmt, 3);
+		const char *title  = (const char *)sqlite3_column_text(pp_stmt, 4);
+		const char *album  = (const char *)sqlite3_column_text(pp_stmt, 5);
 		trackinfo_set_trackid(&ti, id);
 		trackinfo_set_filename(&ti, file);
 		trackinfo_set_artist(&ti, artist);
