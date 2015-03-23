@@ -333,12 +333,12 @@ int id3_read_tag(const char *filename, TrackInfo *ti, const char *file_type)
 	FILE *file;
 
 	if ((file = fopen(filename, "r"))) {
-		char *filename_without_path = strrchr(filename, '/');
+		const char *filename_without_path = strrchr(filename, '/');
 
 		if (filename_without_path != NULL)
 			filename_without_path++;
 		else
-			filename_without_path = (char *)filename;
+			filename_without_path = filename;
 
 		trackinfo_clear(ti);
 		if (charset_is_valid_utf8_string(filename_without_path)) {
