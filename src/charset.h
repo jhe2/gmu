@@ -24,21 +24,33 @@ typedef enum Charset { ASCII, ISO_8859_1, ISO_8859_15, UTF_8, UTF_16, UTF_16_BOM
 typedef enum { BE, LE, BOM } ByteOrder;
 typedef unsigned long UCodePoint;
 
-int   charset_utf8_to_iso8859_1(char *target, const char *source, int target_size);
-int   charset_utf16_to_iso8859_1(char       *target, int target_size,
-                                 const char *source, int source_size,
-                                 ByteOrder   byte_order);
-int   charset_iso8859_1_to_utf8(char *target, const char *source, int target_size);
-int   charset_utf16_to_utf8(char       *target, int target_size,
-                            const char *source, int source_size,
-                            ByteOrder   byte_order);
+int   charset_utf8_to_iso8859_1(char *target, const char *source, size_t target_size);
+int   charset_utf16_to_iso8859_1(
+	char       *target,
+	size_t      target_size,
+	const char *source,
+	size_t      source_size,
+	ByteOrder   byte_order
+);
+int   charset_iso8859_1_to_utf8(char *target, const char *source, size_t target_size);
+int   charset_utf16_to_utf8(
+	char       *target,
+	size_t      target_size,
+	const char *source,
+	size_t      source_size,
+	ByteOrder   byte_order
+);
 void  charset_filename_set(Charset charset);
 char *charset_filename_convert_alloc(const char *filename);
-int   charset_convert_string(const char *source, Charset source_charset,
-                             char       *target, Charset target_charset,
-                             int         target_size);
+int   charset_convert_string(
+	const char *source,
+	Charset     source_charset,
+	char       *target,
+	Charset     target_charset,
+	size_t      target_size
+);
 int   charset_is_valid_utf8_string(const char *str);
-int   charset_utf8_to_codepoints(UCodePoint *target, const char *source, int target_size);
+int   charset_utf8_to_codepoints(UCodePoint *target, const char *source, size_t target_size);
 int   charset_utf8_len(const char *str);
 /* Fiexes a broken UTF-8 string. If there is nothing to be fixed,
  * the string is left as is and 0 is returned, 1 otherwise */

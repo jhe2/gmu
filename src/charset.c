@@ -19,10 +19,13 @@
 #include "charset.h"
 #include "debug.h"
 
-int charset_utf8_to_iso8859_1(char *target, const char *source, int target_size)
+int charset_utf8_to_iso8859_1(char *target, const char *source, size_t target_size)
 {
-	int            i, j, len = strlen(source), valid = 1;
-	unsigned char *src = (unsigned char *)source;
+	int                  i, j;
+	size_t               len = strlen(source);
+	int                  valid = 1;
+	const unsigned char *src = (const unsigned char *)source;
+
 	len = (len < target_size ? len : target_size);
 	for (i = 0, j = 0; i < len; i++) {
 		if (src[i] < 128) { /* ASCII char */
@@ -68,9 +71,13 @@ static UCodePoint get_utf16_code_point(const char *source, ByteOrder byte_order)
 	return code_point;
 }
 
-int charset_utf16_to_iso8859_1(char       *target, int target_size,
-                               const char *source, int source_size,
-                               ByteOrder   byte_order)
+int charset_utf16_to_iso8859_1(
+	char       *target,
+	size_t      target_size,
+	const char *source,
+	size_t      source_size,
+	ByteOrder   byte_order
+)
 {
 	int valid = 1, i = (byte_order == BOM ? 2 : 0), j = 0;
 
@@ -105,10 +112,13 @@ int charset_utf16_to_iso8859_1(char       *target, int target_size,
 	return valid;
 }
 
-int charset_iso8859_1_to_utf8(char *target, const char *source, int target_size)
+int charset_iso8859_1_to_utf8(char *target, const char *source, size_t target_size)
 {
-	int            i, j, len = strlen(source), valid = 1;
-	unsigned char *src = (unsigned char *)source;
+	int                  i, j;
+	size_t               len = strlen(source);
+	int                  valid = 1;
+	const unsigned char *src = (const unsigned char *)source;
+
 	len = (len < target_size ? len : target_size);
 	for (i = 0, j = 0; i < len && j < target_size-1; i++, j++) {
 		if (src[i] < 128) { /* ASCII char */
@@ -132,8 +142,9 @@ void charset_filename_set(Charset charset)
 
 char *charset_filename_convert_alloc(const char *filename)
 {
-	char *buf = NULL;
-	int   len = filename ? strlen(filename) : 0;
+	char  *buf = NULL;
+	size_t len = filename ? strlen(filename) : 0;
+
 	if (len > 0) buf = malloc(len+1);
 	if (buf) {
 		buf[len] = '\0';
@@ -149,9 +160,13 @@ char *charset_filename_convert_alloc(const char *filename)
 	return buf;
 }
 
-int charset_utf16_to_utf8(char       *target, int target_size,
-                          const char *source, int source_size,
-                          ByteOrder   byte_order)
+int charset_utf16_to_utf8(
+	char       *target,
+	size_t      target_size,
+	const char *source,
+	size_t      source_size,
+	ByteOrder   byte_order
+)
 {
 	int valid = 1, i = (byte_order == BOM ? 2 : 0), j = 0;
 
@@ -263,8 +278,11 @@ int charset_utf16_to_utf8(char       *target, int target_size,
 
 int charset_is_valid_utf8_string(const char *str)
 {
-	int            i, len = strlen(str), valid = 1;
-	unsigned char *src = (unsigned char *)str;
+	int                  i;
+	size_t               len = strlen(str);
+	int                  valid = 1;
+	const unsigned char *src = (const unsigned char *)str;
+
 	for (i = 0; i < len; i++) {
 		if (src[i] < 128) { /* ASCII char */
 			/* nothing to do */
@@ -285,10 +303,12 @@ int charset_is_valid_utf8_string(const char *str)
 	return valid;
 }
 
-int charset_utf8_to_codepoints(UCodePoint *target, const char *source, int target_size)
+int charset_utf8_to_codepoints(UCodePoint *target, const char *source, size_t target_size)
 {
-	int            i, j, len = strlen(source), valid = 1;
-	unsigned char *src = (unsigned char *)source;
+	int                  i, j;
+	size_t               len = strlen(source);
+	int                  valid = 1;
+	const unsigned char *src = (const unsigned char *)source;
 
 	for (i = 0, j = 0; j < target_size && source[i]; i++) {
 		if (src[i] < 128) { /* ASCII char */
@@ -331,8 +351,11 @@ int charset_utf8_to_codepoints(UCodePoint *target, const char *source, int targe
 int charset_utf8_len(const char *str)
 {
 	int u8len = 0;
-	int            i, len = strlen(str), valid = 1;
-	unsigned char *src = (unsigned char *)str;
+	int                  i;
+	size_t               len = strlen(str);
+	int                  valid = 1;
+	const unsigned char *src = (const unsigned char *)str;
+
 	for (i = 0; i < len; i++) {
 		if (src[i] < 128) { /* ASCII char */
 			u8len++;
@@ -362,9 +385,11 @@ int charset_utf8_len(const char *str)
 
 int charset_fix_broken_utf8_string(char *str)
 {
-	int i, len = strlen(str);
-	int fixed = 0;
-	unsigned char *src = (unsigned char *)str;
+	int                  i;
+	size_t               len = strlen(str);
+	int                  fixed = 0;
+	const unsigned char *src = (const unsigned char *)str;
+
 	for (i = 0; i < len; i++) {
 		if (src[i] < 128) { /* ASCII char */
 			/* nothing to do */
