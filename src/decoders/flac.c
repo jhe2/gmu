@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: flac.c  Created: 081104
  *
@@ -304,7 +304,7 @@ static int meta_data_load(const char *filename)
 	int                  result = 0;
 	FILE                *file;
 	FLAC__StreamDecoder *decoder;
-	char                *filename_without_path;
+	char                *filename_without_path = NULL;
 
 	decoder = FLAC__stream_decoder_new(); 
 	FLAC__stream_decoder_set_metadata_respond(decoder, FLAC__METADATA_TYPE_VORBIS_COMMENT);
@@ -328,10 +328,10 @@ static int meta_data_load(const char *filename)
 		filename_without_path = strrchr(filename, '/');
 		if (filename_without_path != NULL)
 			filename_without_path++;
-		else
-			filename_without_path = (char *)filename;
 
-		filename_without_path = charset_filename_convert_alloc(filename_without_path);
+		filename_without_path = charset_filename_convert_alloc(
+			filename_without_path ? filename_without_path : filename
+		);
 		strncpy(ti_metaonly.title, filename_without_path, SIZE_TITLE-1);
 		free(filename_without_path);
 
