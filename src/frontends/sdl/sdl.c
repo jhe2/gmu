@@ -319,11 +319,11 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 			update = UPDATE_TEXTAREA;
 			break;
 		case PAGE_DOWN:
-			file_browser_move_selection_n_items_down(fb, skin_textarea_get_number_of_lines((Skin *)fb->skin));
+			file_browser_move_selection_n_items_down(fb, skin_textarea_get_number_of_lines(fb->skin));
 			update = UPDATE_TEXTAREA;
 			break;
 		case PAGE_UP:
-			file_browser_move_selection_n_items_up(fb, skin_textarea_get_number_of_lines((Skin *)fb->skin));
+			file_browser_move_selection_n_items_up(fb, skin_textarea_get_number_of_lines(fb->skin));
 			update = UPDATE_TEXTAREA;
 			break;
 	}
@@ -388,11 +388,11 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 			update = UPDATE_TEXTAREA;
 			break;
 		case PAGE_DOWN:
-			pl_brower_move_selection_n_items_down(pb, skin_textarea_get_number_of_lines((Skin *)pb->skin));
+			pl_brower_move_selection_n_items_down(pb, skin_textarea_get_number_of_lines(pb->skin));
 			update = UPDATE_TEXTAREA;
 			break;
 		case PAGE_UP:
-			pl_brower_move_selection_n_items_up(pb, skin_textarea_get_number_of_lines((Skin *)pb->skin));
+			pl_brower_move_selection_n_items_up(pb, skin_textarea_get_number_of_lines(pb->skin));
 			update = UPDATE_TEXTAREA;
 			break;
 	}
