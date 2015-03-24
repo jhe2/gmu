@@ -93,8 +93,8 @@ void skin_update_bg(const Skin *skin, SDL_Surface *display, SDL_Surface *buffer)
 
 int  skin_textarea_get_number_of_lines(const Skin *skin);
 int  skin_textarea_get_characters_per_line(const Skin *skin);
-void skin_draw_header_text(const Skin *skin, char *text, SDL_Surface *target);
-void skin_draw_footer_text(const Skin *skin, char *text, SDL_Surface *target);
+void skin_draw_header_text(const Skin *skin, const char *text, SDL_Surface *target);
+void skin_draw_footer_text(const Skin *skin, const char *text, SDL_Surface *target);
 
 void skin_draw_scroll_arrow_up(const Skin *skin, SDL_Surface *target);
 void skin_draw_scroll_arrow_down(const Skin *skin, SDL_Surface *target);

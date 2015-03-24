@@ -390,7 +390,7 @@ int skin_textarea_get_characters_per_line(const Skin *skin)
 	return gmu_widget_get_width(&skin->lv, 1) / (skin->font2_char_width+1);
 }
 
-void skin_draw_header_text(const Skin *skin, char *text, SDL_Surface *target)
+void skin_draw_header_text(const Skin *skin, const char *text, SDL_Surface *target)
 {
 	textrenderer_draw_string(&skin->font1, text, target, 
 	                         gmu_widget_get_pos_x(&skin->header, 1),
@@ -399,7 +399,7 @@ void skin_draw_header_text(const Skin *skin, char *text, SDL_Surface *target)
 			                 skin->font1_char_height) / 2);
 }
 
-void skin_draw_footer_text(const Skin *skin, char *text, SDL_Surface *target)
+void skin_draw_footer_text(const Skin *skin, const char *text, SDL_Surface *target)
 {
 	int len = skin_textarea_get_characters_per_line(skin);
 	textrenderer_draw_string_with_highlight(&skin->font1, &skin->font2, text, 0, target,
