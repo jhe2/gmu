@@ -47,17 +47,22 @@ void cover_viewer_free(CoverViewer *cv)
 	cover_image_free(&cv->ci);
 }
 
-void cover_viewer_load_artwork(CoverViewer *cv, TrackInfo *ti, char *audio_file,
-                               char *image_file_pattern, int *ready_flag)
+void cover_viewer_load_artwork(
+	CoverViewer *cv,
+	TrackInfo   *ti,
+	const char  *audio_file,
+	const char  *image_file_pattern,
+	int         *ready_flag
+)
 {
 	static char last_cover_path[256] = "";
 
 	cv->y_offset = 0;
 	if (!cv->large)
-		cover_image_set_target_size(&cv->ci, gmu_widget_get_width((GmuWidget *)&cv->skin->lv, 1) / 2,
-		                            gmu_widget_get_height((GmuWidget *)&cv->skin->lv, 1));
+		cover_image_set_target_size(&cv->ci, gmu_widget_get_width(&cv->skin->lv, 1) / 2,
+		                            gmu_widget_get_height(&cv->skin->lv, 1));
 	else
-		cover_image_set_target_size(&cv->ci, gmu_widget_get_width((GmuWidget *)&cv->skin->lv, 1), -1);
+		cover_image_set_target_size(&cv->ci, gmu_widget_get_width(&cv->skin->lv, 1), -1);
 
 	/* Try to load image embedded in tag: */
 	if (trackinfo_acquire_lock(ti)) {
@@ -146,13 +151,13 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 {
 	SDL_Rect     srect, drect;
 	int          text_x_offset = 5;
-	int          chars_per_line = (skin_textarea_get_characters_per_line((Skin *)cv->skin) < 256 ? 
-	                               skin_textarea_get_characters_per_line((Skin *)cv->skin) : 255);
+	int          chars_per_line = (skin_textarea_get_characters_per_line(cv->skin) < 256 ? 
+	                               skin_textarea_get_characters_per_line(cv->skin) : 255);
 	SDL_Surface *cover = cover_image_get_image(&cv->ci);
-	int          ax = gmu_widget_get_pos_x((GmuWidget *)&cv->skin->lv, 1);
-	int          ay = gmu_widget_get_pos_y((GmuWidget *)&cv->skin->lv, 1);
-	int          aw = gmu_widget_get_width((GmuWidget *)&cv->skin->lv, 1);
-	int          ah = gmu_widget_get_height((GmuWidget *)&cv->skin->lv, 1);
+	int          ax = gmu_widget_get_pos_x(&cv->skin->lv, 1);
+	int          ay = gmu_widget_get_pos_y(&cv->skin->lv, 1);
+	int          aw = gmu_widget_get_width(&cv->skin->lv, 1);
+	int          ah = gmu_widget_get_height(&cv->skin->lv, 1);
 
 	if (cover != NULL && !cv->hide_cover && with_image) {
 		if (!cv->large) {
@@ -232,26 +237,26 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 	}
 
 	if (cv->hide_text && !cv->hide_cover &&  !cv->spectrum_analyzer)
-		skin_draw_header_text((Skin *)cv->skin, "Track info (Cover only)", target);
+		skin_draw_header_text(cv->skin, "Track info (Cover only)", target);
 	else if (cv->hide_cover && !cv->hide_text && !cv->spectrum_analyzer)
-		skin_draw_header_text((Skin *)cv->skin, "Track info (Text only)", target);
+		skin_draw_header_text(cv->skin, "Track info (Text only)", target);
 	else if (cv->hide_cover && cv->hide_text && cv->spectrum_analyzer)
-		skin_draw_header_text((Skin *)cv->skin, "Track info (Spectrum analyzer only)", target);
+		skin_draw_header_text(cv->skin, "Track info (Spectrum analyzer only)", target);
 	else if (cv->hide_text && cv->hide_cover && !cv->spectrum_analyzer)
-		skin_draw_header_text((Skin *)cv->skin, "Track info (showing nothing)", target);
+		skin_draw_header_text(cv->skin, "Track info (showing nothing)", target);
 	else if (cv->hide_text && !cv->hide_cover && cv->spectrum_analyzer)
-		skin_draw_header_text((Skin *)cv->skin, "Track info (Cover + Spectrum analyzer)", target);
+		skin_draw_header_text(cv->skin, "Track info (Cover + Spectrum analyzer)", target);
 	else if (!cv->hide_text && cv->hide_cover && cv->spectrum_analyzer)
-		skin_draw_header_text((Skin *)cv->skin, "Track info (Text + Spectrum analyzer)", target);
+		skin_draw_header_text(cv->skin, "Track info (Text + Spectrum analyzer)", target);
 	else if (!cv->hide_text && !cv->hide_cover && !cv->spectrum_analyzer)
-		skin_draw_header_text((Skin *)cv->skin, "Track info (Text + Cover)", target);
+		skin_draw_header_text(cv->skin, "Track info (Text + Cover)", target);
 }
 
 void cover_viewer_scroll_down(CoverViewer *cv)
 {
 	SDL_Surface *cover = cover_image_get_image(&cv->ci);
 	if (cv->hide_text && cover != NULL) {
-		if (cv->y_offset < cover->h - gmu_widget_get_height((GmuWidget *)&cv->skin->lv, 1) - 10)
+		if (cv->y_offset < cover->h - gmu_widget_get_height(&cv->skin->lv, 1) - 10)
 			cv->y_offset += 10;
 	} else if (!cv->hide_text) {
 		text_browser_scroll_down(&cv->tb);
