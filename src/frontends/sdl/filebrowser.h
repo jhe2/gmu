@@ -26,7 +26,7 @@ typedef struct FileBrowser
 	int         select_next_after_add;
 } FileBrowser;
 
-void    file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, char *base_dir);
+void    file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, const char *base_dir);
 void    file_browser_free(FileBrowser *fb);
 int     file_browser_set_selection(FileBrowser *fb, int selection);
 int     file_browser_get_selection(FileBrowser *fb);
@@ -36,7 +36,7 @@ void    file_browser_move_selection_n_items_down(FileBrowser *fb, int n);
 void    file_browser_move_selection_n_items_up(FileBrowser *fb, int n);
 char   *file_browser_get_selected_file(FileBrowser *fb);
 char   *file_browser_get_selected_file_full_path_alloc(FileBrowser *fb);
-int     file_browser_change_dir(FileBrowser *fb, char *new_dir);
+int     file_browser_change_dir(FileBrowser *fb, const char *new_dir);
 int     file_browser_selection_is_dir(FileBrowser *fb);
 void    file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target);
 void    file_browser_scroll_horiz(FileBrowser *fb, int direction);

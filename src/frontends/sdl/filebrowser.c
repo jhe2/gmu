@@ -21,7 +21,7 @@
 #include "skin.h"
 #include "core.h"
 
-void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, char *base_dir)
+void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, const char *base_dir)
 {
 	fb->skin = skin;
 	fb->horiz_offset = 0;
@@ -65,7 +65,7 @@ void file_browser_move_selection_down(FileBrowser *fb)
 		fb->selection = 0;
 		fb->offset = 0;
 	}
-	if (fb->selection > fb->offset + skin_textarea_get_number_of_lines((Skin *)fb->skin) - 1)
+	if (fb->selection > fb->offset + skin_textarea_get_number_of_lines(fb->skin) - 1)
 		fb->offset++;
 }
 
@@ -74,7 +74,7 @@ void file_browser_move_selection_up(FileBrowser *fb)
 	if (fb->selection > 0) {
 		fb->selection--;
 	} else {
-		int number_of_visible_lines = skin_textarea_get_number_of_lines((Skin *)fb->skin);
+		int number_of_visible_lines = skin_textarea_get_number_of_lines(fb->skin);
 		fb->selection = dir_get_number_of_files(&fb->dir) - 1 >= 0 ? 
 		                dir_get_number_of_files(&fb->dir) - 1 : 0;
 		fb->offset = fb->selection - number_of_visible_lines + 1 > 0 ?
@@ -105,7 +105,7 @@ char *file_browser_get_selected_file_full_path_alloc(FileBrowser *fb)
 	return dir_get_filename_with_full_path_alloc(&fb->dir, fb->selection);
 }
 
-static int internal_change_dir(FileBrowser *fb, char *new_dir)
+static int internal_change_dir(FileBrowser *fb, const char *new_dir)
 {
 	int   result = 0;
 	char *ndir = NULL;
@@ -128,7 +128,7 @@ static int internal_change_dir(FileBrowser *fb, char *new_dir)
 	return result;
 }
 
-int file_browser_change_dir(FileBrowser *fb, char *new_dir)
+int file_browser_change_dir(FileBrowser *fb, const char *new_dir)
 {
 	int result = internal_change_dir(fb, new_dir);
 	if (!result) result = internal_change_dir(fb, "..");
@@ -145,12 +145,12 @@ int file_browser_selection_is_dir(FileBrowser *fb)
 
 void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 {
-	int       cpl = skin_textarea_get_characters_per_line((Skin *)fb->skin);
+	int       cpl = skin_textarea_get_characters_per_line(fb->skin);
 	int       i, pl, len = (cpl > FB_MAXIMUM_STR_LENGTH ? FB_MAXIMUM_STR_LENGTH : cpl);
 	const int chars_left = len - 15;
 	char      buf[FB_MAXIMUM_STR_LENGTH+1], *buf2 = alloca(chars_left+1), *path = dir_get_path(&fb->dir);
 	char     *bufptr, buf3[FB_MAXIMUM_STR_LENGTH];
-	int       number_of_visible_lines = skin_textarea_get_number_of_lines((Skin *)fb->skin);
+	int       number_of_visible_lines = skin_textarea_get_number_of_lines(fb->skin);
 	int       selected_entry_drawn = 0;
 
 	pl = path ? strlen(path) : 0;
@@ -167,15 +167,15 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 	}
 
 	snprintf(buf, FB_MAXIMUM_STR_LENGTH, "File browser (%s)", buf2);
-	skin_draw_header_text((Skin *)fb->skin, buf, sdl_target);
+	skin_draw_header_text(fb->skin, buf, sdl_target);
 
 	fb->longest_line_so_far = 0;
 
 	for (i = fb->offset; 
 	     i < fb->offset + number_of_visible_lines && i < dir_get_number_of_files(&fb->dir); 
 	     i++) {
-	    int           line_length = 0;
-	    TextRenderer *font, *font_inverted;
+	    int                 line_length = 0;
+	    const TextRenderer *font, *font_inverted;
 
 		if (dir_get_flag(&fb->dir, i) == DIRECTORY) {
 			snprintf(buf, len, "[DIR]");
@@ -188,11 +188,11 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		if (i == fb->offset + number_of_visible_lines - 1 && !selected_entry_drawn)
 			fb->selection = i;
 
-		font          = (TextRenderer *)(i == fb->selection ? &fb->skin->font2 : &fb->skin->font1);
-		font_inverted = (TextRenderer *)(i == fb->selection ? &fb->skin->font1 : &fb->skin->font2);
+		font          = (i == fb->selection ? &fb->skin->font2 : &fb->skin->font1);
+		font_inverted = (i == fb->selection ? &fb->skin->font1 : &fb->skin->font2);
 		textrenderer_draw_string(font, buf, sdl_target, 
-		                         gmu_widget_get_pos_x((GmuWidget *)&fb->skin->lv, 1), 
-		                         gmu_widget_get_pos_y((GmuWidget *)&fb->skin->lv, 1) + 1
+		                         gmu_widget_get_pos_x(&fb->skin->lv, 1), 
+		                         gmu_widget_get_pos_y(&fb->skin->lv, 1) + 1
 		                         + (i-fb->offset)*(fb->skin->font2_char_height+1));
 
 		snprintf(buf, FB_MAXIMUM_STR_LENGTH, "%s", dir_get_filename(&fb->dir, i));
@@ -208,9 +208,9 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 			fb->longest_line_so_far = line_length;
 
 		textrenderer_draw_string_with_highlight(font, font_inverted, bufptr, fb->horiz_offset, sdl_target, 
-		                                        gmu_widget_get_pos_x((GmuWidget *)&fb->skin->lv, 1)
+		                                        gmu_widget_get_pos_x(&fb->skin->lv, 1)
 		                                        + fb->skin->font1_char_width * 7,
-		                                        gmu_widget_get_pos_y((GmuWidget *)&fb->skin->lv, 1)+ 1
+		                                        gmu_widget_get_pos_y(&fb->skin->lv, 1)+ 1
 		                                        + (i-fb->offset) * (fb->skin->font2_char_height + 1),
 		                                        cpl-6, RENDER_ARROW);
 		if (i == fb->selection) selected_entry_drawn = 1;
@@ -219,7 +219,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 
 void file_browser_scroll_horiz(FileBrowser *fb, int direction)
 {
-	int cpl = skin_textarea_get_characters_per_line((Skin *)fb->skin);
+	int cpl = skin_textarea_get_characters_per_line(fb->skin);
 	int tmp = (fb->horiz_offset + direction < fb->longest_line_so_far - cpl + 7 ? 
 	           fb->horiz_offset + direction : fb->longest_line_so_far - cpl + 7);
 	fb->horiz_offset = (tmp > 0 ? tmp : 0);
