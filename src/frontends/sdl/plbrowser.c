@@ -92,9 +92,9 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 	int    i = 0;
 	char   buf[64];
 	Entry *pl_entry;
-	int    number_of_visible_lines = skin_textarea_get_number_of_lines((Skin *)pb->skin);
-	int    len = (skin_textarea_get_characters_per_line((Skin *)pb->skin) > 63 ? 
-	              63 : skin_textarea_get_characters_per_line((Skin *)pb->skin));
+	int    number_of_visible_lines = skin_textarea_get_number_of_lines(pb->skin);
+	int    len = (skin_textarea_get_characters_per_line(pb->skin) > 63 ? 
+	              63 : skin_textarea_get_characters_per_line(pb->skin));
 	int    selected_entry_drawn = 0;
 	char  *mode;
 	int    pl_length;
@@ -121,7 +121,7 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 	pl_length = gmu_core_playlist_get_length();
 	snprintf(buf, 63, "Playlist (%d %s, mode: %s)", pl_length,
 	         pl_length != 1 ? "entries" : "entry", mode);
-	skin_draw_header_text((Skin *)pb->skin, buf, sdl_target);
+	skin_draw_header_text(pb->skin, buf, sdl_target);
 
 	if (pb->first_visible_item == -1 || pb->offset == 0) {
 		if (pl_length > 0)
@@ -141,7 +141,7 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 		char         *entry_name = gmu_core_playlist_get_entry_name(pl_entry);
 		char         *format = "%c%3d";
 		int           line_length = strlen(entry_name);
-		TextRenderer *font, *font_inverted;
+		const TextRenderer *font, *font_inverted;
 
 		if (line_length > pb->longest_line_so_far)
 			pb->longest_line_so_far = line_length;
@@ -158,19 +158,19 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 		if (i == pb->offset + number_of_visible_lines - 1 && !selected_entry_drawn)
 			pb->selection = i;
 
-		font =          (TextRenderer *)(i == pb->selection ? &pb->skin->font2 : &pb->skin->font1);
-		font_inverted = (TextRenderer *)(i == pb->selection ? &pb->skin->font1 : &pb->skin->font2);
+		font =          (i == pb->selection ? &pb->skin->font2 : &pb->skin->font1);
+		font_inverted = (i == pb->selection ? &pb->skin->font1 : &pb->skin->font2);
 
 		if (i == pb->selection) selected_entry_drawn = 1;
-		textrenderer_draw_string(font, buf, sdl_target, gmu_widget_get_pos_x((GmuWidget *)&pb->skin->lv, 1),
-		                         gmu_widget_get_pos_y((GmuWidget *)&pb->skin->lv, 1) + 1
+		textrenderer_draw_string(font, buf, sdl_target, gmu_widget_get_pos_x(&pb->skin->lv, 1),
+		                         gmu_widget_get_pos_y(&pb->skin->lv, 1) + 1
 		                         + (i-pb->offset) * (pb->skin->font2_char_height + 1));
 		textrenderer_draw_string_with_highlight(font, font_inverted, entry_name, pb->horiz_offset, sdl_target, 
-		                                        gmu_widget_get_pos_x((GmuWidget *)&pb->skin->lv, 1)
+		                                        gmu_widget_get_pos_x(&pb->skin->lv, 1)
 		                                        + pb->skin->font1_char_width * 7,
-		                                        gmu_widget_get_pos_y((GmuWidget *)&pb->skin->lv, 1) + 1
+		                                        gmu_widget_get_pos_y(&pb->skin->lv, 1) + 1
 		                                        + (i-pb->offset)*(pb->skin->font2_char_height+1),
-		skin_textarea_get_characters_per_line((Skin *)pb->skin)-6, RENDER_ARROW);
+		skin_textarea_get_characters_per_line(pb->skin)-6, RENDER_ARROW);
 		pl_entry = gmu_core_playlist_get_next(pl_entry);
 	}
 	gmu_core_playlist_release_lock();
@@ -191,7 +191,7 @@ int pl_browser_set_selection(PlaylistBrowser *pb, int pos)
 		if (pb->selection < pb->offset) {
 			pb->offset = pb->selection;
 			pb->first_visible_item = pos;
-		} else if (pb->selection > pb->offset + skin_textarea_get_number_of_lines((Skin *)pb->skin) - 1) {
+		} else if (pb->selection > pb->offset + skin_textarea_get_number_of_lines(pb->skin) - 1) {
 			pb->offset = pb->selection;
 			pb->first_visible_item = pos;
 		}
@@ -210,7 +210,7 @@ void pl_brower_move_selection_down(PlaylistBrowser *pb)
 		pb->offset = 0;
 		pb->first_visible_item = 0;
 	}
-	if (pb->selection > pb->offset + skin_textarea_get_number_of_lines((Skin *)pb->skin) - 1) {
+	if (pb->selection > pb->offset + skin_textarea_get_number_of_lines(pb->skin) - 1) {
 		pb->offset++;
 		if (pb->first_visible_item >= 0 && pb->first_visible_item < pl_length-1)
 			pb->first_visible_item++;
@@ -222,7 +222,7 @@ void pl_brower_move_selection_up(PlaylistBrowser *pb)
 	if (pb->selection > 0) {
 		pb->selection--;
 	} else {
-		int nol = skin_textarea_get_number_of_lines((Skin *)pb->skin);
+		int nol = skin_textarea_get_number_of_lines(pb->skin);
 		int pl_length = gmu_core_playlist_get_length();
 		pb->selection = (pl_length - 1 < 0 ? 0 : pl_length - 1);
 		pb->offset = (pb->selection - nol + 1 > 0 ? 
@@ -252,7 +252,7 @@ void pl_brower_move_selection_n_items_up(PlaylistBrowser *pb, int n)
 
 void pl_browser_scroll_horiz(PlaylistBrowser *pb, int direction)
 {
-	int cpl = skin_textarea_get_characters_per_line((Skin *)pb->skin);
+	int cpl = skin_textarea_get_characters_per_line(pb->skin);
 	int tmp = (pb->horiz_offset + direction < pb->longest_line_so_far - cpl + 7 ? 
 	           pb->horiz_offset + direction : pb->longest_line_so_far - cpl + 7);
 	pb->horiz_offset = (tmp > 0 ? tmp : 0);
