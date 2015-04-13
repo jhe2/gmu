@@ -387,19 +387,23 @@ static int cmd_login(UI *ui, JSON_Object *json, int sock, char *cur_dir)
 	if (res && strcmp(res, "success") == 0) {
 		websocket_send_str(sock, "{\"cmd\":\"trackinfo\"}", 1);
 		websocket_send_str(sock, "{\"cmd\":\"playlist_playmode_get_info\"}", 1);
-		listwidget_clear_all_rows(ui->lw_fb);
-		ui_update_playlist_pos(ui, 0);
-		if (!cur_dir) {
-			websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
-		} else {
-			char tmp[256];
-			snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
-			websocket_send_str(sock, tmp, 1);
+		if (ui) {
+			listwidget_clear_all_rows(ui->lw_fb);
+			ui_update_playlist_pos(ui, 0);
+			if (!cur_dir) {
+				websocket_send_str(sock, "{\"cmd\":\"dir_read\", \"dir\": \"/\"}", 1);
+			} else {
+				char tmp[256];
+				snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", cur_dir);
+				websocket_send_str(sock, tmp, 1);
+			}
 		}
 	} else {
-		wprintw(ui->win_cmd->win, "Login failed! Check password\n");
-		ui->active_win = WIN_CMD;
-		screen_update = 1;
+		if (ui) {
+			wprintw(ui->win_cmd->win, "Login failed! Check password\n");
+			ui->active_win = WIN_CMD;
+			screen_update = 1;
+		}
 	}
 	return screen_update;
 }
@@ -1215,6 +1219,176 @@ static int run_gmuc_ui(int color, char *host, char *password)
 	return res;
 }
 
+static void cmd_trackinfo_stdout(JSON_Object *json)
+{
+	char *artist  = json_get_string_value_for_key(json, "artist");
+	char *title   = json_get_string_value_for_key(json, "title");
+	char *album   = json_get_string_value_for_key(json, "album");
+	/*char *date    = json_get_string_value_for_key(json, "date");*/
+	int   minutes = (int)json_get_number_value_for_key(json, "length_min");
+	int   seconds = (int)json_get_number_value_for_key(json, "length_sec");
+	printf("%s - %s (%s) [%02d:%02d]\n", artist, title, album, minutes, seconds);
+}
+
+/**
+ * Returns 1 when printing is done or if an error condition occured or
+ * 0 if there is still work to do.
+ */
+static int handle_data_in_ringbuffer_print_only(RingBuffer *rb, int sock, char *password, char **cur_dir, char *input)
+{
+	char tmp_buf[16];
+	int  size, loop = 1;
+	int  res = 0;
+	do {
+		size = 0;
+		/* 0. set unread pos on ringbuffer */
+		ringbuffer_set_unread_pos(rb);
+		/* 1. read a few bytes from the ringbuffer (Websocket flags+packet size) */
+		if (ringbuffer_read(rb, tmp_buf, 10)) {
+			/* 2. Check wether the required packet size is available in the ringbuffer */
+			size = websocket_calculate_packet_size(tmp_buf);
+			ringbuffer_unread(rb);
+		}
+		/* 3. If so, read the whole packet from the ringbuffer and process it,
+		 *    then startover at step 0. If not, unread the already read bytes
+		 *    from the ringbuffer and leave inner loop so the ringbuffer can fill more */
+		if (ringbuffer_get_fill(rb) >= size && size > 0) {
+			char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
+			const char *payload;
+			if (wspacket) {
+				JSON_Object *json;
+				ringbuffer_read(rb, wspacket, size);
+				wspacket[size] = '\0';
+				payload = websocket_get_payload(wspacket);
+				json = json_parse_alloc(payload);
+				if (!json_object_has_parse_error(json)) {
+					char *cmd = json_get_string_value_for_key(json, "cmd");
+					if (cmd) {
+						if (strcmp(cmd, "trackinfo") == 0) {
+							cmd_trackinfo_stdout(json);
+							res = 1;
+						} else if (strcmp(cmd, "track_change") == 0) {
+							/* TODO */
+						} else if (strcmp(cmd, "playback_time") == 0) {
+							/* TODO */
+						} else if (strcmp(cmd, "playback_state") == 0) {
+							/* TODO */
+						} else if (strcmp(cmd, "hello") == 0) {
+							char tmp[256];
+							snprintf(tmp, 255, "{\"cmd\":\"login\",\"password\":\"%s\"}", password);
+							websocket_send_str(sock, tmp, 1);
+						} else if (strcmp(cmd, "login") == 0) {
+							cmd_login(NULL, json, sock, *cur_dir);
+						} else if (strcmp(cmd, "playmode_info") == 0) {
+							/* TODO */
+						} else if (strcmp(cmd, "volume_info") == 0) {
+							/* TODO */
+						}
+					}
+				} else {
+					res = 1; /* error (invalid JSON data received) */
+				}
+				json_object_free(json);
+				free(wspacket);
+			} else {
+				loop = 0;
+			}
+		} else if (size > 0) {
+			ringbuffer_unread(rb);
+			loop = 0;
+		} else {
+			loop = 0;
+			if (size == -1) res = 1;
+		}
+	} while (loop && !res);
+	return res;
+}
+
+
+static int print_track_info(char *host, char *password, int just_once)
+{
+	int     res = EXIT_FAILURE;
+	int     network_error = 0;
+	char   *cur_dir = NULL;
+	int     sock;
+	ssize_t size;
+	char   *buffer = malloc(BUF);
+
+	while (!quit) {
+		if (!buffer) {
+			quit = 1;
+		} else if ((sock = nethelper_tcp_connect_to_host(host, PORT, 0)) > 0) {
+			struct timeval tv;
+			fd_set         readfds, errorfds;
+			char          *input = NULL;
+			RingBuffer     rb;
+			int            r = 1, connected = 1;
+			State          state = STATE_WEBSOCKET_HANDSHAKE;
+			wchar_t        wchars[256];
+
+			network_error = 0;
+			wchars[0] = L'\0';
+
+			initiate_websocket_handshake(sock, host);
+
+			ringbuffer_init(&rb, 65536);
+			while (!quit && connected && !network_error) {
+				FD_ZERO(&readfds);
+				FD_ZERO(&errorfds);
+				FD_SET(fileno(stdin), &readfds);
+				FD_SET(sock, &readfds);
+				tv.tv_sec = 0;
+				tv.tv_usec = 100000;
+				if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
+					/* ERROR in select() */
+					FD_ZERO(&readfds);
+				}
+
+				if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
+					if (r) {
+						memset(buffer, 0, BUF); /* we don't need that later */
+						size = recv(sock, buffer, BUF-1, 0);
+						if (size <= 0) {
+							network_error = 1;
+						}
+						if (size > 0) r = ringbuffer_write(&rb, buffer, size);
+					}
+				}
+
+				switch (state) {
+					case STATE_WEBSOCKET_HANDSHAKE: {
+						state = do_websocket_handshake(&rb, state);
+						break;
+					}
+					case STATE_CONNECTION_ESTABLISHED: {
+						int tmp;
+						if (!network_error)
+							tmp = handle_data_in_ringbuffer_print_only(&rb, sock, password, &cur_dir, input);
+							if (just_once) quit = tmp;
+						break;
+					}
+					case STATE_WEBSOCKET_HANDSHAKE_FAILED:
+						network_error = 1;
+						connected = 0;
+						break;
+				}
+			}
+			if (input) free(input);
+			ringbuffer_free(&rb);
+			close(sock);
+			res = EXIT_SUCCESS;
+		}
+		if (just_once) {
+			quit = 1;
+		} else {
+			usleep(100000);
+		}
+	}
+	free(cur_dir);
+	if (buffer) free(buffer);
+	return res;
+}
+
 int main(int argc, char **argv)
 {
 	int        res = EXIT_FAILURE;
@@ -1222,6 +1396,7 @@ int main(int argc, char **argv)
 	ConfigFile config;
 	char      *password, *host;
 	char       config_file_path[256] = "", *homedir;
+	int        mode_info = 0, just_once = 1;
 
 	assign_signal_handler(SIGINT, sig_handler);
 	assign_signal_handler(SIGTERM, sig_handler);
@@ -1233,27 +1408,37 @@ int main(int argc, char **argv)
 	cfg_add_key(&config, "Color", "yes");
 
 	if (argc > 1) {
-		if (strlen(argv[1]) == 2) { /* One char parameter */
-			switch (argv[1][1]) {
-				case 'h':
-					gmuc_help(argv[0]);
-					break;
-				case 'c':
-					if (argc < 3) {
+		size_t i;
+		for (i = 1; i < argc; i++) {
+			if (strlen(argv[i]) == 2) { /* One char parameter */
+				switch (argv[i][1]) {
+					case 'h':
 						gmuc_help(argv[0]);
-					} else {
-						int len = strlen(argv[2]);
-						if (len > 255) {
-							printf("ERROR: Path too long.\n");
-							exit(1);
+						break;
+					case 'c':
+						if (i >= argc-1) {
+							gmuc_help(argv[0]);
 						} else {
-							strncpy(config_file_path, argv[2], len);
+							int len = strlen(argv[i+1]);
+							if (len > 255) {
+								printf("ERROR: Path too long.\n");
+								exit(1);
+							} else {
+								strncpy(config_file_path, argv[i+1], len);
+							}
+							i++;
 						}
-					}
-					break;
+						break;
+					case 'p': /* Print track information on stdout */
+						mode_info = 1;
+						break;
+					case 'u': /* Continue running after printing the track information */
+						just_once = 0;
+						break;
+				}
+			} else {
+				gmuc_help(argv[0]);
 			}
-		} else {
-			gmuc_help(argv[0]);
 		}
 	}
 
@@ -1285,10 +1470,13 @@ int main(int argc, char **argv)
 	}
 
 	wdprintf_set_verbosity(V_SILENT);
-	set_terminal_title("Gmu");
-
-	tmp = cfg_get_key_value(config, "Color");
-	if (argc >= 1) res = run_gmuc_ui(tmp && strcmp(tmp, "yes") == 0, host, password);
+	if (!mode_info) {
+		set_terminal_title("Gmu");
+		tmp = cfg_get_key_value(config, "Color");
+		if (argc >= 1) res = run_gmuc_ui(tmp && strcmp(tmp, "yes") == 0, host, password);
+	} else {
+		print_track_info(host, password, just_once);
+	}
 	cfg_free_config_file_struct(&config);
 	return res;
 }
