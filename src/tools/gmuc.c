@@ -1219,15 +1219,76 @@ static int run_gmuc_ui(int color, char *host, char *password)
 	return res;
 }
 
-static void cmd_trackinfo_stdout(JSON_Object *json)
+/**
+ * Prints track information for the current track, formatted according to
+ * the supplied format string.
+ */
+static void cmd_trackinfo_stdout(JSON_Object *json, const char *format_str)
 {
-	char *artist  = json_get_string_value_for_key(json, "artist");
-	char *title   = json_get_string_value_for_key(json, "title");
-	char *album   = json_get_string_value_for_key(json, "album");
-	/*char *date    = json_get_string_value_for_key(json, "date");*/
-	int   minutes = (int)json_get_number_value_for_key(json, "length_min");
-	int   seconds = (int)json_get_number_value_for_key(json, "length_sec");
-	printf("%s - %s (%s) [%02d:%02d]\n", artist, title, album, minutes, seconds);
+	char  *artist  = json_get_string_value_for_key(json, "artist");
+	char  *title   = json_get_string_value_for_key(json, "title");
+	char  *album   = json_get_string_value_for_key(json, "album");
+	char  *date    = json_get_string_value_for_key(json, "date");
+	int    minutes = (int)json_get_number_value_for_key(json, "length_min");
+	int    seconds = (int)json_get_number_value_for_key(json, "length_sec");
+	size_t i, len = strlen(format_str);
+	int    empty = 0;
+
+	for (i = 0; i < len; i++) {
+		if (format_str[i] != '%') {
+			putc(format_str[i], stdout);
+		} else {
+			i++;
+			if (i < len) {
+				switch (format_str[i]) {
+					case 'a': /* artist */
+						empty = 0;
+						if (strlen(artist) > 0)
+							fputs(artist, stdout);
+						else
+							empty = 1;
+						break;
+					case 't': /* title */
+						empty = 0;
+						if (strlen(title) > 0)
+							fputs(title, stdout);
+						else
+							empty = 1;
+						break;
+					case 'A': /* album */
+						empty = 0;
+						if (strlen(album) > 0)
+							fputs(album, stdout);
+						else
+							empty = 1;
+						break;
+					case 'm': /* minutes */
+						empty = 0;
+						printf("%02d", minutes);
+						break;
+					case 's': /* seconds */
+						empty = 0;
+						printf("%02d", seconds);
+						break;
+					case 'd': /* date */
+						empty = 0;
+						if (strlen(date) > 0)
+							fputs(date, stdout);
+						else
+							empty = 1;
+						break;
+					case 'S': /* separator ' - ' unless previous format replacement was empty */
+						if (!empty) {
+							fputs(" - ", stdout);
+						}
+						break;
+					default: /* unknown format character */
+						break;
+				}
+			}
+		}
+	}
+	putc('\n', stdout);
 }
 
 /**
@@ -1265,7 +1326,7 @@ static int handle_data_in_ringbuffer_print_only(RingBuffer *rb, int sock, char *
 					char *cmd = json_get_string_value_for_key(json, "cmd");
 					if (cmd) {
 						if (strcmp(cmd, "trackinfo") == 0) {
-							cmd_trackinfo_stdout(json);
+							cmd_trackinfo_stdout(json, "%a%S%t (%A) [%m:%s]");
 							res = 1;
 						} else if (strcmp(cmd, "track_change") == 0) {
 							/* TODO */
