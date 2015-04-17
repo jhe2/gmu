@@ -380,7 +380,7 @@ static void cmd_volume_info(UI *ui, JSON_Object *json)
 	ui_draw_header(ui);
 }
 
-static int cmd_login(UI *ui, JSON_Object *json, int sock, char *cur_dir)
+static int cmd_login(UI *ui, JSON_Object *json, int sock, const char *cur_dir)
 {
 	int   screen_update = 0;
 	char *res = json_get_string_value_for_key(json, "res");
@@ -1295,7 +1295,14 @@ static void cmd_trackinfo_stdout(JSON_Object *json, const char *format_str)
  * Returns 1 when printing is done or if an error condition occured or
  * 0 if there is still work to do.
  */
-static int handle_data_in_ringbuffer_print_only(RingBuffer *rb, int sock, char *password, char **cur_dir, char *input)
+static int handle_data_in_ringbuffer_print_only(
+	RingBuffer *rb,
+	int         sock,
+	const char *password,
+	char      **cur_dir,
+	const char *input,
+	const char *format_str
+)
 {
 	char tmp_buf[16];
 	int  size, loop = 1;
@@ -1326,7 +1333,7 @@ static int handle_data_in_ringbuffer_print_only(RingBuffer *rb, int sock, char *
 					char *cmd = json_get_string_value_for_key(json, "cmd");
 					if (cmd) {
 						if (strcmp(cmd, "trackinfo") == 0) {
-							cmd_trackinfo_stdout(json, "%a%S%t (%A) [%m:%s]");
+							cmd_trackinfo_stdout(json, format_str ? format_str : "%a%S%t (%A) [%m:%s]");
 							res = 1;
 						} else if (strcmp(cmd, "track_change") == 0) {
 							/* TODO */
@@ -1366,7 +1373,7 @@ static int handle_data_in_ringbuffer_print_only(RingBuffer *rb, int sock, char *
 }
 
 
-static int print_track_info(char *host, char *password, int just_once)
+static int print_track_info(char *host, char *password, int just_once, const char *format_str)
 {
 	int     res = EXIT_FAILURE;
 	int     network_error = 0;
@@ -1424,7 +1431,14 @@ static int print_track_info(char *host, char *password, int just_once)
 					case STATE_CONNECTION_ESTABLISHED: {
 						int tmp;
 						if (!network_error)
-							tmp = handle_data_in_ringbuffer_print_only(&rb, sock, password, &cur_dir, input);
+							tmp = handle_data_in_ringbuffer_print_only(
+								&rb,
+								sock,
+								password,
+								&cur_dir,
+								input,
+								format_str
+							);
 							if (just_once) quit = tmp;
 						break;
 					}
@@ -1452,12 +1466,13 @@ static int print_track_info(char *host, char *password, int just_once)
 
 int main(int argc, char **argv)
 {
-	int        res = EXIT_FAILURE;
-	char      *tmp;
-	ConfigFile config;
-	char      *password, *host;
-	char       config_file_path[256] = "", *homedir;
-	int        mode_info = 0, just_once = 1;
+	int         res = EXIT_FAILURE;
+	char       *tmp;
+	ConfigFile  config;
+	char       *password, *host;
+	char        config_file_path[256] = "", *homedir;
+	int         mode_info = 0, just_once = 1;
+	const char *format_str = NULL;
 
 	assign_signal_handler(SIGINT, sig_handler);
 	assign_signal_handler(SIGTERM, sig_handler);
@@ -1492,6 +1507,10 @@ int main(int argc, char **argv)
 						break;
 					case 'p': /* Print track information on stdout */
 						mode_info = 1;
+						if (i + 1 < argc && argv[i + 1][0] != '-') {
+							format_str = argv[i + 1];
+							i++;
+						}
 						break;
 					case 'u': /* Continue running after printing the track information */
 						just_once = 0;
@@ -1536,7 +1555,7 @@ int main(int argc, char **argv)
 		tmp = cfg_get_key_value(config, "Color");
 		if (argc >= 1) res = run_gmuc_ui(tmp && strcmp(tmp, "yes") == 0, host, password);
 	} else {
-		print_track_info(host, password, just_once);
+		print_track_info(host, password, just_once, format_str);
 	}
 	cfg_free_config_file_struct(&config);
 	return res;
