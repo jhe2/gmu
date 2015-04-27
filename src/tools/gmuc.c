@@ -66,6 +66,7 @@ typedef enum Command {
 	FILES,
 	ADD,
 	SEARCH,
+	PING,
 	RAW, /* Sends raw data as command to thr server (which has to be supplied as parameter) */
 	NO_COMMAND
 } Command;
@@ -998,23 +999,28 @@ static void execute_command(int sock, Command cmd, char *params, UI *ui)
 			}
 			break;
 		case SEARCH:
-			str = malloc(320);
-			if (str) {
-				char *params_esc = json_string_escape_alloc(params);
-				if (params_esc) {
-					if (snprintf(str, 320, "{\"cmd\":\"medialib_search\",\"type\":\"0\",\"str\":\"%s\"}", params_esc) == 320) {
+			if (ui) {
+				str = malloc(320);
+				if (str) {
+					char *params_esc = json_string_escape_alloc(params);
+					if (params_esc) {
+						if (snprintf(str, 320, "{\"cmd\":\"medialib_search\",\"type\":\"0\",\"str\":\"%s\"}", params_esc) == 320) {
+							free(str);
+							str = NULL;
+						}
+						free(params_esc);
+						listwidget_clear_all_rows(ui->lw_mlib_search);
+					} else {
 						free(str);
 						str = NULL;
 					}
-					free(params_esc);
-					listwidget_clear_all_rows(ui->lw_mlib_search);
-				} else {
-					free(str);
-					str = NULL;
+					free_str = 1;
 				}
-				free_str = 1;
+				ui_active_win_set(ui, WIN_LIB);
 			}
-			ui_active_win_set(ui, WIN_LIB);
+			break;
+		case PING:
+			str = "{\"cmd\":\"ping\"}";
 			break;
 		case RAW:
 			str = params;
@@ -1372,6 +1378,10 @@ static int handle_data_in_ringbuffer_print_only(
 	return res;
 }
 
+/* Number of idle loop cycles until a PING request will be send */
+#define PING_TIMEOUT 30
+/* Maximum number of loop cycles until the connection times out after a PING */
+#define PONG_TIMEOUT 5
 
 static int print_track_info(char *host, char *password, int just_once, const char *format_str)
 {
@@ -1393,6 +1403,7 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 			int            r = 1, connected = 1;
 			State          state = STATE_WEBSOCKET_HANDSHAKE;
 			wchar_t        wchars[256];
+			size_t         ping_timeout = PING_TIMEOUT, pong_timeout = PONG_TIMEOUT;
 
 			network_error = 0;
 			wchars[0] = L'\0';
@@ -1400,19 +1411,19 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 			initiate_websocket_handshake(sock, host);
 
 			ringbuffer_init(&rb, 65536);
-			while (!quit && connected && !network_error) {
+			while (!quit && connected && !network_error && pong_timeout) {
 				FD_ZERO(&readfds);
 				FD_ZERO(&errorfds);
-				FD_SET(fileno(stdin), &readfds);
 				FD_SET(sock, &readfds);
 				tv.tv_sec = 0;
-				tv.tv_usec = 100000;
+				tv.tv_usec = 300000;
 				if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
 					/* ERROR in select() */
 					FD_ZERO(&readfds);
 				}
-
 				if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
+					ping_timeout = PING_TIMEOUT;
+					pong_timeout = PONG_TIMEOUT;
 					if (r) {
 						memset(buffer, 0, BUF); /* we don't need that later */
 						size = recv(sock, buffer, BUF-1, 0);
@@ -1420,6 +1431,15 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 							network_error = 1;
 						}
 						if (size > 0) r = ringbuffer_write(&rb, buffer, size);
+					}
+				} else { /* No data received */
+					if (ping_timeout > 0)
+						ping_timeout--;
+					if (ping_timeout == 0) {
+						if (pong_timeout == PONG_TIMEOUT) { /* Send PING request */
+							execute_command(sock, PING, NULL, NULL);
+						}
+						pong_timeout--; /* If this reaches 0, exit loop and try to reconnect */
 					}
 				}
 
@@ -1430,7 +1450,7 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 					}
 					case STATE_CONNECTION_ESTABLISHED: {
 						int tmp;
-						if (!network_error)
+						if (!network_error) {
 							tmp = handle_data_in_ringbuffer_print_only(
 								&rb,
 								sock,
@@ -1440,6 +1460,7 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 								format_str
 							);
 							if (just_once) quit = tmp;
+						}
 						break;
 					}
 					case STATE_WEBSOCKET_HANDSHAKE_FAILED:
