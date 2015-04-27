@@ -1288,6 +1288,9 @@ static void cmd_trackinfo_stdout(JSON_Object *json, const char *format_str)
 							fputs(" - ", stdout);
 						}
 						break;
+					case '%':
+						fputs("%", stdout);
+						break;
 					default: /* unknown format character */
 						break;
 				}
