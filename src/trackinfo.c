@@ -32,10 +32,14 @@ void trackinfo_set(
 	int         channels
 )
 {
-	strncpy(ti->artist, artist, SIZE_ARTIST-1);
-	strncpy(ti->title, title, SIZE_TITLE-1);
-	strncpy(ti->album, album, SIZE_ALBUM-1);
-	strncpy(ti->tracknr, tracknr, SIZE_TRACKNR-1);
+	strncpy(ti->artist, artist, SIZE_ARTIST);
+	ti->artist[SIZE_ARTIST-1] = '\0';
+	strncpy(ti->title, title, SIZE_TITLE);
+	ti->title[SIZE_TITLE-1] = '\0';
+	strncpy(ti->album, album, SIZE_ALBUM);
+	ti->album[SIZE_ALBUM-1] = '\0';
+	strncpy(ti->tracknr, tracknr, SIZE_TRACKNR);
+	ti->tracknr[SIZE_TRACKNR-1] = '\0';
 	ti->bitrate = bitrate;
 	ti->samplerate = samplerate;
 	ti->channels = channels;
@@ -45,17 +49,20 @@ void trackinfo_set(
 
 void trackinfo_set_artist(TrackInfo *ti, const char *artist)
 {
-	strncpy(ti->artist, artist, SIZE_ARTIST-1);
+	strncpy(ti->artist, artist, SIZE_ARTIST);
+	ti->artist[SIZE_ARTIST-1] = '\0';
 }
 
 void trackinfo_set_title(TrackInfo *ti, const char *title)
 {
-	strncpy(ti->title, title, SIZE_TITLE-1);
+	strncpy(ti->title, title, SIZE_TITLE);
+	ti->title[SIZE_TITLE-1] = '\0';
 }
 
 void trackinfo_set_album(TrackInfo *ti, const char *album)
 {
 	strncpy(ti->album, album, SIZE_ALBUM-1);
+	ti->album[SIZE_ALBUM-1] = '\0';
 }
 
 void trackinfo_init(TrackInfo *ti, int with_locking)
@@ -270,7 +277,8 @@ int trackinfo_load_lyrics_from_file(TrackInfo *ti, const char *file_name)
 		}
 		fclose(file);
 		if (charset_is_valid_utf8_string(buffer)) {
-			strncpy(ti->lyrics, buffer, SIZE_LYRICS-1);
+			strncpy(ti->lyrics, buffer, SIZE_LYRICS);
+			ti->lyrics[SIZE_LYRICS-1] = '\0';
 			wdprintf(V_DEBUG, "trackinfo", "Lyrics text looks like it is UTF-8 encoded.\n");
 		} else { /* Try to convert ISO-8859-1 to UTF-8. */
 			wdprintf(V_DEBUG, "trackinfo", "Lyrics text looks like it is ISO-8859-1 encoded.\n");
@@ -306,6 +314,7 @@ void trackinfo_set_trackid(TrackInfo *ti, int id)
 void trackinfo_set_filename(TrackInfo *ti, const char *file)
 {
 	strncpy(ti->file_name, file, SIZE_FILE_NAME-1);
+	ti->file_name[SIZE_FILE_NAME-1] = '\0';
 }
 
 int trackinfo_acquire_lock(TrackInfo *ti)
