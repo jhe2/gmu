@@ -41,7 +41,6 @@ typedef struct Connection {
 	ConnectionState state;
 	char           *http_request_header;
 	RingBuffer      rb_receive;
-	char           *password_ref;
 	int             authentication_okay;
 	char            client_ip[INET6_ADDRSTRLEN+1];
 } Connection;

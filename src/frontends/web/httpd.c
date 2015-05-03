@@ -160,14 +160,11 @@ static int websocket_send_string(Connection *c, const char *str)
 
 int connection_init(Connection *c, int fd, const char *client_ip)
 {
-	ConfigFile *cf = gmu_core_get_config();
 	memset(c, 0, sizeof(Connection));
 	c->connection_time = time(NULL);
 	c->state = CON_HTTP_NEW;
 	c->fd = fd;
 	c->http_request_header = NULL;
-	c->password_ref = NULL;
-	if (cf) c->password_ref = cfg_get_key_value(*cf, "gmuhttp.Password");
 	c->authentication_okay = 0;
 	if (client_ip) strncpy(c->client_ip, client_ip, INET6_ADDRSTRLEN);
 	ringbuffer_init(&(c->rb_receive), 131072);
@@ -315,21 +312,23 @@ int connection_authenticate(Connection *c, const char *password)
 	int         no_local_password_required = 0;
 	ConfigFile *cf = gmu_core_get_config();
 	char       *tmp;
+	const char *password_ref;
 
 	gmu_core_config_acquire_lock();
+	password_ref = cf ? cfg_get_key_value(*cf, "gmuhttp.Password") : NULL;
 	tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
 	if (tmp && strcmp(tmp, "yes") == 0) no_local_password_required = 1;
-	gmu_core_config_release_lock();
 
 	c->authentication_okay = 0;
-	if (password && c->password_ref &&
+	if (password && password_ref &&
 	    strlen(password) >= PASSWORD_MIN_LENGTH &&
-	    strcmp(password, c->password_ref) == 0) {
+	    strcmp(password, password_ref) == 0) {
 		c->authentication_okay = 1;
 	} else if (no_local_password_required && connection_is_local(c)) {
 		wdprintf(V_DEBUG, "httpd", "Accepting local and password-less client connection.\n");
 		c->authentication_okay = 1;
 	}
+	gmu_core_config_release_lock();
 
 	if (c->authentication_okay) {
 		websocket_send_string(c, "{\"cmd\":\"login\",\"res\":\"success\"}");
@@ -1204,6 +1203,7 @@ static void webserver_main_loop(int listen_fd)
 					if (ctmp.fd >= 0) {
 						FD_SET(ctmp.fd, &the_state); /* add new client */
 						if (ctmp.fd > maxfd) maxfd = ctmp.fd;
+						wdprintf(V_DEBUG, "httpd", "Initializing new connection...\n");
 						connection_init(&(connection[con_num]), ctmp.fd, ctmp.client_ip);
 						wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: ++\n", con_num);
 					}
