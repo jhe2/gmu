@@ -494,7 +494,7 @@ static Connection tcp_server_client_init(int listen_fd)
 	          sock.ss_family == AF_INET ?
 	          (const void *)&((struct sockaddr_in *)&sock)->sin_addr :
 	          (const void *)&((struct sockaddr_in6 *)&sock)->sin6_addr,
-	          conn.client_ip, socklen);
+	          conn.client_ip, INET6_ADDRSTRLEN+1);
 	wdprintf(V_DEBUG, "httpd", "Incoming IPv%d connection from %s...\n",
 	         ipver, conn.client_ip);
 	return conn;
