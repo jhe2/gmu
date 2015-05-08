@@ -475,28 +475,42 @@ static int tcp_server_init(unsigned port, int local_only)
 	return listen_fd;
 }
 
-/*
+/**
  * Open connection to client. To be called for every new client.
- * Sets conn.state == CON_ERROR in result in case of an error
+ * Sets conn.state == CON_ERROR in result in case of an error.
  */
 static Connection tcp_server_client_init(int listen_fd)
 {
-	unsigned                ipver = 4;
 	struct sockaddr_storage sock;
 	socklen_t               socklen;
 	Connection              conn;
 
 	socklen = sizeof(sock);
-	conn.fd = accept(listen_fd, (struct sockaddr *) &sock, &socklen);
-	if (conn.fd < 0) conn.state = CON_ERROR; else conn.state = CON_HTTP_NEW;
-	ipver = sock.ss_family == AF_INET ? 4 : 6;
-	inet_ntop(sock.ss_family, 
-	          sock.ss_family == AF_INET ?
-	          (const void *)&((struct sockaddr_in *)&sock)->sin_addr :
-	          (const void *)&((struct sockaddr_in6 *)&sock)->sin6_addr,
-	          conn.client_ip, INET6_ADDRSTRLEN+1);
-	wdprintf(V_DEBUG, "httpd", "Incoming IPv%d connection from %s...\n",
-	         ipver, conn.client_ip);
+	conn.fd = accept(listen_fd, (struct sockaddr *)&sock, &socklen);
+	conn.state = (conn.fd < 0 ? CON_ERROR : CON_HTTP_NEW);
+	if (conn.state == CON_HTTP_NEW) {
+		if (sock.ss_family == AF_INET || sock.ss_family == AF_INET6) {
+			unsigned ipver = sock.ss_family == AF_INET ? 4 : 6;
+			inet_ntop(
+				sock.ss_family,
+				sock.ss_family == AF_INET ?
+					(const void *)&((struct sockaddr_in *)&sock)->sin_addr :
+					(const void *)&((struct sockaddr_in6 *)&sock)->sin6_addr,
+				conn.client_ip, INET6_ADDRSTRLEN+1
+			);
+			wdprintf(
+				V_DEBUG,
+				"httpd", "Incoming IPv%d connection from %s...\n",
+				ipver,
+				conn.client_ip
+			);
+		} else {
+			conn.state = CON_ERROR;
+			wdprintf(V_DEBUG, "httpd", "Unsupported address family.\n");
+		}
+	} else {
+		wdprintf(V_DEBUG, "httpd", "ERROR: Problem with incoming connection.\n");
+	}
 	return conn;
 }
 
