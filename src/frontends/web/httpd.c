@@ -160,15 +160,19 @@ static int websocket_send_string(Connection *c, const char *str)
 
 int connection_init(Connection *c, int fd, const char *client_ip)
 {
+	int res = 0;
 	memset(c, 0, sizeof(Connection));
 	c->connection_time = time(NULL);
 	c->state = CON_HTTP_NEW;
 	c->fd = fd;
 	c->http_request_header = NULL;
 	c->authentication_okay = 0;
-	if (client_ip) strncpy(c->client_ip, client_ip, INET6_ADDRSTRLEN);
-	ringbuffer_init(&(c->rb_receive), 131072);
-	return 1;
+	if (client_ip) {
+		strncpy(c->client_ip, client_ip, INET6_ADDRSTRLEN);
+		res = ringbuffer_init(&(c->rb_receive), HTTP_RINGBUFFER_BUFFER_SIZE);
+	}
+	if (!res) c->state = CON_ERROR;
+	return res;
 }
 
 void connection_reset_timeout(Connection *c)
@@ -185,8 +189,13 @@ void connection_close(Connection *c)
 {
 	if (c->fd) {
 		int cres = close(c->fd);
-		wdprintf(V_DEBUG, "httpd", "Closing connection %d...", c->fd);
-		wdprintf(V_DEBUG, "httpd", cres == 0 ? "ok.\n" : "failed.\n");
+		wdprintf(
+			V_DEBUG,
+			"httpd",
+			"Closing connection %d: %s\n",
+			c->fd,
+			cres == 0 ? "ok" : "failed"
+		);
 	}
 	if (c->http_request_header) {
 		free(c->http_request_header);
@@ -1218,8 +1227,12 @@ static void webserver_main_loop(int listen_fd)
 						FD_SET(ctmp.fd, &the_state); /* add new client */
 						if (ctmp.fd > maxfd) maxfd = ctmp.fd;
 						wdprintf(V_DEBUG, "httpd", "Initializing new connection...\n");
-						connection_init(&(connection[con_num]), ctmp.fd, ctmp.client_ip);
-						wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: ++\n", con_num);
+						if (connection_init(&(connection[con_num]), ctmp.fd, ctmp.client_ip)) {
+							wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: ++\n", con_num);
+						} else {
+							wdprintf(V_DEBUG, "httpd", "Error with incoming connection %d.\n", con_num);
+							close(ctmp.fd);
+						}
 					}
 				} else {
 					wdprintf(V_WARNING, "httpd",

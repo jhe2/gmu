@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: httpd.h  Created: 111209
  *
@@ -17,7 +17,7 @@
 #define true  1
 #define false 0
 #define SERVER_PORT (4680)
-#define BUFFER_SIZE (2048)
+#define HTTP_RINGBUFFER_BUFFER_SIZE (131072)
 
 #define VERBOSE (0)
 
