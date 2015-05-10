@@ -135,6 +135,7 @@ void ui_update_playlist_pos(UI *ui, int playlist_pos)
 {
 	ui->playlist_pos = playlist_pos;
 }
+
 void ui_update_playmode(UI *ui, int playmode)
 {
 	ui->playmode = playmode;
@@ -263,7 +264,7 @@ void ui_draw_header(UI *ui)
 			ui->win_header->win, " %s ",
 			ui->status
 		);
-		if (ui->playlist_pos > 0) {
+		if (ui->playlist_pos > 0 && ui->ti_title[0] != '\0') {
 			if (ui->color) wattron(ui->win_header->win, COLOR_PAIR(2));
 			wprintw(
 				ui->win_header->win, "%d ",
