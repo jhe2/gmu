@@ -482,6 +482,11 @@ static void *decode_audio_thread(void *udata)
 			audio_set_done();
 			if (item_status != STOPPED) set_item_status(FINISHED);
 			wdprintf(V_DEBUG, "fileplayer", "Decoder thread: Playback done.\n");
+			if (trackinfo_acquire_lock(ti)) {
+				trackinfo_clear(ti);
+				trackinfo_release_lock(ti);
+			}
+			event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
 		}
 		if (filename) {
 			free(filename);
