@@ -48,6 +48,11 @@
 #define BUF 1024
 #define PORT 4680
 
+/* Number of idle loop cycles until a PING request will be send */
+#define PING_TIMEOUT 30
+/* Maximum number of loop cycles until the connection times out after a PING */
+#define PONG_TIMEOUT 5
+
 typedef enum { STATE_WEBSOCKET_HANDSHAKE, STATE_CONNECTION_ESTABLISHED, STATE_WEBSOCKET_HANDSHAKE_FAILED } State;
 
 static volatile sig_atomic_t resized = 0;
@@ -1063,6 +1068,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 			int            r = 1, connected = 1;
 			State          state = STATE_WEBSOCKET_HANDSHAKE;
 			wchar_t        wchars[256];
+			size_t         ping_timeout = PING_TIMEOUT, pong_timeout = PONG_TIMEOUT;
 
 			network_error = 0;
 			wchars[0] = L'\0';
@@ -1070,13 +1076,13 @@ static int run_gmuc_ui(int color, char *host, char *password)
 			initiate_websocket_handshake(sock, host);
 
 			ringbuffer_init(&rb, 65536);
-			while (!quit && connected && !network_error) {
+			while (!quit && connected && !network_error && pong_timeout) {
 				FD_ZERO(&readfds);
 				FD_ZERO(&errorfds);
 				FD_SET(fileno(stdin), &readfds);
 				FD_SET(sock, &readfds);
-				tv.tv_sec = 1;
-				tv.tv_usec = 500000;
+				tv.tv_sec = 0;
+				tv.tv_usec = 300000;
 				if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
 					/* ERROR in select() */
 					FD_ZERO(&readfds);
@@ -1179,6 +1185,8 @@ static int run_gmuc_ui(int color, char *host, char *password)
 					}
 				}
 				if (FD_ISSET(sock, &readfds) && !FD_ISSET(sock, &errorfds)) {
+					ping_timeout = PING_TIMEOUT;
+					pong_timeout = PONG_TIMEOUT;
 					if (r) {
 						memset(buffer, 0, BUF); /* we don't need that later */
 						size = recv(sock, buffer, BUF-1, 0);
@@ -1193,6 +1201,15 @@ static int run_gmuc_ui(int color, char *host, char *password)
 						if (!r) wprintw(ui.win_cmd->win, "Write failed, ringbuffer full!\n");
 					} else {
 						wprintw(ui.win_cmd->win, "Can't read more from socket, ringbuffer full!\n");
+					}
+				} else { /* No data received */
+					if (ping_timeout > 0)
+						ping_timeout--;
+					if (ping_timeout == 0) {
+						if (pong_timeout == PONG_TIMEOUT) { /* Send PING request */
+							execute_command(sock, PING, NULL, NULL);
+						}
+						pong_timeout--; /* If this reaches 0, exit loop and try to reconnect */
 					}
 				}
 
@@ -1380,11 +1397,6 @@ static int handle_data_in_ringbuffer_print_only(
 	} while (loop && !res);
 	return res;
 }
-
-/* Number of idle loop cycles until a PING request will be send */
-#define PING_TIMEOUT 30
-/* Maximum number of loop cycles until the connection times out after a PING */
-#define PONG_TIMEOUT 5
 
 static int print_track_info(char *host, char *password, int just_once, const char *format_str)
 {
