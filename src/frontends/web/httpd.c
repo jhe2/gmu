@@ -500,19 +500,22 @@ static Connection tcp_server_client_init(int listen_fd)
 	if (conn.state == CON_HTTP_NEW) {
 		if (sock.ss_family == AF_INET || sock.ss_family == AF_INET6) {
 			unsigned ipver = sock.ss_family == AF_INET ? 4 : 6;
-			inet_ntop(
+			if (!inet_ntop(
 				sock.ss_family,
 				sock.ss_family == AF_INET ?
 					(const void *)&((struct sockaddr_in *)&sock)->sin_addr :
 					(const void *)&((struct sockaddr_in6 *)&sock)->sin6_addr,
-				conn.client_ip, INET6_ADDRSTRLEN+1
-			);
-			wdprintf(
-				V_DEBUG,
-				"httpd", "Incoming IPv%d connection from %s...\n",
-				ipver,
-				conn.client_ip
-			);
+				conn.client_ip, INET6_ADDRSTRLEN
+			)) {
+				conn.state = CON_ERROR;
+			} else {
+				wdprintf(
+					V_DEBUG,
+					"httpd", "Incoming IPv%d connection from %s...\n",
+					ipver,
+					conn.client_ip
+				);
+			}
 		} else {
 			conn.state = CON_ERROR;
 			wdprintf(V_DEBUG, "httpd", "Unsupported address family.\n");

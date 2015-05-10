@@ -42,7 +42,7 @@ typedef struct Connection {
 	char           *http_request_header;
 	RingBuffer      rb_receive;
 	int             authentication_okay;
-	char            client_ip[INET6_ADDRSTRLEN+1];
+	char            client_ip[INET6_ADDRSTRLEN];
 } Connection;
 
 typedef enum HTTPCommand {
