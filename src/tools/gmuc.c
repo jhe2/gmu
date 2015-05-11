@@ -106,11 +106,13 @@ static void set_terminal_title(char *title)
 	}
 }
 
-/* Parses the input string and sotres the detected command in cmd and 
- * its parameters in params, when successful and returns 1. Memory for
+/**
+ * Parses the input string and stores the detected command in cmd and 
+ * its parameters in params when successful and returns 1. Memory for
  * 'params' will be allocated as needed. If there are no parameters
  * 'params' will be set to NULL. No memory will be allocated for 'cmd'.
- * When unable to parse the input, the function returns 0. */
+ * When unable to parse the input, the function returns 0.
+ */
 static int parse_input_alloc(char *input, Command *cmd, char **params)
 {
 	int res = 0;
@@ -537,7 +539,7 @@ static void sig_handler(int sig)
 
 static void gmuc_help(char *str)
 {
-	printf("Usage: %s [-c /path/to/config.file] [-h]\n", str);
+	printf("Usage: %s [-c /path/to/config.file] [-h] [-p] [-u] [-e command]\n", str);
 	exit(0);
 }
 
@@ -1082,7 +1084,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 				FD_SET(fileno(stdin), &readfds);
 				FD_SET(sock, &readfds);
 				tv.tv_sec = 0;
-				tv.tv_usec = 300000;
+				tv.tv_usec = 500000;
 				if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
 					/* ERROR in select() */
 					FD_ZERO(&readfds);
@@ -1326,8 +1328,8 @@ static int handle_data_in_ringbuffer_print_only(
 	int         sock,
 	const char *password,
 	char      **cur_dir,
-	const char *input,
-	const char *format_str
+	const char *format_str,
+	int         silent
 )
 {
 	char tmp_buf[16];
@@ -1359,7 +1361,8 @@ static int handle_data_in_ringbuffer_print_only(
 					char *cmd = json_get_string_value_for_key(json, "cmd");
 					if (cmd) {
 						if (strcmp(cmd, "trackinfo") == 0) {
-							cmd_trackinfo_stdout(json, format_str ? format_str : "%a%S%t (%A) [%m:%s]");
+							if (!silent)
+								cmd_trackinfo_stdout(json, format_str ? format_str : "%a%S%t (%A) [%m:%s]");
 							res = 1;
 						} else if (strcmp(cmd, "track_change") == 0) {
 							/* TODO */
@@ -1398,7 +1401,13 @@ static int handle_data_in_ringbuffer_print_only(
 	return res;
 }
 
-static int print_track_info(char *host, char *password, int just_once, const char *format_str)
+static int process_cli_command(
+	char       *host,
+	char       *password,
+	int         just_once,
+	Command     command,
+	const char *format_str
+)
 {
 	int     res = EXIT_FAILURE;
 	int     network_error = 0;
@@ -1413,7 +1422,6 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 		} else if ((sock = nethelper_tcp_connect_to_host(host, PORT, 0)) > 0) {
 			struct timeval tv;
 			fd_set         readfds, errorfds;
-			char          *input = NULL;
 			RingBuffer     rb;
 			int            r = 1, connected = 1;
 			State          state = STATE_WEBSOCKET_HANDSHAKE;
@@ -1431,7 +1439,7 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 				FD_ZERO(&errorfds);
 				FD_SET(sock, &readfds);
 				tv.tv_sec = 0;
-				tv.tv_usec = 300000;
+				tv.tv_usec = 100000;
 				if (select(sock+1, &readfds, NULL, &errorfds, &tv) < 0) {
 					/* ERROR in select() */
 					FD_ZERO(&readfds);
@@ -1466,15 +1474,18 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 					case STATE_CONNECTION_ESTABLISHED: {
 						int tmp;
 						if (!network_error) {
+							if (command != NO_COMMAND) {
+								execute_command(sock, command, NULL, NULL);
+							}
 							tmp = handle_data_in_ringbuffer_print_only(
 								&rb,
 								sock,
 								password,
 								&cur_dir,
-								input,
-								format_str
+								format_str,
+								command != NO_COMMAND
 							);
-							if (just_once) quit = tmp;
+							if (just_once || command != NO_COMMAND) quit = tmp;
 						}
 						break;
 					}
@@ -1484,15 +1495,14 @@ static int print_track_info(char *host, char *password, int just_once, const cha
 						break;
 				}
 			}
-			if (input) free(input);
 			ringbuffer_free(&rb);
 			close(sock);
 			res = EXIT_SUCCESS;
 		}
-		if (just_once) {
+		if (just_once || command != NO_COMMAND) {
 			quit = 1;
 		} else {
-			usleep(100000);
+			usleep(500000);
 		}
 	}
 	free(cur_dir);
@@ -1509,6 +1519,7 @@ int main(int argc, char **argv)
 	char        config_file_path[256] = "", *homedir;
 	int         mode_info = 0, just_once = 1;
 	const char *format_str = NULL;
+	Command     command = NO_COMMAND;
 
 	assign_signal_handler(SIGINT, sig_handler);
 	assign_signal_handler(SIGTERM, sig_handler);
@@ -1541,6 +1552,21 @@ int main(int argc, char **argv)
 							i++;
 						}
 						break;
+					case 'e': { /* Execute command */
+						char *command_str = NULL;
+						mode_info = 1;
+						if (i + 1 < argc && argv[i + 1][0] != '-') {
+							command_str = argv[i + 1];
+							i++;
+						}
+						if (command_str) {
+							char **params = NULL;
+							if (!parse_input_alloc(command_str, &command, params))
+								command = NO_COMMAND;
+							if (params) free(params);
+						}
+						break;
+					}
 					case 'p': /* Print track information on stdout */
 						mode_info = 1;
 						if (i + 1 < argc && argv[i + 1][0] != '-') {
@@ -1591,7 +1617,7 @@ int main(int argc, char **argv)
 		tmp = cfg_get_key_value(config, "Color");
 		if (argc >= 1) res = run_gmuc_ui(tmp && strcmp(tmp, "yes") == 0, host, password);
 	} else {
-		print_track_info(host, password, just_once, format_str);
+		process_cli_command(host, password, just_once, command, format_str);
 	}
 	cfg_free_config_file_struct(&config);
 	return res;
