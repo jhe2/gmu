@@ -1425,11 +1425,9 @@ static int process_cli_command(
 			RingBuffer     rb;
 			int            r = 1, connected = 1;
 			State          state = STATE_WEBSOCKET_HANDSHAKE;
-			wchar_t        wchars[256];
 			size_t         ping_timeout = PING_TIMEOUT, pong_timeout = PONG_TIMEOUT;
 
 			network_error = 0;
-			wchars[0] = L'\0';
 
 			initiate_websocket_handshake(sock, host);
 
