@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: modplug.c  Created: 130303
  *
@@ -39,14 +39,14 @@ static int decode_data(char *stream, unsigned int len)
 
 static int modplug_play_file(char *mod_file)
 {
-	int            result = 0;
-	long           size = 0;
+	int    result = 0;
+	size_t size = 0;
 
 	mpf = NULL;
 	module = NULL;
 	if (r) {
 		char *buf = reader_get_buffer(r);
-		int offset = 0;
+		int   offset = 0;
 
 		size = reader_get_file_size(r);
 		module = malloc(size);
