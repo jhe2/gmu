@@ -443,40 +443,42 @@ int reader_read_bytes(Reader *r, size_t size)
 {
 	int read_okay = 0;
 
-	if (size > r->buf_size) r->buf = realloc(r->buf, size+1);
-	if (r->buf) r->buf_size = size;
-	if (r->file) {
-		if (r->buf) {
-			long pos = ftell(r->file);
-			memset(r->buf, 0, r->buf_size);
-			if (fread(r->buf, size, 1, r->file) < 1) {
-				do { /* Not the most elegant solution.. ;) */
-					size--;
-					if (fseek(r->file, pos, SEEK_SET) != 0)
-						wdprintf(V_ERROR, "reader", "Unable to seek to pos %d:(\n", pos);
-				} while (fread(r->buf, size, 1, r->file) < 1 && size > 0);
-				r->eof = feof(r->file);
-				if (size > 0)
+	if (size > 0) {
+		if (size > r->buf_size) r->buf = realloc(r->buf, size+1);
+		if (r->buf) r->buf_size = size;
+		if (r->file) {
+			if (r->buf) {
+				long pos = ftell(r->file);
+				memset(r->buf, 0, r->buf_size);
+				if (fread(r->buf, size, 1, r->file) < 1) {
+					do { /* Not the most elegant solution.. ;) */
+						size--;
+						if (fseek(r->file, pos, SEEK_SET) != 0)
+							wdprintf(V_ERROR, "reader", "Unable to seek to pos %d:(\n", pos);
+					} while (fread(r->buf, size, 1, r->file) < 1 && size > 0);
+					r->eof = feof(r->file);
+					if (size > 0)
+						read_okay = 1;
+					else
+						r->eof = 1;
+					r->buf_data_size = size;
+				} else {
+					r->buf[size] = '\0';
 					read_okay = 1;
-				else
-					r->eof = 1;
-				r->buf_data_size = size;
-			} else {				
-				r->buf[size] = '\0';
-				read_okay = 1;
-				r->buf_data_size = size;
-				r->stream_pos += size;
+					r->buf_data_size = size;
+					r->stream_pos += size;
+				}
 			}
-		}
-	} else {
-		while (!read_okay) {
-			pthread_mutex_lock(&(r->mutex));
-			read_okay = ringbuffer_read(&(r->rb_http), r->buf, size);
-			pthread_mutex_unlock(&(r->mutex));
-			if (read_okay) r->buf_data_size = size; else r->buf_data_size = 0;
-			if (!read_okay && r->eof) break;
-			r->buf[size] = '\0';
-			if (!read_okay) usleep(150);
+		} else {
+			while (!read_okay) {
+				pthread_mutex_lock(&(r->mutex));
+				read_okay = ringbuffer_read(&(r->rb_http), r->buf, size);
+				pthread_mutex_unlock(&(r->mutex));
+				if (read_okay) r->buf_data_size = size; else r->buf_data_size = 0;
+				if (!read_okay && r->eof) break;
+				r->buf[size] = '\0';
+				if (!read_okay) usleep(150);
+			}
 		}
 	}
 	return read_okay;
