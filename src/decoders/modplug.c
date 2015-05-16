@@ -62,7 +62,7 @@ static int modplug_play_file(char *mod_file)
 			mpf = ModPlug_Load(module, size);
 			if (mpf) ModPlug_SetMasterVolume(mpf, 320);
 		} else {
-			wdprintf(V_ERROR, "modplug", "Not enough memory.\n");
+			wdprintf(V_ERROR, "modplug", "Not enough memory or unable to read from file.\n");
 			mpf = NULL;
 		}
 		if (mpf == NULL) {
