@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: medialib.h  Created: 130627
  *
@@ -36,6 +36,7 @@ void medialib_refresh(GmuMedialib *gm);
 int  medialib_add_file(GmuMedialib *gm, const char *file);
 void medialib_path_add(GmuMedialib *gm, const char *path);
 void medialib_path_remove(GmuMedialib *gm, const char *path);
+void medialib_path_remove_with_id(GmuMedialib *gm, unsigned int id);
 /* Search the medialib; Returns the number of results */
 int  medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, const char *str);
 TrackInfo medialib_search_fetch_next_result(GmuMedialib *gm);

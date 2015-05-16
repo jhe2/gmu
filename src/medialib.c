@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: medialib.c  Created: 130627
  *
@@ -238,6 +238,16 @@ void medialib_path_remove(GmuMedialib *gm, const char *path)
 	char *q = "DELETE FROM path WHERE path = ?1";
 	int   sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
+	if (sqres == SQLITE_OK) sqlite3_step(pp_stmt);
+	sqlite3_finalize(pp_stmt);
+}
+
+void medialib_path_remove_with_id(GmuMedialib *gm, unsigned int id)
+{
+	sqlite3_stmt *pp_stmt = NULL;
+	char *q = "DELETE FROM path WHERE id = ?1";
+	int   sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
+	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
 	if (sqres == SQLITE_OK) sqlite3_step(pp_stmt);
 	sqlite3_finalize(pp_stmt);
 }
