@@ -280,6 +280,7 @@ div.tabmenu {
 	width:20%;
 	height:130px;
 	text-align:center;
+	display:none;
 }
 
 #loginbox h2 {
