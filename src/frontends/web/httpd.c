@@ -712,10 +712,12 @@ static int process_command(int rfd, Connection *c)
 					int file_okay = 0;
 					if (host) { /* If no Host has been supplied, the query is invalid, thus repond with 400 */
 						if (websocket_key[0]) { /* Websocket connection upgrade */
-							char    *websocket_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-							char     str[61], str2[61];
-							SHA1_CTX sha;
-							uint8_t  digest[SHA1_DIGEST_SIZE];
+							char       *websocket_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+							char        str[61], str2[61];
+							SHA1_CTX    sha;
+							uint8_t     digest[SHA1_DIGEST_SIZE];
+							char       *tmp, *hellostr;
+							ConfigFile *cf = gmu_core_get_config();
 
 							wdprintf(V_DEBUG, "httpd", "%04d Proceeding with websocket connection upgrade...\n", rfd);
 							/* 1) Calculate response key (SHA1, Base64) */
@@ -739,7 +741,13 @@ static int process_command(int rfd, Connection *c)
 							net_send_buf(rfd, "\r\n");
 							/* 3) Set flags in connection struct to WebSocket */
 							connection_set_state(c, CON_WEBSOCKET_OPEN);
-							websocket_send_string(c, "{ \"cmd\": \"hello\" }");
+							gmu_core_config_acquire_lock();
+							tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
+							hellostr = (tmp && strcmp(tmp, "yes") == 0) ?
+								"{ \"cmd\": \"hello\", \"need_password\": \"no\" }" :
+								"{ \"cmd\": \"hello\", \"need_password\": \"yes\" }";
+							gmu_core_config_release_lock();
+							websocket_send_string(c, hellostr);
 						} else if (!connection_file_is_open(c)) { /* ?? open file (if not open already) ?? */
 							char filename[512] = {0};
 
