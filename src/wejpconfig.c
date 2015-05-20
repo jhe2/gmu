@@ -267,6 +267,32 @@ char *cfg_get_key_value_ignore_case(ConfigFile cf, const char *key)
 	return result;
 }
 
+static const char *cfg_boolean_true[] = {
+	"yes",
+	"1",
+	"true",
+	NULL
+};
+
+/**
+ * Interprets the value of the given key as boolean and returns either
+ * 1 for true or 0 for false. All possible values for true are defined
+ * in cfg_boolean_true (see above). Everything else is false.
+ */
+int cfg_get_boolean_value(ConfigFile cf, const char *key)
+{
+	int         res = 0;
+	int         i;
+	const char *v = cfg_get_key_value(cf, key);
+	for (i = 0; cfg_boolean_true[i]; i++) {
+		if (strcasecmp(v, cfg_boolean_true[i]) == 0) {
+			res = 1;
+			break;
+		}
+	}
+	return res;
+}
+
 /**
  * If the supplied key is not found, -1 is returned
  */
