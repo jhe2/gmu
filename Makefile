@@ -136,12 +136,12 @@ default_distbin: $(DISTFILES)
 	$(Q)-rm -rf $(projname)-$(TARGET).zip
 	$(Q)mkdir $(projname)-$(TARGET)
 	$(Q)cp -rl --parents $(DISTFILES) $(projname)-$(TARGET)
-	$(Q)-cp gmu-cli $(projname)-$(TARGET)
+	$(Q)-cp gmuc $(projname)-$(TARGET)
 	$(Q)-cp gmu.$(TARGET).conf $(projname)-$(TARGET)/gmu.$(TARGET).conf
 	$(Q)-cp $(TARGET).keymap $(projname)-$(TARGET)/$(TARGET).keymap
 	$(Q)$(STRIP) $(projname)-$(TARGET)/decoders/*.so
 	$(Q)$(STRIP) $(projname)-$(TARGET)/$(BINARY)
-	$(Q)-$(STRIP) $(projname)-$(TARGET)/gmu-cli
+	$(Q)-$(STRIP) $(projname)-$(TARGET)/gmuc
 	$(Q)zip -r $(projname)-$(TARGET).zip $(projname)-$(TARGET)
 	$(Q)-rm -rf $(projname)-$(TARGET)
 
@@ -153,7 +153,6 @@ install: $(DISTFILES)
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/frontends
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/themes
 	$(Q)cp $(BINARY) $(DESTDIR)$(PREFIX)/bin
-	$(Q)-cp gmu-cli $(DESTDIR)$(PREFIX)/bin/gmu-cli
 	$(Q)-cp gmuc $(DESTDIR)$(PREFIX)/bin/gmuc
 	$(Q)cp README.txt $(DESTDIR)$(PREFIX)/share/gmu/README.txt
 	$(Q)cp -R frontends/* $(DESTDIR)$(PREFIX)/share/gmu/frontends
@@ -176,10 +175,6 @@ clean:
 	$(Q)-rm -rf *.o $(BINARY) gmuc decoders/*.so frontends/*.so
 	$(Q)-rm -f $(TEMP_HEADER_FILES)
 	@echo -e "\033[1mAll clean.\033[0m"
-
-gmu-cli: src/tools/gmu-cli.c wejconfig.o
-	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) -o gmu-cli src/tools/gmu-cli.c wejconfig.o
 
 gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net.o json.o dir.o wejconfig.o ui.o charset.o nethelper.o util.o
 	@echo -e "Linking \033[1mgmuc\033[0m"
@@ -212,10 +207,6 @@ frontends/log.so: src/frontends/log.c util.o | frontendsdir
 frontends/lirc.so: src/frontends/lirc.c | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread -llirc_client
-
-frontends/gmusrv.so: src/frontends/gmusrv.c | frontendsdir
-	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread
 
 %.o: src/frontends/web/%.c
 	@echo -e "Compiling \033[1m$<\033[0m"
