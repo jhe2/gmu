@@ -16,7 +16,6 @@
 #ifndef _GMUDECODER_H
 #define _GMUDECODER_H
 #include "reader.h"
-#include "wejpconfig.h"
 
 typedef enum GmuMetaDataType {
 	GMU_META_TITLE, GMU_META_ARTIST, GMU_META_ALBUM,

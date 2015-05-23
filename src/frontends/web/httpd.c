@@ -35,7 +35,7 @@
 #include "debug.h"
 #include "dir.h"
 #include "trackinfo.h"
-#include "wejpconfig.h"
+#include "wejconfig.h"
 #include "charset.h"
 #include <assert.h>
 
@@ -321,13 +321,11 @@ int connection_authenticate(Connection *c, const char *password)
 {
 	int         no_local_password_required = 0;
 	ConfigFile *cf = gmu_core_get_config();
-	char       *tmp;
 	const char *password_ref;
 
 	gmu_core_config_acquire_lock();
-	password_ref = cf ? cfg_get_key_value(*cf, "gmuhttp.Password") : NULL;
-	tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
-	if (tmp && strcmp(tmp, "yes") == 0) no_local_password_required = 1;
+	password_ref = cf ? cfg_get_key_value(cf, "gmuhttp.Password") : NULL;
+	no_local_password_required = cfg_get_boolean_value(cf, "gmuhttp.DisableLocalPassword");
 
 	c->authentication_okay = 0;
 	if (password && password_ref &&
@@ -712,11 +710,11 @@ static int process_command(int rfd, Connection *c)
 					int file_okay = 0;
 					if (host) { /* If no Host has been supplied, the query is invalid, thus repond with 400 */
 						if (websocket_key[0]) { /* Websocket connection upgrade */
-							char       *websocket_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+							const char *websocket_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 							char        str[61], str2[61];
 							SHA1_CTX    sha;
 							uint8_t     digest[SHA1_DIGEST_SIZE];
-							char       *tmp, *hellostr;
+							char       *hellostr;
 							ConfigFile *cf = gmu_core_get_config();
 
 							wdprintf(V_DEBUG, "httpd", "%04d Proceeding with websocket connection upgrade...\n", rfd);
@@ -742,8 +740,7 @@ static int process_command(int rfd, Connection *c)
 							/* 3) Set flags in connection struct to WebSocket */
 							connection_set_state(c, CON_WEBSOCKET_OPEN);
 							gmu_core_config_acquire_lock();
-							tmp = cf ? cfg_get_key_value(*cf, "gmuhttp.DisableLocalPassword") : "no";
-							hellostr = (tmp && strcmp(tmp, "yes") == 0) ?
+							hellostr = cfg_get_boolean_value(cf, "gmuhttp.DisableLocalPassword") ?
 								"{ \"cmd\": \"hello\", \"need_password\": \"no\" }" :
 								"{ \"cmd\": \"hello\", \"need_password\": \"yes\" }";
 							gmu_core_config_release_lock();
@@ -944,7 +941,7 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 
 	dir_init(&dir);
 	gmu_core_config_acquire_lock();
-	tmp = cfg_get_key_value(*cf, "gmuhttp.BaseDir");
+	tmp = cfg_get_key_value(cf, "gmuhttp.BaseDir");
 	if (tmp && strlen(tmp) < 256) {
 		strcpy(base_dir, tmp);
 	} else {

@@ -22,7 +22,7 @@
 #include "../util.h"
 #include "../id3.h"
 #include "../reader.h"
-#include "../wejpconfig.h"
+#include "../wejconfig.h"
 #include "../debug.h"
 #include "../charset.h"
 

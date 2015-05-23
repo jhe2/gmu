@@ -31,7 +31,7 @@ else
 CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif
 
-OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejpconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o metadatareader.o dirparser.o gmuerror.o
+OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o metadatareader.o dirparser.o gmuerror.o
 ifeq ($(GMU_MEDIALIB),1)
 OBJECTFILES+=medialib.o
 endif
@@ -177,13 +177,13 @@ clean:
 	$(Q)-rm -f $(TEMP_HEADER_FILES)
 	@echo -e "\033[1mAll clean.\033[0m"
 
-gmu-cli: src/tools/gmu-cli.c wejpconfig.o
+gmu-cli: src/tools/gmu-cli.c wejconfig.o
 	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) -o gmu-cli src/tools/gmu-cli.c wejpconfig.o
+	$(Q)$(CC) $(CFLAGS) -o gmu-cli src/tools/gmu-cli.c wejconfig.o
 
-gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net.o json.o dir.o wejpconfig.o ui.o charset.o nethelper.o util.o
+gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net.o json.o dir.o wejconfig.o ui.o charset.o nethelper.o util.o
 	@echo -e "Linking \033[1mgmuc\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(LFLAGS) -o gmuc gmuc.o wejpconfig.o websocket.o base64.o debug.o ringbuffer.o net.o json.o window.o listwidget.o dir.o ui.o charset.o nethelper.o util.o -lncursesw
+	$(Q)$(CC) $(CFLAGS) $(LFLAGS) -o gmuc gmuc.o wejconfig.o websocket.o base64.o debug.o ringbuffer.o net.o json.o window.o listwidget.o dir.o ui.o charset.o nethelper.o util.o -lncursesw
 
 %.o: src/tools/%.c
 	@echo -e "Compiling \033[1m$<\033[0m"

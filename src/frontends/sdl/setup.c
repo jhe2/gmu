@@ -1,7 +1,7 @@
 /* 
  * Gmu GP2X Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: setup.c  Created: 141102
  *
@@ -19,6 +19,7 @@
 #include "setup.h"
 #include "core.h"
 #include "debug.h"
+#include "wejconfig.h"
 
 int setup_process_action(SetupDialog *setup_dlg, View *view, View old_view, int user_key_action)
 {
@@ -91,7 +92,7 @@ void setup_init(SetupDialog *setup_dlg, Skin *skin)
 			}
 			if (len > 0) setup_dlg->keys[c][0] = malloc(len+1);
 			if (setup_dlg->keys[c][0]) {
-				char *val = cfg_get_key_value(*(setup_dlg->config), k);
+				char *val = cfg_get_key_value(setup_dlg->config, k);
 				strncpy(setup_dlg->keys[c][0], k, len+1);
 				for (j = 0; presets[j] && j < MAX_PRESETS_PER_KEY-1; j++) {
 					len = strlen(presets[j]);

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: coverimg.c  Created: 070104
  *
@@ -25,7 +25,7 @@
 #include "../../png.h"
 #include "../../jpeg.h"
 #include "../../bmp.h"
-#include "../../wejpconfig.h"
+#include "../../wejconfig.h"
 #include "../../core.h"
 #include "debug.h"
 
@@ -43,10 +43,9 @@ static int cover_image_thread(void *udata)
 			SDL_Surface *cover_fullsize = NULL;
 			unsigned int max_cover_image_pixels = 0;
 			ConfigFile  *config = gmu_core_get_config();
-			char        *tmp;
+
 			gmu_core_config_acquire_lock();
-			tmp = cfg_get_key_value(*config, "SDL.MaxCoverImageKPixels");
-			if (tmp) max_cover_image_pixels = atoi(tmp) * 1000;
+			max_cover_image_pixels = cfg_get_int_value(config, "SDL.MaxCoverImageKPixels") * 1000;
 			gmu_core_config_release_lock();
 
 			while (SDL_mutexP(ci->mutex1) == -1) SDL_Delay(50);

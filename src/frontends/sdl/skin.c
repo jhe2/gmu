@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "skin.h"
-#include "wejpconfig.h"
+#include "wejconfig.h"
 #include "core.h"
 #include "gmuwidget.h"
 #include "debug.h"
@@ -35,19 +35,15 @@ static int skin_init_widget(
 	int   result = 0;
 
 	snprintf(tmp, 255, "%s.PosX1", prefix);
-	val = cfg_get_key_value(*skinconf, tmp);
-	if (val) tmp_x1 = atoi(val);
+	tmp_x1 = cfg_get_int_value(skinconf, tmp);
 	snprintf(tmp, 255, "%s.PosY1", prefix);
-	val = cfg_get_key_value(*skinconf, tmp);
-	if (val) tmp_y1 = atoi(val);
+	tmp_y1 = cfg_get_int_value(skinconf, tmp);
 	snprintf(tmp, 255, "%s.PosX2", prefix);
-	val = cfg_get_key_value(*skinconf, tmp);
-	if (val) tmp_x2 = atoi(val);
+	tmp_x2 = cfg_get_int_value(skinconf, tmp);
 	snprintf(tmp, 255, "%s.PosY2", prefix);
-	val = cfg_get_key_value(*skinconf, tmp);
-	if (val) tmp_y2 = atoi(val);
+	tmp_y2 = cfg_get_int_value(skinconf, tmp);
 	snprintf(tmp, 255, "%s.ImagePrefix", prefix);
-	val = cfg_get_key_value(*skinconf, tmp);
+	val = cfg_get_key_value(skinconf, tmp);
 	if (val) tmp_img_prefix = val;
 	if (tmp_img_prefix) {
 		snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin_name, tmp_img_prefix);
@@ -59,9 +55,9 @@ static int skin_init_widget(
 
 static int skin_config_load(Skin *skin, const char *skin_name)
 {
-	int        result = 1;
-	ConfigFile skinconf;
-	char       skin_file[256];
+	int         result = 1;
+	ConfigFile *skinconf;
+	char        skin_file[256];
 
 	memset(skin, 0, sizeof(Skin));
 	skin->version = 1;
@@ -101,80 +97,55 @@ static int skin_config_load(Skin *skin, const char *skin_name)
 	skin->arrow_down = NULL;
 
 	snprintf(skin_file, 255, "%s/themes/%s/theme.conf", gmu_core_get_base_dir(), skin_name);
-	cfg_init_config_file_struct(&skinconf);
-	if (cfg_read_config_file(&skinconf, skin_file) != 0) {
+	skinconf = cfg_init();
+	if (cfg_read_config_file(skinconf, skin_file) != 0) {
 		wdprintf(V_ERROR, "skin", "Could not read skin config \"%s\".\n", skin_file);
 		result = 0;
 	} else {
 		char *val;
 
-		val = cfg_get_key_value(skinconf, "FormatVersion");
-		if (val) skin->version = atoi(val);
-
+		skin->version = cfg_get_int_value(skinconf, "FormatVersion");
 		strncpy(skin->name, skin_name, 127);
 
 		switch (skin->version) {
 			case 2: /* New theme format with support for a resizable window */
 				wdprintf(V_INFO, "skin", "Modern theme file format found.\n");
 
-				skin_init_widget(skin_name, &skinconf, "Display",  &(skin->display));
-				skin_init_widget(skin_name, &skinconf, "ListView", &(skin->lv));
-				skin_init_widget(skin_name, &skinconf, "Header",   &(skin->header));
-				skin_init_widget(skin_name, &skinconf, "Footer",   &(skin->footer));
+				skin_init_widget(skin_name, skinconf, "Display",  &(skin->display));
+				skin_init_widget(skin_name, skinconf, "ListView", &(skin->lv));
+				skin_init_widget(skin_name, skinconf, "Header",   &(skin->header));
+				skin_init_widget(skin_name, skinconf, "Footer",   &(skin->footer));
 
-				val = cfg_get_key_value(skinconf, "Display.TitleScrollerOffsetX1");
-				if (val) skin->title_scroller_offset_x1 = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.TitleScrollerOffsetX2");
-				if (val) skin->title_scroller_offset_x2 = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.TitleScrollerOffsetY");
-				if (val) skin->title_scroller_offset_y = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.BitrateOffsetX");
-				if (val) skin->bitrate_offset_x = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.BitrateOffsetY");
-				if (val) skin->bitrate_offset_y = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.TimeOffsetX");
-				if (val) skin->time_offset_x = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.TimeOffsetY");
-				if (val) skin->time_offset_y = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.FrequencyOffsetX");
-				if (val) skin->frequency_offset_x = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.FrequencyOffsetY");
-				if (val) skin->frequency_offset_y = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.SymbolsWidth");
-				if (val) skin->symbols_width = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.SymbolsHeight");
-				if (val) skin->symbols_height = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.Symbol.Play.OffsetX");
-				if (val) skin->symbol_play_offset_x = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.Symbol.Play.OffsetY");
-				if (val) skin->symbol_play_offset_y = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.Symbol.Pause.OffsetX");
-				if (val) skin->symbol_pause_offset_x = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.Symbol.Pause.OffsetY");
-				if (val) skin->symbol_pause_offset_y = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.Symbol.Stereo.OffsetX");
-				if (val) skin->symbol_stereo_offset_x = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.Symbol.Stereo.OffsetY");
-				if (val) skin->symbol_stereo_offset_y = atoi(val);
+				skin->title_scroller_offset_x1 = cfg_get_int_value(skinconf, "Display.TitleScrollerOffsetX1");
+				skin->title_scroller_offset_x2 = cfg_get_int_value(skinconf, "Display.TitleScrollerOffsetX2");
+				skin->title_scroller_offset_y  = cfg_get_int_value(skinconf, "Display.TitleScrollerOffsetY");
+				skin->bitrate_offset_x         = cfg_get_int_value(skinconf, "Display.BitrateOffsetX");
+				skin->bitrate_offset_y         = cfg_get_int_value(skinconf, "Display.BitrateOffsetY");
+				skin->time_offset_x            = cfg_get_int_value(skinconf, "Display.TimeOffsetX");
+				skin->time_offset_y            = cfg_get_int_value(skinconf, "Display.TimeOffsetY");
+				skin->frequency_offset_x       = cfg_get_int_value(skinconf, "Display.FrequencyOffsetX");
+				skin->frequency_offset_y       = cfg_get_int_value(skinconf, "Display.FrequencyOffsetY");
+				skin->symbols_width            = cfg_get_int_value(skinconf, "Display.SymbolsWidth");
+				skin->symbols_height           = cfg_get_int_value(skinconf, "Display.SymbolsHeight");
+				skin->symbol_play_offset_x     = cfg_get_int_value(skinconf, "Display.Symbol.Play.OffsetX");
+				skin->symbol_play_offset_y     = cfg_get_int_value(skinconf, "Display.Symbol.Play.OffsetY");
+				skin->symbol_pause_offset_x    = cfg_get_int_value(skinconf, "Display.Symbol.Pause.OffsetX");
+				skin->symbol_pause_offset_y    = cfg_get_int_value(skinconf, "Display.Symbol.Pause.OffsetY");
+				skin->symbol_stereo_offset_x   = cfg_get_int_value(skinconf, "Display.Symbol.Stereo.OffsetX");
+				skin->symbol_stereo_offset_y   = cfg_get_int_value(skinconf, "Display.Symbol.Stereo.OffsetY");
 				/* fonts */
 				val = cfg_get_key_value(skinconf, "Display.Font");
 				if (val) strncpy(skin->font_display_name, val, 127);
-				val = cfg_get_key_value(skinconf, "Display.FontCharWidth");
-				if (val) skin->font_display_char_width = atoi(val);
-				val = cfg_get_key_value(skinconf, "Display.FontCharHeight");
-				if (val) skin->font_display_char_height = atoi(val);
+				skin->font_display_char_width  = cfg_get_int_value(skinconf, "Display.FontCharWidth");
+				skin->font_display_char_height = cfg_get_int_value(skinconf, "Display.FontCharHeight");
 				val = cfg_get_key_value(skinconf, "Font1");
 				if (val) strncpy(skin->font1_name, val, 127);
-				val = cfg_get_key_value(skinconf, "Font1CharWidth");
-				if (val) skin->font1_char_width = atoi(val);
-				val = cfg_get_key_value(skinconf, "Font1CharHeight");
-				if (val) skin->font1_char_height = atoi(val);
+				skin->font1_char_width         = cfg_get_int_value(skinconf, "Font1CharWidth");
+				skin->font1_char_height        = cfg_get_int_value(skinconf, "Font1CharHeight");
 				val = cfg_get_key_value(skinconf, "Font2");
 				if (val) strncpy(skin->font2_name, val, 127);
-				val = cfg_get_key_value(skinconf, "Font2CharWidth");
-				if (val) skin->font2_char_width = atoi(val);
-				val = cfg_get_key_value(skinconf, "Font2CharHeight");
-				if (val) skin->font2_char_height = atoi(val);
+				skin->font2_char_width         = cfg_get_int_value(skinconf, "Font2CharWidth");
+				skin->font2_char_height        = cfg_get_int_value(skinconf, "Font2CharHeight");
 				result = 1;
 
 				/* load images (symbols, arrows) */
@@ -238,7 +209,7 @@ static int skin_config_load(Skin *skin, const char *skin_name)
 				break;
 		}
 	}
-	cfg_free_config_file_struct(&skinconf);
+	cfg_free(skinconf);
 	return result;
 }
 

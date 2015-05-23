@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: sdl.c  Created: 060929
  *
@@ -30,7 +30,7 @@
 #include "../../debug.h"
 
 #include FILE_HW_H
-#include "../../wejpconfig.h"
+#include "../../wejconfig.h"
 #include "../../pbstatus.h"
 
 #include "textrenderer.h"
@@ -107,9 +107,10 @@ static void input_device_config(void)
 {
 	char tmp[256], *inputconf = NULL;
 	gmu_core_config_acquire_lock();
-	inputconf = cfg_get_key_value(*config, "SDL.InputConfigFile");
+	inputconf = cfg_get_key_value(config, "SDL.InputConfigFile");
 	if (!inputconf) inputconf = "gmuinput.conf";
 	snprintf(tmp, 255, "%s/%s", gmu_core_get_config_dir(), inputconf);
+	tmp[255] = '\0';
 	gmu_core_config_release_lock();
 	input_config_init(tmp);
 }
@@ -574,25 +575,15 @@ static void run_player(char *skin_name, char *decoders_str)
 	int              user_key_action = -1;
 	TrackInfo       *ti = gmu_core_get_current_trackinfo_ref();
 
-	{
-		char *val;
+	gmu_core_config_acquire_lock();
+	auto_select_cur_item              = cfg_get_boolean_value(config, "SDL.AutoSelectCurrentPlaylistItem");
+	time_remaining                    = cfg_get_boolean_value(config, "SDL.TimeDisplay");
+	backlight_poweron_on_track_change = cfg_get_boolean_value(config, "SDL.BacklightPowerOnOnTrackChange");
 
-		gmu_core_config_acquire_lock();
-		val = cfg_get_key_value(*config, "SDL.AutoSelectCurrentPlaylistItem");
-		auto_select_cur_item = (val && strncmp(val, "yes", 3) == 0) ? 1 : 0;
+	old_view = view = FILE_BROWSER;
+	if (cfg_get_boolean_value(config, "Gmu.FirstRun")) view = HELP;
+	gmu_core_config_release_lock();
 
-		val = cfg_get_key_value(*config, "SDL.TimeDisplay");
-		time_remaining = (val && strncmp(val, "remaining", 9) == 0) ? 1 : 0;
-
-		val = cfg_get_key_value(*config, "SDL.BacklightPowerOnOnTrackChange");
-		backlight_poweron_on_track_change = (val && strncmp(val, "yes", 3) == 0) ? 1 : 0;
-
-		old_view = view = FILE_BROWSER;
-		val = cfg_get_key_value(*config, "Gmu.FirstRun");
-		if (val && strncmp(val, "yes", 3) == 0)
-			view = HELP;
-		gmu_core_config_release_lock();
-	}
 	m_init(&m);
 	player_display_init();
 
@@ -603,7 +594,7 @@ static void run_player(char *skin_name, char *decoders_str)
 		int  filename_ok = 0;
 		key_action_mapping_init(kam);
 		gmu_core_config_acquire_lock();
-		keymap_file = cfg_get_key_value(*config, "SDL.KeyMap");
+		keymap_file = cfg_get_key_value(config, "SDL.KeyMap");
 		if (keymap_file) {
 			int r = snprintf(tmp, 256, "%s/%s", gmu_core_get_config_dir(), keymap_file);
 			if (r > 0 && r < 256)
@@ -636,13 +627,13 @@ static void run_player(char *skin_name, char *decoders_str)
 		question_init(&dlg, &skin);
 
 		gmu_core_config_acquire_lock();
-		if (strncmp(cfg_get_key_value(*config, "Gmu.FileSystemCharset"), "UTF-8", 5) == 0) {
-			char *base_dir = cfg_get_key_value(*config, "SDL.BaseDir");
+		if (cfg_compare_value(config, "Gmu.FileSystemCharset", "UTF-8", 1)) {
+			const char *base_dir = cfg_get_key_value(config, "SDL.BaseDir");
 			file_browser_init(&fb, &skin, UTF_8, base_dir ? base_dir : "/");
 			pl_browser_init(&pb, &skin, UTF_8);
 			charset_filename_set(UTF_8);
 		} else {
-			char *base_dir = cfg_get_key_value(*config, "SDL.BaseDir");
+			const char *base_dir = cfg_get_key_value(config, "SDL.BaseDir");
 			file_browser_init(&fb, &skin, ISO_8859_1, base_dir ? base_dir : "/");
 			pl_browser_init(&pb, &skin, ISO_8859_1);
 			charset_filename_set(ISO_8859_1);
@@ -652,52 +643,48 @@ static void run_player(char *skin_name, char *decoders_str)
 			int   directories_first = 0, select_next_after_add = 0;
 			char *tmp;
 
-			directories_first = strncmp(
-				cfg_get_key_value(*config, "Gmu.FileBrowserFoldersFirst"),
-				"yes",
-				3
-			) == 0 ? 1 : 0;
+			directories_first = cfg_get_boolean_value(config, "Gmu.FileBrowserFoldersFirst");
 			file_browser_set_directories_first(&fb, directories_first);
-			tmp = cfg_get_key_value(*config, "Gmu.DefaultFileBrowserPath");
+			tmp = cfg_get_key_value(config, "Gmu.DefaultFileBrowserPath");
 			tmp = expand_path_alloc(tmp);
 			if (tmp) {
 				file_browser_change_dir(&fb, tmp);
 				free(tmp);
 			}
-			tmp = cfg_get_key_value(*config, "SDL.FileBrowserSelectNextAfterAdd");
-			if (tmp) {
-				select_next_after_add = strncmp(tmp, "yes", 3) == 0 ? 1 : 0;
-				file_browser_select_next_after_add(&fb, select_next_after_add);
-			}
+			select_next_after_add = cfg_get_boolean_value(config, "SDL.FileBrowserSelectNextAfterAdd");
+			file_browser_select_next_after_add(&fb, select_next_after_add);
 		}
 
 		about_init(&tb_about, &skin, decoders_str);
 		help_init(&tb_help, &skin, kam);
 
-		cover_viewer_init(&cv, &skin, 
-		                  strncmp(cfg_get_key_value(*config, "SDL.CoverArtworkLarge"), "yes", 3) == 0 ? 
-		                  1 : 0,
-		                  strncmp(cfg_get_key_value(*config, "SDL.SmallCoverArtworkAlignment"), "left", 4) == 0 ?
-		                  ALIGN_LEFT : ALIGN_RIGHT,
-		                  strncmp(cfg_get_key_value(*config, "SDL.LoadEmbeddedCoverArtwork"), "first", 5) == 0 ? 
-		                  EMBEDDED_COVER_FIRST : 
-		                  (strncmp(cfg_get_key_value(*config, "SDL.LoadEmbeddedCoverArtwork"), "last", 4) == 0 ?
-		                  EMBEDDED_COVER_LAST : EMBEDDED_COVER_NO));
-		plmanager_init(&ps, cfg_get_key_value(*config, "Gmu.PlaylistSavePresets"), &skin);
+		cover_viewer_init(
+			&cv,
+			&skin, 
+			cfg_get_boolean_value(config, "SDL.CoverArtworkLarge"),
+			cfg_compare_value(config, "SDL.SmallCoverArtworkAlignment", "left", 1) ? ALIGN_LEFT : ALIGN_RIGHT,
+			cfg_compare_value(config, "SDL.LoadEmbeddedCoverArtwork", "first", 1) ? EMBEDDED_COVER_FIRST : 
+			(cfg_compare_value(config, "SDL.LoadEmbeddedCoverArtwork", "last", 1) ? EMBEDDED_COVER_LAST : EMBEDDED_COVER_NO)
+		);
+		plmanager_init(&ps, cfg_get_key_value(config, "Gmu.PlaylistSavePresets"), &skin);
 
-		if (strncmp(cfg_get_key_value(*config, "SDL.Scroll"), "auto", 3) == 0)
-			player_display_set_scrolling(SCROLL_AUTO);
-		if (strncmp(cfg_get_key_value(*config, "SDL.Scroll"), "always", 3) == 0)
-			player_display_set_scrolling(SCROLL_ALWAYS);
-		if (strncmp(cfg_get_key_value(*config, "SDL.Scroll"), "never", 3) == 0)
-			player_display_set_scrolling(SCROLL_NEVER);
+		{
+			const char *scr = cfg_get_key_value(config, "SDL.Scroll");
+			if (scr && strcmp(scr, "auto") == 0)
+				player_display_set_scrolling(SCROLL_AUTO);
+			if (scr && strcmp(scr, "always") == 0)
+				player_display_set_scrolling(SCROLL_ALWAYS);
+			if (scr && strcmp(scr, "never") == 0)
+				player_display_set_scrolling(SCROLL_NEVER);
+		}
+
 		player_display_set_notice_message("GMU "VERSION_NUMBER, 10);
 
-		if (strncmp(cfg_get_key_value(*config, "SDL.AllowVolumeControlInHoldState"), "yes", 3) == 0)
+		if (cfg_get_boolean_value(config, "SDL.AllowVolumeControlInHoldState"))
 			allow_volume_control_in_hold_state = 1;
 
 		seconds_until_backlight_poweroff = 
-			atoi(cfg_get_key_value(*config, "SDL.SecondsUntilBacklightPowerOff"));
+			cfg_get_int_value(config, "SDL.SecondsUntilBacklightPowerOff");
 		gmu_core_config_release_lock();
 		setup_init(&setup_dlg, &skin);
 
@@ -1238,12 +1225,11 @@ static void run_player(char *skin_name, char *decoders_str)
 
 	if (quit != QUIT_WITH_ERROR) {
 		gmu_core_config_acquire_lock();
-		if (strncmp(cfg_get_key_value(*config, "Gmu.RememberSettings"), "yes", 3) == 0) {
+		if (cfg_get_boolean_value(config, "Gmu.RememberSettings")) {
 			char val[64];
 			
 			wdprintf(V_INFO, "sdl_frontend", "Saving settings...\n");
-			cfg_add_key(config, "SDL.TimeDisplay", time_remaining ? 
-			                                       "remaining" : "elapsed");
+			cfg_add_key(config, "SDL.TimeDisplay", time_remaining ? "remaining" : "elapsed");
 			if (buffer) {
 				snprintf(val, 63, "%d", buffer->w);
 				cfg_add_key(config, "SDL.Width", val);
@@ -1307,7 +1293,7 @@ static void *start_player(void *arg)
 
 		gmu_core_config_acquire_lock();
 		if (skin_name[0] == '\0') {
-			char *skinname = cfg_get_key_value(*config, "SDL.DefaultSkin");
+			const char *skinname = cfg_get_key_value(config, "SDL.DefaultSkin");
 			if (skinname) strncpy(skin_name, skinname, 127);
 			skin_name[127] = '\0';
 		}
@@ -1345,19 +1331,19 @@ static pthread_t fe_thread;
 
 static int init(void)
 {
-	int   w = 320, h = 240, res = 0;
-	char *val;
+	int          w, h, res = 0;
 	SDL_Surface *ds;
 
 	config = gmu_core_get_config();
 	fullscreen = 0;
 	gmu_core_config_acquire_lock();
-	val = cfg_get_key_value(*config, "SDL.Width");
-	if (val) w = atoi(val);
-	val = cfg_get_key_value(*config, "SDL.Height");
-	if (val) h = atoi(val);
-	val = cfg_get_key_value(*config, "SDL.Fullscreen");
-	if (val && strncmp(val, "yes", 3) == 0) fullscreen = 1;
+	w = cfg_get_int_value(config, "SDL.Width");
+	h = cfg_get_int_value(config, "SDL.Height");
+	if (w < 320 || h < 240) {
+		w = 320;
+		h = 240;
+	}
+	fullscreen = cfg_get_boolean_value(config, "SDL.Fullscreen");
 	gmu_core_config_release_lock();
 	input_device_config();
 	ds = init_sdl(input_config_has_joystick(), w, h, fullscreen);
@@ -1406,12 +1392,12 @@ static int event_callback(GmuEvent event, int param)
 				if (tid) SDL_RemoveTimer(tid);
 				cover_viewer_update_data(&cv, ti);
 				gmu_core_config_acquire_lock();
-				if (strcmp(cfg_get_key_value(*config, "SDL.EnableCoverArtwork"), "yes") == 0)
+				if (cfg_get_boolean_value(config, "SDL.EnableCoverArtwork"))
 					cover_viewer_load_artwork(
 						&cv,
 						ti,
 						trackinfo_get_file_name(ti), 
-						cfg_get_key_value(*config, "SDL.CoverArtworkFilePattern"),
+						cfg_get_key_value(config, "SDL.CoverArtworkFilePattern"),
 						(int *)&update
 					);
 				gmu_core_config_release_lock();

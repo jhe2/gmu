@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: opus.c  Created: 130303
  *
@@ -21,7 +21,6 @@
 #include "../trackinfo.h"
 #include "../util.h"
 #include "../reader.h"
-#include "../wejpconfig.h"
 #include "../debug.h"
 
 static int          init = 0;

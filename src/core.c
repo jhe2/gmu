@@ -31,7 +31,7 @@
 #include "trackinfo.h"
 #include "core.h"
 #include "eventqueue.h"
-#include "wejpconfig.h"
+#include "wejconfig.h"
 #include FILE_HW_H
 #include "util.h"
 #include "reader.h" /* for reader_set_cache_size_kb() */
@@ -51,7 +51,7 @@ static pthread_mutex_t gmu_running_mutex;
 static Playlist        pl;
 static TrackInfo       current_track_ti;
 static EventQueue      event_queue;
-static ConfigFile      config;
+static ConfigFile     *config;
 static pthread_mutex_t config_mutex;
 static char           *file_extensions[MAX_FILE_EXTENSIONS+1];
 static int             volume_max;
@@ -147,8 +147,7 @@ static int check_fade_out_on_skip(void)
 {
 	int res = 0;
 	gmu_core_config_acquire_lock();
-	if (strncmp(cfg_get_key_value(config, "Gmu.FadeOutOnSkip"), "yes", 3) == 0)
-		res = 1;
+	if (cfg_get_boolean_value(config, "Gmu.FadeOutOnSkip")) res = 1;
 	gmu_core_config_release_lock();
 	return res;
 }
@@ -263,15 +262,18 @@ int gmu_core_export_playlist(const char *file)
 
 static void set_default_play_mode(ConfigFile *config, Playlist *pl)
 {
-	PlayMode pmode = PM_CONTINUE;
+	PlayMode    pmode = PM_CONTINUE;
+	const char *dpm;
+
 	gmu_core_config_acquire_lock();
-	if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "random", 6) == 0)
+	dpm = cfg_get_key_value(config, "Gmu.DefaultPlayMode");
+	if (strncmp(dpm, "random", 6) == 0)
 		pmode = PM_RANDOM;
-	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "repeat1", 11) == 0)
+	else if (strncmp(dpm, "repeat1", 11) == 0)
 		pmode = PM_REPEAT_1;
-	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "repeatall", 9) == 0)
+	else if (strncmp(dpm, "repeatall", 9) == 0)
 		pmode = PM_REPEAT_ALL;
-	else if (strncmp(cfg_get_key_value(*config, "Gmu.DefaultPlayMode"), "random+repeat", 13) == 0)
+	else if (strncmp(dpm, "random+repeat", 13) == 0)
 		pmode = PM_RANDOM_REPEAT;
 	gmu_core_config_release_lock();
 	playlist_get_lock(pl);
@@ -281,7 +283,7 @@ static void set_default_play_mode(ConfigFile *config, Playlist *pl)
 
 ConfigFile *gmu_core_get_config(void)
 {
-	return &config;
+	return config;
 }
 
 /**
@@ -663,11 +665,20 @@ TrackInfo *gmu_core_get_current_trackinfo_ref(void)
 
 static int volume = 0;
 
-void gmu_core_set_volume(int vol) /* 0..gmu_core_get_volume_max() */
+/**
+ * Sets the volume level. Valid values are either
+ * 0..gmu_core_get_volume_max() or -1. If -1 is specified, the volume
+ * is set to the volume value stored in the configuration key
+ * Gmu.Volume. Acquires CONFIG LOCK.
+ */
+void gmu_core_set_volume(int vol)
 {
+	gmu_core_config_acquire_lock();
+	if (vol == -1) vol = cfg_get_int_value(config, "Gmu.Volume");
 	if (vol >= 0 && vol <= gmu_core_get_volume_max()) {
+		const char *vc = cfg_get_key_value(config, "Gmu.VolumeControl");
 		volume = vol;
-		if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0) {
+		if (strncmp(vc, "Software+Hardware", 17) == 0) {
 			if (vol >= GMU_CORE_SW_VOLUME_MAX-1) {
 				audio_set_volume(GMU_CORE_SW_VOLUME_MAX-1);
 				hw_set_volume(vol-GMU_CORE_SW_VOLUME_MAX+2);
@@ -675,12 +686,13 @@ void gmu_core_set_volume(int vol) /* 0..gmu_core_get_volume_max() */
 				audio_set_volume(vol);
 				hw_set_volume(1);
 			}
-		} else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software", 8) == 0) {
+		} else if (strncmp(vc, "Software", 8) == 0) {
 			audio_set_volume(vol);
-		} else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Hardware", 8) == 0) {
+		} else if (strncmp(vc, "Hardware", 8) == 0) {
 			hw_set_volume(vol);
 		}
 	}
+	gmu_core_config_release_lock();
 	event_queue_push(&event_queue, GMU_VOLUME_CHANGE);
 }
 
@@ -720,7 +732,7 @@ void gmu_core_set_shutdown_time(int value)
 	shutdown_timer = value;
 	remaining_time = (value > 0 ? value : 1);
 	snprintf(tmp, 31, "%d", shutdown_timer);
-	cfg_add_key(&config, "Gmu.Shutdown", tmp);
+	cfg_add_key(config, "Gmu.Shutdown", tmp);
 }
 
 /* Returns the remaining time until shutdown in minutes. Returns 0 if
@@ -870,7 +882,7 @@ static int init_user_config_dir(
 	if (home) {
 		char        target[384], source[384];
 		const char *filename = NULL;
-		ConfigFile  cf;
+		ConfigFile *cf;
 
 		/* Try to create the config directory */
 		snprintf(user_config_dir, 255, "%s/.config", home);
@@ -892,8 +904,8 @@ static int init_user_config_dir(
 			snprintf(source, 383, "%s/%s", sys_config_dir, filename);
 			file_copy(target, source);
 		}
-		cfg_init_config_file_struct(&cf);
-		if (cfg_read_config_file(&cf, target) == 0) {
+		cf = cfg_init();
+		if (cfg_read_config_file(cf, target) == 0) {
 			char *file = cfg_get_key_value(cf, "SDL.KeyMap");
 			if (file) {
 				snprintf(target, 383, "%s/%s", user_config_dir, file);
@@ -916,7 +928,7 @@ static int init_user_config_dir(
 				}
 			}
 		}
-		cfg_free_config_file_struct(&cf);
+		cfg_free(cf);
 	} else {
 		wdprintf(V_ERROR, "gmu", "Unable to find user's home directory.\n");
 	}
@@ -1106,43 +1118,47 @@ int main(int argc, char **argv)
 		exit(10);
 	}
 	gmu_core_config_acquire_lock();
-	cfg_init_config_file_struct(&config);
-	add_default_cfg_settings(&config);
-	if (cfg_read_config_file(&config, config_file_path) != 0) {
+	config = cfg_init();
+	add_default_cfg_settings(config);
+	if (cfg_read_config_file(config, config_file_path) != 0) {
 		wdprintf(V_ERROR, "gmu", "Could not read %s. Assuming defaults.\n", config_file_path);
 		/* In case of a missing default config file create a new one: */
 		if (strncmp(config_file, config_file_path, 8) == 0) {
 			wdprintf(V_INFO, "gmu", "Creating config file.\n");
-			cfg_write_config_file(&config, config_file_path);
+			cfg_write_config_file(config, config_file_path);
 		}
 	}
 	
-	if (skin_file[0] != '\0') cfg_add_key(&config, "SDL.DefaultSkin", skin_file);
+	if (skin_file[0] != '\0') cfg_add_key(config, "SDL.DefaultSkin", skin_file);
 
 	/* Check for shutdown timer */
-	{
-		char *tmp = cfg_get_key_value(config, "Gmu.Shutdown");
-		if (tmp) shutdown_timer = atoi(tmp);
-		remaining_time = shutdown_timer > 0 ? shutdown_timer : 1;
-	}
+	shutdown_timer = cfg_get_int_value(config, "Gmu.Shutdown");
+	remaining_time = shutdown_timer > 0 ? shutdown_timer : 1;
 
 	/* Reader cache size */
 	{
-		char *tmp = cfg_get_key_value(config, "Gmu.ReaderCache");
-		if (tmp) {
-			int size = atoi(tmp), prebuffer_size = size / 2;
-			tmp = cfg_get_key_value(config, "Gmu.ReaderCachePrebufferSize");
-			if (tmp) prebuffer_size = atoi(tmp);
-			reader_set_cache_size_kb(size, prebuffer_size);
-		}
+		int size = cfg_get_int_value(config, "Gmu.ReaderCache");
+		int prebuffer_size;
+		
+		if (size < 64) size = 64; /* Assume a minimum buffer size of 64 KB */
+		prebuffer_size = cfg_get_int_value(config, "Gmu.ReaderCachePrebufferSize");
+		if (prebuffer_size <= 0) prebuffer_size = size / 2;
+		reader_set_cache_size_kb(size, prebuffer_size);
 	}
 
-	if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0)
-		volume_max = GMU_CORE_HW_VOLUME_MAX + GMU_CORE_SW_VOLUME_MAX - 1;
-	else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software", 8) == 0)
-		volume_max = GMU_CORE_SW_VOLUME_MAX - 1;
-	else if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Hardware", 8) == 0)
-		volume_max = GMU_CORE_HW_VOLUME_MAX;
+	{
+		const char *vc = cfg_get_key_value(config, "Gmu.VolumeControl");
+		if (strncmp(vc, "Software+Hardware", 17) == 0)
+			volume_max = GMU_CORE_HW_VOLUME_MAX + GMU_CORE_SW_VOLUME_MAX - 1;
+		else if (strncmp(vc, "Software", 8) == 0)
+			volume_max = GMU_CORE_SW_VOLUME_MAX - 1;
+		else if (strncmp(vc, "Hardware", 8) == 0)
+			volume_max = GMU_CORE_HW_VOLUME_MAX;
+
+		if (strncmp(vc, "Hardware", 8) == 0 || strncmp(vc, "Software+Hardware", 17) == 0) {
+			hw_open_mixer(cfg_get_int_value(config, "Gmu.VolumeHardwareMixerChannel"));
+		}
+	}
 
 #if STATIC
 	decloader_load_builtin_decoders();
@@ -1155,11 +1171,6 @@ int main(int argc, char **argv)
 	/* Put available file extensions in an array */
 	file_extensions_load();
 
-	if (strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Hardware", 8) == 0 ||
-	    strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0) {
-		if (cfg_get_key_value(config, "Gmu.VolumeHardwareMixerChannel"))
-			hw_open_mixer(atoi(cfg_get_key_value(config, "Gmu.VolumeHardwareMixerChannel")));
-	}
 	gmu_core_config_release_lock();
 
 	audio_buffer_init();
@@ -1197,22 +1208,20 @@ int main(int argc, char **argv)
 #endif
 
 	file_player_init(&current_track_ti);
-	set_default_play_mode(&config, &pl);
+	set_default_play_mode(config, &pl);
+
+	gmu_core_set_volume(-1); /* Load from config */
 
 	gmu_core_config_acquire_lock();
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "Gmu.LyricsFilePattern"));
 
-	gmu_core_set_volume(atoi(cfg_get_key_value(config, "Gmu.Volume")));
-
-	if (strncmp(cfg_get_key_value(config, "Gmu.AutoPlayOnProgramStart"), "yes", 3) == 0) {
+	if (cfg_get_boolean_value(config, "Gmu.AutoPlayOnProgramStart")) {
 		global_command = NEXT;
 	}
 
-	if (strncmp(cfg_get_key_value(config, "Gmu.ResumePlayback"), "yes", 3) == 0) {
-		char *itemstr =  cfg_get_key_value(config, "Gmu.LastPlayedPlaylistItem");
-		char *seekposstr = cfg_get_key_value(config, "Gmu.LastPlayedPlaylistItemTime");
-		int   item = (itemstr ? atoi(itemstr) : 0);
-		int   seekpos = (seekposstr ? atoi(seekposstr) : 0);
+	if (cfg_get_boolean_value(config, "Gmu.ResumePlayback")) {
+		int item    = cfg_get_int_value(config, "Gmu.LastPlayedPlaylistItem");
+		int seekpos = cfg_get_int_value(config, "Gmu.LastPlayedPlaylistItemTime");
 		if (item > 0) {
 			global_command = NO_CMD;
 			file_player_seek(seekpos);
@@ -1352,14 +1361,14 @@ int main(int argc, char **argv)
 		unsigned int item_time = file_player_playback_get_time() / 1000;
 		snprintf(temp, 10, "%d", gmu_core_playlist_get_current_position()+1);
 		gmu_core_config_acquire_lock();
-		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItem", temp);
+		cfg_add_key(config, "Gmu.LastPlayedPlaylistItem", temp);
 		snprintf(temp, 10, "%d", item_time);
-		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItemTime", temp);
+		cfg_add_key(config, "Gmu.LastPlayedPlaylistItemTime", temp);
 		gmu_core_config_release_lock();
 	} else {
 		gmu_core_config_acquire_lock();
-		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItem", "None");
-		cfg_add_key(&config, "Gmu.LastPlayedPlaylistItemTime", "0");
+		cfg_add_key(config, "Gmu.LastPlayedPlaylistItem", "None");
+		cfg_add_key(config, "Gmu.LastPlayedPlaylistItemTime", "0");
 		gmu_core_config_release_lock();
 	}
 
@@ -1375,7 +1384,7 @@ int main(int argc, char **argv)
 	    strncmp(cfg_get_key_value(config, "Gmu.VolumeControl"), "Software+Hardware", 17) == 0)
 		hw_close_mixer();
 
-	if (strncmp(cfg_get_key_value(config, "Gmu.RememberLastPlaylist"), "yes", 3) == 0) {
+	if (cfg_get_boolean_value(config, "Gmu.RememberLastPlaylist")) {
 		gmu_core_config_release_lock();
 		wdprintf(V_INFO, "gmu", "Saving playlist...\n");
 		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
@@ -1384,7 +1393,7 @@ int main(int argc, char **argv)
 		disksync = 1;
 		gmu_core_config_acquire_lock();
 	}
-	if (strncmp(cfg_get_key_value(config, "Gmu.RememberSettings"), "yes", 3) == 0) {
+	if (cfg_get_boolean_value(config, "Gmu.RememberSettings")) {
 		char *playmode = NULL;
 		char  volume_str[20];
 
@@ -1407,13 +1416,13 @@ int main(int argc, char **argv)
 				playmode = "random+repeat";
 				break;
 		}
-		cfg_add_key(&config, "Gmu.DefaultPlayMode", playmode);
+		cfg_add_key(config, "Gmu.DefaultPlayMode", playmode);
 
 		snprintf(volume_str, 19, "%d", gmu_core_get_volume());
-		cfg_add_key(&config, "Gmu.Volume", volume_str);
+		cfg_add_key(config, "Gmu.Volume", volume_str);
 
-		cfg_add_key(&config, "Gmu.FirstRun", "no");
-		cfg_write_config_file(&config, config_file_path);
+		cfg_add_key(config, "Gmu.FirstRun", "no");
+		cfg_write_config_file(config, config_file_path);
 		disksync = 1;
 	}
 	gmu_core_config_release_lock();
@@ -1436,13 +1445,13 @@ int main(int argc, char **argv)
 
 	gmu_core_config_acquire_lock();
 	if (auto_shutdown) {
-		char *tmp = cfg_get_key_value(config, "Gmu.ShutdownCommand");
-		if (tmp) {
-			wdprintf(V_INFO, "gmu", "Executing shutdown command: \'%s\'\n", tmp);
-			wdprintf(V_INFO, "gmu", "Shutdown command completed with return code %d.\n", system(tmp));
+		const char *cmd = cfg_get_key_value(config, "Gmu.ShutdownCommand");
+		if (cmd) {
+			wdprintf(V_INFO, "gmu", "Executing shutdown command: \'%s\'\n", cmd);
+			wdprintf(V_INFO, "gmu", "Shutdown command completed with return code %d.\n", system(cmd));
 		}
 	}
-	cfg_free_config_file_struct(&config);
+	cfg_free(config);
 	gmu_core_config_release_lock();
 	pthread_mutex_destroy(&config_mutex);
 	pthread_mutex_destroy(&gmu_running_mutex);

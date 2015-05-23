@@ -18,7 +18,7 @@
 #include "playlist.h"
 #include "pbstatus.h"
 #include "trackinfo.h"
-#include "wejpconfig.h"
+#include "wejconfig.h"
 #include "audio.h"
 #include "eventqueue.h"
 #include "medialib.h"

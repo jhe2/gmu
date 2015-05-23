@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: kam.c  Created: 061102
  *
@@ -17,7 +17,7 @@
 #include "SDL.h"
 #include "kam.h"
 #include FILE_HW_H
-#include "wejpconfig.h"
+#include "wejconfig.h"
 #include "inputconfig.h"
 #include "debug.h"
 
@@ -147,11 +147,11 @@ static int get_button(char *button_name, int *button, int *modifier, ActivateMet
 
 int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 {
-	int        result = 0;
-	ConfigFile keymapconf;
+	int         result = 0;
+	ConfigFile *keymapconf;
 
-	cfg_init_config_file_struct(&keymapconf);
-	if (cfg_read_config_file(&keymapconf, keymap_file) != 0) {
+	keymapconf = cfg_init();
+	if (cfg_read_config_file(keymapconf, keymap_file) != 0) {
 		wdprintf(V_ERROR, "keymap", "Could not read \"%s\". You need to resolve this issue. No buttons have been mapped.\n", keymap_file);
 		result = 1;
 	} else {
@@ -395,7 +395,7 @@ int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 			wdprintf(V_INFO, "keymap", "Key map \"%s\" loaded successfully.\n", keymap_file);
 		}		
 	}
-	cfg_free_config_file_struct(&keymapconf);
+	cfg_free(keymapconf);
 	return result;
 }
 

@@ -158,7 +158,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 		pthread_mutex_init(&(r->mutex), NULL);
 		wdprintf(V_DEBUG, "reader", "mutex init done.\n");
 
-		cfg_init_config_file_struct(&(r->streaminfo));
+		r->streaminfo = cfg_init();
 
 		if (strncasecmp(url, "http://", 7) == 0) { /* Got a HTTP URL */
 			char *hostname = NULL, *path = NULL;
@@ -307,7 +307,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 								value[i] = '\0';
 								wdprintf(V_DEBUG, "reader", "value=[%s]\n", value);
 								if (key[0] && value[0])
-									cfg_add_key(&(r->streaminfo), key, value);
+									cfg_add_key(r->streaminfo, key, value);
 
 								i = 0;
 								if (ch == '\n' || (ch = reader_read_byte(r)) == '\n') {
@@ -400,7 +400,7 @@ int reader_close(Reader *r)
 		}
 		pthread_mutex_destroy(&(r->mutex));
 		if (r->buf) free(r->buf);
-		cfg_free_config_file_struct(&(r->streaminfo));
+		cfg_free(r->streaminfo);
 		free(r);
 		r = NULL;
 	}

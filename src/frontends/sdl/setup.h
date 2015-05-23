@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: setup.h  Created: 141102
  *
@@ -14,6 +14,7 @@
  * for details.
  */
 #include "kam.h"
+#include "wejconfig.h"
 
 #ifndef WEJ_SETUP_H
 #define WEJ_SETUP_H

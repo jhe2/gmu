@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: inputconfig.c  Created: 100306
  *
@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../wejpconfig.h"
+#include "../../wejconfig.h"
 #include "inputconfig.h"
 #include "../../debug.h"
 
@@ -30,9 +30,9 @@ static int            has_joystick;
 
 int input_config_init(char *inputconf_file)
 {
-	int        result = 0;
-	ConfigFile inputconf;
-	int        w;
+	int         result = 0;
+	ConfigFile *inputconf;
+	int         w;
 
 	has_joystick = 0;
 	number_of_buttons = 0;
@@ -42,8 +42,8 @@ int input_config_init(char *inputconf_file)
 	}
 
 	wdprintf(V_INFO, "inputconfig", "Initializing. Loading %s\n", inputconf_file);
-	cfg_init_config_file_struct(&inputconf);
-	if (cfg_read_config_file(&inputconf, inputconf_file) == 0) {
+	inputconf = cfg_init();
+	if (cfg_read_config_file(inputconf, inputconf_file) == 0) {
 		char key[128];
 		int  e, j, ja;
 		/* Load keyboard configuration ... */
@@ -155,7 +155,7 @@ int input_config_init(char *inputconf_file)
 		wdprintf(V_ERROR, "inputconfig", "Failed loading input configuration file: %s.\n", inputconf_file);
 		result = 0;
 	}
-	cfg_free_config_file_struct(&inputconf);
+	cfg_free(inputconf);
 	return result;
 }
 

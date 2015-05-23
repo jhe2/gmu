@@ -41,18 +41,16 @@ static int init(void)
 	int                res = 0;
 	HTTPD_Init_Params *ip;
 	ConfigFile        *config = gmu_core_get_config();
-	char              *kval = NULL;
 
 	ip = malloc(sizeof(HTTPD_Init_Params));
 	ip->local_only = 1;
 	if (config) {
 		gmu_core_config_acquire_lock();
-		kval = cfg_get_key_value(*config, "gmuhttp.Listen");
+		if (cfg_compare_value(config, "gmuhttp.Listen", "All", 1))
+			ip->local_only = 0;
 		gmu_core_config_release_lock();
 	}
 	ip->webserver_root = gmu_core_get_base_dir();
-	if (kval && strcmp(kval, "All") == 0)
-		ip->local_only = 0;
 
 	if (pthread_create(&fe_thread, NULL, httpd_run_server, ip) == 0)
 		res = 1;

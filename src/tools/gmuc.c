@@ -33,7 +33,7 @@
 #include <curses.h>
 #include <signal.h>
 #include <wctype.h>
-#include "../wejpconfig.h"
+#include "../wejconfig.h"
 #include "../ringbuffer.h"
 #include "../debug.h"
 #include "../frontends/web/websocket.h"
@@ -1512,7 +1512,7 @@ int main(int argc, char **argv)
 {
 	int         res = EXIT_FAILURE;
 	char       *tmp;
-	ConfigFile  config;
+	ConfigFile *config;
 	char       *password, *host;
 	char        config_file_path[256] = "", *homedir;
 	int         mode_info = 0, just_once = 1;
@@ -1523,10 +1523,10 @@ int main(int argc, char **argv)
 	assign_signal_handler(SIGTERM, sig_handler);
 	assign_signal_handler(SIGPIPE, SIG_IGN);
 
-	cfg_init_config_file_struct(&config);
-	cfg_add_key(&config, "Host", "127.0.0.1");
-	cfg_add_key(&config, "Password", "stupidpassword");
-	cfg_add_key(&config, "Color", "yes");
+	config = cfg_init();
+	cfg_add_key(config, "Host", "127.0.0.1");
+	cfg_add_key(config, "Password", "stupidpassword");
+	cfg_add_key(config, "Color", "yes");
 
 	if (argc > 1) {
 		size_t i;
@@ -1586,16 +1586,16 @@ int main(int argc, char **argv)
 	if (homedir || config_file_path[0] != '\0') {
 		if (config_file_path[0] == '\0')
 			snprintf(config_file_path, 255, "%s/.config/gmu/gmuc.conf", homedir);
-		if (cfg_read_config_file(&config, config_file_path) != 0) {
+		if (cfg_read_config_file(config, config_file_path) != 0) {
 			char tmp[256];
 			wdprintf(V_INFO, "gmuc", "No config file found. Creating a config file at %s. Please edit that file and try again.\n", config_file_path);
 			snprintf(tmp, 255, "%s/.config", homedir);
 			mkdir(tmp, 0);
 			snprintf(tmp, 255, "%s/.config/gmu", homedir);
 			mkdir(tmp, 0);
-			if (cfg_write_config_file(&config, config_file_path))
+			if (cfg_write_config_file(config, config_file_path))
 				wdprintf(V_ERROR, "gmuc", "ERROR: Unable to create config file.\n");
-			cfg_free_config_file_struct(&config);
+			cfg_free(config);
 			exit(2);
 		}
 		host = cfg_get_key_value(config, "Host");
@@ -1617,6 +1617,6 @@ int main(int argc, char **argv)
 	} else {
 		process_cli_command(host, password, just_once, command, format_str);
 	}
-	cfg_free_config_file_struct(&config);
+	cfg_free(config);
 	return res;
 }

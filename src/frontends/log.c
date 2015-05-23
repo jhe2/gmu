@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: log.c  Created: 091218
  *
@@ -45,36 +45,28 @@ static void shut_down(void)
 static int init(void)
 {
 	ConfigFile *cf = gmu_core_get_config();
-	char       *tmp = cfg_get_key_value(*cf, "Log.Enable");
-	char       *logfile = NULL;
 
-	if (tmp && strncmp(tmp, "yes", 3) == 0) {
+	gmu_core_config_acquire_lock();
+	if (cfg_get_boolean_value(cf, "Log.Enable")) {
+		const char *logfile;
+
 		wdprintf(V_INFO, "logbot", "Initializing logger.\n");
 		logging_enabled = 1;
-		tmp = cfg_get_key_value(*cf, "Log.File");
-		if (tmp)
-			logfile = tmp;
-		else
-			logfile = "gmu.log";
+		logfile = cfg_get_key_value(cf, "Log.File");
+		if (!logfile) logfile = "gmu.log";
 		if (!(lf = fopen(logfile, "a"))) logging_enabled = 0;
-
 		if (logging_enabled) wdprintf(V_INFO, "logbot", "Logging to %s\n", logfile);
 
-		tmp = cfg_get_key_value(*cf, "Log.MinimumPlaytimeSec");
-		if (tmp)
-			minimum_playtime_seconds = atoi(tmp);
-		else
-			minimum_playtime_seconds = 30;
-		tmp = cfg_get_key_value(*cf, "Log.MinimumPlaytimePercent");
-		if (tmp)
-			minimum_playtime_percent = atoi(tmp);
-		else
-			minimum_playtime_percent = 50;
+		minimum_playtime_seconds = cfg_get_int_value(cf, "Log.MinimumPlaytimeSec");
+		if (minimum_playtime_seconds <= 0) minimum_playtime_seconds = 30;
+		minimum_playtime_percent = cfg_get_int_value(cf, "Log.MinimumPlaytimePercent");
+		if (minimum_playtime_percent <= 0) minimum_playtime_percent = 50;
 	} else {
 		wdprintf(V_INFO, "logbot", "Logging has been disabled.\n");
 	}
+	gmu_core_config_release_lock();
 	trackinfo_clear(&previous);
-	return 1;
+	return logging_enabled;
 }
 
 static void save_previous_trackinfo()

@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "ringbuffer.h"
-#include "wejpconfig.h"
+#include "wejconfig.h"
 
 #define HTTP_CACHE_SIZE_MIN_KB 256
 #define HTTP_CACHE_SIZE_MAX_KB 4096
@@ -37,7 +37,7 @@ typedef struct
 	size_t          buf_size;
 	size_t          buf_data_size;
 
-	ConfigFile      streaminfo;
+	ConfigFile     *streaminfo;
 
 	RingBuffer      rb_http;
 	pthread_mutex_t mutex;
