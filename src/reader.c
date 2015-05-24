@@ -154,9 +154,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 		r->file_size = 0;
 		r->is_ready = 0;
 		r->stream_pos = 0;
-		wdprintf(V_DEBUG, "reader", "mutex init.\n");
 		pthread_mutex_init(&(r->mutex), NULL);
-		wdprintf(V_DEBUG, "reader", "mutex init done.\n");
 
 		r->streaminfo = cfg_init();
 
