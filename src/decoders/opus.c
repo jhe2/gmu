@@ -190,8 +190,12 @@ static int opus_play_file(char *opus_file)
 
 static int opus_seek_to(int offset_seconds)
 {
-	seek_to_sample_offset = offset_seconds * sample_rate;
-	return seek_to_sample_offset;
+	int res = 0;
+	if (offset_seconds >= 0) {
+		seek_to_sample_offset = offset_seconds * sample_rate;
+		res = 1;
+	}
+	return res;
 }
 
 static int close_file(void)

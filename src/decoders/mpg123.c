@@ -33,6 +33,7 @@ static int            sample_rate, channels = 0, bitrate = 0;
 static TrackInfo      ti, ti_metaonly;
 static Reader        *r;
 static int            metaint = -1, metacount = 0;
+static int            seek_request = 0;
 
 static const char *get_name(void)
 {
@@ -86,17 +87,17 @@ static int decode_data(char *target, unsigned int max_size)
 			metacount = metaint;
 		}
 
-		if (seek_to_sample_offset && reader_is_seekable(r)) {
+		if (seek_request && reader_is_seekable(r) && seek_to_sample_offset >= 0) {
+			off_t offset;
 			wdprintf(V_DEBUG, "mpg123", "Seeking requested to sample %d.\n", seek_to_sample_offset);
-			if (mpg123_tell(player) + seek_to_sample_offset >= 0) {
-				off_t offset;
-
-				if (mpg123_feedseek(player, seek_to_sample_offset, SEEK_SET, &offset) > 0) {
-					wdprintf(V_DEBUG, "mpg123", "Seeking stream to file offset at %d bytes.\n", offset);
-					reader_seek(r, offset);
-				}
+			if (mpg123_feedseek(player, seek_to_sample_offset, SEEK_SET, &offset) >= 0) {
+				wdprintf(V_DEBUG, "mpg123", "Seeking stream to file offset at %d bytes.\n", offset);
+				reader_seek(r, offset);
+			} else {
+				wdprintf(V_WARNING, "mpg123", "Seek error.\n");
 			}
 			seek_to_sample_offset = 0;
+			seek_request = 0;
 		}
 
 		readsize = 2048;
@@ -148,6 +149,7 @@ static int mpg123_play_file(char *mpeg_file)
 	struct mpg123_frameinfo  mi;
 
 	seek_to_sample_offset = 0;
+	seek_request = 0;
 
 	if (!init) {
 		wdprintf(V_DEBUG, "mpg123", "Initializing.\n");
@@ -256,8 +258,13 @@ static int mpg123_play_file(char *mpeg_file)
 
 static int mpg123_seek_to(int offset_seconds)
 {
-	seek_to_sample_offset = offset_seconds * sample_rate;
-	return seek_to_sample_offset;
+	int res = 0;
+	if (offset_seconds >= 0) {
+		seek_to_sample_offset = offset_seconds * sample_rate;
+		seek_request = 1;
+		res = 1;
+	}
+	return res;
 }
 
 static int close_file(void)

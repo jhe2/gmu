@@ -260,6 +260,7 @@ static void *decode_audio_thread(void *udata)
 	GmuCharset  charset = M_CHARSET_AUTODETECT;
 
 	wdprintf(V_INFO, "fileplayer", "File player thread initialized.\n");
+	seek_second = -1;
 	while (!file_player_check_shutdown()) {
 		char *filename = NULL;
 		int   len = 0, set_playing = 0;
@@ -404,13 +405,12 @@ static void *decode_audio_thread(void *udata)
 						) {
 							int size = 0, ret = 1, br = 0;
 
-							if (seek_second) {
+							if (seek_second >= 0) {
 								if (get_item_status() == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
-									if (seek_second < 0) seek_second = 0;
 									if (*gd->seek && (*gd->seek)(seek_second))
 										audio_set_sample_counter(seek_second * ti->samplerate);
 								}
-								seek_second = 0;
+								seek_second = -1;
 							}
 							if (audio_fade_out_in_progress()) {
 								if (audio_fade_out_step(15)) set_item_status(STOPPED);
@@ -466,7 +466,7 @@ static void *decode_audio_thread(void *udata)
 						}
 						wdprintf(V_INFO, "fileplayer", "Playback stopped: %d\n", item_status);
 						wdprintf(V_DEBUG, "fileplayer", "Buffer: %d\n", audio_buffer_get_fill());
-						seek_second = 0;
+						seek_second = -1;
 					} else {
 						wdprintf(V_WARNING, "fileplayer", "Broken audio stream.\n");
 					}
@@ -515,9 +515,15 @@ int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip
 	return 0;
 }
 
+/**
+ * Initiates a seek request in the current stream to the relative
+ * offset 'offset'. If the specified offset lies before the beginning
+ * of the stream, the file player will try to seek to the beginning.
+ */
 int file_player_seek(long offset)
 {
 	seek_second = audio_get_playtime() / 1000 + offset;
+	if (seek_second < 0) seek_second = 0;
 	return 0;
 }
 
