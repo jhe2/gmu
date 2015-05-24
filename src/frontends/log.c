@@ -47,13 +47,13 @@ static int init(void)
 	ConfigFile *cf = gmu_core_get_config();
 
 	gmu_core_config_acquire_lock();
-	cfg_add_key(cf, "Log.Enable", "no");
+	cfg_add_key_if_not_present(cf, "Log.Enable", "no");
 	cfg_key_add_presets(cf, "Log.Enable", "yes", "no", NULL);
-	cfg_add_key(cf, "Log.MinimumPlaytimeSec", "10");
+	cfg_add_key_if_not_present(cf, "Log.MinimumPlaytimeSec", "10");
 	cfg_key_add_presets(cf, "Log.MinimumPlaytimeSec", "5", "10", "30", "60", "90", NULL);
-	cfg_add_key(cf, "Log.MinimumPlaytimePercent", "10");
+	cfg_add_key_if_not_present(cf, "Log.MinimumPlaytimePercent", "10");
 	cfg_key_add_presets(cf, "Log.MinimumPlaytimePercent", "1", "10", "25", "50", "75", NULL);
-	cfg_add_key(cf, "Log.File", "gmutracks.log");
+	cfg_add_key_if_not_present(cf, "Log.File", "gmutracks.log");
 	if (cfg_get_boolean_value(cf, "Log.Enable")) {
 		const char *logfile;
 
