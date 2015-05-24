@@ -32,5 +32,5 @@ void      file_player_set_filename(char *filename);
 void      file_player_start_playback(void);
 int       file_player_init(TrackInfo *ti_ref);
 TrackInfo *file_player_get_trackinfo_ref(void);
-int       fileplayer_request_playback_state_change(PB_Status_Request request);
+int       file_player_request_playback_state_change(PB_Status_Request request);
 #endif

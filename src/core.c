@@ -310,7 +310,7 @@ int gmu_core_play(void)
 	if (player_status == STOPPED)
 		res = gmu_core_next();
 	else
-		fileplayer_request_playback_state_change(PBRQ_PLAY);
+		file_player_request_playback_state_change(PBRQ_PLAY);
 	event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 	return res;
 }
@@ -328,7 +328,7 @@ int gmu_core_play_pause(void)
 /* Pause playback */
 int gmu_core_pause(void)
 {
-	fileplayer_request_playback_state_change(PBRQ_PAUSE);
+	file_player_request_playback_state_change(PBRQ_PAUSE);
 	event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 	return 0;
 }
@@ -336,7 +336,7 @@ int gmu_core_pause(void)
 int gmu_core_next(void)
 {
 	int res;
-	int pbsc = fileplayer_request_playback_state_change(PBRQ_PLAY);
+	int pbsc = file_player_request_playback_state_change(PBRQ_PLAY);
 	res = play_next(&pl, 1);
 	if (pbsc) event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 	return res;
@@ -345,7 +345,7 @@ int gmu_core_next(void)
 int gmu_core_previous(void)
 {
 	int res;
-	int pbsc = fileplayer_request_playback_state_change(PBRQ_PLAY);
+	int pbsc = file_player_request_playback_state_change(PBRQ_PLAY);
 	res = play_previous(&pl);
 	if (pbsc) event_queue_push(&event_queue, GMU_PLAYBACK_STATE_CHANGE);
 	return res;
@@ -368,7 +368,7 @@ static int stop_playback(void)
 int gmu_core_stop(void)
 {
 	int res = stop_playback();
-	fileplayer_request_playback_state_change(PBRQ_STOP);
+	file_player_request_playback_state_change(PBRQ_STOP);
 	return res;
 }
 
@@ -377,7 +377,7 @@ int gmu_core_play_pl_item(int item)
 	global_command = PLAY_ITEM;
 	global_param = item;
 	player_status = PLAYING;
-	fileplayer_request_playback_state_change(PBRQ_PLAY);
+	file_player_request_playback_state_change(PBRQ_PLAY);
 	event_queue_push_with_parameter(
 		&event_queue,
 		GMU_TRACK_CHANGE,
@@ -391,7 +391,7 @@ int gmu_core_play_file(const char *filename)
 	strncpy(global_filename, filename, 255);
 	global_command = PLAY_FILE;
 	player_status = PLAYING;
-	fileplayer_request_playback_state_change(PBRQ_PLAY);
+	file_player_request_playback_state_change(PBRQ_PLAY);
 	event_queue_push_with_parameter(&event_queue, GMU_TRACK_CHANGE, -1);
 	return 0;
 }

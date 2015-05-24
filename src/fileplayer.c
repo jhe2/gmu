@@ -536,7 +536,7 @@ TrackInfo *file_player_get_trackinfo_ref(void)
  * Returns 1 if the requested playback state differs from the current
  * state, 0 otherwise.
  */
-int fileplayer_request_playback_state_change(PB_Status_Request request)
+int file_player_request_playback_state_change(PB_Status_Request request)
 {
 	int res = 0;
 	pthread_mutex_lock(&item_status_mutex);
