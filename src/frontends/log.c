@@ -47,13 +47,20 @@ static int init(void)
 	ConfigFile *cf = gmu_core_get_config();
 
 	gmu_core_config_acquire_lock();
+	cfg_add_key(cf, "Log.Enable", "no");
+	cfg_key_add_presets(cf, "Log.Enable", "yes", "no", NULL);
+	cfg_add_key(cf, "Log.MinimumPlaytimeSec", "10");
+	cfg_key_add_presets(cf, "Log.MinimumPlaytimeSec", "5", "10", "30", "60", "90", NULL);
+	cfg_add_key(cf, "Log.MinimumPlaytimePercent", "10");
+	cfg_key_add_presets(cf, "Log.MinimumPlaytimePercent", "1", "10", "25", "50", "75", NULL);
+	cfg_add_key(cf, "Log.File", "gmutracks.log");
 	if (cfg_get_boolean_value(cf, "Log.Enable")) {
 		const char *logfile;
 
 		wdprintf(V_INFO, "logbot", "Initializing logger.\n");
 		logging_enabled = 1;
 		logfile = cfg_get_key_value(cf, "Log.File");
-		if (!logfile) logfile = "gmu.log";
+		if (!logfile) logfile = "gmutracks.log";
 		if (!(lf = fopen(logfile, "a"))) logging_enabled = 0;
 		if (logging_enabled) wdprintf(V_INFO, "logbot", "Logging to %s\n", logfile);
 
