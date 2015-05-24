@@ -46,6 +46,12 @@ static int init(void)
 	ip->local_only = 1;
 	if (config) {
 		gmu_core_config_acquire_lock();
+		cfg_add_key_if_not_present(config, "gmuhttp.Listen", "Local");
+		cfg_key_add_presets(config, "gmuhttp.Listen", "Local", "All", NULL);
+		cfg_add_key_if_not_present(config, "gmuhttp.DisableLocalPassword", "no");
+		cfg_key_add_presets(config, "gmuhttp.DisableLocalPassword", "yes", "no", NULL);
+		cfg_add_key_if_not_present(config, "gmuhttp.Password", "change.me");
+		cfg_add_key_if_not_present(config, "gmuhttp.BaseDir", "/");
 		if (cfg_compare_value(config, "gmuhttp.Listen", "All", 1))
 			ip->local_only = 0;
 		gmu_core_config_release_lock();
