@@ -344,6 +344,8 @@ static void *decode_audio_thread(void *udata)
 					}
 
 					if (channels > 0 && trackinfo_acquire_lock(ti)) {
+						int ret;
+
 						wdprintf(V_INFO, "fileplayer", "Found %s stream w/ %d channel(s), %d Hz, %ld bps, %d seconds\n",
 								 ti->file_type, ti->channels, ti->samplerate, ti->bitrate, ti->length);
 
@@ -397,12 +399,13 @@ static void *decode_audio_thread(void *udata)
 							}
 						}
 
+						ret = 1;
 						while (
 							( get_item_status() == PLAYING || audio_fade_out_in_progress()
 							|| (item_status != STOPPED && audio_buffer_get_fill() > 0) )
 							&& !file_player_check_shutdown()
 						) {
-							int size = 0, ret = 1, br = 0;
+							int size = 0, br = 0;
 
 							if (seek_second >= 0) {
 								if (get_item_status() == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {

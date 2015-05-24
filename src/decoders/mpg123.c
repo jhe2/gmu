@@ -44,7 +44,7 @@ static int decode_data(char *target, unsigned int max_size)
 {
 	int                     ret = 1;
 	struct mpg123_frameinfo mi;
-	size_t                  decsize = 1;
+	size_t                  decsize = 0;
 	int                     readsize;
 
 	if (r) {
@@ -112,33 +112,37 @@ static int decode_data(char *target, unsigned int max_size)
 			}
 		} else {
 			wdprintf(V_WARNING, "mpg123", "Got no data from reader :(\n");
+			if (reader_get_number_of_bytes_in_buffer(r) == 0)
+				ret = MPG123_DONE;
 		}
 	}
 	mpg123_info(player, &mi);
 	bitrate = 1000 * (mi.abr_rate ? mi.abr_rate : mi.bitrate);
-	do {
-		ret = mpg123_read(player, (unsigned char*)target, max_size, &decsize);
-		if (ret == MPG123_NEED_MORE && decsize == 0) {
-			readsize = 2048;
-			if (metaint > 0) { /* Do this only if there is Shoutcast meta data in the stream */
-				if (metacount < readsize) readsize = metacount;
-				metacount -= readsize;
-			}
-			if (readsize > 0) {
-				if (reader_read_bytes(r, readsize)) {
-					int size = reader_get_number_of_bytes_in_buffer(r);
-					if (size > 0) {
-						mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+	if (ret != MPG123_DONE) {
+		do {
+			ret = mpg123_read(player, (unsigned char*)target, max_size, &decsize);
+			if (ret == MPG123_NEED_MORE && decsize == 0) {
+				readsize = 2048;
+				if (metaint > 0) { /* Do this only if there is Shoutcast meta data in the stream */
+					if (metacount < readsize) readsize = metacount;
+					metacount -= readsize;
+				}
+				if (readsize > 0) {
+					if (reader_read_bytes(r, readsize)) {
+						int size = reader_get_number_of_bytes_in_buffer(r);
+						if (size > 0) {
+							mpg123_feed(player, (unsigned char *)reader_get_buffer(r), size);
+						}
+					} else { /* Must have reached EOF */
+						break;
 					}
-				} else { /* Must have reached EOF */
+				} else {
+					wdprintf(V_DEBUG, "mpg123", "Need more data, but can't read. readsize = %d\n", readsize);
 					break;
 				}
-			} else {
-				wdprintf(V_DEBUG, "mpg123", "Need more data, but can't read. readsize = %d\n", readsize);
-				break;
 			}
-		}
-	} while (ret == MPG123_NEED_MORE && decsize == 0 && !reader_is_eof(r));
+		} while (ret == MPG123_NEED_MORE && decsize == 0 && !reader_is_eof(r));
+	}
 	if (ret == MPG123_DONE) decsize = 0;
 	return decsize;
 }
@@ -227,7 +231,7 @@ static int mpg123_play_file(char *mpeg_file)
 			size_t        dummy;
 			unsigned char dumbuf[1024];
 
-			wdprintf(V_INFO, "mpg123", "Found stream with %d channels and %ld bps.\n", channels, rate);
+			wdprintf(V_INFO, "mpg123", "Found stream with %d channels and %ld Hz.\n", channels, rate);
 			mpg123_format_none(player);
 			mpg123_format(player, rate, channels, encoding);
 			mpg123_info(player, &mi);
