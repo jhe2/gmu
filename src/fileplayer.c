@@ -255,7 +255,6 @@ static void *decode_audio_thread(void *udata)
 {
 	GmuDecoder *gd = NULL;
 	Reader     *r;
-	long        ret  = 1;
 	static char pcmout[BUF_SIZE];
 	GmuCharset  charset = M_CHARSET_AUTODETECT;
 
@@ -399,7 +398,7 @@ static void *decode_audio_thread(void *udata)
 						}
 
 						while (
-							( (ret && (get_item_status() == PLAYING || audio_fade_out_in_progress()))
+							( get_item_status() == PLAYING || audio_fade_out_in_progress()
 							|| (item_status != STOPPED && audio_buffer_get_fill() > 0) )
 							&& !file_player_check_shutdown()
 						) {
@@ -473,9 +472,11 @@ static void *decode_audio_thread(void *udata)
 					(*gd->close_file)();
 				} else {
 					wdprintf(V_DEBUG, "fileplayer", "Unable to open file.\n");
-					event_queue_push_with_parameter(gmu_core_get_event_queue(),
-													GMU_ERROR,
-													GMU_ERROR_CANNOT_OPEN_FILE);
+					event_queue_push_with_parameter(
+						gmu_core_get_event_queue(),
+						GMU_ERROR,
+						GMU_ERROR_CANNOT_OPEN_FILE
+					);
 				}
 			}
 			if (get_item_status() == STOPPED) audio_buffer_clear();
