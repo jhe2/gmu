@@ -244,6 +244,7 @@ int playlist_insert_item_after(Playlist *pl, Entry *entry, const char *file, con
 			new_entry->filename[255] = '\0';
 			playlist_entry_set_name(new_entry, name);
 			new_entry->played = 0;
+			new_entry->queue_pos = 0;
 			new_entry->next_in_queue = NULL;
 			new_entry->prev = entry;
 			if (entry->next != NULL)
