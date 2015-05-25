@@ -41,7 +41,7 @@ void playlist_init(Playlist *pl)
 	pl->last         = NULL;
 	pl->play_mode    = PM_CONTINUE;
 	pl->played_items = 0;
-	pl->queue_start = NULL;
+	pl->queue_start  = NULL;
 	srand(time(NULL));
 	pthread_mutex_init(&(pl->mutex), NULL);
 }
@@ -133,7 +133,13 @@ int playlist_add_item(Playlist *pl, const char *file, const char *name)
 	return result;
 }
 
-int playlist_add_file(Playlist *pl, const char *filename_with_path)
+/**
+ * If 'entry' is NULL, the file is added at the end of the playlist.
+ * If 'entry' is a valid playlist entry, the file is inserted after 
+ * 'entry' in the playlist.
+ * Returns 1 on success, 0 otherwise.
+ */
+int playlist_add_file(Playlist *pl, const char *filename_with_path, Entry *entry)
 {
 	char        filetype[16];
 	const char *tmp = get_file_extension(filename_with_path);
@@ -142,33 +148,38 @@ int playlist_add_file(Playlist *pl, const char *filename_with_path)
 
 	trackinfo_init(&ti, 0);
 	filetype[0] = '\0';
-	if (tmp != NULL)
-		strtoupper(filetype, tmp, 15);
-	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
-	if (strncmp(filetype, "M3U", 3) != 0) {
+	if (tmp != NULL) strtoupper(filetype, tmp, 15);
+	if (strncmp(filetype, "M3U", 3) != 0 && strncmp(filetype, "PLS", 3) != 0) {
 		if (metadatareader_read(filename_with_path, filetype, &ti)) {
 			char temp[256];
 			trackinfo_get_full_title(&ti, temp, 255);
 			if (!charset_is_valid_utf8_string(temp)) {
 				wdprintf(V_WARNING, "playlist", "WARNING: Failed to create a valid UTF-8 title string. :(\n");
 			} else {
-				result = playlist_add_item(pl, filename_with_path, temp);
+				if (entry)
+					result = playlist_insert_item_after(pl, entry, filename_with_path, temp);
+				else
+					result = playlist_add_item(pl, filename_with_path, temp);
 			}
 		} else {
-			char *filename = strrchr(filename_with_path, '/');
+			const char *filename = strrchr(filename_with_path, '/');
 			if (filename) {
 				char buf[256];
 
 				filename = filename + 1;
 				if (charset_is_valid_utf8_string(filename)) {
 					strncpy(buf, filename, 255);
+					buf[255] = '\0';
 				} else {
 					if (!charset_iso8859_1_to_utf8(buf, filename, 255)) {
 						wdprintf(V_WARNING, "playlist", "ERROR: Failed to convert filename text to UTF-8.\n");
 						snprintf(buf, 255, "[Filename with unsupported encoding]");
 					}
 				}
-				result = playlist_add_item(pl, filename_with_path, buf);
+				if (entry)
+					result = playlist_insert_item_after(pl, entry, filename_with_path, buf);
+				else
+					result = playlist_add_item(pl, filename_with_path, buf);
 			}
 		}
 	}
@@ -184,7 +195,7 @@ typedef struct _thread_params {
 
 static int internal_add_file(void *pl, const char *file)
 {
-	return playlist_add_file((Playlist *)pl, file);
+	return playlist_add_file((Playlist *)pl, file, NULL);
 }
 
 static void *thread_add_dir(void *udata)
@@ -258,47 +269,6 @@ int playlist_insert_item_after(Playlist *pl, Entry *entry, const char *file, con
 			result = 1;
 		}
 	}
-	return result;
-}
-
-int playlist_insert_file_after(Playlist *pl, Entry *entry, const char *filename_with_path)
-{
-	char        filetype[16];
-	const char *tmp = get_file_extension(filename_with_path);
-	TrackInfo   ti;
-	int         result = 0;
-
-	trackinfo_init(&ti, 0);
-	filetype[0] = '\0';
-	if (tmp != NULL)
-		strtoupper(filetype, tmp, 15);
-	/*wdprintf(V_DEBUG, "playlist", "[%4d] %s\n", i, dir_get_filename(&dir, i));*/
-	if (strncmp(filetype, "M3U", 3) != 0) {
-		if (metadatareader_read(filename_with_path, filetype, &ti)) {
-			char temp[256];
-			trackinfo_get_full_title(&ti, temp, 255);
-			if (!charset_is_valid_utf8_string(temp)) {
-				wdprintf(V_WARNING, "playlist", "WARNING: Failed to create a valid UTF-8 title string. :(\n");
-			} else {
-				result = playlist_insert_item_after(pl, entry, filename_with_path, temp);
-			}
-		} else {
-			char *filename = strrchr(filename_with_path, '/')+1;
-			if (filename) {
-				char buf[256];
-				if (charset_is_valid_utf8_string(filename)) {
-					strncpy(buf, filename, 255);
-				} else {
-					if (!charset_iso8859_1_to_utf8(buf, filename, 255)) {
-						wdprintf(V_WARNING, "playlist", "ERROR: Failed to convert filename text to UTF-8.\n");
-						snprintf(buf, 255, "[Filename with unsupported encoding]");
-					}
-				}
-				result = playlist_insert_item_after(pl, entry, filename_with_path, buf);
-			}
-		}
-	}
-	trackinfo_clear(&ti);
 	return result;
 }
 

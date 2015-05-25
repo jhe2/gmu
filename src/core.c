@@ -474,9 +474,8 @@ size_t gmu_core_playlist_get_length(void)
 
 int gmu_core_playlist_insert_file_after(Entry *entry, const char *filename_with_path)
 {
-	int res;
-	res = playlist_insert_file_after(&pl, entry, filename_with_path);
-	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
+	int res = playlist_add_file(&pl, filename_with_path, entry);
+	if (res) event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 	return res;
 }
 
@@ -496,7 +495,7 @@ int gmu_core_playlist_add_file(const char *filename_with_path)
 	} else if (strcmp(filetype, "PLS") == 0) {
 		res = add_pls_contents_to_playlist(&pl, filename_with_path);
 	} else {
-		res = playlist_add_file(&pl, filename_with_path);
+		res = playlist_add_file(&pl, filename_with_path, NULL);
 	}
 	playlist_release_lock(&pl);
 	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, len);
