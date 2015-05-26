@@ -165,6 +165,9 @@ set_feature()
 		SDL_gfx)
 			feature_sdl_gfx=$on_off
 			;;
+		debug)
+			feature_debug=$on_off
+			;;
 	esac
 }
 
@@ -190,6 +193,10 @@ print_features_and_write_config()
 	if [ $feature_medialib = 1 ]; then
 		echo "Media library enabled"
 		echo "GMU_MEDIALIB=1" >>config.mk
+	fi
+	if [ $feature_debug = 1 ]; then
+		echo "Debug build enabled"
+		EXTRA_CFLAGS="$EXTRA_CFLAGS -DDEBUG"
 	fi
 	echo
 	echo "Decoders:"
@@ -251,7 +258,7 @@ print_features_and_write_config()
 		echo "SDL_CFLAGS=$(sdl-config --cflags)" >>config.mk
 		echo "SDL_LIB=$(sdl-config --libs)" >>config.mk
 	fi
-	echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H -DDEBUG $EXTRA_CFLAGS" >>config.mk
+	echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H $EXTRA_CFLAGS" >>config.mk
 	echo "LFLAGS=$LFLAGS -Wl,-export-dynamic" >>config.mk
 	echo "LFLAGS_CORE=$LFLAGS_CORE" >>config.mk
 	echo "DECODERS_TO_BUILD=$dec" >>config.mk
@@ -291,6 +298,7 @@ fe_lirc=-2
 fe_log=-2
 feature_medialib=1
 feature_sdl_gfx=-2
+feature_debug=0
 target_device="unknown"
 sdk_path=
 includes=
