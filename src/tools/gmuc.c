@@ -591,6 +591,19 @@ static void file_browser_handle_return_key(UI *ui, int sock, char **cur_dir)
 	}
 }
 
+static void media_library_play_item(UI *ui, int sock)
+{
+	if (ui_mlib_get_state(ui) == MLIB_STATE_RESULTS) {
+		char  tmp[256] = "";
+		int   s = listwidget_get_selection(ui->lw_mlib_search);
+		char *idstr = listwidget_get_row_data(ui->lw_mlib_search, s, 3);
+		int   id = idstr ? atoi(idstr) : -1;
+		wprintw(ui->win_cmd->win, "Playing medialib ID %d...\n", id);
+		snprintf(tmp, 255, "{\"cmd\":\"play\", \"source\":\"medialib\", \"item\": %d}", id);
+		if (tmp[0]) websocket_send_str(sock, tmp, 1);
+	}
+}
+
 static void media_library_handle_return_key(UI *ui, int sock)
 {
 	char  tmp[256] = "";
@@ -761,6 +774,9 @@ static char *handle_function_based_on_key_press(
 			break;
 		case FUNC_MLIB_REFRESH:
 			websocket_send_str(sock, "{\"cmd\":\"medialib_refresh\"}", 1);
+			break;
+		case FUNC_MLIB_PLAY_ITEM:
+			media_library_play_item(ui, sock);
 			break;
 		case FUNC_VOLUME_UP:
 			websocket_send_str(sock, "{\"cmd\":\"volume_set\",\"relative\":1}", 1);

@@ -95,6 +95,7 @@ static FooterButtons fb_lib[] = {
 	{ "g",   "Genres",   FUNC_BROWSE_GENRES,  'g', 0 },
 	{ "s",   "Search",   FUNC_SEARCH,         's', 0 },
 	{ "R",   "Refresh",  FUNC_MLIB_REFRESH,   'R', 0 },
+	{ "i",   "Pl. item", FUNC_MLIB_PLAY_ITEM, 'i', 0 },
 	{ "+",   "Vol+",     FUNC_VOLUME_UP,      '+', 0 },
 	{ "-",   "Vol-",     FUNC_VOLUME_DOWN,    '-', 0 },
 	{ "/",   "Command",  FUNC_TEXT_INPUT,     '/', 0 },
