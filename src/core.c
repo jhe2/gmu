@@ -386,14 +386,36 @@ int gmu_core_play_pl_item(int item)
 	return 0;
 }
 
+/**
+ * Plays a media file, identified by its full path, without
+ * adding it to the playlist.
+ */
 int gmu_core_play_file(const char *filename)
 {
 	strncpy(global_filename, filename, 255);
+	global_filename[255] = '\0';
 	global_command = PLAY_FILE;
 	player_status = PLAYING;
 	file_player_request_playback_state_change(PBRQ_PLAY);
 	event_queue_push_with_parameter(&event_queue, GMU_TRACK_CHANGE, -1);
-	return 0;
+	return 1;
+}
+
+/**
+ * Plays an item from the media library, identified by its ID, without
+ * adding it to the playlist.
+ */
+int gmu_core_play_medialib_item(size_t id)
+{
+	int res = 0;
+#ifdef GMU_MEDIALIB
+	TrackInfo ti = medialib_get_data_for_id(&gm, id);
+	if (ti.id > 0 && ti.file_name[0]) {
+		res = gmu_core_play_file(ti.file_name);
+	}
+	wdprintf(V_DEBUG, "core", "Playing track from media library with ID %d...\n", id);
+#endif
+	return res;
 }
 
 /* Playlist wrapper functions: */

@@ -44,6 +44,7 @@ int              gmu_core_previous(void);
 int              gmu_core_stop(void);
 int              gmu_core_play_pl_item(int item);
 int              gmu_core_play_file(const char *filename);
+int              gmu_core_play_medialib_item(size_t id);
 int              gmu_core_playback_is_paused(void);
 int              gmu_core_get_length_current_track(void);
 void             gmu_core_quit(void);
