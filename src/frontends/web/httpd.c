@@ -1108,11 +1108,11 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 			wdprintf(V_DEBUG, "httpd", "Got command (via JSON data): '%s'\n", cmd);
 			if (strcmp(cmd, "play") == 0) {
 				JSON_Key_Type type   = json_get_type_for_key(json, "item");
-				int           item   = (int)json_get_number_value_for_key(json, "item");
+				int           item   = json_get_integer_value_for_key(json, "item");
 				/* source: 'playlist' (default) or 'medialib' */
 				const char   *source = json_get_string_value_for_key(json, "source");
 
-				if (type == NUMBER && item >= 0) {
+				if (type == JSON_NUMBER && item >= 0) {
 					if (source && strcmp(source, "medialib") == 0)
 						gmu_core_play_medialib_item(item);
 					else
