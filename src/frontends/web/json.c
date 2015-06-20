@@ -386,9 +386,13 @@ static void jema_prepare_kv_string(
 {
 	switch (key_type) {
 		case JSON_STRING: {
-			const char *val_str = va_arg(*args, char *);
-			if (snprintf(target, 256, "%s\"%s\":\"%s\"", first_key ? "" : ",", key_name, val_str) >= 256)
-				target[0] = '\0';
+			char *val_str = va_arg(*args, char *);
+			val_str = json_string_escape_alloc(val_str);
+			if (val_str) {
+				if (snprintf(target, 256, "%s\"%s\":\"%s\"", first_key ? "" : ",", key_name, val_str) >= 256)
+					target[0] = '\0';
+				free(val_str);
+			}
 			break;
 		}
 		case JSON_NUMBER:
