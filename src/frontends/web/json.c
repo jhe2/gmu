@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: json.c  Created: 120811
  *
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "json.h"
 #include "debug.h"
 
@@ -102,10 +103,11 @@ JSON_Key *json_key_new(void)
 		jk->key_name = NULL;
 		jk->key_value_str = NULL;
 		jk->key_value_number = 0.0;
+		jk->key_value_integer = 0;
 		jk->key_value_boolean = 0;
 		jk->key_value_array = NULL;
 		jk->key_value_object = NULL;
-		jk->type = EMPTY;
+		jk->type = JSON_EMPTY;
 		jk->next = NULL;
 	}
 	return jk;
@@ -177,7 +179,7 @@ JSON_Object *json_parse_alloc(const char *json_data)
 								obj = json_parse_alloc(json_data+i);
 								i += obj->length;
 								if (current_key) {
-									current_key->type = OBJECT;
+									current_key->type = JSON_OBJECT;
 									current_key->key_value_object = obj;
 								}
 								break;
@@ -200,7 +202,7 @@ JSON_Object *json_parse_alloc(const char *json_data)
 										}
 										key_value[k] = '\0';
 										if (current_key) {
-											current_key->type = STRING;
+											current_key->type = JSON_STRING;
 											current_key->key_value_str = key_value;
 										}
 										s = STATE_SEARCH_VALUE;
@@ -232,12 +234,13 @@ JSON_Object *json_parse_alloc(const char *json_data)
 										key_value[j - start] = '\0';
 										if (current_key) {
 											if (key_value[0] == 't' || key_value[0] == 'f') {
-												current_key->type = BOOLEAN;
+												current_key->type = JSON_BOOLEAN;
 												current_key->key_value_boolean = key_value[0] == 't' ? 1 : 0;
 												free(key_value);
 											} else {
-												current_key->type = NUMBER;
+												current_key->type = JSON_NUMBER;
 												current_key->key_value_number = atof(key_value);
+												current_key->key_value_integer = atoi(key_value);
 												free(key_value);
 											}
 										}
@@ -322,7 +325,7 @@ char *json_get_string_value_for_key(JSON_Object *object, const char *key)
 	char *res = NULL;
 	if (object) {
 		JSON_Key *k = json_get_key_object_for_key(object, key);
-		if (k && k->key_name && strcmp(k->key_name, key) == 0 && k->type == STRING) {
+		if (k && k->key_name && strcmp(k->key_name, key) == 0 && k->type == JSON_STRING) {
 			res = k->key_value_str;
 		}
 	}
@@ -334,8 +337,20 @@ double json_get_number_value_for_key(JSON_Object *object, const char *key)
 	double res = 0.0;
 	if (object) {
 		JSON_Key *k = json_get_key_object_for_key(object, key);
-		if (k && k->key_name && strcmp(k->key_name, key) == 0 && k->type == NUMBER) {
+		if (k && k->key_name && strcmp(k->key_name, key) == 0 && k->type == JSON_NUMBER) {
 			res = k->key_value_number;
+		}
+	}
+	return res;
+}
+
+int json_get_integer_value_for_key(JSON_Object *object, const char *key)
+{
+	int res = 0;
+	if (object) {
+		JSON_Key *k = json_get_key_object_for_key(object, key);
+		if (k && k->key_name && strcmp(k->key_name, key) == 0 && k->type == JSON_NUMBER) {
+			res = k->key_value_integer;
 		}
 	}
 	return res;
@@ -348,7 +363,7 @@ char *json_get_first_key_string(JSON_Object *object)
 
 JSON_Key_Type json_get_type_for_key(JSON_Object *object, const char *key)
 {
-	JSON_Key_Type res = EMPTY;
+	JSON_Key_Type res = JSON_EMPTY;
 	if (object) {
 		JSON_Key *k = json_get_key_object_for_key(object, key);
 		if (k && k->key_name && strcmp(k->key_name, key) == 0) {
@@ -356,4 +371,103 @@ JSON_Key_Type json_get_type_for_key(JSON_Object *object, const char *key)
 		}
 	}
 	return res;
+}
+
+/**
+ * target must point to an array of char with at least 256 bytes of space.
+ */
+static void jema_prepare_kv_string(
+	va_list      *args,
+	char         *target,
+	JSON_Key_Type key_type,
+	const char   *key_name,
+	int           first_key
+)
+{
+	switch (key_type) {
+		case JSON_STRING: {
+			const char *val_str = va_arg(*args, char *);
+			if (snprintf(target, 256, "%s\"%s\":\"%s\"", first_key ? "" : ",", key_name, val_str) >= 256)
+				target[0] = '\0';
+			break;
+		}
+		case JSON_NUMBER:
+		case JSON_FLOAT: {
+			double val_double = va_arg(*args, double);
+			if (snprintf(target, 256, "%s\"%s\":%f", first_key ? "" : ",", key_name, val_double) >= 256)
+				target[0] = '\0';
+			break;
+		}
+		case JSON_INTEGER: {
+			int val = va_arg(*args, int);
+			if (snprintf(target, 256, "%s\"%s\":%d", first_key ? "" : ",", key_name, val) >= 256)
+				target[0] = '\0';
+			break;
+		}
+		case JSON_BOOLEAN:
+			va_arg(*args, char *);
+			break;
+		default:
+			/* Ignore more complex types */
+			va_arg(*args, char *);
+			break;
+	}
+}
+
+static char *jema_concat(const char *kv_str, char *msg, size_t *msg_size, size_t *msg_pos)
+{
+	if (kv_str[0]) {
+		size_t len = strlen(kv_str);
+		if (*msg_size - *msg_pos > len) {
+			strcat(msg, kv_str);
+			*msg_pos += len;
+		} else {
+			*msg_size += len + 256;
+			msg = realloc(msg, *msg_size);
+		}
+	}
+	return msg;
+}
+
+/**
+ * Function for creating a JSON message string from an arbitrary number
+ * of keys. Only a flat list of keys is supported, no arrays or nested
+ * objects.
+ * To be called with a variable list of arguments. The number of arguments
+ * always must be a multiple of 3 plus 1, with the last argument always
+ * being JSON_EMPTY. The three arguments are: key type, key name and key value.
+ * The type of key value depends on the selected key type.
+ * Returns a valid JSON message on success or NULL on error.
+ * Memory will be allocated for the JSON message as needed and needs to
+ * be free'd.
+ */
+char *json_encode_message_alloc(JSON_Key_Type type_1, const char *key, ...)
+{
+	char       *msg;
+	va_list     args;
+	size_t      msg_size = 256;
+
+	msg = malloc(msg_size);
+	if (msg) {
+		JSON_Key_Type key_type;
+		const char   *key_name;
+		size_t        msg_pos = 0;
+		char          tmp[256];
+
+		va_start(args, key);
+		msg[0] = '{';
+		msg[1] = '\0';
+		tmp[0] = '\0';
+		key_name = key;
+		jema_prepare_kv_string(&args, tmp, type_1, key_name, 1);
+		msg = jema_concat(tmp, msg, &msg_size, &msg_pos);
+		for (key_type = va_arg(args, JSON_Key_Type); key_type != JSON_EMPTY; key_type = va_arg(args, JSON_Key_Type)) {
+			key_name = va_arg(args, char *);
+			jema_prepare_kv_string(&args, tmp, key_type, key_name, 0);
+			msg = jema_concat(tmp, msg, &msg_size, &msg_pos);
+		}
+		strcat(msg, "}");
+		va_end(args);
+	}
+	return msg;
 }

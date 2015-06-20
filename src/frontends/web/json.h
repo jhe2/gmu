@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: json.h  Created: 120811
  *
@@ -15,7 +15,17 @@
  */
 #ifndef JSON_H
 #define JSON_H
-typedef enum JSON_Key_Type { EMPTY, STRING, NUMBER, BOOLEAN, ARRAY, OBJECT } JSON_Key_Type;
+
+/**
+ * Definition of JSON data types. Since JSON does not distinguish between
+ * integer and floating point numbers, the JSON_INTEGER and JSON_FLOAT
+ * types are for internal use, e.g. to be able to fetch a a number as
+ * either an integer or a float. When checking a JSON key for its type,
+ * if it is numerical the result will always be JSON_NUMBER.
+ */
+typedef enum JSON_Key_Type {
+	JSON_EMPTY, JSON_STRING, JSON_NUMBER, JSON_INTEGER, JSON_FLOAT, JSON_BOOLEAN, JSON_ARRAY, JSON_OBJECT
+} JSON_Key_Type;
 
 typedef struct _JSON_Key JSON_Key;
 typedef struct _JSON_Object JSON_Object;
@@ -24,6 +34,7 @@ struct _JSON_Key {
 	char         *key_name;
 	char         *key_value_str;
 	double        key_value_number;
+	int           key_value_integer;
 	int           key_value_boolean;
 	JSON_Object  *key_value_array;
 	JSON_Object  *key_value_object;
@@ -50,6 +61,8 @@ char         *json_string_escape_alloc(const char *src);
 JSON_Key     *json_get_key_object_for_key(JSON_Object *object, const char *key);
 char         *json_get_string_value_for_key(JSON_Object *object, const char *key);
 double        json_get_number_value_for_key(JSON_Object *object, const char *key);
+int           json_get_integer_value_for_key(JSON_Object *object, const char *key);
 char         *json_get_first_key_string(JSON_Object *object);
 JSON_Key_Type json_get_type_for_key(JSON_Object *object, const char *key);
+char         *json_encode_message_alloc(JSON_Key_Type type_1, const char *key, ...);
 #endif
