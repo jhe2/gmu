@@ -235,6 +235,8 @@ static void add_default_cfg_settings(ConfigFile *config)
 	cfg_add_key(config, "Gmu.LyricsFilePattern", "*.txt");
 	cfg_add_key(config, "Gmu.FadeOutOnSkip", "no");
 	cfg_key_add_presets(config, "Gmu.FadeOutOnSkip", "yes", "no", NULL);
+	cfg_add_key(config, "Gmu.DeviceCloseASAP", "no");
+	cfg_key_add_presets(config, "Gmu.DeviceCloseASAP", "yes", "no", NULL);
 }
 
 int gmu_core_export_playlist(const char *file)
@@ -1228,7 +1230,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	file_player_init(&current_track_ti);
+	file_player_init(&current_track_ti, cfg_get_boolean_value(config, "Gmu.DeviceCloseASAP"));
 	set_default_play_mode(config, &pl);
 
 	gmu_core_set_volume(-1); /* Load from config */

@@ -68,6 +68,8 @@ static TrackInfo        *ti;
 
 static pthread_mutex_t   mutex;
 
+static int               dev_close_asap; /* When true, the device isn't kept open, but closed ASAP */
+
 static void set_item_status(PB_Status status)
 {
 	pthread_mutex_lock(&item_status_mutex);
@@ -170,7 +172,7 @@ void file_player_start_playback(void)
 	locked = 0;
 }
 
-int file_player_init(TrackInfo *ti_ref)
+int file_player_init(TrackInfo *ti_ref, int device_close_asap)
 {
 	pthread_mutex_init(&mutex, NULL);
 	pthread_mutex_init(&file_mutex, NULL);
@@ -179,6 +181,7 @@ int file_player_init(TrackInfo *ti_ref)
 	file_player_set_filename(NULL);
 	ti = ti_ref;
 	pthread_create(&thread, NULL, decode_audio_thread, NULL);
+	dev_close_asap = device_close_asap;
 	return 0;
 }
 
@@ -500,6 +503,7 @@ static void *decode_audio_thread(void *udata)
 		if (gd && gd->set_reader_handle) {
 			(*gd->set_reader_handle)(NULL);
 		}
+		if (dev_close_asap) audio_device_close();
 		usleep(100000);
 	}
 	wdprintf(V_DEBUG, "fileplayer", "Decoder thread finished.\n");
