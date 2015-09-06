@@ -189,6 +189,7 @@ print_features_and_write_config()
 	if [ $tool_gmuc != 0 ]; then
 		echo "gmuc enabled"
 		TOOLS_TO_BUILD="$TOOLS_TO_BUILD gmuc"
+		EXTRA_CFLAGS="$EXTRA_CFLAGS -I$BASE_INCLUDE_PATH/ncursesw"
 	fi
 	if [ $feature_medialib = 1 ]; then
 		echo "Media library enabled"
@@ -439,6 +440,7 @@ fi
 
 
 includes_test="#include <curses.h>"
+includes_test_flags="-I$BASE_INCLUDE_PATH/ncursesw"
 libs_test="-lncursesw"
 test_lib "ncurses"
 if [ $? = 0 ]; then
