@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: ringbuffer.c  Created: 060928
  *
@@ -16,8 +16,9 @@
 #include <stdlib.h>
 #include "ringbuffer.h"
 #include <stdio.h>
+#include <string.h>
 
-int ringbuffer_init(RingBuffer *rb, int size)
+int ringbuffer_init(RingBuffer *rb, size_t size)
 {
 	rb->buffer      = (char *)malloc(size);
 	rb->size        = size;
@@ -44,59 +45,63 @@ void ringbuffer_clear(RingBuffer *rb)
 	rb->buffer_fill = 0;
 }
 
-int ringbuffer_write(RingBuffer *rb, char *data, int size)
+int ringbuffer_write(RingBuffer *rb, const char *data, size_t size)
 {
-	int i = 0, result = 1;
+	int result = 1;
 
 	if (size > rb->size - rb->buffer_fill) {
 		result = 0;
 	} else {
 		rb->buffer_fill += size;
 
-		while (i < size && result == 1) {
-			rb->buffer[rb->write_ptr] = data[i];
-			i++;
-			if (rb->write_ptr < rb->size - 1)
-				rb->write_ptr++;
-			else
-				rb->write_ptr = 0;
+		if (rb->size - rb->write_ptr >= size) {
+			memcpy(rb->buffer + rb->write_ptr, data, size);
+			rb->write_ptr += size;
+		} else {
+			size_t size_chunk_1 = rb->size - rb->write_ptr;
+			size_t size_chunk_2 = size - size_chunk_1;
+			memcpy(rb->buffer + rb->write_ptr, data, size_chunk_1);
+			memcpy(rb->buffer, data + size_chunk_1, size_chunk_2);
+			rb->write_ptr = size_chunk_2;
 		}
 	}
 	return result;
 }
 
-int ringbuffer_read(RingBuffer *rb, char *target, int size)
+int ringbuffer_read(RingBuffer *rb, char *target, size_t size)
 {
-	int i = 0, result = 1;
+	int result = 1;
 
 	if (size > rb->buffer_fill) {
 		result = 0;
 	} else {
 		rb->buffer_fill -= size;
 
-		while (i < size) {
-			target[i] = rb->buffer[rb->read_ptr];
-			if (rb->read_ptr < rb->size - 1)
-				rb->read_ptr++;
-			else
-				rb->read_ptr = 0;
-			i++;
+		if (rb->size - rb->read_ptr >= size) {
+			memcpy(target, rb->buffer + rb->read_ptr, size);
+			rb->read_ptr += size;
+		} else {
+			size_t size_chunk_1 = rb->size - rb->read_ptr;
+			size_t size_chunk_2 = size - size_chunk_1;
+			memcpy(target, rb->buffer + rb->read_ptr, size_chunk_1);
+			memcpy(target + size_chunk_1, rb->buffer, size_chunk_2);
+			rb->read_ptr = size_chunk_2;
 		}
 	}
 	return result;
 }
 
-int ringbuffer_get_fill(RingBuffer *rb)
+size_t ringbuffer_get_fill(RingBuffer *rb)
 {
 	return rb->buffer_fill;
 }
 
-int ringbuffer_get_free(RingBuffer *rb)
+size_t ringbuffer_get_free(RingBuffer *rb)
 {
 	return rb->size - rb->buffer_fill;
 }
 
-int ringbuffer_get_size(RingBuffer *rb)
+size_t ringbuffer_get_size(RingBuffer *rb)
 {
 	return rb->size;
 }

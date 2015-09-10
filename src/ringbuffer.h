@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
  *
  * File: ringbuffer.h  Created: 060928
  *
@@ -16,21 +16,22 @@
 #ifndef WEJ_RINGBUFFER_H
 #define WEJ_RINGBUFFER_H
 struct _RingBuffer {
-	int   size;
-	char *buffer;
-	int   read_ptr, write_ptr, buffer_fill, unread_ptr, unread_fill;
+	size_t  size;
+	char   *buffer;
+	size_t  read_ptr, write_ptr, buffer_fill, unread_fill;
+	ssize_t unread_ptr;
 };
 
 typedef struct _RingBuffer RingBuffer;
 
-int  ringbuffer_init(RingBuffer *rb, int size);
-void ringbuffer_free(RingBuffer *rb);
-int  ringbuffer_write(RingBuffer *rb, char *data, int size);
-int  ringbuffer_read(RingBuffer *rb, char *target, int size);
-int  ringbuffer_get_fill(RingBuffer *rb);
-int  ringbuffer_get_free(RingBuffer *rb);
-void ringbuffer_clear(RingBuffer *rb);
-int  ringbuffer_get_size(RingBuffer *rb);
-void ringbuffer_set_unread_pos(RingBuffer *rb);
-int  ringbuffer_unread(RingBuffer *rb);
+int    ringbuffer_init(RingBuffer *rb, size_t size);
+void   ringbuffer_free(RingBuffer *rb);
+int    ringbuffer_write(RingBuffer *rb, const char *data, size_t size);
+int    ringbuffer_read(RingBuffer *rb, char *target, size_t size);
+size_t ringbuffer_get_fill(RingBuffer *rb);
+size_t ringbuffer_get_free(RingBuffer *rb);
+void   ringbuffer_clear(RingBuffer *rb);
+size_t ringbuffer_get_size(RingBuffer *rb);
+void   ringbuffer_set_unread_pos(RingBuffer *rb);
+int    ringbuffer_unread(RingBuffer *rb);
 #endif
