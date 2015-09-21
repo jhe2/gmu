@@ -45,7 +45,7 @@ static int           device_open;
 static unsigned int  volume, volume_internal;
 
 
-int audio_fill_buffer(char *data, int size)
+int audio_fill_buffer(char *data, size_t size)
 {
 	int result = 0;
 	SDL_LockAudio();
@@ -270,18 +270,18 @@ int audio_get_playtime(void)
 	return res;
 }
 
-int audio_buffer_get_fill(void)
+size_t audio_buffer_get_fill(void)
 {
-	int res = 0;
+	size_t res = 0;
 	SDL_LockAudio();
 	res = ringbuffer_get_fill(&audio_rb);
 	SDL_UnlockAudio();
 	return res;
 }
 
-int audio_buffer_get_size(void)
+size_t audio_buffer_get_size(void)
 {
-	int res = 0;
+	size_t res = 0;
 	SDL_LockAudio();
 	res = ringbuffer_get_size(&audio_rb);
 	SDL_UnlockAudio();
