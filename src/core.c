@@ -1397,6 +1397,7 @@ int main(int argc, char **argv)
 
 	wdprintf(V_INFO, "gmu", "Unloading frontends...\n");
 	feloader_free();
+	wdprintf(V_INFO, "gmu", "Unloading frontends done.\n");
 
 	file_player_shutdown();
 	audio_device_close();

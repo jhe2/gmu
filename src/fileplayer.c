@@ -440,8 +440,6 @@ static void *decode_audio_thread(void *udata)
 							} else {
 								int ret = 0;
 								while (!ret && get_item_status() == PLAYING) {
-									if (audio_buffer_get_fill() > MIN_BUFFER_FILL * 3)
-										audio_wait_until_more_data_is_needed();
 									ret = audio_fill_buffer(pcmout, size);
 									if (!ret) SDL_Delay(10);
 									if (get_item_status() == PLAYING && get_pb_request() == PBRQ_PLAY && audio_get_pause()) {
