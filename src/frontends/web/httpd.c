@@ -55,7 +55,7 @@
 static Queue queue;
 static char  webserver_root[256];
 
-static char *http_status[] = {
+static const char *http_status[] = {
 	"100", "Continue",
 	"101", "Switching Protocols",
 	"200", "OK",
@@ -69,7 +69,7 @@ static char *http_status[] = {
 	NULL
 };
 
-static char *mime_type[] = {
+static const char *mime_type[] = {
 	"jpg",  "image/jpeg",
 	"jpeg", "image/jpeg",
 	"png",  "image/png",
@@ -84,10 +84,10 @@ static char *mime_type[] = {
 	NULL
 };
 
-static char *get_mime_type(const char *url)
+static const char *get_mime_type(const char *url)
 {
-	char *ext, *res = "text/html";
-	ext = strrchr(url, '.');
+	const char *res = "text/html";
+	const char *ext = strrchr(url, '.');
 	if (ext) {
 		size_t i;
 		for (i = 0; mime_type[i]; i+=2) {
@@ -354,11 +354,11 @@ static void send_http_header(
 	const char *content_type
 )
 {
-	char       msg[255] = {0};
-	struct tm *ptm = NULL;
-	time_t     stime;
-	char      *code_text = "";
-	size_t     i;
+	char        msg[255] = {0};
+	struct tm  *ptm = NULL;
+	time_t      stime;
+	const char *code_text = "";
+	size_t      i;
 
 	for (i = 0; http_status[i]; i += 2) {
 		if (strcmp(http_status[i], code) == 0) {
@@ -402,7 +402,7 @@ void *httpd_run_server(void *data)
 		strncpy(webserver_root, ip->webserver_root, 255);
 	else
 		webserver_root[0] = '\0';
-	if (ip) 
+	if (ip)
 		local_only = ip->local_only;
 	else
 		wdprintf(V_WARNING, "httpd", "Warning: Init params missing!\n");
@@ -582,36 +582,37 @@ static HTTPCommand get_command(const char *str)
 
 static void http_response_bad_request(int fd, int head_only)
 {
-	char *str = "<h1>400 Bad Request</h1>";
-	int   body_len = strlen(str);
+	const char *str = "<h1>400 Bad Request</h1>";
+	size_t      body_len = strlen(str);
 	send_http_header(fd, "400", body_len, NULL, "text/html");
 	if (!head_only) tcp_server_write(fd, str, body_len);
 }
 
 static void http_response_not_found(int fd, int head_only)
 {
-	char *str = "<h1>404 File not found</h1>";
-	int   body_len = strlen(str);
+	const char *str = "<h1>404 File not found</h1>";
+	size_t      body_len = strlen(str);
 	send_http_header(fd, "404", body_len, NULL, "text/html");
 	if (!head_only) tcp_server_write(fd, str, body_len);
 }
 
 static void http_response_not_implemented(int fd)
 {
-		char *str =
-				"<html><head><title>501 Not implemented</title></head>\n"
-				"<body>\n<h1>501 Not implemented</h1>\n<p>Invalid method.</p>\n"
-				"<p><hr /><i>Gmu http server</i></p>\n</body>\n"
-				"</html>\r\n\r\n";
-		int   body_len = strlen(str);
+		const char *str =
+			"<html><head><title>501 Not implemented</title></head>\n"
+			"<body>\n<h1>501 Not implemented</h1>\n<p>Invalid method.</p>\n"
+			"<p><hr /><i>Gmu http server</i></p>\n</body>\n"
+			"</html>\r\n\r\n";
+		size_t      body_len = strlen(str);
 		send_http_header(fd, "501", body_len, NULL, "text/html");
 		tcp_server_write(fd, str, body_len);
 }
 
 static int process_command(int rfd, Connection *c)
 {
-	char *command = NULL, *resource = NULL, *http_version = NULL, *options = NULL;
-	char *host = NULL, websocket_key[32] = "";
+	const char *command = NULL, *resource = NULL;
+	const char *http_version = NULL, *options = NULL;
+	char       *host = NULL, websocket_key[32] = "";
 
 	if (c->http_request_header) {
 		size_t len = strlen(c->http_request_header);
@@ -665,9 +666,10 @@ static int process_command(int rfd, Connection *c)
 		}
 		if (http_version) wdprintf(V_DEBUG, "httpd", "%04d http_version: [%s]\n", rfd, http_version);
 		if (options) {
-			char key[128], value[256];
+			char        key[128], value[256];
 			const char *opts = options;
-			int  websocket_version = 0, websocket_upgrade = 0, websocket_connection = 0;
+			int         websocket_version = 0, websocket_upgrade = 0, websocket_connection = 0;
+
 			wdprintf(V_DEBUG, "httpd", "%04d Options: [%s]\n", rfd, options);
 			while (opts) {
 				opts = get_next_key_value_pair(opts, key, 128, value, 256);
@@ -714,7 +716,7 @@ static int process_command(int rfd, Connection *c)
 							char        str[61], str2[61];
 							SHA1_CTX    sha;
 							uint8_t     digest[SHA1_DIGEST_SIZE];
-							char       *hellostr;
+							const char *hellostr;
 							ConfigFile *cf = gmu_core_get_config();
 
 							wdprintf(V_DEBUG, "httpd", "%04d Proceeding with websocket connection upgrade...\n", rfd);
@@ -936,7 +938,7 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 {
 	Dir         dir;
 	char        base_dir[256];
-	char       *tmp;
+	const char *tmp;
 	ConfigFile *cf = gmu_core_get_config();
 
 	dir_init(&dir);
@@ -1094,7 +1096,7 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 	int          res = 1;
 	if (json && !json_object_has_parse_error(json)) { /* Valid JSON data received */
 		/* Analyze command in JSON data */
-		char *cmd = json_get_string_value_for_key(json, "cmd");
+		const char *cmd = json_get_string_value_for_key(json, "cmd");
 		if (cmd && strcmp(cmd, "login") == 0) {
 			char *password = json_get_string_value_for_key(json, "password");
 			if (!connection_authenticate(c, password)) {
@@ -1141,14 +1143,14 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 			} else if (strcmp(cmd, "playlist_get_info") == 0) {
 				gmu_http_playlist_get_info(c);
 			} else if (strcmp(cmd, "dir_read") == 0) {
-				char *dir = json_get_string_value_for_key(json, "dir");
+				const char *dir = json_get_string_value_for_key(json, "dir");
 				if (dir) {
 					gmu_http_read_dir(dir, c);
 				}
 			} else if (strcmp(cmd, "get_current_track") == 0) {
 			} else if (strcmp(cmd, "playlist_add") == 0) {
-				char *path = json_get_string_value_for_key(json, "path");
-				char *type = json_get_string_value_for_key(json, "type");
+				const char *path = json_get_string_value_for_key(json, "path");
+				const char *type = json_get_string_value_for_key(json, "type");
 				if (path) {
 					if (type && strcmp(type, "file") == 0) {
 						gmu_core_playlist_add_file(path);
@@ -1182,8 +1184,8 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 			} else if (strcmp(cmd, "medialib_refresh") == 0) {
 				gmu_core_medialib_start_refresh();
 			} else if (strcmp(cmd, "medialib_search") == 0) {
-				char *type = json_get_string_value_for_key(json, "type");
-				char *str  = json_get_string_value_for_key(json, "str");
+				const char *type = json_get_string_value_for_key(json, "type");
+				const char *str  = json_get_string_value_for_key(json, "str");
 				if (type && str) {
 					gmu_http_medialib_search(c, type, str);
 				}
@@ -1191,7 +1193,7 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 				int id = json_get_number_value_for_key(json, "id");
 				if (id > 0) gmu_core_medialib_add_id_to_playlist(id);
 			} else if (strcmp(cmd, "medialib_browse") == 0) {
-				char *col = json_get_string_value_for_key(json, "column");
+				const char *col = json_get_string_value_for_key(json, "column");
 				if (col && strcmp(col, "artist") == 0) {
 					gmu_http_medialib_browse_artists(c);
 				}
