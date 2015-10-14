@@ -33,17 +33,20 @@ typedef enum ConnectionState {
 	CON_WEBSOCKET_CONNECTING, CON_WEBSOCKET_OPEN, CON_ERROR
 } ConnectionState;
 
-typedef struct Connection {
+typedef struct ConnectionStruct Connection;
+
+struct ConnectionStruct {
 	int             fd;
 	time_t          connection_time;
 	FILE           *local_file;
-	int             total_size, remaining_bytes_to_send;
+	size_t          total_size, remaining_bytes_to_send;
 	ConnectionState state;
 	char           *http_request_header;
 	RingBuffer      rb_receive;
 	int             authentication_okay;
 	char            client_ip[INET6_ADDRSTRLEN];
-} Connection;
+	Connection     *prev, *next;
+};
 
 typedef enum HTTPCommand {
 	GET, HEAD, POST, UNKNOWN
@@ -58,7 +61,7 @@ void *httpd_run_server(void *webserver_root);
 void  httpd_stop_server(void);
 void  httpd_send_websocket_broadcast(const char *str);
 
-int  connection_init(Connection *c, int fd, const char *client_ip);
+Connection *connection_init(int fd, const char *client_ip, Connection *prev);
 void connection_reset_timeout(Connection *c);
 int  connection_is_valid(Connection *c);
 int  connection_is_local(Connection *c);

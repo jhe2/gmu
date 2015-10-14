@@ -142,8 +142,6 @@ static const char *get_next_key_value_pair(
 	return str+sc+1;
 }
 
-static Connection connection[MAX_CONNECTIONS];
-
 static int server_running = 0;
 
 static int websocket_send_string(Connection *c, const char *str)
@@ -159,21 +157,37 @@ static int websocket_send_string(Connection *c, const char *str)
 	return res;
 }
 
-int connection_init(Connection *c, int fd, const char *client_ip)
+/**
+ * Initializes a new connection with a given file descriptor fd and
+ * attaches the connection before the connection supplied with 'prev'
+ * (if prev is not NULL), so that the new connection appears before 
+ * prev and prev's predecessor (if there is one), is then the
+ * predecessor of the new connection.
+ * A reference to the new connection is returned, or NULL on failure.
+ */
+Connection *connection_init(int fd, const char *client_ip, Connection *prev)
 {
-	int res = 0;
-	memset(c, 0, sizeof(Connection));
-	c->connection_time = time(NULL);
-	c->state = CON_HTTP_NEW;
-	c->fd = fd;
-	c->http_request_header = NULL;
-	c->authentication_okay = 0;
-	if (client_ip) {
-		strncpy(c->client_ip, client_ip, INET6_ADDRSTRLEN);
-		res = ringbuffer_init(&(c->rb_receive), HTTP_RINGBUFFER_BUFFER_SIZE);
+	Connection *c = calloc(1, sizeof(Connection));
+	if (c) {
+		int res = 0;
+		c->connection_time = time(NULL);
+		c->state = CON_HTTP_NEW;
+		c->fd = fd;
+		c->http_request_header = NULL;
+		c->authentication_okay = 0;
+		c->next = prev ? prev : NULL;
+		c->prev = prev ? prev->prev : NULL;
+		if (client_ip) {
+			strncpy(c->client_ip, client_ip, INET6_ADDRSTRLEN);
+			res = ringbuffer_init(&(c->rb_receive), HTTP_RINGBUFFER_BUFFER_SIZE);
+		}
+		if (!res) {
+			c->state = CON_ERROR;
+		} else if (prev) {
+			prev->prev = c;
+		}
 	}
-	if (!res) c->state = CON_ERROR;
-	return res;
+	return c;
 }
 
 void connection_reset_timeout(Connection *c)
@@ -203,7 +217,9 @@ void connection_close(Connection *c)
 		c->http_request_header = NULL;
 	}
 	ringbuffer_free(&(c->rb_receive));
-	memset(c, 0, sizeof(Connection));
+	if (c->prev) c->prev->next = c->next;
+	if (c->next) c->next->prev = c->prev;
+	free(c);
 }
 
 void connection_free_request_header(Connection *c)
@@ -429,7 +445,7 @@ void *httpd_run_server(void *data)
 
 #define MAXLEN 4096
 
-/*
+/**
  * Open server listen port 'port'
  * Returns socket fd or ERROR
  */
@@ -525,7 +541,7 @@ static Connection tcp_server_client_init(int listen_fd)
 	return conn;
 }
 
-/*
+/**
  * Write to client socket
  * Returns OKAY when the message could be written completely, ERROR otherwise
  */
@@ -534,7 +550,7 @@ static int tcp_server_write(int fd, const char buf[], size_t buflen)
 	return write(fd, buf, buflen) == buflen ? OKAY : ERROR;
 }
 
-/*
+/**
  * Read from client socket
  * Returns OKAY when reading was successful, ERROR otherwise
  */
@@ -1211,9 +1227,12 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
  */
 static void webserver_main_loop(int listen_fd)
 {
-	fd_set the_state;
-	int    maxfd;
-	int    rb_ok = 1, i;
+	fd_set      the_state;
+	int         maxfd;
+	int         rb_ok = 1;
+	Connection *con_ptr;
+	Connection *first_connection = NULL;
+	size_t      con_count = 0;
 
 	FD_ZERO(&the_state);
 	FD_SET(listen_fd, &the_state);
@@ -1223,7 +1242,7 @@ static void webserver_main_loop(int listen_fd)
 
 	while (server_running) {
 		fd_set         readfds, exceptfds;
-		int            ret, rfd;
+		int            ret;
 		struct timeval tv;
 		char          *websocket_msg;
 
@@ -1234,7 +1253,7 @@ static void webserver_main_loop(int listen_fd)
 		readfds = the_state; /* select() changes readfds */
 		exceptfds = the_state;
 		ret = select(maxfd + 1, &readfds, NULL, &exceptfds, &tv);
-		if ((ret == -1) && (errno == EINTR)) {
+		if (ret == -1 && errno == EINTR) {
 			/* A signal has occured; ignore it. */
 			continue;
 		}
@@ -1242,30 +1261,34 @@ static void webserver_main_loop(int listen_fd)
 
 		/* Check TCP listen port for incoming connections... */
 		if (FD_ISSET(listen_fd, &readfds)) {
-			size_t     con_num;
 			Connection ctmp = tcp_server_client_init(listen_fd);
 
 			if (ctmp.state != CON_ERROR) {
 				fcntl(ctmp.fd, F_SETFL, O_NONBLOCK);
-				con_num = ctmp.fd - listen_fd - 1;
-				wdprintf(V_DEBUG, "httpd", "listen_fd=%d < fd=%d\n", listen_fd, ctmp.fd);
-				assert(ctmp.fd >= listen_fd - 1);
-				if (con_num < MAX_CONNECTIONS) {
+				if (con_count < MAX_CONNECTIONS) {
+					con_count++;
 					if (ctmp.fd >= 0) {
+						Connection *tmp_con;
 						FD_SET(ctmp.fd, &the_state); /* add new client */
 						if (ctmp.fd > maxfd) maxfd = ctmp.fd;
 						wdprintf(V_DEBUG, "httpd", "Initializing new connection...\n");
-						if (connection_init(&(connection[con_num]), ctmp.fd, ctmp.client_ip)) {
-							wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: ++\n", con_num);
+						tmp_con = connection_init(ctmp.fd, ctmp.client_ip, first_connection);
+						if (tmp_con && connection_get_state(tmp_con) != CON_ERROR) {
+							wdprintf(V_DEBUG, "httpd", "Incoming connection %d. Connection count: %d (++)\n", ctmp.fd, con_count);
+							first_connection = tmp_con;
 						} else {
-							wdprintf(V_DEBUG, "httpd", "Error with incoming connection %d.\n", con_num);
-							close(ctmp.fd);
+							wdprintf(V_DEBUG, "httpd", "Error with incoming connection %d.\n", ctmp.fd);
+							connection_close(tmp_con);
 						}
 					}
 				} else {
-					wdprintf(V_WARNING, "httpd",
-							 "Connection limit reached of %d. Cannot accept incoming connection %d.\n",
-							 MAX_CONNECTIONS, con_num);
+					wdprintf(
+						V_WARNING,
+						"httpd",
+						"Connection limit reached of %d. Cannot accept incoming connection %d.\n",
+						MAX_CONNECTIONS,
+						con_count
+					);
 					close(ctmp.fd);
 				}
 			} else {
@@ -1280,25 +1303,30 @@ static void webserver_main_loop(int listen_fd)
 		/* Check all open TCP connections for incoming data. 
 		 * Also handle ongoing http file requests and pending 
 		 * WebSocket transmit requests here. */
-		for (rfd = listen_fd + 1; rfd <= maxfd; ++rfd) {
-			size_t con_num = rfd - listen_fd - 1;
-			if (FD_ISSET(rfd, &exceptfds)) {
-				wdprintf(V_DEBUG, "httpd", "Error on connection %d.\n", rfd);
-				FD_CLR(rfd, &the_state);
-				connection_close(&(connection[con_num]));
+		for (con_ptr = first_connection; con_ptr; ) {
+			Connection *tmp_con = NULL;
+			if (FD_ISSET(con_ptr->fd, &exceptfds)) {
+				wdprintf(V_INFO, "httpd", "Error on connection %d.\n", con_ptr->fd);
+				FD_CLR(con_ptr->fd, &the_state);
+				if (con_ptr == first_connection) first_connection = con_ptr->next;
+				tmp_con = con_ptr->next;
+				connection_close(con_ptr);
+				con_ptr = tmp_con;
+				con_count--;
+				continue;
 			} else {
-				if (connection_get_state(&(connection[con_num])) == CON_HTTP_BUSY) { /* feed data */
+				if (connection_get_state(con_ptr) == CON_HTTP_BUSY) { /* feed data */
 					/* Read CHUNK_SIZE bytes from file and send data to socket & update remaining bytes counter */
-					connection_file_read_chunk(&(connection[con_num]));
-				} else if (connection[con_num].state == CON_WEBSOCKET_OPEN) {
+					connection_file_read_chunk(con_ptr);
+				} else if (connection_get_state(con_ptr) == CON_WEBSOCKET_OPEN) {
 					/* If data for sending through websocket has been fetched
 					 * from the broadcast queue, send the data to all open WebSocket connections */
 					if (websocket_msg) {
-						if (connection_is_authenticated(&(connection[con_num])))
-							websocket_send_string(&(connection[con_num]), websocket_msg);
+						if (connection_is_authenticated(con_ptr))
+							websocket_send_string(con_ptr, websocket_msg);
 					}
 				}
-				if (FD_ISSET(rfd, &readfds)) { /* Data received on connection socket */
+				if (FD_ISSET(con_ptr->fd, &readfds)) { /* Data received on connection socket */
 					char    msgbuf[MAXLEN+1];
 					ssize_t msgbuflen;
 					int     request_header_complete = 0;
@@ -1306,27 +1334,32 @@ static void webserver_main_loop(int listen_fd)
 					/* Read message from client */
 					msgbuf[MAXLEN] = '\0';
 					msgbuflen = sizeof(msgbuf);
-					ret = tcp_server_read(rfd, msgbuf, &msgbuflen);
+					ret = tcp_server_read(con_ptr->fd, msgbuf, &msgbuflen);
 					if (ret == ERROR) {
-						FD_CLR(rfd, &the_state); /* remove dead client */
-						wdprintf(V_DEBUG, "httpd", "Connection count: --\n");
-						connection_close(&(connection[con_num]));
+						FD_CLR(con_ptr->fd, &the_state); /* remove dead client */
+						con_count--;
+						wdprintf(V_INFO, "httpd", "Connection count: %d (--)\n", con_count);
+						if (con_ptr == first_connection) first_connection = con_ptr->next;
+						tmp_con = con_ptr->next;
+						connection_close(con_ptr);
+						con_ptr = tmp_con;
+						continue;
 					} else {
 						size_t len = msgbuflen;
 						size_t len_header = 0;
 
-						if (connection[con_num].state != CON_WEBSOCKET_OPEN) {
-							wdprintf(V_DEBUG, "httpd", "%04d http message.\n", rfd);
-							if (connection[con_num].http_request_header)
-								len_header = strlen(connection[con_num].http_request_header);
-							connection[con_num].http_request_header = 
-								realloc(connection[con_num].http_request_header, len_header+len+1);
-							if (connection[con_num].http_request_header) {
-								memcpy(connection[con_num].http_request_header+len_header, msgbuf, len);
-								connection[con_num].http_request_header[len_header+len] = '\0';
+						if (connection_get_state(con_ptr) != CON_WEBSOCKET_OPEN) {
+							wdprintf(V_DEBUG, "httpd", "%04d http message.\n", con_ptr->fd);
+							if (con_ptr->http_request_header)
+								len_header = strlen(con_ptr->http_request_header);
+							con_ptr->http_request_header = 
+								realloc(con_ptr->http_request_header, len_header+len+1);
+							if (con_ptr->http_request_header) {
+								memcpy(con_ptr->http_request_header+len_header, msgbuf, len);
+								con_ptr->http_request_header[len_header+len] = '\0';
 							}
-							if (strstr(connection[con_num].http_request_header, "\r\n\r\n") || 
-								strstr(connection[con_num].http_request_header, "\n\n")) { /* we got a complete header */
+							if (strstr(con_ptr->http_request_header, "\r\n\r\n") || 
+								strstr(con_ptr->http_request_header, "\n\n")) { /* we got a complete header */
 								request_header_complete = 1;
 							}
 						} else {
@@ -1334,31 +1367,33 @@ static void webserver_main_loop(int listen_fd)
 							size_t size = 0;
 							int    loop = 1;
 
-							wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", rfd);
+							wdprintf(V_DEBUG, "httpd", "%04d websocket message received.\n", con_ptr->fd);
 							if (msgbuflen > 0) {
-								rb_ok = ringbuffer_write(&(connection[con_num].rb_receive), msgbuf, msgbuflen);
+								rb_ok = ringbuffer_write(&(con_ptr->rb_receive), msgbuf, msgbuflen);
 								if (!rb_ok) wdprintf(V_WARNING, "httpd", "WARNING: Cannot write to ring buffer. Ring buffer full.\n");
 							}
 
 							do {
-								ringbuffer_set_unread_pos(&(connection[con_num].rb_receive));
-								if (ringbuffer_read(&(connection[con_num].rb_receive), tmp_buf, 10)) {
+								ringbuffer_set_unread_pos(&(con_ptr->rb_receive));
+								if (ringbuffer_read(&(con_ptr->rb_receive), tmp_buf, 10)) {
 									size = websocket_calculate_packet_size(tmp_buf);
 									wdprintf(V_DEBUG, "httpd", "Size of websocket message: %d bytes\n", size);
-									ringbuffer_unread(&(connection[con_num].rb_receive));
+									ringbuffer_unread(&(con_ptr->rb_receive));
 								}
-								if (ringbuffer_get_fill(&(connection[con_num].rb_receive)) >= size && size > 0) {
+								if (ringbuffer_get_fill(&(con_ptr->rb_receive)) >= size && size > 0) {
 									char *wspacket = malloc(size+1); /* packet size+1 byte null terminator */
 									char *payload;
 									if (wspacket) {
-										ringbuffer_read(&(connection[con_num].rb_receive), wspacket, size);
+										ringbuffer_read(&(con_ptr->rb_receive), wspacket, size);
 										wspacket[size] = '\0';
 										payload = websocket_unmask_message_alloc(wspacket, size);
 										if (payload) {
 											wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
-											if (!gmu_http_handle_websocket_message(payload, &(connection[con_num]))) {
-												FD_CLR(rfd, &the_state);
-												connection_close(&(connection[con_num]));
+											if (!gmu_http_handle_websocket_message(payload, con_ptr)) {
+												FD_CLR(con_ptr->fd, &the_state);
+												if (con_ptr == first_connection) first_connection = con_ptr->next;
+												con_count--;
+												connection_close(con_ptr);
 											}
 											free(payload);
 										}
@@ -1370,36 +1405,45 @@ static void webserver_main_loop(int listen_fd)
 										V_DEBUG,
 										"httpd", "Not enough data available. Need %d bytes, but only %d avail.\n",
 										size,
-										ringbuffer_get_fill(&(connection[con_num].rb_receive))
+										ringbuffer_get_fill(&(con_ptr->rb_receive))
 									);
-									ringbuffer_unread(&(connection[con_num].rb_receive));
+									ringbuffer_unread(&(con_ptr->rb_receive));
 									loop = 0;
 								} else {
 									loop = 0;
 								}
 							} while (loop);
-							connection_reset_timeout(&(connection[con_num]));
+							connection_reset_timeout(con_ptr);
 						}
 					}
 					if (request_header_complete)
-						process_command(rfd, &(connection[con_num]));
+						process_command(con_ptr->fd, con_ptr);
 				} else { /* no data received */
-					if (connection_is_valid(&(connection[con_num])) &&
-						connection_is_timed_out(&(connection[con_num])) &&
-						connection[con_num].state != CON_WEBSOCKET_OPEN) { /* close idle connection */
-						wdprintf(V_DEBUG, "httpd", "Closing connection to idle client %d...\n", rfd);
-						FD_CLR(rfd, &the_state);
-						connection_close(&(connection[con_num]));
-						wdprintf(V_DEBUG, "httpd", "Connection count: -- (idle)\n");
+					if (connection_is_valid(con_ptr) &&
+						connection_is_timed_out(con_ptr) &&
+						connection_get_state(con_ptr) != CON_WEBSOCKET_OPEN) { /* close idle connection */
+						wdprintf(V_DEBUG, "httpd", "Closing connection to idle client %d...\n", con_ptr->fd);
+						FD_CLR(con_ptr->fd, &the_state);
+						if (con_ptr == first_connection) first_connection = con_ptr->next;
+						tmp_con = con_ptr->next;
+						con_count--;
+						connection_close(con_ptr);
+						con_ptr = tmp_con;
+						wdprintf(V_INFO, "httpd", "Connection count: %d (--) (idle)\n", con_count);
+						continue;
 					}
 				}
 			}
+			con_ptr = con_ptr->next;
 		}
 		if (websocket_msg) free(websocket_msg);
 	}
 	queue_free(&queue);
-	for (i = 0; i < MAX_CONNECTIONS; i++)
-		connection_close(&(connection[i]));
+	for (con_ptr = first_connection; con_ptr; ) {
+		Connection *tmp_con = con_ptr->next;
+		connection_close(con_ptr);
+		con_ptr = tmp_con;
+	}
 	shutdown(listen_fd, SHUT_RDWR);
 }
 
