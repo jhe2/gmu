@@ -1191,7 +1191,9 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 				int rel = (int)json_get_number_value_for_key(json, "relative");
 				if (rel != 0) {
 					int cv = gmu_core_get_volume();
-					gmu_core_set_volume(cv+rel);
+					cv += rel;
+					if (cv < 0) cv = 0;
+					gmu_core_set_volume(cv);
 				} else if (vol >= 0) {
 					gmu_core_set_volume(vol);
 				}

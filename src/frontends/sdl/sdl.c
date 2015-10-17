@@ -1088,12 +1088,15 @@ static void run_player(char *skin_name, char *decoders_str)
 				}
 			}
 			if (!hold_state || allow_volume_control_in_hold_state) {
+				int vol = gmu_core_get_volume();
 				switch (user_key_action) {
 					case GLOBAL_INC_VOLUME:
-						gmu_core_set_volume(gmu_core_get_volume()+1);
+						vol++;
+						gmu_core_set_volume(vol);
 						break;
 					case GLOBAL_DEC_VOLUME:
-						gmu_core_set_volume(gmu_core_get_volume()-1);
+						if (vol > 0) vol--;
+						gmu_core_set_volume(vol);
 						break;
 				}
 			}
