@@ -501,7 +501,9 @@ static void *decode_audio_thread(void *udata)
 		if (gd && gd->set_reader_handle) {
 			(*gd->set_reader_handle)(NULL);
 		}
-		if (dev_close_asap) audio_device_close();
+		pthread_mutex_lock(&file_mutex);
+		if (dev_close_asap && !file) audio_device_close();
+		pthread_mutex_unlock(&file_mutex);
 		usleep(100000);
 	}
 	wdprintf(V_DEBUG, "fileplayer", "Decoder thread finished.\n");
