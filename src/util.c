@@ -252,7 +252,6 @@ char *get_file_matching_given_pattern_alloc(
 		pattern = replace_char_with_string_alloc(file_pattern, '$', filename_without_ext);
 	}
 
-	wdprintf(V_DEBUG, "util", "path = %s\n", path);
 	if (get_first_matching_file_pattern_list(new_file, 256, path, pattern ? pattern : file_pattern)) {
 		res_str = malloc(256);
 		if (res_str) {
