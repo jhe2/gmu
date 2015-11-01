@@ -224,8 +224,10 @@ void medialib_path_add(GmuMedialib *gm, const char *path)
 		"SELECT ?1 " \
 		"WHERE NOT EXISTS (SELECT 1 FROM path WHERE path = ?1)";
 	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
-	if (sqres == SQLITE_OK) sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
-	sqlite3_step(pp_stmt);
+	if (sqres == SQLITE_OK) {
+		sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
+		sqlite3_step(pp_stmt);
+	}
 	sqlite3_finalize(pp_stmt);
 }
 
