@@ -63,7 +63,7 @@ int medialib_add_file(GmuMedialib *gm, const char *file)
 	TrackInfo     ti;
 	char          filetype[16];
 	const char   *tmp = get_file_extension(file);
-	char         *q;
+	const char   *q;
 	sqlite3_stmt *pp_stmt = NULL;
 	int           sqres;
 	int           new_file = 1;
@@ -87,8 +87,8 @@ int medialib_add_file(GmuMedialib *gm, const char *file)
 	trackinfo_init(&ti, 0);
 	if (new_file && metadatareader_read(file, filetype, &ti)) {
 		/* Add file with metadata to media library... */
-		int   a, b, c, d, e;
-		char *q = "INSERT INTO track (file, artist, title, album, comment, file_missing) VALUES (?1, ?2, ?3, ?4, ?5, 0)";
+		int         a, b, c, d, e;
+		const char *q = "INSERT INTO track (file, artist, title, album, comment, file_missing) VALUES (?1, ?2, ?3, ?4, ?5, 0)";
 
 		sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 		a = sqlite3_bind_text(pp_stmt, 1, file,       -1, SQLITE_STATIC);
@@ -234,8 +234,8 @@ void medialib_path_add(GmuMedialib *gm, const char *path)
 void medialib_path_remove(GmuMedialib *gm, const char *path)
 {
 	sqlite3_stmt *pp_stmt = NULL;
-	char *q = "DELETE FROM path WHERE path = ?1";
-	int   sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
+	const char   *q = "DELETE FROM path WHERE path = ?1";
+	int           sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
 	if (sqres == SQLITE_OK) sqlite3_step(pp_stmt);
 	sqlite3_finalize(pp_stmt);
@@ -244,8 +244,8 @@ void medialib_path_remove(GmuMedialib *gm, const char *path)
 void medialib_path_remove_with_id(GmuMedialib *gm, unsigned int id)
 {
 	sqlite3_stmt *pp_stmt = NULL;
-	char *q = "DELETE FROM path WHERE id = ?1";
-	int   sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
+	const char   *q = "DELETE FROM path WHERE id = ?1";
+	int           sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
 	if (sqres == SQLITE_OK) sqlite3_step(pp_stmt);
 	sqlite3_finalize(pp_stmt);
@@ -253,8 +253,8 @@ void medialib_path_remove_with_id(GmuMedialib *gm, unsigned int id)
 
 int medialib_path_list(GmuMedialib *gm)
 {
-	char *q = "SELECT path FROM path";
-	int   sqres = sqlite3_prepare_v2(gm->db, q, -1, &(gm->pp_stmt_path_list), NULL);
+	const char *q = "SELECT path FROM path";
+	int         sqres = sqlite3_prepare_v2(gm->db, q, -1, &(gm->pp_stmt_path_list), NULL);
 	return (sqres == SQLITE_OK);
 }
 
@@ -275,9 +275,9 @@ void medialib_path_list_finish(GmuMedialib *gm)
 /* Search the medialib; Returns true on success; false (0) otherwise */
 int medialib_search_find(GmuMedialib *gm, GmuMedialibDataType type, const char *str)
 {
-	char *q;
-	int   sqres = -1, len;
-	char *str_tmp;
+	const char *q;
+	int         sqres = -1, len;
+	char       *str_tmp;
 
 	switch (type) {
 		case GMU_MLIB_ANY:
@@ -402,7 +402,7 @@ TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id)
 {
 	sqlite3_stmt *pp_stmt;
 	TrackInfo     ti;
-	char         *q = "SELECT * FROM track WHERE id = ?1 LIMIT 1";
+	const char   *q = "SELECT * FROM track WHERE id = ?1 LIMIT 1";
 	int           sqres;
 
 	trackinfo_init(&ti, 0);
@@ -429,7 +429,7 @@ TrackInfo medialib_get_data_for_id(GmuMedialib *gm, int id)
 static int rate_track(GmuMedialib *gm, int id, int relative, int rating)
 {
 	sqlite3_stmt *pp_stmt;
-	char         *q;
+	const char   *q;
 	int           sqres;
 
 	if (!relative) {
