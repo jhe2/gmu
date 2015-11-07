@@ -70,6 +70,7 @@ DEC_musepack_LFLAGS=-lmpcdec
 DEC_mikmod_LFLAGS=-lmikmod
 DEC_speex_LFLAGS=-logg -lspeex
 DEC_modplug_LFLAGS=-lmodplug
+DEC_openmpt_LFLAGS=-lopenmpt
 DEC_opus_LFLAGS=-lopus -logg -lopusfile
 
 ifeq (1,$(STATIC))

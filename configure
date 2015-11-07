@@ -2,7 +2,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
 #
 # File: configure  Created: 130804
 #
@@ -147,6 +147,9 @@ set_feature()
 		modplug-decoder)
 			dec_modplug=$on_off
 			;;
+		openmpt-decoder)
+			dec_openmpt=$on_off
+			;;
 		sdl-frontend)
 			fe_sdl=$on_off
 			;;
@@ -229,6 +232,10 @@ print_features_and_write_config()
 		echo "ModPlug enabled"
 		dec="$dec decoders/modplug.so"
 	fi
+	if [ $dec_openmpt = 1 ]; then
+		echo "OpenMPT enabled"
+		dec="$dec decoders/openmpt.so"
+	fi
 	echo
 	echo "Frontends:"
 	if [ $fe_sdl = 1 ]; then
@@ -293,6 +300,7 @@ dec_musepack=-2
 dec_flac=-2
 dec_speex=-2
 dec_modplug=-2
+dec_openmpt=-2
 fe_sdl=-2
 fe_web=-2
 fe_lirc=-2
@@ -485,6 +493,13 @@ if [ $dec_modplug != 0 ]; then
 	dec_modplug=$?
 fi
 
+if [ $dec_openmpt != 0 ]; then
+	includes_test="#include <libopenmpt/libopenmpt.h>
+#include <libopenmpt/libopenmpt_stream_callbacks_file.h>"
+	libs_test="-lopenmpt"
+	test_lib "libopenmpt"
+	dec_openmpt=$?
+fi
 
 if [ $feature_medialib != 0 ]; then
 	includes_test="#include <sqlite3.h>"
