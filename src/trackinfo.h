@@ -84,6 +84,7 @@ void  trackinfo_set_title(TrackInfo *ti, const char *title);
 void  trackinfo_set_album(TrackInfo *ti, const char *album);
 void  trackinfo_set_trackid(TrackInfo *ti, int id);
 void  trackinfo_set_filename(TrackInfo *ti, const char *file);
+void  trackinfo_set_file_type(TrackInfo *ti, const char *file_type);
 char *trackinfo_get_artist(TrackInfo *ti);
 char *trackinfo_get_title(TrackInfo *ti);
 char *trackinfo_get_album(TrackInfo *ti);

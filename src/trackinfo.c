@@ -317,6 +317,12 @@ void trackinfo_set_filename(TrackInfo *ti, const char *file)
 	ti->file_name[SIZE_FILE_NAME-1] = '\0';
 }
 
+void trackinfo_set_file_type(TrackInfo *ti, const char *file_type)
+{
+	strncpy(ti->file_type, file_type, SIZE_FILE_TYPE-1);
+	ti->file_type[SIZE_FILE_TYPE-1] = '\0';
+}
+
 int trackinfo_acquire_lock(TrackInfo *ti)
 {
 	int res = 0;
