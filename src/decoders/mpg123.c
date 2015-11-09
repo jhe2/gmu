@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: mpg123.c  Created: 090606
  *
@@ -40,7 +40,7 @@ static const char *get_name(void)
 	return "mpg123 MPEG decoder v1.0";
 }
 
-static int decode_data(char *target, unsigned int max_size)
+static int decode_data(char *target, size_t max_size)
 {
 	int                     ret = 1;
 	struct mpg123_frameinfo mi;
@@ -147,10 +147,10 @@ static int decode_data(char *target, unsigned int max_size)
 	return decsize;
 }
 
-static int mpg123_play_file(char *mpeg_file)
+static int mpg123_play_file(const char *mpeg_file)
 {
-	int                      result = 1;
-	struct mpg123_frameinfo  mi;
+	int                     result = 1;
+	struct mpg123_frameinfo mi;
 
 	seek_to_sample_offset = 0;
 	seek_request = 0;
@@ -395,7 +395,7 @@ static GmuCharset meta_data_get_charset(void)
 	return M_CHARSET_UTF_8;
 }
 
-static int data_check_magic_bytes(const char *data, int size)
+static int data_check_magic_bytes(const char *data, size_t size)
 {
 	int id3 = 0, sync = 0;
 	if (size >= 3) {

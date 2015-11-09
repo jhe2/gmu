@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: mikmod.c  Created: 090810
  *
@@ -30,7 +30,7 @@ static const char *get_name(void)
 	return "Mikmod module decoder v0.1";
 }
 
-static int open_file(char *filename)
+static int open_file(const char *filename)
 {
 	int   res = 0;
 	CHAR *list;
@@ -110,7 +110,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, unsigned int max_size)
+static int decode_data(char *target, size_t max_size)
 {
 	int mlen = VC_WriteBytes((SBYTE*)target, BUF_SIZE);
 	if (!Player_Active()) mlen = 0;

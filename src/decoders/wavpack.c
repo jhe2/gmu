@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: wavpack.c  Created: 081102
  *
@@ -73,7 +73,7 @@ static const char *get_name(void)
 	return "WavPack decoder v0.2";
 }
 
-static int open_file(char *filename)
+static int open_file(const char *filename)
 {
 	char  error[80];
 	wdprintf(V_INFO, "wavpack", "Opening %s ...", filename);
@@ -97,7 +97,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, unsigned int max_size)
+static int decode_data(char *target, size_t max_size)
 {
 	int      bps, channels;
 	uint32_t samples_unpacked = 0;

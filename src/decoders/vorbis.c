@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: vorbis.c  Created: 081022
  *
@@ -31,7 +31,7 @@ static const char *get_name(void)
 	return "Tremor Vorbis decoder v1.0";
 }
 
-static int open_file(char *filename)
+static int open_file(const char *filename)
 {
 	FILE *file;
 	int   res = 0;
@@ -53,7 +53,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, unsigned int max_size)
+static int decode_data(char *target, size_t max_size)
 {
 	int        size = 0, ret = 1;
 	static int current_section;

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: opus.c  Created: 130303
  *
@@ -129,7 +129,7 @@ static void read_tags(int li, struct _trackinfo_mapping *tim)
 	}
 }
 
-static int decode_data(char *target, unsigned int max_size)
+static int decode_data(char *target, size_t max_size)
 {
 	int        res = 0;
 	static int prev_li = -1;
@@ -150,7 +150,7 @@ static int decode_data(char *target, unsigned int max_size)
 	return res;
 }
 
-static int opus_play_file(char *opus_file)
+static int opus_play_file(const char *opus_file)
 {
 	int result = 1, error;
 	OpusFileCallbacks ofc;
@@ -348,7 +348,7 @@ static GmuCharset meta_data_get_charset(void)
 	return M_CHARSET_UTF_8;
 }
 
-static int data_check_magic_bytes(const char *data, int size)
+static int data_check_magic_bytes(const char *data, size_t size)
 {
 	int res = 0;
 	if (strncmp(data, "OggS", 4) == 0) { /* Ok, we've got an Ogg container */

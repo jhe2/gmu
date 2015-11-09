@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: flac.c  Created: 081104
  *
@@ -137,11 +137,11 @@ static void error_callback(const FLAC__StreamDecoder      *decoder,
 {
 }
 
-static int open_file(char *filename)
+static int open_file(const char *filename)
 {
-	int   result = 1;
-	char *filename_without_path;
-	FILE *file;
+	int         result = 1;
+	const char *filename_without_path;
+	FILE       *file;
 
 	total_samples = 0;
 	seek_to_sample = 0;
@@ -196,7 +196,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, unsigned int max_size)
+static int decode_data(char *target, size_t max_size)
 {
 	if (seek_to_sample) {
 		if (seek_to_sample < 0) seek_to_sample = 0;

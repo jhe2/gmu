@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: gmudecoder.h  Created: 081022
  *
@@ -54,12 +54,12 @@ typedef struct _GmuDecoder {
 	 * the file to be decoded. Must return TRUE on success, FALSE otherwise. 
 	 * If set_reader_handle() has been defined, the supplied Reader handle should
 	 * be used for file/stream access, instead of doing file access with fopen() etc. */
-	int          (*open_file)(char *filename);
+	int          (*open_file)(const char *filename);
 	/* Function to close the previously opened file, free memory etc. */
 	int          (*close_file)(void);
 	/* Decodes up to max_size bytes of audio data and writes it to target,
 	 * returns actual size */
-	int          (*decode_data)(char *target, unsigned int max_size);
+	int          (*decode_data)(char *target, size_t max_size);
 	/* Seeks in the audio stream, can be NULL if seeking is not supported.
 	 * Returns TRUE on success. "second" is the second in the stream to seek to
 	 * from the beginning, that is second=0 would be the beginning of the track */
@@ -100,7 +100,7 @@ typedef struct _GmuDecoder {
 	/* Checks wether the supplied data contains data compatible with the decoder.
 	 * This function is optional, but is recommended for streaming audio. Returns 1
 	 * on success and 0 otherwise. */
-	int          (*data_check_magic_bytes)(const char *data, int size);
+	int          (*data_check_magic_bytes)(const char *data, size_t size);
 	/* Supplies a Reader handle for reading file/stream data. This function is
 	 * optional, but required for http streaming audio. If this function is not NULL
 	 * the decoder has to close the supplied handle, when finished. */

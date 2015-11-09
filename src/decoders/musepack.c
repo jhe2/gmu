@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: musepack.c  Created: 081022
  *
@@ -89,7 +89,7 @@ static const char *get_name(void)
 	return "Musepack decoder v0.9";
 }
 
-static int open_file(char *filename)
+static int open_file(const char *filename)
 {
 	int   result = 1;
 	/*char *filename_without_path;*/
@@ -162,7 +162,7 @@ static int close_file(void)
 	return 0;
 }
 
-static int decode_data(char *target, unsigned int max_size)
+static int decode_data(char *target, size_t max_size)
 {
 	int               size = MPC_DECODER_BUFFER_LENGTH;
 	unsigned          total_samples = 0;
