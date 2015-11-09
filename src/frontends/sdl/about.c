@@ -1,7 +1,7 @@
 /* 
- * Gmu GP2X Music Player
+ * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: about.c  Created: 061223
  *
@@ -25,14 +25,14 @@ static const char *text_about_gmu =
 	"The decoder plugins use additional\n"
 	"libraries for decoding.\n\n"
 	"Program written by\n"
-	"Johannes Heimansberg (**wejp.k.vu**)\n\n"
+	"Johannes Heimansberg (**wej.k.vu**)\n\n"
 	"Please take a look at the README.txt\n"
 	"file for more details and\n"
 	"configuration hints. You also might\n"
 	"want to check the in-program help\n"
 	"screen.\n\n"
 	"Project website:\n"
-	"**http://wejp.k.vu/projects/gmu/**";
+	"**http://wej.k.vu/projects/gmu/**";
 
 int about_process_action(TextBrowser *tb_about, View *view, View old_view, int user_key_action)
 {
