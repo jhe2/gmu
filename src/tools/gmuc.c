@@ -716,6 +716,29 @@ static char *handle_function_based_on_key_press(
 			free(file_esc);
 			break;
 		}
+		case FUNC_FB_MLIB_ADD_PATH: {
+			char  cmd[256];
+			int   sel_row = listwidget_get_selection(ui->lw_fb);
+			const char *ftype = listwidget_get_row_data(ui->lw_fb, sel_row, 0);
+			const char *file = listwidget_get_row_data(ui->lw_fb, sel_row, 1);
+			if (strcmp(ftype, "[DIR]") == 0) {
+				char *cur_dir_esc = json_string_escape_alloc(cur_dir);
+				char *file_esc = json_string_escape_alloc(file);
+				if (cur_dir_esc && file_esc) {
+					snprintf(
+						cmd,
+						255, 
+						"{\"cmd\":\"medialib_path_add\",\"path\":\"%s/%s\"}",
+						cur_dir_esc,
+						file_esc
+					);
+					websocket_send_str(sock, cmd, 1);
+				}
+				free(cur_dir_esc);
+				free(file_esc);
+			}
+			break;
+		}
 		case FUNC_PREVIOUS:
 			if (state == STATE_CONNECTION_ESTABLISHED) {
 				websocket_send_str(sock, "{\"cmd\":\"prev\"}", 1);

@@ -54,6 +54,7 @@ static FooterButtons fb_fb[] = {
 	{ "/",   "Command",  FUNC_TEXT_INPUT,  '/', 0 },
 	{ "q",   "Quit",     FUNC_QUIT,        'q', 0 },
 	{ "t",   "Time",     FUNC_TOGGLE_TIME, 't', 0 },
+	{ "A",   "Add to Mlib", FUNC_FB_MLIB_ADD_PATH, 'A', 0 },
 	{ NULL, NULL, FUNC_NONE, 0, 0 }
 };
 
