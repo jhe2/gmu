@@ -1215,6 +1215,9 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 				if (col && strcmp(col, "artist") == 0) {
 					gmu_http_medialib_browse_artists(c);
 				}
+			} else if (strcmp(cmd, "medialib_path_add") == 0) {
+				const char *path = json_get_string_value_for_key(json, "path");
+				if (path) gmu_core_medialib_path_add(path);
 			}
 		}
 	}
