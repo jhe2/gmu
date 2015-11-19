@@ -873,6 +873,13 @@ void gmu_core_medialib_browse_finish(void)
 #endif
 }
 
+void gmu_core_medialib_path_add(const char *path)
+{
+#ifdef GMU_MEDIALIB
+	medialib_path_add(&gm, path);
+#endif
+}
+
 static void print_cmd_help(const char *prog_name)
 {
 	printf("Gmu Music Player " VERSION_NUMBER "\n");
