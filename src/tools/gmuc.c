@@ -1654,7 +1654,7 @@ int main(int argc, char **argv)
 		tmp = cfg_get_key_value(config, "Color");
 		if (argc >= 1) res = run_gmuc_ui(tmp && strcmp(tmp, "yes") == 0, host, password);
 	} else {
-		process_cli_command(host, password, just_once, command, format_str);
+		res = process_cli_command(host, password, just_once, command, format_str);
 	}
 	cfg_free(config);
 	return res;
