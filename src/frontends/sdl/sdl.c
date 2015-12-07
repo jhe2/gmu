@@ -1311,8 +1311,15 @@ static void *start_player(void *arg)
 
 			if (tmp) len_tmp = strlen(tmp);
 			if (len_tmp > 0) {
+				char *buf;
 				if (decoders_str) len = strlen(decoders_str);
-				decoders_str = realloc(decoders_str, (decoders_str ? strlen(decoders_str) : 0) + len_tmp + 8);
+				buf = realloc(decoders_str, (decoders_str ? strlen(decoders_str) : 0) + len_tmp + 8);
+				if (buf) {
+					decoders_str = buf;
+				} else {
+					free(decoders_str);
+					decoders_str = NULL;
+				}
 			}
 
 			if (decoders_str) {
