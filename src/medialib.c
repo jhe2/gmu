@@ -67,6 +67,7 @@ int medialib_add_file(GmuMedialib *gm, const char *file)
 	sqlite3_stmt *pp_stmt = NULL;
 	int           sqres;
 	int           new_file = 1;
+	int           res = 0;
 
 	filetype[0] = '\0';
 	if (tmp != NULL)
@@ -75,15 +76,17 @@ int medialib_add_file(GmuMedialib *gm, const char *file)
 	wdprintf(V_DEBUG, "medialib", "file=%s type=%s\n", file, filetype);
 	q = "SELECT id FROM track WHERE file = ?1 LIMIT 1";
 	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
-	if (sqlite3_bind_text(pp_stmt, 1, file, -1, SQLITE_STATIC) == SQLITE_OK) {
-		sqres = sqlite3_step(pp_stmt);
-		if (sqres == SQLITE_ROW) {
-			new_file = 0;
-			wdprintf(V_DEBUG, "medialib", "File already in media library.\n");
+	if (sqres == SQLITE_OK) {
+		if (sqlite3_bind_text(pp_stmt, 1, file, -1, SQLITE_STATIC) == SQLITE_OK) {
+			sqres = sqlite3_step(pp_stmt);
+			if (sqres == SQLITE_ROW) {
+				new_file = 0;
+				wdprintf(V_DEBUG, "medialib", "File already in media library.\n");
+			}
 		}
 		sqlite3_finalize(pp_stmt);
 	}
-	
+
 	trackinfo_init(&ti, 0);
 	if (new_file && metadatareader_read(file, filetype, &ti)) {
 		/* Add file with metadata to media library... */
@@ -91,20 +94,26 @@ int medialib_add_file(GmuMedialib *gm, const char *file)
 		const char *q = "INSERT INTO track (file, artist, title, album, comment, file_missing) VALUES (?1, ?2, ?3, ?4, ?5, 0)";
 
 		sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
-		a = sqlite3_bind_text(pp_stmt, 1, file,       -1, SQLITE_STATIC);
-		b = sqlite3_bind_text(pp_stmt, 2, ti.artist,  -1, SQLITE_STATIC);
-		c = sqlite3_bind_text(pp_stmt, 3, ti.title,   -1, SQLITE_STATIC);
-		d = sqlite3_bind_text(pp_stmt, 4, ti.album,   -1, SQLITE_STATIC);
-		e = sqlite3_bind_text(pp_stmt, 5, ti.comment, -1, SQLITE_STATIC);
-		if (a == SQLITE_OK && b == SQLITE_OK && c == SQLITE_OK && d == SQLITE_OK && e == SQLITE_OK) {
-			sqres = sqlite3_step(pp_stmt);
-			if (sqres != SQLITE_DONE) {
-				wdprintf(V_ERROR, "medialib", "ERROR while inserting into database: ERROR %d\n", sqres);
+		if (sqres == SQLITE_OK) {
+			a = sqlite3_bind_text(pp_stmt, 1, file,       -1, SQLITE_STATIC);
+			b = sqlite3_bind_text(pp_stmt, 2, ti.artist,  -1, SQLITE_STATIC);
+			c = sqlite3_bind_text(pp_stmt, 3, ti.title,   -1, SQLITE_STATIC);
+			d = sqlite3_bind_text(pp_stmt, 4, ti.album,   -1, SQLITE_STATIC);
+			e = sqlite3_bind_text(pp_stmt, 5, ti.comment, -1, SQLITE_STATIC);
+			if (a == SQLITE_OK && b == SQLITE_OK && c == SQLITE_OK && d == SQLITE_OK && e == SQLITE_OK) {
+				sqres = sqlite3_step(pp_stmt);
+				if (sqres != SQLITE_DONE) {
+					wdprintf(V_ERROR, "medialib", "ERROR while inserting into database: ERROR %d\n", sqres);
+				} else {
+					res = 1;
+				}
+			} else {
+				wdprintf(V_ERROR, "medialib", "Problem with SQL parameters.\n");
 			}
-		} else wdprintf(V_ERROR, "medialib", "NOT GOOD! Problem with SQL params.\n");
-		sqlite3_finalize(pp_stmt);
+			sqlite3_finalize(pp_stmt);
+		}
 	}
-	return 0;
+	return res;
 }
 
 static int _medialib_add_file(void *gm, const char *file)
@@ -226,7 +235,7 @@ void medialib_path_add(GmuMedialib *gm, const char *path)
 	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) {
 		sqres = sqlite3_bind_text(pp_stmt, 1, path, -1, SQLITE_TRANSIENT);
-		sqlite3_step(pp_stmt);
+		if (sqres == SQLITE_OK) sqlite3_step(pp_stmt);
 	}
 	sqlite3_finalize(pp_stmt);
 }
@@ -443,7 +452,7 @@ static int rate_track(GmuMedialib *gm, int id, int relative, int rating)
 	sqres = sqlite3_prepare_v2(gm->db, q, -1, &pp_stmt, NULL);
 	if (sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 1, id);
 	if (!relative && sqres == SQLITE_OK) sqres = sqlite3_bind_int(pp_stmt, 2, rating);
-	sqres = sqlite3_step(pp_stmt);
+	if (sqres == SQLITE_OK) sqres = sqlite3_step(pp_stmt);
 	if (sqres != SQLITE_DONE) {
 		wdprintf(V_ERROR, "medialib", "ERROR while updating database: ERROR %d\n", sqres);
 	}
