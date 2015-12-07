@@ -153,6 +153,8 @@ JSON_Object *json_parse_alloc(const char *json_data)
 								if (current_key) {
 									current_key->key_name = key_name;
 									json_object_attach_key(json, current_key);
+								} else {
+									free(key_name);
 								}
 								s = STATE_SEARCH_VALUE;
 							}
