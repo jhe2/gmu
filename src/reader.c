@@ -348,6 +348,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 					}
 					wdprintf(V_INFO, "reader", "302 Redirect found: %s\n", vc ? vc : "unknown");
 					reader_close(r);
+					r = NULL;
 					if (max_redirects > 0 && vc) {
 						r = _reader_open(vc, max_redirects-1);
 					} else {
