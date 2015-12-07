@@ -87,7 +87,7 @@ static const char *mime_type[] = {
 static const char *get_mime_type(const char *url)
 {
 	const char *res = "text/html";
-	const char *ext = strrchr(url, '.');
+	const char *ext = url ? strrchr(url, '.') : NULL;
 	if (ext) {
 		size_t i;
 		for (i = 0; mime_type[i]; i+=2) {
