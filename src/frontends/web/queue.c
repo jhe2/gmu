@@ -33,12 +33,12 @@ int queue_push(Queue *q, const char *str)
 {
 	QueueEntry *new_entry;
 	int         result = 0;
+	size_t      len = str ? strlen(str) : 0;
 
-	new_entry = malloc(sizeof(QueueEntry));
 	pthread_mutex_lock(&(q->mutex));
-	if (new_entry) {
-		int len = str ? strlen(str) : 0;
-		if (len > 0) {
+	if (len > 0) {
+		new_entry = malloc(sizeof(QueueEntry));
+		if (new_entry) {
 			new_entry->str = malloc(len+1);
 			if (new_entry->str) {
 				memcpy(new_entry->str, str, len+1);
@@ -47,6 +47,8 @@ int queue_push(Queue *q, const char *str)
 				q->last = new_entry;
 				if (!q->first) q->first = new_entry;
 				result = 1;
+			} else { /* Failure */
+				free(new_entry);
 			}
 		}
 	}
