@@ -228,7 +228,11 @@ GmuDecoder *decloader_decoder_list_get_next_decoder(int getfirst)
 	static DecoderChain *dc = NULL;
 	GmuDecoder          *gd = NULL;
 
-	dc = (getfirst ? dc_root : dc->next);
+	if (getfirst) {
+		dc = dc_root;
+	} else if (dc) {
+		dc = dc->next;
+	}
 	if (dc) gd = dc->gd;
 	return gd;
 }
