@@ -101,14 +101,15 @@ void cover_viewer_load_artwork(
 
 int cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti)
 {
-	char *lyrics = "";
+	char *lyrics = NULL;
 	int   contains_image = 0;
 
 	if (trackinfo_acquire_lock(ti)) {
 		if (strlen(trackinfo_get_lyrics(ti)) > 0) {
 			int len = strlen(trackinfo_get_lyrics(ti)) + 42;
 			lyrics = malloc(sizeof(char) * len);
-			snprintf(lyrics, len, "\n\n**Lyrics/Additional information:**\n%s", trackinfo_get_lyrics(ti));
+			if (lyrics)
+				snprintf(lyrics, len, "\n\n**Lyrics/Additional information:**\n%s", trackinfo_get_lyrics(ti));
 		}
 
 		snprintf(cv->track_info_text, SIZE_TRACKINFO_TEXT-1,
@@ -121,12 +122,12 @@ int cover_viewer_update_data(CoverViewer *cv, TrackInfo *ti)
 				 trackinfo_get_length_seconds(ti), trackinfo_get_samplerate(ti),
 				 trackinfo_get_channels(ti), trackinfo_get_channels(ti) >= 2 ? "stereo" : "mono",
 				 trackinfo_get_bitrate(ti) / 1000, trackinfo_is_vbr(ti) ? "(average)" : "",
-				 trackinfo_get_file_type(ti), trackinfo_get_file_name(ti), lyrics);
+				 trackinfo_get_file_type(ti), trackinfo_get_file_name(ti), lyrics ? lyrics : "");
 		contains_image = trackinfo_has_cover_artwork(ti);
 		trackinfo_release_lock(ti);
 		text_browser_set_text(&cv->tb, cv->track_info_text, "Track info");
 	}
-	if (lyrics[0] != '\0') free(lyrics);
+	free(lyrics);
 	return contains_image;
 }
 
