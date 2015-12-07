@@ -139,9 +139,8 @@ static void error_callback(const FLAC__StreamDecoder      *decoder,
 
 static int open_file(const char *filename)
 {
-	int         result = 1;
-	const char *filename_without_path;
-	FILE       *file;
+	int   result = 1;
+	FILE *file;
 
 	total_samples = 0;
 	seek_to_sample = 0;
@@ -168,19 +167,6 @@ static int open_file(const char *filename)
 		wdprintf(V_ERROR, "flac", "Could not initialize decoder.\n");
 		result = 0;
 	} else {
-		/*strncpy(ti->file_name, filename, SIZE_FILE_NAME-1);*/
-		filename_without_path = strrchr(filename, '/');
-		if (filename_without_path != NULL)
-			filename_without_path++;
-		else
-			filename_without_path = filename;
-
-		/*filename_without_path = charset_filename_convert_alloc(filename_without_path);
-		strncpy(ti->title, filename_without_path, SIZE_TITLE-1);
-		free(filename_without_path);
-
-		strncpy(ti->file_type, "FLAC", SIZE_FILE_TYPE-1);*/
-
 		if (FLAC__stream_decoder_process_until_end_of_metadata(fsd) == false) {
 			wdprintf(V_ERROR, "flac", "Stream error.\n");
 			result = 0;
