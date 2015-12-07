@@ -177,6 +177,8 @@ static State do_websocket_handshake(RingBuffer *rb, State state)
 {
 	int  i, data_available = 1;
 	char buf[256], ch;
+
+	memset(buf, 0, 256);
 	ringbuffer_set_unread_pos(rb);
 	while (data_available && state == STATE_WEBSOCKET_HANDSHAKE) {
 		for (i = 0, ch = 0; i < 255 && ch != '\n'; ) {
