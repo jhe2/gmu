@@ -33,6 +33,7 @@ void base64_encode_data(unsigned char *in, int in_len, char *out, int out_max_le
 	unsigned char in_buf[3];
 	char out_buf[4];
 
+	memset(in_buf, 0, 3);
 	memset(out, 0, out_max_len);
 	for (i = 0, j = 0, k = 0; i < in_len; i++, j++) {
 		if (j >= 3) {
