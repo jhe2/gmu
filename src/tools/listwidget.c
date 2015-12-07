@@ -24,8 +24,10 @@
 
 static int internal_listwidget_set_length(ListWidget *lw, int rows)
 {
-	lw->rows_ref = realloc(lw->rows_ref, sizeof(ListCell *) * rows);
-	if (lw->rows_ref) lw->rows = rows; else lw->rows = 0;
+	if (rows > 0) {
+		lw->rows_ref = realloc(lw->rows_ref, sizeof(ListCell *) * rows);
+		if (lw->rows_ref) lw->rows = rows; else lw->rows = 0;
+	}
 	return lw->rows_ref ? 1 : 0;
 }
 
