@@ -1599,8 +1599,8 @@ int main(int argc, char **argv)
 							i++;
 						}
 						if (command_str) {
-							char **params = NULL;
-							if (!parse_input_alloc(command_str, &command, params))
+							char *params = NULL;
+							if (!parse_input_alloc(command_str, &command, &params))
 								command = NO_COMMAND;
 							if (params) free(params);
 						}
