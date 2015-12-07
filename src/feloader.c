@@ -176,9 +176,15 @@ int feloader_load_all(char *directory)
 GmuFrontend *feloader_frontend_list_get_next_frontend(int getfirst)
 {
 	static FrontendChainElement *fec = NULL;
+	GmuFrontend                 *res = NULL;
 
-	fec = (getfirst ? fec_root : fec->next);
-	return fec->gf;
+	if (getfirst) {
+		fec = fec_root;
+	} else if (fec) {
+		fec = fec->next;
+	}
+	if (fec) res = fec->gf;
+	return res;
 }
 
 int feloader_load_builtin_frontends(void)
