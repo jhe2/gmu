@@ -815,7 +815,6 @@ static void run_player(char *skin_name, char *decoders_str)
 						joy_axis_dir = -1;
 						button = (event.jaxis.axis+1) * joy_axis_dir;
 					} else if (event.jaxis.value > -JOYSTICK_THRESHOLD && event.jaxis.value < JOYSTICK_THRESHOLD) {
-						joy_axis_dir = 0;
 						button = 0;
 					}
 					break;
