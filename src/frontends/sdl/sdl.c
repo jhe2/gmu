@@ -1316,8 +1316,10 @@ static void *start_player(void *arg)
 				decoders_str = realloc(decoders_str, (decoders_str ? strlen(decoders_str) : 0) + len_tmp + 8);
 			}
 
-			snprintf(decoders_str+len, len_tmp + 4, "- %s\n", tmp);
-			decoders_str[len+len_tmp+3] = '\0';
+			if (decoders_str) {
+				snprintf(decoders_str+len, len_tmp + 4, "- %s\n", tmp);
+				decoders_str[len+len_tmp+3] = '\0';
+			}
 			gd = decloader_decoder_list_get_next_decoder(0);
 		}
 		if (decoders_str == NULL)
