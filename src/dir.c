@@ -221,7 +221,7 @@ void dir_get_human_readable_filesize(Dir *dir, int i,
 	} else {
 		suffix = 'G';
 		result = s / G;
-		if (s > 999) s = 999;
+		if (result > 999) result = 999;
 	}
 	if (suffix == '?')
 		snprintf(target, target_size, "?");
