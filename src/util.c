@@ -86,7 +86,7 @@ int file_copy(const char *destination_file, const char *source_file)
 const char *get_file_extension(const char *filename)
 {
 	size_t len = filename ? strlen(filename) : 0;
-	while (filename[len] != '.' && len > 0) len--;
+	while (len > 0 && filename[len] != '.') len--;
 	return (len == 0 ? NULL : filename + len + 1);
 }
 
