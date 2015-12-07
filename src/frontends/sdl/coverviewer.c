@@ -198,7 +198,6 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 			srect.y = cv->y_offset;
 			srect.w = aw;
 			srect.h = ah;
-			text_x_offset = 5;
 			SDL_BlitSurface(cover, &srect, target, &drect);
 			if (!cv->hide_text)	text_browser_draw(&cv->tb, target);
 		}
