@@ -86,9 +86,10 @@ void text_browser_scroll_up(TextBrowser *tb)
 
 void text_browser_draw(TextBrowser *tb, SDL_Surface *sdl_target)
 {
-	int i, char_offset = tb->char_offset, yo = 1;
-	int tlen = strlen(tb->text), indent = tb->skin->font1_char_width / 2;
-	int nol = skin_textarea_get_number_of_lines(tb->skin);
+	int char_offset = tb->char_offset, yo = 1;
+	size_t i;
+	size_t tlen = strlen(tb->text), indent = tb->skin->font1_char_width / 2;
+	size_t nol = skin_textarea_get_number_of_lines(tb->skin);
 
 	text_browser_set_chars_per_line(tb, skin_textarea_get_characters_per_line(tb->skin));
 	tb->pos_x = gmu_widget_get_pos_x(&tb->skin->lv, 1);
@@ -97,7 +98,7 @@ void text_browser_draw(TextBrowser *tb, SDL_Surface *sdl_target)
 	skin_draw_header_text(tb->skin, tb->title, sdl_target);
 	for (i = 0; i < nol && char_offset < tlen; i++) {
 		char  line[MAX_LINE_LENGTH], line_break_char = '\0';
-		int   line_length = 0, red = 0;
+		size_t line_length = 0, red = 0;
 
 		memset(line, '\0', MAX_LINE_LENGTH);
 		while (tb->text[char_offset+line_length] != '\n' &&
@@ -121,7 +122,7 @@ void text_browser_draw(TextBrowser *tb, SDL_Surface *sdl_target)
 			tb->end_reached = 1;
 		else
 			tb->end_reached = 0;
-		line_length = (line_length > MAX_LINE_LENGTH-1 ? MAX_LINE_LENGTH-1 : line_length);
+		if (line_length > MAX_LINE_LENGTH-1) line_length = MAX_LINE_LENGTH-1;
 		tb->longest_line_so_far = (line_length - red > tb->longest_line_so_far ? 
 		                           line_length - red : tb->longest_line_so_far);
 
