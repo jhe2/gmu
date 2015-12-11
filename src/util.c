@@ -160,7 +160,7 @@ static int check_pattern(
 {
 	int res = 0;
 	if (pattern_length > 0) {
-		char *pattern = malloc(pattern_length + 1);
+		char *pattern = calloc(1, pattern_length + 1);
 		if (pattern) {
 			int k;
 			for (k = pattern_offset; k < pattern_length + pattern_offset; k++)
