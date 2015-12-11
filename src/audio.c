@@ -135,12 +135,15 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 			SDL_UnlockMutex(audio_mutex2);
 		}
 
-		for (i = 0, j = 0; i < 16 * 2 * channels; i += (2 * channels), j++) {
-			samples_l[j] = (buf[i+1] << 8) + buf[i];
+		if (channels > 0) {
+			for (i = 0, j = 0; j < 16; i += (2 * channels), j++) {
+				samples_l[j] = (buf[i+1] << 8) + buf[i];
+			}
+			calculate_dft(samples_l, 16, rex, imx);
 		}
-		calculate_dft(samples_l, 16, rex, imx);
 		SDL_LockMutex(spectrum_mutex);
-		for (i = 1; i < 9; i++) amplitudes[i-1] = (imx[i] < 0 ? -imx[i] : imx[i]);
+		if (channels > 0)
+			for (i = 1; i < 9; i++) amplitudes[i-1] = (imx[i] < 0 ? -imx[i] : imx[i]);
 		SDL_UnlockMutex(spectrum_mutex);
 	}
 }
