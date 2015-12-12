@@ -85,6 +85,9 @@ TEMP_HEADER_FILES=tmp-felist.h tmp-declist.h
 all: decoders frontends $(TOOLS_TO_BUILD)
 	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
 
+config.mk:
+	$(error ERROR: Please run the configure script first)
+
 decoders: $(DECODERS_TO_BUILD)
 	@echo -e "All \033[1mdecoders\033[0m have been built."
 
