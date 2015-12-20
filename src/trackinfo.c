@@ -259,10 +259,12 @@ int trackinfo_load_lyrics_from_file(TrackInfo *ti, const char *file_name)
 
 	file = fopen(file_name, "r");
 	if (file) {
-		int read_counter = 0;
+		size_t read_counter = 0;
+		char   prev = '\0';
+
 		buffer[0] = '\0';
 		while (!feof(file) && read_counter < SIZE_LYRICS && SIZE_LYRICS-1-read_counter > 1) {
-			char prev = '\0', curr = fgetc(file);
+			char curr = fgetc(file);
 			if (curr != '\r') {
 				if (!feof(file))
 					buffer[read_counter] = curr;
