@@ -93,58 +93,52 @@ int cfg_check_config_file(const char *filename)
 }
 
 /**
- * Adds a new key to the configuration.
+ * Internal helper function to initialize a key/value pair at position
+ * "pos" in the key/value arrays. Allocates memory as needed. Does not
+ * free memory in case the key already exists.
+ */
+static int set_key_at_position(ConfigFile *cf, size_t pos, const char *key, const char *value)
+{
+	int    result = CFG_SUCCESS;
+	size_t strsize = strlen(key) + 1;
+
+	if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
+	cf->key[pos] = (char*)malloc(strsize * sizeof(char));
+	if (cf->key[pos]) {
+		snprintf(cf->key[pos], strsize, "%s", key);
+		strsize = strlen(value) + 1;
+		if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
+		cf->value[pos] = (char*)malloc(strsize * sizeof(char));
+		if (cf->value[pos]) {
+			snprintf(cf->value[pos], strsize, "%s", value);
+		} else {
+			result = CFG_OUT_OF_MEMORY;
+		}
+	} else {
+		result = CFG_OUT_OF_MEMORY;
+	}
+	return result;
+}
+
+/**
+ * Adds a new key to the configuration or overrides an existing one.
  */
 int cfg_add_key(ConfigFile *cf, const char *key, const char *value)
 {
 	int    result = CFG_SUCCESS;
-	size_t strsize = 0;
 	size_t i;
-	
+
 	if (cfg_get_key_value(cf, key) != NULL) { /* Key already exists->overwrite */
 		for (i = 0; i < cf->lastkey; i++)
 			if (strncmp(key, cf->key[i], MAX_LINE_LENGTH-1) == 0) {
 				free(cf->key[i]); /* Free allocated memory */
 				free(cf->value[i]);
-
-				/* Allocate memory for the new string and save it... */
-				strsize = strlen(key) + 1;
-				if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
-				cf->key[i] = (char*)malloc(strsize * sizeof(char));
-				if (cf->key[i]) {
-					snprintf(cf->key[i], strsize, "%s", key);
-					strsize = strlen(value) + 1;
-					if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
-					cf->value[i] = (char*)malloc(strsize * sizeof(char));
-					if (cf->value[i]) {
-						snprintf(cf->value[i], strsize, "%s", value);
-					} else {
-						result = CFG_OUT_OF_MEMORY;
-					}
-				} else {
-					result = CFG_OUT_OF_MEMORY;
-				}
+				result = set_key_at_position(cf, i, key, value);
 				break;
 			}
 	} else if (cf->lastkey < MAXKEYS) {
-		strsize = strlen(key) + 1;
-		if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
-		cf->key[cf->lastkey] = (char*)malloc(strsize);
-		if (cf->key[cf->lastkey]) {
-			sprintf(cf->key[cf->lastkey], "%s", key);
-
-			strsize = strlen(value) + 1;
-			if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
-			cf->value[cf->lastkey] = (char*)malloc(strsize);
-			if (cf->value[cf->lastkey]) {
-				sprintf(cf->value[cf->lastkey], "%s", value);
-				(cf->lastkey)++;
-			} else {
-				result = CFG_OUT_OF_MEMORY;
-			}
-		} else {
-			result = CFG_OUT_OF_MEMORY;
-		}
+		result = set_key_at_position(cf, cf->lastkey, key, value);
+		if (result == CFG_SUCCESS) (cf->lastkey)++;
 	} else {
 		result = CFG_ERROR;
 	}
