@@ -108,11 +108,13 @@ int cfg_add_key(ConfigFile *cf, const char *key, const char *value)
 				free(cf->value[i]);
 
 				/* Allocate memory for the new string and save it... */
-				strsize = (strlen(key) < MAX_LINE_LENGTH-1 ? strlen(key) : MAX_LINE_LENGTH-2) + 1;
+				strsize = strlen(key) + 1;
+				if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
 				cf->key[i] = (char*)malloc(strsize * sizeof(char));
 				if (cf->key[i]) {
 					snprintf(cf->key[i], strsize, "%s", key);
-					strsize = (strlen(value) < MAX_LINE_LENGTH-1 ? strlen(value) : MAX_LINE_LENGTH-2) + 1;
+					strsize = strlen(value) + 1;
+					if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
 					cf->value[i] = (char*)malloc(strsize * sizeof(char));
 					if (cf->value[i]) {
 						snprintf(cf->value[i], strsize, "%s", value);
@@ -131,7 +133,7 @@ int cfg_add_key(ConfigFile *cf, const char *key, const char *value)
 		if (cf->key[cf->lastkey]) {
 			sprintf(cf->key[cf->lastkey], "%s", key);
 
-			strsize = strlen(key) + 1;
+			strsize = strlen(value) + 1;
 			if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
 			cf->value[cf->lastkey] = (char*)malloc(strsize);
 			if (cf->value[cf->lastkey]) {
