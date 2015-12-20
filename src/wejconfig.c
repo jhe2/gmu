@@ -125,13 +125,15 @@ int cfg_add_key(ConfigFile *cf, const char *key, const char *value)
 				break;
 			}
 	} else if (cf->lastkey < MAXKEYS) {
-		strsize = (strlen(key) < MAX_LINE_LENGTH-1 ? strlen(key) : MAX_LINE_LENGTH-2) + 1;
-		cf->key[cf->lastkey] = (char*)malloc(strsize * sizeof(char));
+		strsize = strlen(key) + 1;
+		if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
+		cf->key[cf->lastkey] = (char*)malloc(strsize);
 		if (cf->key[cf->lastkey]) {
 			sprintf(cf->key[cf->lastkey], "%s", key);
 
-			strsize = (strlen(key) < MAX_LINE_LENGTH-1 ? strlen(value) : MAX_LINE_LENGTH-2) + 1;
-			cf->value[cf->lastkey] = (char*)malloc(strsize * sizeof(char));
+			strsize = strlen(key) + 1;
+			if (strsize > MAX_LINE_LENGTH) strsize = MAX_LINE_LENGTH;
+			cf->value[cf->lastkey] = (char*)malloc(strsize);
 			if (cf->value[cf->lastkey]) {
 				sprintf(cf->value[cf->lastkey], "%s", value);
 				(cf->lastkey)++;
