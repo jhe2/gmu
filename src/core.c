@@ -883,8 +883,8 @@ void gmu_core_medialib_path_add(const char *path)
 static void print_cmd_help(const char *prog_name)
 {
 	printf("Gmu Music Player " VERSION_NUMBER "\n");
-	printf("Copyright (c) 2006-2013 Johannes Heimansberg\n");
-	printf("http://wejp.k.vu/projects/gmu/\n");
+	printf("Copyright (c) 2006-2015 Johannes Heimansberg\n");
+	printf("http://wej.k.vu/projects/gmu/\n");
 	printf("\nUsage:\n%s [-h] [-r] [-v V] [-c file.conf] [-s theme_name] [music_file.ext] [...]\n", prog_name);
 	printf("-h : Print this help\n");
 	printf("-d /path/to/config/dir: Use the specified path as configuration dir.\n");
