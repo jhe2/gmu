@@ -510,6 +510,7 @@ static Connection tcp_server_client_init(int listen_fd)
 	Connection              conn;
 
 	socklen = sizeof(sock);
+	memset(&sock, 0, socklen);
 	conn.fd = accept(listen_fd, (struct sockaddr *)&sock, &socklen);
 	conn.state = (conn.fd < 0 ? CON_ERROR : CON_HTTP_NEW);
 	if (conn.state == CON_HTTP_NEW) {
@@ -1354,18 +1355,24 @@ static void webserver_main_loop(int listen_fd)
 						size_t len_header = 0;
 
 						if (connection_get_state(con_ptr) != CON_WEBSOCKET_OPEN) {
+							char *tmp;
 							wdprintf(V_DEBUG, "httpd", "%04d http message.\n", con_ptr->fd);
 							if (con_ptr->http_request_header)
 								len_header = strlen(con_ptr->http_request_header);
-							con_ptr->http_request_header = 
-								realloc(con_ptr->http_request_header, len_header+len+1);
+							tmp = realloc(con_ptr->http_request_header, len_header+len+1);
+							if (tmp) {
+								con_ptr->http_request_header = tmp;
+							} else {
+								free(con_ptr->http_request_header);
+								con_ptr->http_request_header = NULL;
+							}
 							if (con_ptr->http_request_header) {
 								memcpy(con_ptr->http_request_header+len_header, msgbuf, len);
 								con_ptr->http_request_header[len_header+len] = '\0';
-							}
-							if (strstr(con_ptr->http_request_header, "\r\n\r\n") || 
-								strstr(con_ptr->http_request_header, "\n\n")) { /* we got a complete header */
-								request_header_complete = 1;
+								if (strstr(con_ptr->http_request_header, "\r\n\r\n") || 
+								    strstr(con_ptr->http_request_header, "\n\n")) { /* we got a complete header */
+									request_header_complete = 1;
+								}
 							}
 						} else {
 							char   tmp_buf[16];
