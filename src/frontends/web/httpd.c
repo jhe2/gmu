@@ -970,7 +970,7 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 	if (strncmp(base_dir, directory, strlen(base_dir)) != 0)
 		directory = base_dir;
 	dir_set_base_dir(&dir, base_dir);
-	dir_set_ext_filter(&dir, (const char **)gmu_core_get_file_extensions(), 1);
+	dir_set_ext_filter(&dir, gmu_core_get_file_extensions(), 1);
 
 	if (dir_read(&dir, directory, 1)) {
 		size_t i = 0;

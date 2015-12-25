@@ -31,7 +31,7 @@ union {
 	GmuDecoder * (*fptr) (void);
 } dlsymunion;
 
-static const char   *dir_extensions[] = { ".so", NULL };
+static char         *dir_extensions[] = { ".so", NULL };
 static DecoderChain *dc_root;
 static char          extensions[1024];
 
@@ -109,7 +109,7 @@ int decloader_load_all(const char *directory)
 	wdprintf(V_DEBUG, "decloader", "Searching...\n");
 
 	dir_init(&dir);
-	dir_set_ext_filter(&dir, (const char **)&dir_extensions, 0);
+	dir_set_ext_filter(&dir, (char **)&dir_extensions, 0);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
 		int i, num = dir_get_number_of_files(&dir);

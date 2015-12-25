@@ -734,9 +734,9 @@ const char *gmu_core_get_device_model_name(void)
 	return hw_get_device_model_name();
 }
 
-const char **gmu_core_get_file_extensions(void)
+char **gmu_core_get_file_extensions(void)
 {
-	return (const char **)file_extensions;
+	return file_extensions;
 }
 
 int gmu_core_get_status(void)

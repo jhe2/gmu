@@ -31,7 +31,7 @@ union {
 	GmuFrontend * (*fptr) (void);
 } dlsymunion;
 
-static const char           *dir_extensions[] = { ".so", NULL };
+static char                 *dir_extensions[] = { ".so", NULL };
 static FrontendChainElement *fec_root = NULL;
 
 static FrontendChainElement *fec_init_element(void)
@@ -144,7 +144,7 @@ int feloader_load_all(char *directory)
 	fec_root = fec;
 
 	dir_init(&dir);
-	dir_set_ext_filter(&dir, (const char **)&dir_extensions, 0);
+	dir_set_ext_filter(&dir, (char **)&dir_extensions, 0);
 	dir_set_base_dir(&dir, "/");
 	if (dir_read(&dir, directory, 0)) {
 		int i, num = dir_get_number_of_files(&dir);

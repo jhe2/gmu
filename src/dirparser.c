@@ -26,7 +26,7 @@ int dirparser_walk_through_directory_tree(const char *directory, int (fn(void *a
 
 	dir_init(&dir);
 	dir_set_base_dir(&dir, "/");
-	dir_set_ext_filter(&dir, (const char **)gmu_core_get_file_extensions(), 1);
+	dir_set_ext_filter(&dir, gmu_core_get_file_extensions(), 1);
 	if (dir_read(&dir, directory, 1)) {
 		for (i = 0; i < dir_get_number_of_files(&dir); i++) {
 			if (dir_get_flag(&dir, i) == DIRECTORY) {

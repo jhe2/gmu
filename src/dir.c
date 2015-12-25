@@ -26,7 +26,7 @@
 #include "debug.h"
 #include "charset.h"
 
-void dir_set_ext_filter(Dir *dir, const char **dir_exts, int show_dirs)
+void dir_set_ext_filter(Dir *dir, char **dir_exts, int show_dirs)
 {
 	dir->dir_extensions = dir_exts;
 	dir->show_directories = show_dirs;

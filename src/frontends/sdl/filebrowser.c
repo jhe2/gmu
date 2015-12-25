@@ -32,7 +32,7 @@ void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, const
 	fb->longest_line_so_far = 0;
 	fb->select_next_after_add = 0;
 	dir_init(&(fb->dir));
-	dir_set_ext_filter(&(fb->dir), (const char **)gmu_core_get_file_extensions(), 1);
+	dir_set_ext_filter(&(fb->dir), gmu_core_get_file_extensions(), 1);
 	dir_set_base_dir(&(fb->dir), base_dir);
 }
 

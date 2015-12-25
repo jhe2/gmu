@@ -54,7 +54,7 @@ int              gmu_core_get_volume(void);
 int              gmu_core_get_volume_max(void);
 int              gmu_core_export_playlist(const char *file);
 const char      *gmu_core_get_device_model_name(void);
-const char     **gmu_core_get_file_extensions(void);
+char           **gmu_core_get_file_extensions(void);
 int              gmu_core_get_status(void);
 void             gmu_core_set_shutdown_time(int value);
 int              gmu_core_get_shutdown_time_total(void);
