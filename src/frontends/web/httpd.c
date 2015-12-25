@@ -1402,10 +1402,14 @@ static void webserver_main_loop(int listen_fd)
 										if (payload) {
 											wdprintf(V_DEBUG, "httpd", "Payload data=[%s]\n", payload);
 											if (!gmu_http_handle_websocket_message(payload, con_ptr)) {
+												Connection *tmp_con = con_ptr;
 												FD_CLR(con_ptr->fd, &the_state);
 												if (con_ptr == first_connection) first_connection = con_ptr->next;
 												con_count--;
-												connection_close(con_ptr);
+												con_ptr = con_ptr->next;
+												connection_close(tmp_con);
+												free(payload);
+												continue;
 											}
 											free(payload);
 										}
