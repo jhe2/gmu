@@ -1,11 +1,11 @@
 /* 
- * Gmu GP2X Music Player
+ * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: id3.c  Created: 061030
  *
- * Description: Wejp's ID3 parser
+ * Description: Wej's ID3 parser
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,9 +23,10 @@
 #include "id3.h"
 #define ID3V2_MAX_SIZE 262144
 
-static int convert_copy_strip(char *target, const char *source, int size)
+static int convert_copy_strip(char *target, const char *source, size_t size)
 {
-	int res = 1, i;
+	int    res = 1;
+	size_t i;
 	if (charset_is_valid_utf8_string(source))
 		strncpy(target, source, size-1);
 	else
@@ -95,12 +96,18 @@ typedef enum {
 	TITLE, ARTIST, ALBUM, COMMENT, DATE, TRACKNR, LYRICS
 } MetaDataItem;
 
-static int set_data(TrackInfo *ti, MetaDataItem mdi, char *str, int str_size, Charset charset)
+static int set_data(
+	TrackInfo   *ti,
+	MetaDataItem mdi,
+	const char  *str,
+	size_t       str_size,
+	Charset      charset
+)
 {
 	int res = 0;
 	if (str[0] != '\0') {
-		char *target = NULL;
-		int   target_size = 0;
+		char  *target = NULL;
+		size_t target_size = 0;
 		switch (mdi) {
 			case TITLE:   target = ti->title;   target_size = SIZE_TITLE-1;   break;
 			case ARTIST:  target = ti->artist;  target_size = SIZE_ARTIST-1;  break;
@@ -161,7 +168,7 @@ static void set_cover_art(TrackInfo *ti, char *data, size_t data_size, Charset c
 	trackinfo_set_image(ti, data+m, data_size-m, mime_type);
 }
 
-static void set_lyrics(TrackInfo *ti, char *str, int str_size, Charset charset)
+static void set_lyrics(TrackInfo *ti, const char *str, size_t str_size, Charset charset)
 {
 	if (str[0] != '\0') {
 		int i = 0;
@@ -178,9 +185,9 @@ static void set_lyrics(TrackInfo *ti, char *str, int str_size, Charset charset)
 	}
 }
 
-static int fread_unsync(char *frame_data, int fsize, FILE *file)
+static int fread_unsync(char *frame_data, size_t fsize, FILE *file)
 {
-	int j;
+	size_t j;
 
 	for (j = 0; j < fsize; j++) {
 		unsigned char uc = fgetc(file);
@@ -217,7 +224,8 @@ int id3_read_id3v2(FILE *file, TrackInfo *ti, const char *file_type)
 			} else if ((flags & (1+2+4+8)) > 0) {
 				wdprintf(V_WARNING, "id3", "Tag error!\n");
 			} else {
-				int           i, error = 0, global_unsync = 0, real_size = 0;
+				int           error = 0, global_unsync = 0;
+				size_t        i, real_size = 0;
 				unsigned char frame_size[5];
 
 				if ((flags & 16) > 0) /* bit 4 */
@@ -239,12 +247,13 @@ int id3_read_id3v2(FILE *file, TrackInfo *ti, const char *file_type)
 						break;
 					}
 				if (!error) {
-					int  byte_counter = 0;
-					char frame_id[5] = "X", frame_flags[3];
+					size_t byte_counter = 0;
+					char   frame_id[5] = "X", frame_flags[3];
 
 					if (real_size - 10 > ID3V2_MAX_SIZE) frame_id[0] = 0;
 					while (byte_counter < real_size - 10 && frame_id[0] != 0) {
-						int fsize, frame_unsync = 0;
+						size_t fsize;
+						int    frame_unsync = 0;
 
 						if (fread(frame_id,    4, 1, file) &&
 						    fread(frame_size,  4, 1, file) &&
