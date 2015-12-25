@@ -135,10 +135,11 @@ static int set_data(TrackInfo *ti, MetaDataItem mdi, char *str, int str_size, Ch
 	return res;
 }
 
-static void set_cover_art(TrackInfo *ti, char *data, int data_size, Charset charset)
+static void set_cover_art(TrackInfo *ti, char *data, size_t data_size, Charset charset)
 {
-	char *mime_type = data, *descr = NULL;
-	int   m, pic_type = -1;
+	char  *mime_type = data, *descr = NULL;
+	size_t m;
+	int    pic_type;
 	/* skip over mime type: */
 	for (m = 0; data[m] != '\0' && m < data_size - 1; m++);
 	m++;
@@ -149,9 +150,14 @@ static void set_cover_art(TrackInfo *ti, char *data, int data_size, Charset char
 	for (; data[m] != '\0' && m < data_size - 1; m++);
 	m++;
 	if (charset == UTF_16 || charset == UTF_16_BOM) m++;
-	/*wdprintf(V_DEBUG, "id3", "APIC: mime type: %s pic type: %d description: %s\n",
-	           mime_type, pic_type, descr);
-	wdprintf(V_DEBUG, "id3", "APIC: size = %d (header: %d)\n", data_size-m, m);*/
+	wdprintf(
+		V_DEBUG,
+		"id3", "APIC: mime type: %s pic type: %d description: %s\n",
+		mime_type,
+		pic_type,
+		descr
+	);
+	/*wdprintf(V_DEBUG, "id3", "APIC: size = %d (header: %d)\n", data_size-m, m);*/
 	trackinfo_set_image(ti, data+m, data_size-m, mime_type);
 }
 
