@@ -149,10 +149,10 @@ static int websocket_send_string(Connection *c, const char *str)
 	int res = 0;
 	if (str && c->fd) {
 		res = websocket_send_str(c->fd, str, 0);
-		if (!res)
-			connection_close(c);
-		else
+		if (res)
 			connection_reset_timeout(c);
+		else
+			c->state = CON_ERROR;
 	}
 	return res;
 }
@@ -638,7 +638,6 @@ static int process_command(int rfd, Connection *c)
 		char  *str;
 
 		str = malloc(len+1);
-		memset(str, 0, len); /* Huh? */
 		if (str) {
 			strncpy(str, c->http_request_header, len);
 			str[len] = '\0';
@@ -1450,7 +1449,11 @@ static void webserver_main_loop(int listen_fd)
 					}
 				}
 			}
+			tmp_con = con_ptr;
 			con_ptr = con_ptr->next;
+			if (tmp_con->state == CON_ERROR) {
+				connection_close(tmp_con);
+			}
 		}
 		if (websocket_msg) free(websocket_msg);
 	}
