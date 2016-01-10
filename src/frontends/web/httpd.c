@@ -209,7 +209,7 @@ void connection_close(Connection *c)
 			"httpd",
 			"Closing connection %d: %s\n",
 			c->fd,
-			cres == 0 ? "ok" : "failed"
+			cres == 0 ? "ok" : strerror(errno)
 		);
 	}
 	if (c->http_request_header) {
@@ -560,8 +560,7 @@ static int tcp_server_read(int fd, char buf[], ssize_t *buflen)
 	int res = OKAY;
 	*buflen = read(fd, buf, *buflen);
 	if (*buflen <= 0) { /* End of TCP connection */
-		close(fd);
-		res = ERROR; /* fd no longer valid */
+		res = ERROR; /* Connection fd should be closed */
 	}
 	return res;
 }
