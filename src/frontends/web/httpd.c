@@ -1361,8 +1361,7 @@ static void webserver_main_loop(int listen_fd)
 							if (tmp) {
 								con_ptr->http_request_header = tmp;
 							} else {
-								free(con_ptr->http_request_header);
-								con_ptr->http_request_header = NULL;
+								connection_free_request_header(con_ptr);
 							}
 							if (con_ptr->http_request_header) {
 								memcpy(con_ptr->http_request_header+len_header, msgbuf, len);
