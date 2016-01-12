@@ -1451,6 +1451,7 @@ static void webserver_main_loop(int listen_fd)
 			tmp_con = con_ptr;
 			con_ptr = con_ptr->next;
 			if (tmp_con->state == CON_ERROR) {
+				if (first_connection == tmp_con) first_connection = con_ptr;
 				connection_close(tmp_con);
 			}
 		}
