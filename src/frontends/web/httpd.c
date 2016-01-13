@@ -1261,7 +1261,9 @@ static void webserver_main_loop(int listen_fd)
 			/* A signal has occured; ignore it. */
 			continue;
 		}
-		if (ret < 0) break;
+		if (ret < 0) {
+			wdprintf(V_DEBUG, "httpd", "An error occured: (%d) %s\n", ret, strerror(errno));
+		}
 
 		/* Check TCP listen port for incoming connections... */
 		if (FD_ISSET(listen_fd, &readfds)) {
