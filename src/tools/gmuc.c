@@ -1006,13 +1006,30 @@ static void handle_key_press(wint_t ch, UI *ui, int sock, char **cur_dir)
 	}
 }
 
-static void execute_command(int sock, Command cmd, char *params, UI *ui)
+static void execute_command(int sock, Command cmd, const char *params, UI *ui)
 {
 	char *str = NULL;
 	int   free_str = 0;
 	switch (cmd) {
 		case PLAY:
-			str = "{\"cmd\":\"play\"}";
+			if (!params) {
+				str = "{\"cmd\":\"play\"}";
+			} else {
+				char *file_esc = json_string_escape_alloc(params);
+
+				str = "";
+				if (file_esc) {
+					size_t len = strlen(file_esc);
+					if (len > 0) {
+						str = malloc(64 + len);
+						if (str) {
+							free_str = 1;
+							snprintf(str, 255, "{\"cmd\":\"play\", \"source\":\"file\", \"file\": \"%s\"}", file_esc);
+						}
+					}
+					free(file_esc);
+				}
+			}
 			break;
 		case PAUSE:
 			str = "{\"cmd\":\"pause\"}";
@@ -1069,9 +1086,6 @@ static void execute_command(int sock, Command cmd, char *params, UI *ui)
 			break;
 		case PING:
 			str = "{\"cmd\":\"ping\"}";
-			break;
-		case RAW:
-			str = params;
 			break;
 		default:
 			break;
@@ -1447,6 +1461,7 @@ static int process_cli_command(
 	char       *password,
 	int         just_once,
 	Command     command,
+	const char *params,
 	const char *format_str
 )
 {
@@ -1514,7 +1529,7 @@ static int process_cli_command(
 						int tmp;
 						if (!network_error) {
 							if (command != NO_COMMAND) {
-								execute_command(sock, command, NULL, NULL);
+								execute_command(sock, command, params, NULL);
 							}
 							tmp = handle_data_in_ringbuffer_print_only(
 								&rb,
@@ -1559,6 +1574,7 @@ int main(int argc, char **argv)
 	int         mode_info = 0, just_once = 1;
 	const char *format_str = NULL;
 	Command     command = NO_COMMAND;
+	char       *params = NULL;
 
 	assign_signal_handler(SIGINT, sig_handler);
 	assign_signal_handler(SIGTERM, sig_handler);
@@ -1592,17 +1608,30 @@ int main(int argc, char **argv)
 						}
 						break;
 					case 'e': { /* Execute command */
-						char *command_str = NULL;
+						char  *command_str = NULL;
+						size_t command_str_len = 1;
 						mode_info = 1;
-						if (i + 1 < argc && argv[i + 1][0] != '-') {
-							command_str = argv[i + 1];
+						command_str = malloc(1);
+						if (command_str) command_str[0] = '\0';
+						while (i + 1 < argc && argv[i + 1][0] != '-') {
+							char *tmp;
+							command_str_len += strlen(argv[i + 1]) + 1;
+							tmp = realloc(command_str, command_str_len);
+							if (tmp) {
+								command_str = tmp;
+								if (command_str) {
+									strcat(command_str, argv[i + 1]);
+									if (i + 2 < argc) strcat(command_str, " ");
+								}
+							} else {
+								break;
+							}
 							i++;
 						}
 						if (command_str) {
-							char *params = NULL;
 							if (!parse_input_alloc(command_str, &command, &params))
 								command = NO_COMMAND;
-							if (params) free(params);
+							if (command_str) free(command_str);
 						}
 						break;
 					}
@@ -1656,8 +1685,9 @@ int main(int argc, char **argv)
 		tmp = cfg_get_key_value(config, "Color");
 		if (argc >= 1) res = run_gmuc_ui(tmp && strcmp(tmp, "yes") == 0, host, password);
 	} else {
-		res = process_cli_command(host, password, just_once, command, format_str);
+		res = process_cli_command(host, password, just_once, command, params, format_str);
 	}
+	if (params) free(params);
 	cfg_free(config);
 	return res;
 }
