@@ -539,9 +539,15 @@ static void sig_handler(int sig)
 	quit = 1;
 }
 
-static void gmuc_help(char *str)
+static void gmuc_help(const char *str)
 {
-	printf("Usage: %s [-c /path/to/config.file] [-h] [-p] [-u] [-e command]\n", str);
+	printf("Usage: %s [-c /path/to/gmuc.conf] [-h] [-p [format string]] [-u] [command [arguments]]\n", str);
+	printf(
+		"When started without a command and without the -p flag the interactive gmuc\n" \
+		"user interface will be launched.\n" \
+		"The -p flag causes gmuc to print the current track and exit or if the -u flag\n" \
+		"is also specified continously print the current track.\n"
+	);
 	exit(0);
 }
 
@@ -1588,7 +1594,7 @@ int main(int argc, char **argv)
 	if (argc > 1) {
 		size_t i;
 		for (i = 1; i < argc; i++) {
-			if (strlen(argv[i]) == 2) { /* One char parameter */
+			if (strlen(argv[i]) >= 2 && argv[i][0] == '-') { /* Parameter (beginning with a '-') */
 				switch (argv[i][1]) {
 					case 'h':
 						gmuc_help(argv[0]);
@@ -1607,34 +1613,6 @@ int main(int argc, char **argv)
 							i++;
 						}
 						break;
-					case 'e': { /* Execute command */
-						char  *command_str = NULL;
-						size_t command_str_len = 1;
-						mode_info = 1;
-						command_str = malloc(1);
-						if (command_str) command_str[0] = '\0';
-						while (i + 1 < argc && argv[i + 1][0] != '-') {
-							char *tmp;
-							command_str_len += strlen(argv[i + 1]) + 1;
-							tmp = realloc(command_str, command_str_len);
-							if (tmp) {
-								command_str = tmp;
-								if (command_str) {
-									strcat(command_str, argv[i + 1]);
-									if (i + 2 < argc) strcat(command_str, " ");
-								}
-							} else {
-								break;
-							}
-							i++;
-						}
-						if (command_str) {
-							if (!parse_input_alloc(command_str, &command, &params))
-								command = NO_COMMAND;
-							if (command_str) free(command_str);
-						}
-						break;
-					}
 					case 'p': /* Print track information on stdout */
 						mode_info = 1;
 						if (i + 1 < argc && argv[i + 1][0] != '-') {
@@ -1645,9 +1623,36 @@ int main(int argc, char **argv)
 					case 'u': /* Continue running after printing the track information */
 						just_once = 0;
 						break;
+					default:
+						gmuc_help(argv[0]);
+						break;
 				}
-			} else {
-				gmuc_help(argv[0]);
+			} else { /* Execute command (play/pause/etc.) */
+				char  *command_str = NULL;
+				size_t command_str_len = 1;
+				mode_info = 1;
+				command_str = malloc(1);
+				if (command_str) command_str[0] = '\0';
+				while (i < argc && argv[i][0] != '-') {
+					char *tmp;
+					command_str_len += strlen(argv[i]) + 1;
+					tmp = realloc(command_str, command_str_len);
+					if (tmp) {
+						command_str = tmp;
+						if (command_str) {
+							strcat(command_str, argv[i]);
+							if (i + 1 < argc) strcat(command_str, " ");
+						}
+					} else {
+						break;
+					}
+					i++;
+				}
+				if (command_str) {
+					if (!parse_input_alloc(command_str, &command, &params))
+						command = NO_COMMAND;
+					if (command_str) free(command_str);
+				}
 			}
 		}
 	}
