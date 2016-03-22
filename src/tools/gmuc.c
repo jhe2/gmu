@@ -33,6 +33,7 @@
 #include <curses.h>
 #include <signal.h>
 #include <wctype.h>
+#include <limits.h>
 #include "../wejconfig.h"
 #include "../ringbuffer.h"
 #include "../debug.h"
@@ -1630,21 +1631,38 @@ int main(int argc, char **argv)
 			} else { /* Execute command (play/pause/etc.) */
 				char  *command_str = NULL;
 				size_t command_str_len = 1;
+
 				mode_info = 1;
 				command_str = malloc(1);
 				if (command_str) command_str[0] = '\0';
 				while (i < argc && argv[i][0] != '-') {
-					char *tmp;
-					command_str_len += strlen(argv[i]) + 1;
-					tmp = realloc(command_str, command_str_len);
-					if (tmp) {
-						command_str = tmp;
-						if (command_str) {
-							strcat(command_str, argv[i]);
-							if (i + 1 < argc) strcat(command_str, " ");
-						}
+					char *tmp, *argument;
+					int   argument_is_file = 0;
+					char  path[PATH_MAX];
+					/* Check if argument is a file */
+					if (strchr(argv[i], '.')) { /* Argument contains a dot */
+						if (file_exists(argv[i])) argument_is_file = 1;
+					}
+					if (!argument_is_file) {
+						argument = argv[i];
 					} else {
-						break;
+						if (realpath(argv[i], path))
+							argument = path;
+						else
+							argument = NULL;
+					}
+					if (argument) {
+						command_str_len += strlen(argument) + 1;
+						tmp = realloc(command_str, command_str_len);
+						if (tmp) {
+							command_str = tmp;
+							if (command_str) {
+								strcat(command_str, argument);
+								if (i + 1 < argc) strcat(command_str, " ");
+							}
+						} else {
+							break;
+						}
 					}
 					i++;
 				}
