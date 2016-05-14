@@ -424,6 +424,7 @@ static void *decode_audio_thread(void *udata)
 								ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
 								size += ret;
 							}
+							if (ret <= 0) SDL_Delay(50);
 							if (gd->get_current_bitrate) br = (*gd->get_current_bitrate)();
 							if (br > 0) {
 								if (trackinfo_acquire_lock(ti)) {
