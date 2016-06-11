@@ -17,6 +17,7 @@
 #define AUDIO_MAX_SW_VOLUME 16
 #ifndef _AUDIO_H
 #define _AUDIO_H
+#include <sys/types.h>
 
 int      audio_device_open(int samplerate, int channels);
 int      audio_fill_buffer(char *data, size_t size);

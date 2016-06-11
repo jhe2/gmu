@@ -15,6 +15,8 @@
  */
 #ifndef WEJ_RINGBUFFER_H
 #define WEJ_RINGBUFFER_H
+#include <sys/types.h>
+
 struct _RingBuffer {
 	size_t  size;
 	char   *buffer;
