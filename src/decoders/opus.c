@@ -112,18 +112,20 @@ static struct _trackinfo_mapping tim_metaonly[] = {
 	{ NULL,           NULL,       0 }
 };
 
-static void read_tags(int li, struct _trackinfo_mapping *tim)
+static void read_tags(OggOpusFile *oof, int li, struct _trackinfo_mapping *tim)
 {
 	const OpusTags *tags = op_tags(oof, li);
 	int             ci, i;
-	for (ci = 0; ci < tags->comments; ci++) {
-		wdprintf(V_DEBUG, "opus", "metadata(%d): %s\n", ci, tags->user_comments[ci]);
-		for (i = 0; tim[i].key; i++) {
-			int len = strlen(tim[i].key);
-			if (strncasecmp(tags->user_comments[ci], tim[i].key, len) == 0) {
-				wdprintf(V_INFO, "opus", "%s> %s\n", tim[i].key, tags->user_comments[ci]+len);
-				strncpy(tim[i].target, tags->user_comments[ci]+len, tim[i].maxlen);
-				tim[i].target[tim[i].maxlen-1] = '\0';
+	if (tags) {
+		for (ci = 0; ci < tags->comments; ci++) {
+			wdprintf(V_DEBUG, "opus", "metadata(%d): %s\n", ci, tags->user_comments[ci]);
+			for (i = 0; tim[i].key; i++) {
+				int len = strlen(tim[i].key);
+				if (strncasecmp(tags->user_comments[ci], tim[i].key, len) == 0) {
+					wdprintf(V_INFO, "opus", "%s> %s\n", tim[i].key, tags->user_comments[ci]+len);
+					strncpy(tim[i].target, tags->user_comments[ci]+len, tim[i].maxlen);
+					tim[i].target[tim[i].maxlen-1] = '\0';
+				}
 			}
 		}
 	}
@@ -138,7 +140,7 @@ static int decode_data(char *target, size_t max_size)
 
 	if (li != prev_li) {
 		prev_li = li;
-		read_tags(li, tim);
+		read_tags(oof, li, tim);
 	}
 
 	if (channels > 1)
@@ -176,7 +178,7 @@ static int opus_play_file(const char *opus_file)
 			result = 0;
 		} else {
 			int li = op_current_link(oof);
-			read_tags(li, tim);
+			read_tags(oof, li, tim);
 			channels = op_channel_count(oof, -1);
 			bitrate  = op_bitrate(oof, -1);
 			sample_rate = 48000;
@@ -328,7 +330,7 @@ static int meta_data_load(const char *filename)
 			result = 0;
 		} else {
 			int li = op_current_link(oof_tmp);
-			read_tags(li, tim_metaonly);
+			read_tags(oof_tmp, li, tim_metaonly);
 			result = 1;
 		}
 		op_free(oof_tmp);
