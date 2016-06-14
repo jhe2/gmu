@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: reader.c  Created: 110406
  *
@@ -30,7 +30,8 @@
 #include "reader.h"
 #include "ringbuffer.h"
 #include "debug.h"
-#include "core.h" /* for VERSION_NUMBER */
+#include "core.h" /* for VERSION_NUMBER and DEFAULT_THREAD_STACK_SIZE */
+#include "pthread_helper.h"
 
 static size_t http_cache_size           = 512 * 1024;
 static size_t http_cache_prebuffer_size = 256 * 1024;
@@ -269,7 +270,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 
 						/* Start reader thread... */
 						if (ringbuffer_init(&(r->rb_http), http_cache_size)) {
-							pthread_create(&(r->thread), NULL, http_reader_thread, r);
+							pthread_create_with_stack_size(&(r->thread), DEFAULT_THREAD_STACK_SIZE, http_reader_thread, r);
 						} else {
 							wdprintf(V_ERROR, "reader", "Out of memory.\n");
 						}

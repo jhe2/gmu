@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: sdl.c  Created: 060929
  *
@@ -28,6 +28,7 @@
 #include "../../decloader.h"  /* for decoders list */
 #include "../../gmudecoder.h" /* for decoders list */
 #include "../../debug.h"
+#include "../../pthread_helper.h"
 
 #include FILE_HW_H
 #include "../../wejconfig.h"
@@ -48,6 +49,8 @@
 #include "inputconfig.h"
 #include "help.h"
 #include "gmuerror.h"
+
+#define SDL_FRONTEND_THREAD_STACK_SIZE (768 * 1024)
 
 #define FPS          10
 #define FRAME_SKIP    1
@@ -1363,7 +1366,7 @@ static int init(void)
 	} else {
 		wdprintf(V_INFO, "sdl_frontend", "Display surface initialized.\n");
 		display = ds;
-		if (pthread_create(&fe_thread, NULL, start_player, NULL) == 0)
+		if (pthread_create_with_stack_size(&fe_thread, SDL_FRONTEND_THREAD_STACK_SIZE, start_player, NULL) == 0)
 			res = 1;
 	}
 	return res;

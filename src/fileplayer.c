@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: fileplayer.c  Created: 070107
  *
@@ -32,6 +32,7 @@
 #include "core.h"
 #include "eventqueue.h"
 #include "gmuerror.h"
+#include "pthread_helper.h"
 
 #define BUF_SIZE 65536
 
@@ -180,7 +181,7 @@ int file_player_init(TrackInfo *ti_ref, int device_close_asap)
 	pthread_mutex_init(&item_status_mutex, NULL);
 	file_player_set_filename(NULL);
 	ti = ti_ref;
-	pthread_create(&thread, NULL, decode_audio_thread, NULL);
+	pthread_create_with_stack_size(&thread, DEFAULT_THREAD_STACK_SIZE, decode_audio_thread, NULL);
 	dev_close_asap = device_close_asap;
 	return 0;
 }

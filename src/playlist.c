@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: playlist.c  Created: 060930
  *
@@ -28,6 +28,7 @@
 #include "core.h"
 #include "metadatareader.h"
 #include "dirparser.h"
+#include "pthread_helper.h"
 
 #define PLAYLIST_MAX_LENGTH 9999
 
@@ -230,7 +231,7 @@ int playlist_add_dir(
 			memcpy(tp.directory, directory, len+1);
 			tp.pl = pl;
 			tp.finished_callback = finished_callback;
-			pthread_create(&thread, NULL, thread_add_dir, &tp);
+			pthread_create_with_stack_size(&thread, DEFAULT_THREAD_STACK_SIZE, thread_add_dir, &tp);
 			pthread_detach(thread);
 			res = 1;
 		}

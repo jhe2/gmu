@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: medialib.c  Created: 130627
  *
@@ -19,6 +19,8 @@
 #include "metadatareader.h"
 #include "util.h"
 #include "debug.h"
+#include "core.h" /* For DEFAULT_THREAD_STACK_SIZE */
+#include "pthread_helper.h"
 
 int medialib_create_db_and_open(GmuMedialib *gm)
 {
@@ -148,7 +150,7 @@ int medialib_start_refresh(GmuMedialib *gm, void (*finished_callback)(void))
 		gm->refresh_in_progress = 1;
 		tp.gm = gm;
 		tp.finished_callback = finished_callback;
-		pthread_create(&thread, NULL, thread_gml_refresh, &tp);
+		pthread_create_with_stack_size(&thread, DEFAULT_THREAD_STACK_SIZE, thread_gml_refresh, &tp);
 		pthread_detach(thread);
 		res = 1;
 	}

@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2011 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: lirc.c  Created: 100502
  *
@@ -23,6 +23,7 @@
 #include "../gmufrontend.h"
 #include "../core.h"
 #include "../debug.h"
+#include "../pthread_helper.h"
 
 static pthread_t fe_thread;
 
@@ -96,7 +97,7 @@ static void *thread_func(void *arg)
 static int init(void)
 {
 	int res = 0;
-	if (pthread_create(&fe_thread, NULL, thread_func, NULL) == 0)
+	if (pthread_create_with_stack_size(&fe_thread, DEFAULT_THREAD_STACK_SIZE, thread_func, NULL) == 0)
 		res = 1;
 	return res;
 }
