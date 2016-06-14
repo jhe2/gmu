@@ -31,6 +31,7 @@
 #include "pthread_helper.h"
 
 #define PLAYLIST_MAX_LENGTH 9999
+#define PLAYLIST_DIR_ADD_THREAD_STACK_SIZE (8192 * 1024)
 
 static int recursive_directory_add_in_progress = 0;
 
@@ -231,7 +232,7 @@ int playlist_add_dir(
 			memcpy(tp.directory, directory, len+1);
 			tp.pl = pl;
 			tp.finished_callback = finished_callback;
-			pthread_create_with_stack_size(&thread, DEFAULT_THREAD_STACK_SIZE, thread_add_dir, &tp);
+			pthread_create_with_stack_size(&thread, PLAYLIST_DIR_ADD_THREAD_STACK_SIZE, thread_add_dir, &tp);
 			pthread_detach(thread);
 			res = 1;
 		}
