@@ -18,7 +18,7 @@ typedef struct FileBrowser
 	int         offset;
 	int         horiz_offset;
 	int         selection;
-	Dir         dir;
+	Dir        *dir;
 	const Skin *skin;
 	Charset     charset;
 	int         directories_first;

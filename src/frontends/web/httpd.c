@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
  *
  * File: httpd.c  Created: 111209
  *
@@ -951,12 +951,12 @@ void gmu_http_send_initial_information(Connection *c)
 
 static void gmu_http_read_dir(const char *directory, Connection *c)
 {
-	Dir         dir;
+	Dir        *dir;
 	char        base_dir[256];
 	const char *tmp;
 	ConfigFile *cf = gmu_core_get_config();
 
-	dir_init(&dir);
+	dir = dir_init();
 	gmu_core_config_acquire_lock();
 	tmp = cfg_get_key_value(cf, "gmuhttp.BaseDir");
 	if (tmp && strlen(tmp) < 256) {
@@ -967,12 +967,12 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 	gmu_core_config_release_lock();
 	if (strncmp(base_dir, directory, strlen(base_dir)) != 0)
 		directory = base_dir;
-	dir_set_base_dir(&dir, base_dir);
-	dir_set_ext_filter(&dir, gmu_core_get_file_extensions(), 1);
+	dir_set_base_dir(dir, base_dir);
+	dir_set_ext_filter(dir, gmu_core_get_file_extensions(), 1);
 
-	if (dir_read(&dir, directory, 1)) {
+	if (dir_read(dir, directory, 1)) {
 		size_t i = 0;
-		int    num_files = dir_get_number_of_files(&dir);
+		int    num_files = dir_get_number_of_files(dir);
 		while (i < num_files) {
 			char   res[MAX_LEN], *jpath = NULL, *spath;
 			size_t pos;
@@ -991,8 +991,8 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 				);
 				free(jpath);
 				for (pos = strlen(res); i < num_files; i++) {
-					char  *tmp = json_string_escape_alloc(dir_get_filename(&dir, i));
-					long   filesize = dir_get_filesize(&dir, i);
+					char  *tmp = json_string_escape_alloc(dir_get_filename(dir, i));
+					long   filesize = dir_get_filesize(dir, i);
 					size_t pos_prev = pos;
 
 					if (tmp) {
@@ -1003,7 +1003,7 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 							i,
 							tmp,
 							filesize,
-							dir_get_flag(&dir, i) == DIRECTORY
+							dir_get_flag(dir, i) == DIRECTORY
 						);
 						free(tmp);
 					}
@@ -1026,7 +1026,7 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 	} else { /* Error condition */
 		websocket_send_string(c, "{ \"cmd\": \"dir_read\", \"res\" : \"error\", \"msg\" : \"Unable to read directory\" }");
 	}
-	dir_free(&dir);
+	dir_free(dir);
 }
 
 static void gmu_http_ping(Connection *c)

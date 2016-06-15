@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: filebrowser.c  Created: 061011
  *
@@ -31,14 +31,14 @@ void file_browser_init(FileBrowser *fb, const Skin *skin, Charset charset, const
 	fb->directories_first = 0;
 	fb->longest_line_so_far = 0;
 	fb->select_next_after_add = 0;
-	dir_init(&(fb->dir));
-	dir_set_ext_filter(&(fb->dir), gmu_core_get_file_extensions(), 1);
-	dir_set_base_dir(&(fb->dir), base_dir);
+	fb->dir = dir_init();
+	dir_set_ext_filter(fb->dir, gmu_core_get_file_extensions(), 1);
+	dir_set_base_dir(fb->dir, base_dir);
 }
 
 void file_browser_free(FileBrowser *fb)
 {
-	dir_free(&(fb->dir));
+	dir_free(fb->dir);
 }
 
 void file_browser_set_directories_first(FileBrowser *fb, int value)
@@ -59,7 +59,7 @@ int file_browser_get_selection(FileBrowser *fb)
 
 void file_browser_move_selection_down(FileBrowser *fb)
 {
-	if (fb->selection < dir_get_number_of_files(&fb->dir) - 1) {
+	if (fb->selection < dir_get_number_of_files(fb->dir) - 1) {
 		fb->selection++;
 	} else {
 		fb->selection = 0;
@@ -75,8 +75,8 @@ void file_browser_move_selection_up(FileBrowser *fb)
 		fb->selection--;
 	} else {
 		int number_of_visible_lines = skin_textarea_get_number_of_lines(fb->skin);
-		fb->selection = dir_get_number_of_files(&fb->dir) - 1 >= 0 ? 
-		                dir_get_number_of_files(&fb->dir) - 1 : 0;
+		fb->selection = dir_get_number_of_files(fb->dir) - 1 >= 0 ? 
+		                dir_get_number_of_files(fb->dir) - 1 : 0;
 		fb->offset = fb->selection - number_of_visible_lines + 1 > 0 ?
 		             fb->selection - number_of_visible_lines + 1 : 0;
 	}
@@ -97,12 +97,12 @@ void file_browser_move_selection_n_items_up(FileBrowser *fb, int n)
 
 char *file_browser_get_selected_file(FileBrowser *fb)
 {
-	return dir_get_filename(&fb->dir, fb->selection);
+	return dir_get_filename(fb->dir, fb->selection);
 }
 
 char *file_browser_get_selected_file_full_path_alloc(FileBrowser *fb)
 {
-	return dir_get_filename_with_full_path_alloc(&fb->dir, fb->selection);
+	return dir_get_filename_with_full_path_alloc(fb->dir, fb->selection);
 }
 
 static int internal_change_dir(FileBrowser *fb, const char *new_dir)
@@ -116,8 +116,8 @@ static int internal_change_dir(FileBrowser *fb, const char *new_dir)
 			ndir = malloc(len+1);
 			if (ndir) {
 				memcpy(ndir, new_dir, len+1);
-				dir_free(&fb->dir);
-				result = dir_read(&fb->dir, ndir, fb->directories_first);
+				dir_clear(fb->dir);
+				result = dir_read(fb->dir, ndir, fb->directories_first);
 				fb->selection = 0;
 				fb->offset = 0;
 				fb->horiz_offset = 0;
@@ -132,13 +132,13 @@ int file_browser_change_dir(FileBrowser *fb, const char *new_dir)
 {
 	int result = internal_change_dir(fb, new_dir);
 	if (!result) result = internal_change_dir(fb, "..");
-	if (!result) result = internal_change_dir(fb, dir_get_base_dir(&(fb->dir)));
+	if (!result) result = internal_change_dir(fb, dir_get_base_dir(fb->dir));
 	return result;
 }
 
 int file_browser_selection_is_dir(FileBrowser *fb)
 {
-	return (dir_get_flag(&fb->dir, fb->selection) == DIRECTORY ? 1 : 0);
+	return (dir_get_flag(fb->dir, fb->selection) == DIRECTORY ? 1 : 0);
 }
 
 #define FB_MAXIMUM_STR_LENGTH 255
@@ -148,7 +148,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 	int       cpl = skin_textarea_get_characters_per_line(fb->skin);
 	int       i, pl, len = (cpl > FB_MAXIMUM_STR_LENGTH ? FB_MAXIMUM_STR_LENGTH : cpl);
 	const int chars_left = len - 15;
-	char      buf[FB_MAXIMUM_STR_LENGTH+1], *buf2 = alloca(chars_left+1), *path = dir_get_path(&fb->dir);
+	char      buf[FB_MAXIMUM_STR_LENGTH+1], *buf2 = alloca(chars_left+1), *path = dir_get_path(fb->dir);
 	char     *bufptr, buf3[FB_MAXIMUM_STR_LENGTH];
 	int       number_of_visible_lines = skin_textarea_get_number_of_lines(fb->skin);
 	int       selected_entry_drawn = 0;
@@ -172,16 +172,16 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 	fb->longest_line_so_far = 0;
 
 	for (i = fb->offset; 
-	     i < fb->offset + number_of_visible_lines && i < dir_get_number_of_files(&fb->dir); 
+	     i < fb->offset + number_of_visible_lines && i < dir_get_number_of_files(fb->dir);
 	     i++) {
 	    int                 line_length = 0;
 	    const TextRenderer *font, *font_inverted;
 
-		if (dir_get_flag(&fb->dir, i) == DIRECTORY) {
+		if (dir_get_flag(fb->dir, i) == DIRECTORY) {
 			snprintf(buf, len, "[DIR]");
 		} else {
 			char fsbuf[32];
-			dir_get_human_readable_filesize(&fb->dir, i, fsbuf, 32);
+			dir_get_human_readable_filesize(fb->dir, i, fsbuf, 32);
 			snprintf(buf, len, " %4s", fsbuf);
 		}
 
@@ -195,7 +195,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		                         gmu_widget_get_pos_y(&fb->skin->lv, 1) + 1
 		                         + (i-fb->offset)*(fb->skin->font2_char_height+1));
 
-		snprintf(buf, FB_MAXIMUM_STR_LENGTH, "%s", dir_get_filename(&fb->dir, i));
+		snprintf(buf, FB_MAXIMUM_STR_LENGTH, "%s", dir_get_filename(fb->dir, i));
 		if (fb->charset != UTF_8) {
 			charset_iso8859_1_to_utf8(buf3, buf, FB_MAXIMUM_STR_LENGTH);
 			bufptr = buf3;

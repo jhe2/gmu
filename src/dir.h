@@ -36,12 +36,13 @@ struct _Dir
 
 typedef struct _Dir Dir;
 
-void  dir_init(Dir *dir);
+Dir  *dir_init(void);
 void  dir_set_base_dir(Dir *dir, const char *base_dir);
 char *dir_get_base_dir(Dir *dir);
 /* dir_set_ext_filter() expects a pointer to a _statically_ allocated array of file extensions! */
 void  dir_set_ext_filter(Dir *dir, char **dir_exts, int show_dirs);
 int   dir_read(Dir *dir, const char *path, int directories_first);
+void  dir_clear(Dir *dir);
 void  dir_free(Dir *dir);
 char *dir_get_filename(Dir *dir, int i);
 char *dir_get_filename_with_full_path_alloc(Dir *dir, int i);

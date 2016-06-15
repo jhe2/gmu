@@ -40,15 +40,19 @@ static int select_file(const struct dirent *de)
 	return 1;
 }
 
-void dir_init(Dir *dir)
+Dir *dir_init(void)
 {
-	dir->entries = 0;
-	dir->files = 0;
-	dir->ep = NULL;
-	dir->path[0] = '\0';
-	dir->base_dir[0] = '\0';
-	dir->dir_extensions = NULL;
-	dir->show_directories = 0;
+	Dir *dir = (Dir *)malloc(sizeof(Dir));
+	if (dir) {
+		dir->entries = 0;
+		dir->files = 0;
+		dir->ep = NULL;
+		dir->path[0] = '\0';
+		dir->base_dir[0] = '\0';
+		dir->dir_extensions = NULL;
+		dir->show_directories = 0;
+	}
+	return dir;
 }
 
 void dir_set_base_dir(Dir *dir, const char *base_dir)
@@ -82,7 +86,7 @@ int dir_read(Dir *dir, const char *path, int directories_first)
 			memset(dir->path, 0, 256);
 			strncpy(dir->path, new_path, 255);
 			wdprintf(V_DEBUG, "dir", "scanning path=[%s]\n", dir->path);
-			dir_free(dir);
+			dir_clear(dir);
 			dir->entries = scandir(dir->path, &(dir->ep), select_file, alphasort);
 			dir->files = dir->entries;
 			wdprintf(V_DEBUG, "dir", "files found=%d\n", dir->files);
@@ -157,16 +161,24 @@ int dir_read(Dir *dir, const char *path, int directories_first)
 	return result;
 }
 
-void dir_free(Dir *dir)
+void dir_clear(Dir *dir)
 {
 	int             i;
 	struct dirent **list;
 
-	if (dir->ep) {
+	if (dir && dir->ep) {
 		for (i = 0, list = dir->ep; i < dir->entries; i++, list++)
 			free(*list);
 		free(dir->ep);
 		dir->ep = NULL;
+	}
+}
+
+void dir_free(Dir *dir)
+{
+	if (dir) {
+		dir_clear(dir);
+		free(dir);
 	}
 }
 
