@@ -24,8 +24,6 @@
 #include "httpd.h"
 #include "json.h"
 
-#define HTTP_FRONTEND_THREAD_STACK_SIZE (512 * 1024)
-
 static const char *get_name(void)
 {
 	return "Gmu HTTP server frontend v0.1";
@@ -61,7 +59,7 @@ static int init(void)
 	}
 	ip->webserver_root = gmu_core_get_base_dir();
 
-	if (pthread_create_with_stack_size(&fe_thread, HTTP_FRONTEND_THREAD_STACK_SIZE, httpd_run_server, ip) == 0)
+	if (pthread_create_with_stack_size(&fe_thread, DEFAULT_THREAD_STACK_SIZE, httpd_run_server, ip) == 0)
 		res = 1;
 	else if (ip)
 		free(ip);

@@ -50,8 +50,6 @@
 #include "help.h"
 #include "gmuerror.h"
 
-#define SDL_FRONTEND_THREAD_STACK_SIZE (768 * 1024)
-
 #define FPS          10
 #define FRAME_SKIP    1
 #define NOTICE_DELAY  8
@@ -1366,7 +1364,7 @@ static int init(void)
 	} else {
 		wdprintf(V_INFO, "sdl_frontend", "Display surface initialized.\n");
 		display = ds;
-		if (pthread_create_with_stack_size(&fe_thread, SDL_FRONTEND_THREAD_STACK_SIZE, start_player, NULL) == 0)
+		if (pthread_create_with_stack_size(&fe_thread, DEFAULT_THREAD_STACK_SIZE, start_player, NULL) == 0)
 			res = 1;
 	}
 	return res;
