@@ -1577,7 +1577,7 @@ int main(int argc, char **argv)
 	char       *tmp;
 	ConfigFile *config;
 	char       *password, *host;
-	char        config_file_path[256] = "", *homedir;
+	char       *config_file_path = NULL, *homedir;
 	int         mode_info = 0, just_once = 1;
 	const char *format_str = NULL;
 	Command     command = NO_COMMAND;
@@ -1609,7 +1609,9 @@ int main(int argc, char **argv)
 								printf("ERROR: Path too long.\n");
 								exit(1);
 							} else {
-								strncpy(config_file_path, argv[i+1], len);
+								config_file_path = malloc(len+1);
+								if (config_file_path)
+									strncpy(config_file_path, argv[i+1], len+1);
 							}
 							i++;
 						}
@@ -1676,18 +1678,22 @@ int main(int argc, char **argv)
 	}
 
 	homedir = getenv("HOME");
-	if (homedir || config_file_path[0] != '\0') {
-		if (config_file_path[0] == '\0')
-			snprintf(config_file_path, 255, "%s/.config/gmu/gmuc.conf", homedir);
+	if (homedir || config_file_path) {
+		if (!config_file_path)
+			config_file_path = get_config_dir_with_name_alloc("gmu/gmuc.conf", 0);
 		if (cfg_read_config_file(config, config_file_path) != 0) {
-			char tmp[256];
-			wdprintf(V_INFO, "gmuc", "No config file found. Creating a config file at %s. Please edit that file and try again.\n", config_file_path);
-			snprintf(tmp, 255, "%s/.config", homedir);
-			mkdir(tmp, 0);
-			snprintf(tmp, 255, "%s/.config/gmu", homedir);
-			mkdir(tmp, 0);
-			if (cfg_write_config_file(config, config_file_path))
-				wdprintf(V_ERROR, "gmuc", "ERROR: Unable to create config file.\n");
+			char *tmp = get_config_dir_with_name_alloc("gmu", 1);
+			if (tmp) {
+				free(tmp);
+				wdprintf(
+					V_INFO,
+					"gmuc",
+					"No config file found. Creating a config file at %s. Please edit that file and try again.\n",
+					config_file_path
+				);
+				if (cfg_write_config_file(config, config_file_path))
+					wdprintf(V_ERROR, "gmuc", "ERROR: Unable to create config file.\n");
+			}
 			cfg_free(config);
 			exit(2);
 		}
@@ -1701,6 +1707,7 @@ int main(int argc, char **argv)
 		wdprintf(V_ERROR, "gmuc", "ERROR: Cannot find user's home directory.\n");
 		exit(3);
 	}
+	if (config_file_path) free(config_file_path);
 
 	wdprintf_set_verbosity(V_SILENT);
 	if (!mode_info) {
