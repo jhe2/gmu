@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: util.c  Created: 060929
  *
@@ -19,6 +19,11 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <sys/stat.h> /* for mkdir() */
+#include <errno.h>
 #include "charset.h"
 #include "debug.h"
 #include "util.h"
@@ -335,4 +340,89 @@ int assign_signal_handler(int sig_num, void (*signalhandler)(int))
 	new_sig.sa_flags = SA_RESTART;
 	if (sigaction(sig_num, &new_sig, NULL) < 0) res = 0;
 	return res;
+}
+
+int rmkdir(const char *dir, mode_t mode)
+{
+	int    res = -1;
+	char   tmp[PATH_MAX];
+	char  *p = NULL;
+	size_t len, size = sizeof(tmp);
+	errno = 0;
+
+	len = snprintf(tmp, size, "%s", dir);
+	if (len > 0 && len < size) {
+		if (tmp[len - 1] == '/')
+			tmp[len - 1] = 0;
+		for (p = tmp + 1; *p; p++) {
+			if (*p == '/') {
+				*p = 0;
+				mkdir(tmp, mode);
+				*p = '/';
+			}
+		}
+		res = mkdir(tmp, mode);
+	}
+	return res;
+}
+
+const char *get_home_dir(void)
+{
+	const char *home_dir;
+
+	if ((home_dir = getenv("HOME")) == NULL) {
+		home_dir = getpwuid(getuid())->pw_dir;
+	}
+	return home_dir;
+}
+
+char *get_config_dir_alloc(int create)
+{
+	char       *config_dir = NULL;
+	const char *tmp;
+
+	if ((tmp = getenv("XDG_CONFIG_HOME")) != NULL) {
+		size_t len = strlen(tmp);
+		if (len > 1) {
+			config_dir = malloc(len + 1);
+			if (config_dir) {
+				strncpy(config_dir, tmp, len + 1);
+			}
+		}
+	} else {
+		/* Try with $HOME/.config instead... */
+		const char *home = get_home_dir();
+		if (home) {
+			size_t len = strlen(home);
+			if (len > 1) {
+				config_dir = malloc(len + 8 + 1); /* strlen("/.config") = 8 */
+				if (config_dir) {
+					snprintf(config_dir, len + 8 + 1, "%s/.config/", home);
+				}
+			}
+		}
+	}
+	if (create) rmkdir(config_dir, S_IRWXU);
+	return config_dir;
+}
+
+char *get_config_dir_with_name_alloc(const char *name, int create)
+{
+	char *config_dir = get_config_dir_alloc(create);
+
+	if (config_dir && name) {
+		size_t len = strlen(name);
+
+		if (len > 1) {
+			size_t len_config_dir = strlen(config_dir);
+			if (len_config_dir > 1) {
+				size_t len_total = len_config_dir + len + 2;
+				config_dir = realloc(config_dir, len_total);
+				strcat(config_dir, "/");
+				strcat(config_dir, name);
+				if (create) rmkdir(config_dir, S_IRWXU);
+			}
+		}
+	}
+	return config_dir;
 }

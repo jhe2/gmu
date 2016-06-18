@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: util.h  Created: 060929
  *
@@ -55,4 +55,31 @@ int   strncpy_charset_conv(
  */
 char *expand_path_alloc(const char *path);
 int assign_signal_handler(int sig_num, void (*signalhandler)(int));
+
+/**
+ * Creates a directory path with all sub directories as necessary.
+ * Returns 0 on success or -1 on error (and set errno).
+ */
+int rmkdir(const char *dir, mode_t mode);
+
+/**
+ * Returns the user's home directory.
+ */
+const char *get_home_dir(void);
+
+/**
+ * Returns the user's config file directory.
+ * If 'create' is true, the function tries to create the directory,
+ * if it does not exist. Returns NULL on failure. The returned value
+ * needs to be free'd when it is no longer used.
+ */
+char *get_config_dir_alloc(int create);
+
+/**
+ * Returns the config file directory for a given application name.
+ * If 'create' is true, the function tries to create the directory,
+ * if it does not exist. Returns NULL on failure. The returned value
+ * needs to be free'd when it is no longer used.
+ */
+char *get_config_dir_with_name_alloc(const char *name, int create);
 #endif
