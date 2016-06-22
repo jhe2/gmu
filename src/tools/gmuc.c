@@ -1577,7 +1577,7 @@ int main(int argc, char **argv)
 	char       *tmp;
 	ConfigFile *config;
 	char       *password, *host;
-	char       *config_file_path = NULL, *homedir;
+	char       *config_file_path = NULL;
 	int         mode_info = 0, just_once = 1;
 	const char *format_str = NULL;
 	Command     command = NO_COMMAND;
@@ -1677,35 +1677,29 @@ int main(int argc, char **argv)
 		}
 	}
 
-	homedir = getenv("HOME");
-	if (homedir || config_file_path) {
-		if (!config_file_path)
-			config_file_path = get_config_dir_with_name_alloc("gmu/gmuc.conf", 0);
-		if (cfg_read_config_file(config, config_file_path) != 0) {
-			char *tmp = get_config_dir_with_name_alloc("gmu", 1);
-			if (tmp) {
-				free(tmp);
-				wdprintf(
-					V_INFO,
-					"gmuc",
-					"No config file found. Creating a config file at %s. Please edit that file and try again.\n",
-					config_file_path
-				);
-				if (cfg_write_config_file(config, config_file_path))
-					wdprintf(V_ERROR, "gmuc", "ERROR: Unable to create config file.\n");
-			}
-			cfg_free(config);
-			exit(2);
+	if (!config_file_path)
+		config_file_path = get_config_dir_with_name_alloc("gmu/gmuc.conf", 0);
+	if (cfg_read_config_file(config, config_file_path) != 0) {
+		char *tmp = get_config_dir_with_name_alloc("gmu", 1);
+		if (tmp) {
+			free(tmp);
+			wdprintf(
+				V_INFO,
+				"gmuc",
+				"No config file found. Creating a config file at %s. Please edit that file and try again.\n",
+				config_file_path
+			);
+			if (cfg_write_config_file(config, config_file_path))
+				wdprintf(V_ERROR, "gmuc", "ERROR: Unable to create config file.\n");
 		}
-		host = cfg_get_key_value(config, "Host");
-		password = cfg_get_key_value(config, "Password");
-		if (!host || !password) {
-			wdprintf(V_ERROR, "gmuc", "ERROR: Invalid configuration.\n");
-			exit(4);
-		}
-	} else {
-		wdprintf(V_ERROR, "gmuc", "ERROR: Cannot find user's home directory.\n");
-		exit(3);
+		cfg_free(config);
+		exit(2);
+	}
+	host = cfg_get_key_value(config, "Host");
+	password = cfg_get_key_value(config, "Password");
+	if (!host || !password) {
+		wdprintf(V_ERROR, "gmuc", "ERROR: Invalid configuration.\n");
+		exit(4);
 	}
 	if (config_file_path) free(config_file_path);
 
