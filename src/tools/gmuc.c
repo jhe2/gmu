@@ -1678,20 +1678,16 @@ int main(int argc, char **argv)
 	}
 
 	if (!config_file_path)
-		config_file_path = get_config_dir_with_name_alloc("gmu/gmuc.conf", 0);
+		config_file_path = get_config_dir_with_name_alloc("gmu", 1, "gmuc.conf");
 	if (cfg_read_config_file(config, config_file_path) != 0) {
-		char *tmp = get_config_dir_with_name_alloc("gmu", 1);
-		if (tmp) {
-			free(tmp);
-			wdprintf(
-				V_INFO,
-				"gmuc",
-				"No config file found. Creating a config file at %s. Please edit that file and try again.\n",
-				config_file_path
-			);
-			if (cfg_write_config_file(config, config_file_path))
-				wdprintf(V_ERROR, "gmuc", "ERROR: Unable to create config file.\n");
-		}
+		wdprintf(
+			V_INFO,
+			"gmuc",
+			"No config file found. Creating a config file at %s. Please edit that file and try again.\n",
+			config_file_path
+		);
+		if (cfg_write_config_file(config, config_file_path))
+			wdprintf(V_ERROR, "gmuc", "ERROR: Unable to create config file.\n");
 		cfg_free(config);
 		exit(2);
 	}
