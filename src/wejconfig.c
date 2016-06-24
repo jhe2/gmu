@@ -219,6 +219,25 @@ int cfg_read_config_file(ConfigFile *cf, const char *filename)
 }
 
 /**
+ * Sets the output config file, so that cfg_write_config_file() can
+ * be called with NULL as second argument, even if the configuration
+ * has not been loaded from file or if the configuration is supposed to
+ * be written to a different file than the one it has been loaded from.
+ */
+int cfg_set_output_config_file(ConfigFile *cf, const char *filename)
+{
+	int res = CFG_ERROR;
+	size_t lf = strlen(filename);
+	if (cf->file) free(cf->file);
+	if (lf > 0) cf->file = malloc(lf+1);
+	if (cf->file) {
+		memcpy(cf->file, filename, lf+1);
+		res = CFG_SUCCESS;
+	}
+	return res;
+}
+
+/**
  * Saves the configuration to file.
  * If 'filename' is NULL, the function tries to save to the same file
  * that was used to load the configuration. Obviously, this won't work

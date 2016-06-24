@@ -40,6 +40,7 @@ void        cfg_free(ConfigFile *cf);
 int         cfg_add_key(ConfigFile *cf, const char *key, const char *value);
 int         cfg_key_add_presets(ConfigFile *cf, const char *key, ...);
 int         cfg_read_config_file(ConfigFile *cf, const char *filename);
+int         cfg_set_output_config_file(ConfigFile *cf, const char *filename);
 int         cfg_write_config_file(ConfigFile *cf, const char *filename);
 char       *cfg_get_key_value(ConfigFile *cf, const char *key);
 char       *cfg_get_key_value_ignore_case(ConfigFile *cf, const char *key);
