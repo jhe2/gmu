@@ -406,23 +406,64 @@ char *get_config_dir_alloc(int create)
 	return config_dir;
 }
 
-char *get_config_dir_with_name_alloc(const char *name, int create)
+char *get_config_dir_with_name_alloc(const char *name, int create, const char *filename)
 {
 	char *config_dir = get_config_dir_alloc(create);
 
 	if (config_dir && name) {
-		size_t len = strlen(name);
+		size_t len_name = strlen(name);
+		size_t len_filename = filename ? strlen(filename) : 0;
 
-		if (len > 1) {
+		if (len_name > 1) {
 			size_t len_config_dir = strlen(config_dir);
 			if (len_config_dir > 1) {
-				size_t len_total = len_config_dir + len + 2;
+				size_t len_total = len_config_dir + 1 + len_name + 1 + len_filename + 1;
 				config_dir = realloc(config_dir, len_total);
 				strcat(config_dir, "/");
 				strcat(config_dir, name);
 				if (create) rmkdir(config_dir, S_IRWXU);
+				if (filename) {
+					strcat(config_dir, "/");
+					strcat(config_dir, filename);
+				}
 			}
 		}
 	}
 	return config_dir;
+}
+
+char *get_config_file_path_alloc(const char *program_name, const char *filename)
+{
+	char  *file_path = NULL;
+	size_t len = 0;
+	/*
+	 * Test in user-config-dir first.
+	 * Then try system-config-dir.
+	 * Last, try current working directory.
+	 */
+	file_path = get_config_dir_with_name_alloc(program_name, 0, filename);
+	if (access(file_path, R_OK) != 0) { /* Access in user config dir failed */
+		free(file_path);
+		/* Try system install path... */
+		len = strlen(GMU_INSTALL_PREFIX);
+		if (len > 0) {
+			size_t size = len + 5 + strlen(program_name) + 1 + strlen(filename) + 1;
+			file_path = malloc(size);
+			if (file_path)
+				snprintf(file_path, size, "%s/etc/%s/%s", GMU_INSTALL_PREFIX, program_name, filename);
+		}
+		if (file_path && access(file_path, R_OK) != 0) {
+			free(file_path);
+			if (access(filename, R_OK) == 0) { /* Try access in current working dir */
+				len = strlen(filename);
+				if (len > 0) {
+					file_path = malloc(len + 1);
+					if (file_path) {
+						strncpy(file_path, filename, len + 1);
+					}
+				}
+			}
+		}
+	}
+	return file_path;
 }

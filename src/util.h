@@ -78,8 +78,20 @@ char *get_config_dir_alloc(int create);
 /**
  * Returns the config file directory for a given application name.
  * If 'create' is true, the function tries to create the directory,
- * if it does not exist. Returns NULL on failure. The returned value
- * needs to be free'd when it is no longer used.
+ * if it does not exist. If filename is not NULL, the path includes
+ * that filename. If 'create' is true and a filename is given, the
+ * path up to that file is created if necessary, but the file is not.
+ * Returns NULL on failure. The returned value needs to be free'd when
+ * it is no longer used.
  */
-char *get_config_dir_with_name_alloc(const char *name, int create);
+char *get_config_dir_with_name_alloc(const char *name, int create, const char *filename);
+
+/**
+ * Returns a valid path to the requested config file (if available),
+ * or NULL if the file is unaccessible. The path might be relative to
+ * the current working directory. Example return values:
+ * get_config_file_path_alloc("foo", "bar.conf")
+ * -> "/home/user/.config/foo/bar.conf" or "bar.conf"
+ */
+char *get_config_file_path_alloc(const char *program_name, const char *filename);
 #endif
