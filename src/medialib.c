@@ -24,21 +24,26 @@
 
 int medialib_create_db_and_open(GmuMedialib *gm)
 {
-	int res = 0;
-	if (sqlite3_open_v2("gmu.db", &(gm->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) == SQLITE_OK) {
+	int   res = 0;
+	char *gmu_db = get_data_dir_with_name_alloc("gmu", 1, "gmu.db");
+
+	if (gmu_db && sqlite3_open_v2(gmu_db, &(gm->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) == SQLITE_OK) {
 		res = sqlite3_exec(gm->db, medialib_sql, 0, 0, 0);
 		wdprintf(V_DEBUG, "medialib", "Create result: %d\n", res);
 		if (res == SQLITE_OK) res = 1;
 	}
+	free(gmu_db);
 	return res;
 }
 
 int medialib_open(GmuMedialib *gm)
 {
-	int res = 0;
+	int   res = 0;
+	char *gmu_db = get_data_dir_with_name_alloc("gmu", 1, "gmu.db");
+
 	gm->refresh_in_progress = 0;
 	wdprintf(V_INFO, "medialib", "Opening medialib...\n");
-	if (sqlite3_open_v2("gmu.db", &(gm->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
+	if (gmu_db && sqlite3_open_v2(gmu_db, &(gm->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
 		wdprintf(V_ERROR, "medialib", "ERROR: Can't open database: %s\n", sqlite3_errmsg(gm->db));
 		sqlite3_close(gm->db);
 		gm->db = NULL;
@@ -48,6 +53,7 @@ int medialib_open(GmuMedialib *gm)
 		res = 1;
 		wdprintf(V_INFO, "medialib", "OK!\n");
 	}
+	free(gmu_db);
 	return res;
 }
 

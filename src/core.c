@@ -888,7 +888,6 @@ static void print_cmd_help(const char *prog_name)
 	printf("\nUsage:\n%s [-h] [-r] [-v V] [-c file.conf] [-s theme_name] [music_file.ext] [...]\n", prog_name);
 	printf("-h : Print this help\n");
 	printf("-d /path/to/config/dir: Use the specified path as configuration dir.\n");
-	printf("-e : Store user configuration in user's home directory (~/.config/gmu/)\n");
 	printf("-c configfile.conf: Use the specified config file instead of gmu.conf\n");
 	printf("-s theme_name: Use theme \"theme_name\"\n");
 	printf("-v V : Set verbosity level to V, where V is an integer between 0 (silent) and 5 (debug).\n");
@@ -898,71 +897,6 @@ static void print_cmd_help(const char *prog_name)
 	printf("they will be added to the playlist\n");
 	printf("and playback is started automatically.\n");
 	printf("You can add as many files as you like.\n\n");
-}
-
-static int init_user_config_dir(
-	char       *user_config_dir,
-	const char *sys_config_dir,
-	const char *config_file
-)
-{
-	int   result = 0;
-	char *home = getenv("HOME");
-
-	if (home) {
-		char        target[384], source[384];
-		const char *filename = NULL;
-		ConfigFile *cf;
-
-		/* Try to create the config directory */
-		snprintf(user_config_dir, 255, "%s/.config", home);
-		mkdir(user_config_dir, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-		snprintf(user_config_dir, 255, "%s/.config/gmu", home);
-		wdprintf(V_DEBUG, "gmu", "User config directory: %s\n", user_config_dir);
-		mkdir(user_config_dir, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-
-		/* Copy all missing config files from system config dir to home config dir */
-		if (config_file[0] == '/') {
-			filename = strrchr(config_file, '/');
-			filename++;
-		} else {
-			filename = config_file;
-		}
-		snprintf(target, 383, "%s/%s", user_config_dir, filename);
-		if (!file_exists(target)) {
-			wdprintf(V_INFO, "gmu", "Copying file: %s\n", filename);
-			snprintf(source, 383, "%s/%s", sys_config_dir, filename);
-			file_copy(target, source);
-		}
-		cf = cfg_init();
-		if (cfg_read_config_file(cf, target) == 0) {
-			char *file = cfg_get_key_value(cf, "SDL.KeyMap");
-			if (file) {
-				snprintf(target, 383, "%s/%s", user_config_dir, file);
-				if (!file_exists(target)) {
-					wdprintf(V_INFO, "gmu", "Copying file: %s\n", file);
-					snprintf(source, 383, "%s/%s", sys_config_dir, file);
-					if (file_copy(target, source)) result = 1;
-				} else {
-					result = 1;
-				}
-			}
-			file = cfg_get_key_value(cf, "SDL.InputConfigFile");
-			if (result) {
-				if (!file) file = "gmuinput.conf";
-				snprintf(target, 383, "%s/%s", user_config_dir, file);
-				if (!file_exists(target)) {
-					wdprintf(V_INFO, "gmu", "Copying file: %s\n", file);
-					snprintf(source, 383, "%s/%s", sys_config_dir, file);
-					if (!file_copy(target, source)) result = 0;
-				}
-			}
-		}
-		cfg_free(cf);
-	} else {
-		wdprintf(V_ERROR, "gmu", "Unable to find user's home directory.\n");
-	}
-	return result;
 }
 
 static void sig_handler(int sig)
@@ -1000,7 +934,6 @@ static void file_extensions_free(void)
 int main(int argc, char **argv)
 {
 	char        *skin_file = "";
-	char         user_config_dir[256] = "0";
 	char        *config_file = "gmu.conf", *config_file_path, *sys_config_dir = NULL;
 	char         temp[512];
 	int          disksync = 0;
@@ -1077,9 +1010,6 @@ int main(int argc, char **argv)
 						exit(0);
 					}
 					break;
-				case 'e': /* Store config in user's home directory */
-					user_config_dir[0] = '1';
-					break;
 				case 'p': /* Load given frontend plugin */
 					if (argc >= i+2) {
 						if (frontend_plugin_by_cmd_arg_counter < MAX_FRONTEND_PLUGIN_BY_CMD_ARG)
@@ -1117,19 +1047,7 @@ int main(int argc, char **argv)
 #endif
 
 	config_dir = sys_config_dir;
-	if (user_config_dir[0] == '1') {
-		if (init_user_config_dir(user_config_dir, sys_config_dir, config_file)) {
-			/* Set config_dir to the user config directory */
-			config_dir = user_config_dir;
-		}
-	}
-
-	if (config_file[0] != '/') { /* Relative path to config file given? */
-		config_file_path = alloca(strlen(base_dir)+strlen(config_file)+2);
-		snprintf(config_file_path, 255, "%s/%s", config_dir, config_file);
-	} else {
-		config_file_path = config_file;
-	}
+	config_file_path = get_config_file_path_alloc("gmu", config_file);
 
 	wdprintf(V_INFO, "gmu", "Base directory: %s\n", base_dir);
 	wdprintf(V_INFO, "gmu", "System config directory: %s\n", sys_config_dir);
@@ -1138,7 +1056,6 @@ int main(int argc, char **argv)
 		wdprintf(V_ERROR, "gmu", "Failed to initialize event_queue.\n");
 		exit(11);
 	}
-	wdprintf(V_INFO, "gmu", "Loading configuration %s...\n", config_file_path);
 	if (pthread_mutex_init(&config_mutex, NULL) != 0) {
 		wdprintf(V_ERROR, "gmu", "Failed to initialize config mutex.\n");
 		exit(10);
@@ -1147,18 +1064,25 @@ int main(int argc, char **argv)
 		wdprintf(V_ERROR, "gmu", "Failed to initialize gmu_running_mutex.\n");
 		exit(10);
 	}
+	if (config_file_path)
+		wdprintf(V_INFO, "gmu", "Loading configuration %s...\n", config_file_path);
+	else
+		wdprintf(V_WARNING, "gmu", "Unable to find configuration at specified location.\n");
 	gmu_core_config_acquire_lock();
 	config = cfg_init();
 	add_default_cfg_settings(config);
-	if (cfg_read_config_file(config, config_file_path) != 0) {
-		wdprintf(V_ERROR, "gmu", "Could not read %s. Assuming defaults.\n", config_file_path);
-		/* In case of a missing default config file create a new one: */
-		if (strncmp(config_file, config_file_path, 8) == 0) {
-			wdprintf(V_INFO, "gmu", "Creating config file.\n");
-			cfg_write_config_file(config, config_file_path);
-		}
+	if (config_file_path && cfg_read_config_file(config, config_file_path) != 0) {
+		wdprintf(V_WARNING, "gmu", "Could not read %s. Assuming defaults.\n", config_file_path);
 	}
-	
+	free(config_file_path);
+
+	/* Set output path for gmu.conf file, based on XDG spec, usually ~/.config/gmu/gmu.conf */
+	{
+		char *gmu_conf_user_config_path = get_config_dir_with_name_alloc("gmu", 1, "gmu.conf");
+		cfg_set_output_config_file(config, gmu_conf_user_config_path);
+		free(gmu_conf_user_config_path);
+	}
+
 	if (skin_file[0] != '\0') cfg_add_key(config, "SDL.DefaultSkin", skin_file);
 
 	/* Check for shutdown timer */
@@ -1212,8 +1136,14 @@ int main(int argc, char **argv)
 				wdprintf(V_WARNING, "gmu", "Unable to load user playlist: %s\n", alt_playlist);
 	} else {
 		/* Load playlist from playlist.m3u */
-		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
-		add_m3u_contents_to_playlist(&pl, temp);
+		char *playlist_m3u = get_data_dir_with_name_alloc("gmu", 0, "playlist.m3u");
+		if (playlist_m3u) {
+			wdprintf(V_INFO, "gmu", "Loading playlist from '%s'.\n", playlist_m3u);
+			add_m3u_contents_to_playlist(&pl, playlist_m3u);
+			free(playlist_m3u);
+		} else {
+			wdprintf(V_ERROR, "gmu", "ERROR: Unable to load playlist. Failed to create path.\n");
+		}
 	}
 	wdprintf(V_INFO, "gmu", "Playlist length: %d items\n", playlist_get_length(&pl));
 #ifdef GMU_MEDIALIB
@@ -1416,11 +1346,17 @@ int main(int argc, char **argv)
 		hw_close_mixer();
 
 	if (cfg_get_boolean_value(config, "Gmu.RememberLastPlaylist")) {
+		char *playlist_m3u;
 		gmu_core_config_release_lock();
 		wdprintf(V_INFO, "gmu", "Saving playlist...\n");
-		snprintf(temp, 255, "%s/playlist.m3u", config_dir);
-		wdprintf(V_INFO, "gmu", "Playlist file: %s\n", temp);
-		gmu_core_export_playlist(temp);
+		playlist_m3u = get_data_dir_with_name_alloc("gmu", 1, "playlist.m3u");
+		if (playlist_m3u) {
+			wdprintf(V_INFO, "gmu", "Playlist file: %s\n", playlist_m3u);
+			gmu_core_export_playlist(playlist_m3u);
+			free(playlist_m3u);
+		} else {
+			wdprintf(V_ERROR, "gmu", "ERROR: Unable to save playlist. Failed to create path.\n");
+		}
 		disksync = 1;
 		gmu_core_config_acquire_lock();
 	}
@@ -1453,7 +1389,7 @@ int main(int argc, char **argv)
 		cfg_add_key(config, "Gmu.Volume", volume_str);
 
 		cfg_add_key(config, "Gmu.FirstRun", "no");
-		cfg_write_config_file(config, config_file_path);
+		cfg_write_config_file(config, NULL);
 		disksync = 1;
 	}
 	gmu_core_config_release_lock();
