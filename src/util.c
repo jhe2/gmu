@@ -395,8 +395,8 @@ static char *get_xdg_dir_alloc(const char *xdg_var_str, const char *alt_path, in
 			if (len > 1) {
 				size_t alt_path_len = alt_path ? strlen(alt_path) : 0;
 				if (alt_path_len > 0) {
-					xdg_dir = malloc(len + 1 + alt_path_len + 1 + 1);
-					if (xdg_dir) snprintf(xdg_dir, len + 8 + 1, "%s/%s/", home, alt_path);
+					xdg_dir = malloc(len + 1 + alt_path_len + 1);
+					if (xdg_dir) snprintf(xdg_dir, len + 1 + alt_path_len + 1, "%s/%s", home, alt_path);
 				}
 			}
 		}
