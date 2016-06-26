@@ -376,34 +376,43 @@ const char *get_home_dir(void)
 	return home_dir;
 }
 
-char *get_config_dir_alloc(int create)
+static char *get_xdg_dir_alloc(const char *xdg_var_str, const char *alt_path, int create)
 {
-	char       *config_dir = NULL;
+	char       *xdg_dir = NULL;
 	const char *tmp;
 
-	if ((tmp = getenv("XDG_CONFIG_HOME")) != NULL) {
+	if ((tmp = getenv(xdg_var_str)) != NULL) {
 		size_t len = strlen(tmp);
 		if (len > 1) {
-			config_dir = malloc(len + 1);
-			if (config_dir) {
-				strncpy(config_dir, tmp, len + 1);
-			}
+			xdg_dir = malloc(len + 1);
+			if (xdg_dir) strncpy(xdg_dir, tmp, len + 1);
 		}
 	} else {
-		/* Try with $HOME/.config instead... */
+		/* Try with $HOME/alt_path instead (e.g ~/.config/gmu or ~/.local/share/gmu)... */
 		const char *home = get_home_dir();
 		if (home) {
 			size_t len = strlen(home);
 			if (len > 1) {
-				config_dir = malloc(len + 8 + 1); /* strlen("/.config") = 8 */
-				if (config_dir) {
-					snprintf(config_dir, len + 8 + 1, "%s/.config/", home);
+				size_t alt_path_len = alt_path ? strlen(alt_path) : 0;
+				if (alt_path_len > 0) {
+					xdg_dir = malloc(len + 1 + alt_path_len + 1 + 1);
+					if (xdg_dir) snprintf(xdg_dir, len + 8 + 1, "%s/%s/", home, alt_path);
 				}
 			}
 		}
 	}
-	if (create) rmkdir(config_dir, S_IRWXU);
-	return config_dir;
+	if (create) rmkdir(xdg_dir, S_IRWXU);
+	return xdg_dir;
+}
+
+char *get_data_dir_alloc(int create)
+{
+	return get_xdg_dir_alloc("XDG_DATA_HOME", ".local/share", create);
+}
+
+char *get_config_dir_alloc(int create)
+{
+	return get_xdg_dir_alloc("XDG_CONFIG_HOME", ".config", create);
 }
 
 char *get_config_dir_with_name_alloc(const char *name, int create, const char *filename)

@@ -68,6 +68,14 @@ int rmkdir(const char *dir, mode_t mode);
 const char *get_home_dir(void);
 
 /**
+ * Returns the user's data directory.
+ * If 'create' is true, the function tries to create the directory,
+ * if it does not exist. Returns NULL on failure. The returned value
+ * needs to be free'd when it is no longer used.
+ */
+char *get_data_dir_alloc(int create);
+
+/**
  * Returns the user's config file directory.
  * If 'create' is true, the function tries to create the directory,
  * if it does not exist. Returns NULL on failure. The returned value
