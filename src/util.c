@@ -454,6 +454,7 @@ char *get_config_file_path_alloc(const char *program_name, const char *filename)
 		}
 		if (file_path && access(file_path, R_OK) != 0) {
 			free(file_path);
+			file_path = NULL;
 			if (access(filename, R_OK) == 0) { /* Try access in current working dir */
 				len = strlen(filename);
 				if (len > 0) {
