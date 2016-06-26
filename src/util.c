@@ -415,30 +415,40 @@ char *get_config_dir_alloc(int create)
 	return get_xdg_dir_alloc("XDG_CONFIG_HOME", ".config", create);
 }
 
-char *get_config_dir_with_name_alloc(const char *name, int create, const char *filename)
+static char *get_dir_alloc(char *dir, const char *name, int create, const char *filename)
 {
-	char *config_dir = get_config_dir_alloc(create);
-
-	if (config_dir && name) {
+	if (dir && name) {
 		size_t len_name = strlen(name);
 		size_t len_filename = filename ? strlen(filename) : 0;
 
 		if (len_name > 1) {
-			size_t len_config_dir = strlen(config_dir);
+			size_t len_config_dir = strlen(dir);
 			if (len_config_dir > 1) {
 				size_t len_total = len_config_dir + 1 + len_name + 1 + len_filename + 1;
-				config_dir = realloc(config_dir, len_total);
-				strcat(config_dir, "/");
-				strcat(config_dir, name);
-				if (create) rmkdir(config_dir, S_IRWXU);
+				dir = realloc(dir, len_total);
+				strcat(dir, "/");
+				strcat(dir, name);
+				if (create) rmkdir(dir, S_IRWXU);
 				if (filename) {
-					strcat(config_dir, "/");
-					strcat(config_dir, filename);
+					strcat(dir, "/");
+					strcat(dir, filename);
 				}
 			}
 		}
 	}
-	return config_dir;
+	return dir;
+}
+
+char *get_config_dir_with_name_alloc(const char *name, int create, const char *filename)
+{
+	char *config_dir = get_config_dir_alloc(create);
+	return get_dir_alloc(config_dir, name, create, filename);
+}
+
+char *get_data_dir_with_name_alloc(const char *name, int create, const char *filename)
+{
+	char *data_dir = get_data_dir_alloc(create);
+	return get_dir_alloc(data_dir, name, create, filename);
 }
 
 char *get_config_file_path_alloc(const char *program_name, const char *filename)
