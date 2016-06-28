@@ -519,7 +519,7 @@ if [ $dec_speex != 0 ]; then
 	libs_test="-logg -lspeex"
 	test_lib "speex"
 	dec_speex=$?
-	[ $dec_speex = 1 ] && add_config "DEC_opus_CFLAGS=$includes_test_flags"
+	[ $dec_speex = 1 ] && add_config "DEC_speex_CFLAGS=$includes_test_flags"
 fi
 
 if [ $feature_medialib != 0 ]; then
