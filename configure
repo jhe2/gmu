@@ -150,6 +150,9 @@ set_feature()
 		openmpt-decoder)
 			dec_openmpt=$on_off
 			;;
+		wavpack-decoder)
+			dec_wavpack=$on_off
+			;;
 		sdl-frontend)
 			fe_sdl=$on_off
 			;;
@@ -236,6 +239,10 @@ print_features_and_write_config()
 		echo "OpenMPT enabled"
 		dec="$dec decoders/openmpt.so"
 	fi
+	if [ $dec_wavpack = 1 ]; then
+		echo "WavPack enabled"
+		dec="$dec decoders/wavpack.so"
+	fi
 	echo
 	echo "Frontends:"
 	if [ $fe_sdl = 1 ]; then
@@ -301,11 +308,12 @@ dec_flac=-2
 dec_speex=-2
 dec_modplug=-2
 dec_openmpt=-2
+dec_wavpack=1
 fe_sdl=-2
 fe_web=-2
 fe_lirc=-2
 fe_log=-2
-feature_medialib=1
+feature_medialib=0
 feature_sdl_gfx=-2
 feature_debug=0
 target_device="unknown"
@@ -499,6 +507,19 @@ if [ $dec_openmpt != 0 ]; then
 	libs_test="-lopenmpt"
 	test_lib "libopenmpt"
 	dec_openmpt=$?
+fi
+
+if [ $dec_speex != 0 ]; then
+	includes_test="#include <ogg/ogg.h>
+#include <speex/speex.h>
+#include <speex/speex_header.h>
+#include <speex/speex_stereo.h>
+#include <speex/speex_callbacks.h>"
+	includes_test_flags=""
+	libs_test="-logg -lspeex"
+	test_lib "speex"
+	dec_speex=$?
+	[ $dec_speex = 1 ] && add_config "DEC_opus_CFLAGS=$includes_test_flags"
 fi
 
 if [ $feature_medialib != 0 ]; then
