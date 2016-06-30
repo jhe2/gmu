@@ -155,7 +155,7 @@ static GmuFrontend gf = {
 	NULL
 };
 
-GmuFrontend *gmu_register_frontend(void)
+GmuFrontend *GMU_REGISTER_FRONTEND(void)
 {
 	return &gf;
 }

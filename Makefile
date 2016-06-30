@@ -49,18 +49,19 @@ GENERATED_HEADERFILES_STATIC=
 PLUGIN_OBJECTFILES=
 else
 # static build (with builtin plugins)
-FRONTEND_PLUGIN_LOADER_FUNCTION=f`echo $@|md5sum|cut -d ' ' -f 1`
-DECODER_PLUGIN_LOADER_FUNCTION=f`echo $@|md5sum|cut -d ' ' -f 1`
+FRONTEND_PLUGIN_LOADER_FUNCTION=f`echo frontends/$(basename $@).so|md5sum|cut -d ' ' -f 1`
+DECODER_PLUGIN_LOADER_FUNCTION=f`echo $(basename $@).so|md5sum|cut -d ' ' -f 1`
 CFLAGS+=-DSTATIC=1
 PLUGIN_CFLAGS=-c -fPIC $(COPTS)
 GENERATED_HEADER_FILES_STATIC=$(TEMP_HEADER_FILES)
-PLUGIN_OBJECTFILES+=$(DECODERS_TO_BUILD)
+PLUGIN_OBJECTFILES=
 LFLAGS+=$(LFLAGS_SDLFE)
 endif
 
 # Frontend configs
-PLUGIN_FE_SDL_OBJECTFILES=sdl.o kam.o skin.o textrenderer.o question.o filebrowser.o plbrowser.o about.o setup.o textbrowser.o coverimg.o coverviewer.o plmanager.o playerdisplay.o gmuwidget.o png.o jpeg.o bmp.o inputconfig.o help.o
-PLUGIN_FE_HTTP_OBJECTFILES=gmuhttp.o sha1.o base64.o httpd.o queue.o json.o websocket.o net.o
+PLUGIN_FE_sdl_OBJECTFILES=sdl.o kam.o skin.o textrenderer.o question.o filebrowser.o plbrowser.o about.o setup.o textbrowser.o coverimg.o coverviewer.o plmanager.o playerdisplay.o gmuwidget.o png.o jpeg.o bmp.o inputconfig.o help.o
+PLUGIN_FE_gmuhttp_OBJECTFILES=gmuhttp.o sha1.o base64.o httpd.o queue.o json.o websocket.o net.o
+PLUGIN_FE_log_OBJECTFILES=log.o
 
 # Decoder configs
 DEC_vorbis_LFLAGS=-lvorbisidec
@@ -74,7 +75,14 @@ DEC_openmpt_LFLAGS=-lopenmpt
 DEC_opus_LFLAGS=-lopus -logg -lopusfile
 
 ifeq (1,$(STATIC))
-LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(basename $(i))_LFLAGS))
+LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(subst decoders/,,$(basename $(i)))_LFLAGS))
+PLUGIN_OBJECTFILES+=$(foreach i, $(DECODERS_TO_BUILD), $(basename $(i)).o)
+DECODERS=
+FRONTENDS=
+OBJECTFILES+=$(foreach i, $(FRONTENDS_TO_BUILD), $(PLUGIN_FE_$(subst frontends/,,$(basename $(i)))_OBJECTFILES))
+else
+DECODERS=decoders
+FRONTENDS=frontends
 endif
 
 TOOLS_TO_BUILD?=$(BINARY) gmuc
@@ -82,7 +90,7 @@ DISTBIN_DEPS?=default_distbin
 
 TEMP_HEADER_FILES=tmp-felist.h tmp-declist.h
 
-all: decoders frontends $(TOOLS_TO_BUILD)
+all: $(DECODERS) $(FRONTENDS) $(TOOLS_TO_BUILD)
 	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
 
 config.mk:
@@ -102,7 +110,7 @@ decodersdir:
 
 $(BINARY): $(OBJECTFILES) $(PLUGIN_OBJECTFILES)
 	@echo -e "Linking \033[1m$(BINARY)\033[0m"
-	$(Q)$(CC) $(OBJECTFILES) $(PLUGIN_OBJECTFILES) $(LFLAGS) $(LFLAGS_CORE) -o $(BINARY)
+	$(Q)$(CC) $(LFLAGS) $(LFLAGS_CORE) -o $(BINARY) $(OBJECTFILES) $(PLUGIN_OBJECTFILES)
 
 libs.$(TARGET):
 	$(Q)-mkdir -p libs.$(TARGET)
@@ -176,7 +184,7 @@ install: $(DISTFILES)
 	$(Q)cp gmu.png $(DESTDIR)$(PREFIX)/share/pixmaps/gmu.png
 
 clean:
-	$(Q)-rm -rf *.o $(BINARY) gmuc decoders/*.so frontends/*.so
+	$(Q)-rm -rf *.o $(BINARY) gmuc decoders/*.so decoders/*.o frontends/*.so frontends/*.o
 	$(Q)-rm -f $(TEMP_HEADER_FILES)
 	@echo -e "\033[1mAll clean.\033[0m"
 
@@ -189,8 +197,12 @@ gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 decoders/%.so: src/decoders/%.c | decodersdir
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo -e "Building \033[1m$@\033[0m from \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS) $(DEC_$(*)_CFLAGS)
+
+decoders/%.o: src/decoders/%.c | decodersdir
+	@echo -e "Compiling \033[1m$<\033[0m"
+	$(Q)$(CC) -c -o $@ $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS) $(DEC_$(*)_CFLAGS)
 
 decoders/wavpack.so: src/decoders/wavpack.c util.o | decodersdir
 	@echo -e "Compiling \033[1m$<\033[0m"
@@ -200,11 +212,11 @@ decoders/wavpack.so: src/decoders/wavpack.c util.o | decodersdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) -Isrc/ -c -o $@ $<
 
-frontends/sdl.so: $(PLUGIN_FE_SDL_OBJECTFILES) | frontendsdir
+frontends/sdl.so: $(PLUGIN_FE_sdl_OBJECTFILES) | frontendsdir
 	@echo -e "Linking \033[1m$@\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_SDL_OBJECTFILES)
+	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_sdl_OBJECTFILES)
 
-frontends/log.so: src/frontends/log.c util.o | frontendsdir
+frontends/log.so: log.o util.o | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) util.o -lpthread
 
@@ -216,9 +228,13 @@ frontends/lirc.so: src/frontends/lirc.c | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $<
 
-frontends/gmuhttp.so: $(PLUGIN_FE_HTTP_OBJECTFILES) | frontendsdir
+%.o: src/frontends/%.c
+	@echo -e "Compiling \033[1m$<\033[0m"
+	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION)
+
+frontends/gmuhttp.so: $(PLUGIN_FE_gmuhttp_OBJECTFILES) | frontendsdir
 	@echo -e "Building \033[1m$@\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $(LFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread $(PLUGIN_FE_HTTP_OBJECTFILES)
+	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $(LFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread $(PLUGIN_FE_gmuhttp_OBJECTFILES)
 
 tmp-felist.h:
 	@echo -e "Creating file \033[1mtmp-felist.h\033[0m"
