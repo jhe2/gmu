@@ -73,6 +73,7 @@ DEC_speex_LFLAGS=-logg -lspeex
 DEC_modplug_LFLAGS=-lmodplug
 DEC_openmpt_LFLAGS=-lopenmpt
 DEC_opus_LFLAGS=-lopus -logg -lopusfile
+DEC_wavpack_LFLAGS=-lwavpack
 
 ifeq (1,$(STATIC))
 LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(subst decoders/,,$(basename $(i)))_LFLAGS))
@@ -203,10 +204,6 @@ decoders/%.so: src/decoders/%.c | decodersdir
 decoders/%.o: src/decoders/%.c | decodersdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -c -o $@ $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS) $(DEC_$(*)_CFLAGS)
-
-decoders/wavpack.so: src/decoders/wavpack.c util.o | decodersdir
-	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) util.o src/decoders/wavpack/*.c
 
 %.o: src/decoders/%.c
 	@echo -e "Compiling \033[1m$<\033[0m"

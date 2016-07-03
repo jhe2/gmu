@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: wavpack.c  Created: 081102
  *
@@ -16,22 +16,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <wavpack/wavpack.h>
 #include "../gmudecoder.h"
 #include "../trackinfo.h"
 #include "../util.h"
-#include "wavpack/wavpack.h"
 #include "../debug.h"
 
 static int32_t         temp_buffer[256];
 static WavpackContext *wpc;
 static long            total_unpacked_samples;
 static int             get_channels(void);
-static FILE           *file;
-
-static int32_t read_bytes(void *buff, int32_t bcount)
-{
-    return fread(buff, 1, bcount, file);
-}
+typedef unsigned char  uchar;
 
 static uchar *format_samples(int bps, uchar *dst, int32_t *src, uint32_t samcnt)
 {
@@ -70,30 +65,24 @@ static uchar *format_samples(int bps, uchar *dst, int32_t *src, uint32_t samcnt)
 
 static const char *get_name(void)
 {
-	return "WavPack decoder v0.2";
+	return "WavPack decoder v0.3";
 }
 
 static int open_file(const char *filename)
 {
-	char  error[80];
+	char error[80];
 	wdprintf(V_INFO, "wavpack", "Opening %s ...", filename);
 	wpc = 0;
-	if ((file = fopen(filename, "r"))) {
-		wpc = WavpackOpenFileInput(read_bytes, error);
-		total_unpacked_samples = 0;
-		wdprintf(V_DEBUG, "wavpack", "Status: %s", wpc ? "OK" : "Error");
-		/*if (wpc) {
-			total_samples = WavpackGetNumSamples (wpc);
-			bps = WavpackGetBytesPerSample (wpc);
-		}*/
-	}
+	wpc = WavpackOpenFileInput(filename, error, OPEN_TAGS, 0);
+	total_unpacked_samples = 0;
+	wdprintf(V_DEBUG, "wavpack", "Status: %s", wpc ? "OK" : "Error");
 	return (wpc ? 1 : 0);
 }
 
 static int close_file(void)
 {
-	/*WavpackCloseFile(wpc);*/
-	fclose(file);
+	WavpackCloseFile(wpc);
+	//fclose(file);
 	return 0;
 }
 
