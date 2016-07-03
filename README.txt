@@ -1,20 +1,29 @@
 The Gmu Music Player
 
-Version 0.9.9
+Version 0.10.0
 
-Copyright (c) 2006-2014 Johannes 'wej' Heimansberg
-http://wejp.k.vu/projects/gmu/
+Copyright (c) 2006-2016 Johannes 'wej' Heimansberg
+http://wej.k.vu/projects/gmu/
 
-Gmu is a music player for portable handheld consoles. It comes
-with a file browser and a playlist. It supports various play modes.
-It also has a cover viewer and spectrum analyzer and it can display 
-lyrics (either from a text file or embedded lyrics from an ID3v2 tag).
-Gmu can play local audio files and internet audio streams (on devices
-with networking support).
-Currently, Gmu is available for various handheld devices, including
-the GP2X (both F100 and F200 versions), the GP2X Wiz, the Dingoo A320 
-and A330 (both running Dingux), the Ben NanoNote, the Pandora handheld
-and the Zipit Z2.
+Gmu is a music player application. It was initially developed for the
+GP2X handheld, but has since then been adapted to run on a variety of
+other devices, including ordinary computers and lots of handheld
+devices.
+
+Gmu is built in a modular way and supports various frontends and
+decoders for supports of different user interfaces and file formats
+respectively.
+Gmu's most used frontend is the SDL based frontend which gives the user
+a graphical user interface optimized for control through buttons.
+Besides that, Gmu comes with a webfrontend which allow Gmu to be
+controlled through a web browser both locally and remotely. There is
+also a command line tool for controlling Gmu through a terminal, again
+both locally and remotely.
+Supported audio formats include MP3, MP2, Ogg Vorbis, Speex, Ogg Opus,
+FLAC, Musepack, WavPack and lots of module formats through different module
+decoder libraries (ranging from MikMod for devices with low end CPUs to
+OpenMPT for devices with a more capable CPU delivering a higher quality).
+
 Gmu is open source software, licensed under the GPLv2 and comes without
 any warranty. For details see file "COPYING". Gmu has been written by
 me, Johannes Heimansberg.
@@ -95,8 +104,8 @@ the following file formats there are decoder plugins available:
 - FLAC (.flac)
 - Speex (.spx)
 - Ogg Opus (.opus)
-- WavPack (.wv)
-- Several module formats (MOD, IT, STM, S3M, XM, 669, ULT)
+- WavPack (.wv, .wvc)
+- Module formats (including MOD, IT, STM, S3M, XM, 669, ULT among others)
 - M3U (Gmu can read and write .m3u playlists)
 - PLS (Gmu can read .pls playlists)
 
@@ -938,19 +947,18 @@ which contains the Gmu host information as well as the password.
 8. Libraries used by Gmu
 ------------------------
 
-See "libs/information" directory for further details.
-
 - SDL >=1.2.14 (mandatory)
 - SDL_image >=1.2.4 (required by SDL_frontend)
 - SDL_gfx >=2.0.13 (optional for SDL_frontend)
 - tremor >=1.0.0 (optional, required by Vorbis decoder)
 - libmikmod >=3.1.11 (optional, required by Module decoder)
-- libmodplug (optional, required by the alternative module decoder)
+- libmodplug (optional, required by an alternative module decoder)
+- libopenmpt (optional, required by another alternative module decoder)
 - libmpg123 >=1.8.1 (optional, required by MPEG decoder)
 - libmpcdec >=1.2.6 (optional, required by Musepack decoder)
 - libFLAC >=1.2.1 (optional, required by FLAC decoder)
-- WavPack 4.4.0 (optional, included, required by WavPack decoder)
+- WavPack >=4.6.0 (optional, required by WavPack decoder)
 - speex >= 1.2_rc1 (optional, required by speex decoder)
 - libopus and libopusfile (optional, required by the Opus decoder)
-- libjpeg and libpng (used by SDL_image)
+- libogg (optional, required by the Opus and Speex decoders)
 - ncurses 5.9 (used by gmuc)
