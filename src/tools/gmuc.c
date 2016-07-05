@@ -283,50 +283,57 @@ static void cmd_playlist_item(UI *ui, JSON_Object *json, int sock)
  * actually read directory */
 static char *cmd_dir_read(UI *ui, JSON_Object *json)
 {
-	int   i, start;
-	JSON_Key *jk = json_get_key_object_for_key(json, "data");
+	int          i, start;
+	JSON_Key    *jk = json_get_key_object_for_key(json, "data");
 	JSON_Object *jo = jk ? jk->key_value_object : NULL;
-	char *tmp = json_get_string_value_for_key(json, "path");
-	char *cur_dir = NULL;
+	const char  *tmp = json_get_string_value_for_key(json, "path");
+	const char  *json_res = json_get_string_value_for_key(json, "res");
+	char        *cur_dir = NULL;
 
-	if (tmp) {
-		int size = strlen(tmp)+1;
-		cur_dir = malloc(size);
-		memcpy(cur_dir, tmp, size);
-	}
-	tmp = NULL;
-
-	if (jo) tmp = json_get_first_key_string(jo);
-	start = -1;
-	if (tmp) start = atoi(tmp);
-	if (!jk) wprintw(ui->win_cmd->win, "ERROR: No key for 'data'.\n");
-
-	if (start >= 0) {
-		for (i = start; ; i++) {
-			JSON_Object *j_file;
-			JSON_Key    *jk;
-			char tmp[16];
-			snprintf(tmp, 15, "%d", i);
-			if (!jo) wprintw(ui->win_cmd->win, "ERROR: No object.\n");
-			jk = json_get_key_object_for_key(jo, tmp);
-			j_file = jk ? jk->key_value_object : NULL;
-			if (j_file) {
-				char *jv     = json_get_string_value_for_key(j_file, "name");
-				int   is_dir = json_get_number_value_for_key(j_file, "is_dir");
-				int   fsize  = json_get_number_value_for_key(j_file, "size");
-				if (!jv) break;
-				listwidget_add_row(ui->lw_fb);
-				listwidget_set_cell_data(ui->lw_fb, i, 1, jv);
-				if (!is_dir)
-					snprintf(tmp, 15, "%d", fsize / 1024);
-				else
-					snprintf(tmp, 15, "[DIR]");
-				listwidget_set_cell_data(ui->lw_fb, i, 0, tmp);
-			} else {
-				break;
-			}
+	if (strcmp("ok", json_res) == 0) {
+		if (tmp) {
+			int size = strlen(tmp)+1;
+			cur_dir = malloc(size);
+			memcpy(cur_dir, tmp, size);
 		}
-		ui_refresh_active_window(ui);
+		tmp = NULL;
+
+		if (jo) tmp = json_get_first_key_string(jo);
+		start = -1;
+		if (tmp) start = atoi(tmp);
+		if (!jk) wprintw(ui->win_cmd->win, "ERROR: No key for 'data'.\n");
+
+		if (start == 0) {
+			listwidget_clear_all_rows(ui->lw_fb);
+			ui_refresh_active_window(ui);
+		}
+		if (start >= 0) {
+			for (i = start; ; i++) {
+				JSON_Object *j_file;
+				JSON_Key    *jk;
+				char tmp[16];
+				snprintf(tmp, 15, "%d", i);
+				if (!jo) wprintw(ui->win_cmd->win, "ERROR: No object.\n");
+				jk = json_get_key_object_for_key(jo, tmp);
+				j_file = jk ? jk->key_value_object : NULL;
+				if (j_file) {
+					char *jv     = json_get_string_value_for_key(j_file, "name");
+					int   is_dir = json_get_number_value_for_key(j_file, "is_dir");
+					int   fsize  = json_get_number_value_for_key(j_file, "size");
+					if (!jv) break;
+					listwidget_add_row(ui->lw_fb);
+					listwidget_set_cell_data(ui->lw_fb, i, 1, jv);
+					if (!is_dir)
+						snprintf(tmp, 15, "%d", fsize / 1024);
+					else
+						snprintf(tmp, 15, "[DIR]");
+					listwidget_set_cell_data(ui->lw_fb, i, 0, tmp);
+				} else {
+					break;
+				}
+			}
+			ui_refresh_active_window(ui);
+		}
 	}
 	return cur_dir;
 }
@@ -492,8 +499,11 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 						} else if (strcmp(cmd, "playlist_item") == 0) {
 							cmd_playlist_item(ui, json, sock);
 						} else if (strcmp(cmd, "dir_read") == 0) {
-							if (*cur_dir) free(*cur_dir);
-							*cur_dir = cmd_dir_read(ui, json);
+							char *tmp_dir = cmd_dir_read(ui, json);
+							if (tmp_dir) {
+								if (*cur_dir) free(*cur_dir);
+								*cur_dir = tmp_dir;
+							}
 						} else if (strcmp(cmd, "playmode_info") == 0) {
 							cmd_playmode_info(ui, json);
 						} else if (strcmp(cmd, "volume_info") == 0) {
@@ -574,26 +584,26 @@ static void playlist_handle_return_key(UI *ui, int sock)
 	websocket_send_str(sock, str, 1);
 }
 
-static void file_browser_handle_return_key(UI *ui, int sock, char **cur_dir)
+static void file_browser_handle_return_key(UI *ui, int sock, const char *cur_dir)
 {
-	char  tmp[256], *prev_cur_dir = *cur_dir;
+	char  tmp[256];
 	int   sel_row = listwidget_get_selection(ui->lw_fb);
 	char *ftype = NULL;
-	
+
 	if (sel_row >= 0)
 		ftype = listwidget_get_row_data(ui->lw_fb, sel_row, 0);
 
 	if (ftype && strcmp(ftype, "[DIR]") == 0) {
-		*cur_dir = dir_get_new_dir_alloc(prev_cur_dir ? prev_cur_dir : "/", 
-		                                 listwidget_get_row_data(ui->lw_fb, sel_row, 1));
-		free(prev_cur_dir);
+		char *dir = dir_get_new_dir_alloc(
+			cur_dir ? cur_dir : "/", 
+			listwidget_get_row_data(ui->lw_fb, sel_row, 1)
+		);
 		wprintw(ui->win_cmd->win, "Selected dir: %s/%d\n", listwidget_get_row_data(ui->lw_fb, sel_row, 1), sel_row);
-		wprintw(ui->win_cmd->win, "Full path: %s\n", *cur_dir);
-		listwidget_clear_all_rows(ui->lw_fb);
-		ui_refresh_active_window(ui);
-		if (*cur_dir) {
-			snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", *cur_dir);
+		wprintw(ui->win_cmd->win, "Full path: %s\n", cur_dir);
+		if (dir) {
+			snprintf(tmp, 255, "{\"cmd\":\"dir_read\", \"dir\": \"%s\"}", dir);
 			websocket_send_str(sock, tmp, 1);
+			free(dir);
 		}
 	} else { /* Add file */
 		/* TODO */
@@ -837,7 +847,7 @@ static char *handle_function_based_on_key_press(
 	return input;
 }
 
-static void handle_key_press(wint_t ch, UI *ui, int sock, char **cur_dir)
+static void handle_key_press(wint_t ch, UI *ui, int sock, const char *cur_dir)
 {
 	switch (ch) {
 		case KEY_DOWN:
@@ -1240,7 +1250,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 					} else if (res == OK || res == KEY_CODE_YES) {
 						char *in = handle_function_based_on_key_press(ch, &ui, sock, cur_dir, res, state, wchars, &cpos);
 						if (in) input = in;
-						handle_key_press(ch, &ui, sock, &cur_dir);
+						handle_key_press(ch, &ui, sock, cur_dir);
 						ui_refresh_active_window(&ui);
 						ui_cursor_text_input(&ui, input);
 						window_refresh(ui.win_footer);
