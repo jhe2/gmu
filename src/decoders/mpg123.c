@@ -100,7 +100,7 @@ static int decode_data(char *target, size_t max_size)
 			seek_request = 0;
 		}
 
-		readsize = 2048;
+		readsize = 4096;
 		if (metacount > 0) {
 			if (metacount < readsize) readsize = metacount;
 			metacount -= readsize;
@@ -122,7 +122,7 @@ static int decode_data(char *target, size_t max_size)
 		do {
 			ret = mpg123_read(player, (unsigned char*)target, max_size, &decsize);
 			if (ret == MPG123_NEED_MORE && decsize == 0) {
-				readsize = 2048;
+				readsize = 4096;
 				if (metaint > 0) { /* Do this only if there is Shoutcast meta data in the stream */
 					if (metacount < readsize) readsize = metacount;
 					metacount -= readsize;
