@@ -63,6 +63,7 @@ test_lib()
 $includes_test
 int main(void)
 {
+  $code_test
   return 0;
 }
 _WEJTEST
@@ -70,7 +71,7 @@ _WEJTEST
 	echo "Checking '$1'..."
 	res=1
 	echo -n "$1 header files: "
-	$CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall
+	$CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall 2>/dev/null
 	if [ $? = 0 ]; then
 		echo "okay";
 	else
@@ -101,7 +102,7 @@ int main(void)
   return 0;
 }
 _WEJTEST
-	$CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c
+	$CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c 2>/dev/null
 	if [ $? != 0 ]; then
 		res=1
 	fi
@@ -433,6 +434,7 @@ if [ $sdk_path ]; then
 		sdl_libs=$(sdl-config --libs)
 	fi
 libs_test=$sdl_libs
+code_test=""
 test_lib "SDL"
 if [ $? = 0 ]; then
 	echo "WARNING: Gmu depends on SDL. Cannot build the Gmu core without it."
@@ -448,6 +450,7 @@ if [ $sdk_path ]; then
 		sdl_libs=$(sdl-config --libs)
 	fi
 libs_test="$sdl_libs -lSDL_gfx"
+code_test=""
 test_lib "SDL_gfx"
 if [ $? = 0 ]; then
 	echo "SDL_gfx support disabled."
@@ -455,10 +458,14 @@ if [ $? = 0 ]; then
 fi
 
 
-includes_test="#include <curses.h>"
+includes_test="#ifndef _XOPEN_SOURCE_EXTENDED
+#define _XOPEN_SOURCE_EXTENDED
+#endif
+#include <curses.h>"
 includes_test_flags="-I$BASE_INCLUDE_PATH/ncursesw"
 libs_test="-lncursesw"
-test_lib "ncurses"
+code_test="int testvar = WACS_VLINE;"
+test_lib "ncursesw"
 if [ $? = 0 ]; then
 	tool_gmuc=0
 fi
@@ -468,6 +475,7 @@ if [ $dec_opus != 0 ]; then
 #include <opusfile.h>"
 	includes_test_flags="-I$BASE_INCLUDE_PATH/opus"
 	libs_test="-lopus -lopusfile"
+	code_test=""
 	test_lib "opus"
 	dec_opus=$?
 	[ $dec_opus = 1 ] && add_config "DEC_opus_CFLAGS=$includes_test_flags"
@@ -476,6 +484,7 @@ fi
 if [ $dec_mpg123 != 0 ]; then
 	includes_test="#include <mpg123.h>"
 	libs_test="-lmpg123"
+	code_test=""
 	test_lib "libmpg123"
 	dec_mpg123=$?
 fi
@@ -483,6 +492,7 @@ fi
 if [ $dec_flac != 0 ]; then
 	includes_test="#include <FLAC/stream_decoder.h>"
 	libs_test="-lFLAC"
+	code_test=""
 	test_lib "libFLAC"
 	dec_flac=$?
 fi
@@ -490,6 +500,7 @@ fi
 if [ $dec_vorbis != 0 ]; then
 	includes_test="#include <tremor/ivorbiscodec.h>"
 	libs_test="-lvorbisidec"
+	code_test=""
 	test_lib "libvorbisidec"
 	dec_vorbis=$?
 fi
@@ -497,6 +508,7 @@ fi
 if [ $dec_modplug != 0 ]; then
 	includes_test="#include <libmodplug/modplug.h>"
 	libs_test="-lmodplug"
+	code_test=""
 	test_lib "libmodplug"
 	dec_modplug=$?
 fi
@@ -505,6 +517,7 @@ if [ $dec_openmpt != 0 ]; then
 	includes_test="#include <libopenmpt/libopenmpt.h>
 #include <libopenmpt/libopenmpt_stream_callbacks_file.h>"
 	libs_test="-lopenmpt"
+	code_test=""
 	test_lib "libopenmpt"
 	dec_openmpt=$?
 fi
@@ -517,6 +530,7 @@ if [ $dec_speex != 0 ]; then
 #include <speex/speex_callbacks.h>"
 	includes_test_flags=""
 	libs_test="-logg -lspeex"
+	code_test=""
 	test_lib "speex"
 	dec_speex=$?
 	[ $dec_speex = 1 ] && add_config "DEC_speex_CFLAGS=$includes_test_flags"
@@ -525,6 +539,7 @@ fi
 if [ $feature_medialib != 0 ]; then
 	includes_test="#include <sqlite3.h>"
 	libs_test="-lsqlite3"
+	code_test=""
 	test_lib "Media library dependency: libsqlite3"
 	if [ $? = 1 ]; then
 		feature_medialib=1
@@ -539,6 +554,7 @@ if [ $fe_sdl != 0 ]; then
 	includes_test="#include <SDL/SDL.h>
 #include <SDL/SDL_image.h>"
 	libs_test="-lSDL_image -lSDL"
+	code_test=""
 	test_lib "SDL + helper libs"
 	fe_sdl=$?
 fi
@@ -557,6 +573,7 @@ if [ $fe_web != 0 ]; then
 #include <fcntl.h>
 "
 	libs_test="-lpthread"
+	code_test=""
 	test_lib "web frontend dependencies"
 	fe_web=$?
 fi
@@ -565,6 +582,7 @@ if [ $fe_lirc != 0 ]; then
 	includes_test="#include <pthread.h>
 #include <lirc/lirc_client.h>"
 	libs_test="-llirc_client"
+	code_test=""
 	test_lib "lirc_client"
 	fe_lirc=$?
 fi
@@ -576,6 +594,7 @@ if [ $fe_log != 0 ]; then
 #include <string.h>
 #include <time.h>"
 	libs_test=""
+	code_test=""
 	test_lib "log frontend dependencies"
 	fe_log=$?
 fi
