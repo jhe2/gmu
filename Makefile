@@ -38,6 +38,7 @@ endif
 ALLFILES=src/ htdocs/ Makefile  *.sh *.dge *.gpu *.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
 BINARY=gmu.bin
 COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
+DISTFILES?=$(COMMON_DISTBIN_FILES)
 
 ifeq (0,$(STATIC))
 # normal dynamic build (with runtime-loadable plugins)
