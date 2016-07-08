@@ -24,6 +24,7 @@
 #include <pwd.h>
 #include <sys/stat.h> /* for mkdir() */
 #include <errno.h>
+#include <limits.h> /* for PATH_MAX */
 #include "charset.h"
 #include "debug.h"
 #include "util.h"
