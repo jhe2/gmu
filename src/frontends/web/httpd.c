@@ -268,7 +268,7 @@ int connection_file_open(Connection *c, const char *filename)
 		if (S_ISREG(fst.st_mode)) {
 			wdprintf(
 				V_DEBUG,
-				"httpd", "Connection: Opening file %s (%ld bytes)...\n",
+				"httpd", "Connection: Opening file %s (%zd bytes)...\n",
 				filename,
 				fst.st_size
 			);
@@ -397,7 +397,7 @@ static void send_http_header(
 	}
 
 	net_send_buf(soc, "Accept-Ranges: none\r\n");
-	snprintf(msg, 254, "Content-Length: %ld\r\n", length);
+	snprintf(msg, 254, "Content-Length: %zd\r\n", length);
 	net_send_buf(soc, msg);
 	/*send_buf(soc, "Connection: close\r\n");*/
 	snprintf(msg, 254, "Content-Type: %s\r\n", content_type);
@@ -828,7 +828,7 @@ void gmu_http_playlist_get_info(Connection *c)
 	int  r = snprintf(
 		msg,
 		MSG_MAX_LEN,
-		"{ \"cmd\": \"playlist_info\", \"changed_at_position\" : 0, \"length\" : %ld }",
+		"{ \"cmd\": \"playlist_info\", \"changed_at_position\" : 0, \"length\" : %zd }",
 		gmu_core_playlist_get_length()
 	);
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
@@ -927,7 +927,7 @@ void gmu_http_send_initial_information(Connection *c)
 	int  r = snprintf(
 		msg,
 		MSG_MAX_LEN,
-		"{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %ld }",
+		"{ \"cmd\": \"playlist_change\", \"changed_at_position\" : 0, \"length\" : %zd }",
 		gmu_core_playlist_get_length()
 	);
 	if (r < MSG_MAX_LEN && r > 0) websocket_send_string(c, msg);
@@ -999,7 +999,7 @@ static void gmu_http_read_dir(const char *directory, Connection *c)
 						snprintf(
 							res+pos,
 							MAX_LEN-pos,
-							"\"%ld\": { \"name\": \"%s\", \"size\": %ld, \"is_dir\": %d },",
+							"\"%zd\": { \"name\": \"%s\", \"size\": %ld, \"is_dir\": %d },",
 							i,
 							tmp,
 							filesize,
@@ -1055,7 +1055,7 @@ static void gmu_http_medialib_search(Connection *c, const char *type, const char
 			snprintf(
 				rstr,
 				1023,
-				"{\"cmd\":\"mlib_result\", \"pos\":%ld,\"id\":%d,\"artist\":\"%s\",\"title\":\"%s\",\"album\":\"%s\",\"date\":\"%s\",\"file\":\"%s\"}",
+				"{\"cmd\":\"mlib_result\", \"pos\":%zd,\"id\":%d,\"artist\":\"%s\",\"title\":\"%s\",\"album\":\"%s\",\"date\":\"%s\",\"file\":\"%s\"}",
 				i,
 				ti.id,
 				artist,
@@ -1091,7 +1091,7 @@ static void gmu_http_medialib_browse_artists(Connection *c)
 			snprintf(
 				rstr,
 				1023,
-				"{\"cmd\":\"mlib_browse_result\", \"pos\":%ld,\"artist\":\"%s\"}",
+				"{\"cmd\":\"mlib_browse_result\", \"pos\":%zd,\"artist\":\"%s\"}",
 				i,
 				artist
 			);

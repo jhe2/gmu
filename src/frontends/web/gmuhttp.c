@@ -127,7 +127,7 @@ static int event_callback(GmuEvent event, int param)
 			r = snprintf(
 				msg,
 				MSG_MAX_LEN,
-				"{ \"cmd\": \"playlist_change\", \"changed_at_position\" : %d, \"length\" : %ld }",
+				"{ \"cmd\": \"playlist_change\", \"changed_at_position\" : %d, \"length\" : %zd }",
 				param,
 				gmu_core_playlist_get_length()
 			);
