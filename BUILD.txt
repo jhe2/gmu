@@ -143,9 +143,9 @@ Gmu from source.
 
 2. Adding a new target
 
-When using the configure script, most of what follows is irrelevant, since
-it can be configured with arguments to configure. Hardware specific stuff
-still needs to be manually done. See 2.2 for that.
+When using the configure script, most of what follows (2.1) is irrelevant,
+since it can be configured with arguments to configure. Hardware specific
+stuff still needs to be done manually. See 2.2 for that.
 
 2.1 Adding a new target the old way
 
@@ -163,7 +163,11 @@ can set SDLFE_WITHOUT_SDL_GFX=1. This will disable cover image support.
 
 2.2 Hardware specific code
 
-Next you need to create two files hw_new_target.h and hw_new_target.c. These
+Depending on the device you are trying to run Gmu on, you might want to add
+device specific code for screen/backlight control and/or the audio mixer
+to control the volume with the device's hardware mixer. Both things are
+optional and aren't needed for all devices.
+You need to create two files hw_new_target.h and hw_new_target.c. These
 files consist of hardware specific things. Again, the easiest way of creating
 those files is copying them. Copy hw_unknown.h to hw_new_target.h and 
 hw_unknown.c to hw_new_target.c. You can make adjustments to those files later,
@@ -179,7 +183,7 @@ changing the button configuration.
 
 2.3 Static build
 
-By default, Gmu's plugins are built as external loadable plugins. It is now
+By default, Gmu's plugins are built as external loadable plugins. It is
 also possible to build Gmu as one static binary with all plugins built-in.
 This can be useful for platforms where you are unable to dynamically load
 shared objects (e.g. if you are forced to statically link the binary due
