@@ -1277,6 +1277,7 @@ static void *start_player(void *arg)
 	cfg_add_key_if_not_present(config, "SDL.BacklightPowerOnOnTrackChange", "no");
 	cfg_key_add_presets(config, "SDL.BacklightPowerOnOnTrackChange", "yes", "no", NULL);
 	cfg_add_key_if_not_present(config, "SDL.KeyMap", "default.keymap");
+	cfg_add_key_if_not_present(config, "SDL.InputConfigFile", "gmuinput.conf");
 	cfg_add_key_if_not_present(config, "SDL.AllowVolumeControlInHoldState", "no");
 	cfg_key_add_presets(config, "SDL.AllowVolumeControlInHoldState", "yes", "no", NULL);
 	cfg_add_key_if_not_present(config, "SDL.SecondsUntilBacklightPowerOff", "30");
