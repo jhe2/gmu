@@ -184,6 +184,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 					free(r);
 					r = NULL;
 				} else {
+					int err = 0;
 					int flags = 0;
 					/* loop through all the results and connect to the first we can */
 					for (p = servinfo; p != NULL; p = p->ai_next) {
@@ -202,17 +203,21 @@ static Reader *_reader_open(const char *url, int max_redirects)
 						flags = fcntl(r->sockfd, F_GETFL, 0);
 						fcntl(r->sockfd, F_SETFL, flags | O_NONBLOCK);
 						if (connect(r->sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-							wdprintf(V_INFO, "reader", "connect: %s\n", strerror(errno));
-							if (errno == EINPROGRESS)
+							err = errno;
+							wdprintf(V_INFO, "reader", "connect: %s\n", strerror(err));
+							if (err == EINPROGRESS) {
+								wdprintf(V_DEBUG, "reader", "Connection okay; continuing...\n");
 								break;
-							else
+							} else {
+								wdprintf(V_DEBUG, "reader", "Connection unusable; closing.\n");
 								close(r->sockfd);
+							}
 							continue;
 						}
 						break;
 					}
 
-					if (errno == EINPROGRESS) {
+					if (err == EINPROGRESS) {
 						fd_set myset;
 						struct timeval tv; 
 
