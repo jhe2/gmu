@@ -61,9 +61,9 @@ TrackInfoToggleText=B
 QuestionYes=Enter
 QuestionNo=ESC
 # Setup mappings:
-RunSetup=A
-SetupSelect=B
+RunSetup=S
+SetupSelect=Enter
 SetupClose=X
-SetupFileBrowserSelect=B
+SetupFileBrowserSelect=Enter
 SetupFileBrowserChDir=A
 SetupFileBrowserCancel=X
