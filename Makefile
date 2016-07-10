@@ -35,7 +35,7 @@ OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejconfig.o 
 ifeq ($(GMU_MEDIALIB),1)
 OBJECTFILES+=medialib.o
 endif
-ALLFILES=src/ htdocs/ Makefile  *.sh *.dge *.gpu *.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
+ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu *.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
 BINARY=gmu.bin
 COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
 DISTFILES?=$(COMMON_DISTBIN_FILES)
