@@ -1221,6 +1221,7 @@ int main(int argc, char **argv)
 			playlist_release_lock(&pl);
 			file_player_play_file(global_filename, 1, check_fade_out_on_skip());
 			global_command = NO_CMD;
+			global_filename[0] = '\0';
 		} else if ((file_player_get_item_status() == FINISHED || 
 		           global_command == NEXT) && player_status == PLAYING) {
 			wdprintf(V_DEBUG, "gmu", "Trying to play next track in playlist...\n");
