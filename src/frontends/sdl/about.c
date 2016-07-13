@@ -20,8 +20,7 @@
 
 static const char *text_about_gmu = 
 	"Libraries used by this program:\n\n"
-	"- SDL, SDL_Image, SDL_gfx\n"
-	"- libjpeg+libpng used by SDL_image\n\n"
+	"- SDL, SDL_Image, SDL_gfx (optional)\n\n"
 	"The decoder plugins use additional\n"
 	"libraries for decoding.\n\n"
 	"Program written by\n"
@@ -32,7 +31,11 @@ static const char *text_about_gmu =
 	"want to check the in-program help\n"
 	"screen.\n\n"
 	"Project website:\n"
-	"**http://wej.k.vu/projects/gmu/**";
+	"**http://wej.k.vu/projects/gmu/**\n\n"
+	"Gmu is free software: you can\n"
+	"redistribute it and/or modify it under\n"
+	"the terms of the GNU General Public\n"
+	"License version 2.\n";
 
 int about_process_action(TextBrowser *tb_about, View *view, View old_view, int user_key_action)
 {
