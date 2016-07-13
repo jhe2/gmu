@@ -35,7 +35,7 @@ OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejconfig.o 
 ifeq ($(GMU_MEDIALIB),1)
 OBJECTFILES+=medialib.o
 endif
-ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu *.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
+ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu dingux.mk gp2xwiz.mk pandora.mk unknown.mk caanoo.mk dingoo-native.mk gp2x.mk nanonote.mk pre.mk zipit-z2.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmuinput.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
 BINARY=gmu.bin
 COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
 DISTFILES?=$(COMMON_DISTBIN_FILES)
@@ -153,6 +153,7 @@ default_distbin: $(DISTFILES)
 	$(Q)-cp gmuc $(projname)-$(TARGET)
 	$(Q)-cp gmu.$(TARGET).conf $(projname)-$(TARGET)/gmu.$(TARGET).conf
 	$(Q)-cp $(TARGET).keymap $(projname)-$(TARGET)/$(TARGET).keymap
+	$(Q)-cp gmuinput.$(TARGET).conf $(projname)-$(TARGET)/gmuinput.conf
 	$(Q)$(STRIP) $(projname)-$(TARGET)/decoders/*.so
 	$(Q)$(STRIP) $(projname)-$(TARGET)/$(BINARY)
 	$(Q)-$(STRIP) $(projname)-$(TARGET)/gmuc
