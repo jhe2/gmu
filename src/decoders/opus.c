@@ -225,7 +225,7 @@ static int get_current_bitrate(void)
 
 static int get_length(void)
 {
-	return 0;
+	return op_pcm_total(oof, -1) / 48000;
 }
 
 static int get_samplerate(void)
