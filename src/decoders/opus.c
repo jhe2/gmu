@@ -225,7 +225,8 @@ static int get_current_bitrate(void)
 
 static int get_length(void)
 {
-	return op_pcm_total(oof, -1) / 48000;
+	ogg_int64_t samples = op_pcm_total(oof, -1);
+	return samples == OP_EINVAL ? 0 : samples / 48000;
 }
 
 static int get_samplerate(void)
