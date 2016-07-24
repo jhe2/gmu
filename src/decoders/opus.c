@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: opus.c  Created: 130303
  *
@@ -29,6 +29,7 @@ static int          sample_rate, channels = 0, bitrate = 0;
 static TrackInfo    ti, ti_metaonly;
 static Reader      *r;
 static OggOpusFile *oof;
+static int          seek_request = 0;
 
 static const char *get_name(void)
 {
@@ -143,6 +144,14 @@ static int decode_data(char *target, size_t max_size)
 		read_tags(oof, li, tim);
 	}
 
+	if (seek_request && reader_is_seekable(r) && seek_to_sample_offset >= 0) {
+		wdprintf(V_DEBUG, "opus", "Seeking requested to sample %d.\n", seek_to_sample_offset);
+		if (op_pcm_seek(oof, seek_to_sample_offset) != 0)
+			wdprintf(V_WARNING, "opus", "Seeking failed.\n");
+		seek_to_sample_offset = 0;
+		seek_request = 0;
+	}
+
 	if (channels > 1)
 		samples = op_read_stereo(oof, (opus_int16 *)target, max_size / 2);
 	else if (channels == 1)
@@ -195,6 +204,7 @@ static int opus_seek_to(int offset_seconds)
 	int res = 0;
 	if (offset_seconds >= 0) {
 		seek_to_sample_offset = offset_seconds * sample_rate;
+		seek_request = 1;
 		res = 1;
 	}
 	return res;
