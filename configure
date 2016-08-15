@@ -555,7 +555,7 @@ if [ $fe_sdl != 0 ]; then
 #include <SDL/SDL_image.h>"
 	libs_test="-lSDL_image -lSDL"
 	code_test=""
-	test_lib "SDL + helper libs"
+	test_lib "SDL + SDL_image"
 	fe_sdl=$?
 fi
 
