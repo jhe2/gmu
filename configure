@@ -34,6 +34,7 @@ TARGET=unknown
 EXTRA_CFLAGS=
 BUILD_CONFIG_EXTRAS=
 LFLAGS_CORE=
+LIBS_CORE=
 
 test_compiler()
 {
@@ -277,6 +278,7 @@ print_features_and_write_config()
 	echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H $EXTRA_CFLAGS" >>config.mk
 	echo "LFLAGS=$LFLAGS -Wl,-export-dynamic" >>config.mk
 	echo "LFLAGS_CORE=$LFLAGS_CORE" >>config.mk
+	echo "LIBS_CORE=$LIBS_CORE" >>config.mk
 	echo "DECODERS_TO_BUILD=$dec" >>config.mk
 	echo "FRONTENDS_TO_BUILD=$frn" >>config.mk
 	echo "TARGET=$TARGET" >>config.mk
@@ -421,7 +423,7 @@ fi
 test_need_libdl
 if [ $? = 1 ]; then
 	echo "libdl needed."
-	LFLAGS_CORE="$LFLAGS_CORE -ldl"
+	LIBS_CORE="$LIBS_CORE -ldl"
 fi
 
 # Tests

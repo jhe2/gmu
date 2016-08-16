@@ -1,7 +1,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2016 Johannes Heimansberg (wejp.k.vu)
 #
 # File: Makefile  Created: 060904
 #
@@ -20,13 +20,13 @@ include config.mk
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -pipe -Wall -Wcast-qual -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\"" -DGMU_INSTALL_PREFIX="\"$(PREFIX)\""
 
-LFLAGS_CORE+=$(SDL_LIB) -lrt
+LIBS_CORE+=$(SDL_LIB) -lrt
 ifeq ($(GMU_MEDIALIB),1)
-LFLAGS_CORE+=-lsqlite3
+LIBS_CORE+=-lsqlite3
 endif
-LFLAGS_SDLFE=$(SDL_LIB) -lSDL_image
+LIBS_SDLFE=$(SDL_LIB) -lSDL_image
 ifneq ($(SDLFE_WITHOUT_SDL_GFX),1)
-LFLAGS_SDLFE+=-lSDL_gfx
+LIBS_SDLFE+=-lSDL_gfx
 else
 CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif
@@ -65,19 +65,19 @@ PLUGIN_FE_gmuhttp_OBJECTFILES=gmuhttp.o sha1.o base64.o httpd.o queue.o json.o w
 PLUGIN_FE_log_OBJECTFILES=log.o
 
 # Decoder configs
-DEC_vorbis_LFLAGS=-lvorbisidec
-DEC_mpg123_LFLAGS=-lmpg123
-DEC_flac_LFLAGS=-lFLAC
-DEC_musepack_LFLAGS=-lmpcdec
-DEC_mikmod_LFLAGS=-lmikmod
-DEC_speex_LFLAGS=-logg -lspeex
-DEC_modplug_LFLAGS=-lmodplug
-DEC_openmpt_LFLAGS=-lopenmpt
-DEC_opus_LFLAGS=-lopus -logg -lopusfile
-DEC_wavpack_LFLAGS=-lwavpack
+DEC_vorbis_LIBS=-lvorbisidec
+DEC_mpg123_LIBS=-lmpg123
+DEC_flac_LIBS=-lFLAC
+DEC_musepack_LIBS=-lmpcdec
+DEC_mikmod_LIBS=-lmikmod
+DEC_speex_LIBS=-logg -lspeex
+DEC_modplug_LIBS=-lmodplug
+DEC_openmpt_LIBS=-lopenmpt
+DEC_opus_LIBS=-lopus -logg -lopusfile
+DEC_wavpack_LIBS=-lwavpack
 
 ifeq (1,$(STATIC))
-LFLAGS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(subst decoders/,,$(basename $(i)))_LFLAGS))
+LIBS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(subst decoders/,,$(basename $(i)))_LIBS))
 PLUGIN_OBJECTFILES+=$(foreach i, $(DECODERS_TO_BUILD), $(basename $(i)).o)
 DECODERS=
 FRONTENDS=
@@ -112,7 +112,7 @@ decodersdir:
 
 $(BINARY): $(OBJECTFILES) $(PLUGIN_OBJECTFILES)
 	@echo -e "Linking \033[1m$(BINARY)\033[0m"
-	$(Q)$(CC) $(LFLAGS) $(LFLAGS_CORE) -o $(BINARY) $(OBJECTFILES) $(PLUGIN_OBJECTFILES)
+	$(Q)$(CC) $(LFLAGS) $(LFLAGS_CORE) -o $(BINARY) $(OBJECTFILES) $(PLUGIN_OBJECTFILES) $(LIBS_CORE) $(LIBS)
 
 libs.$(TARGET):
 	$(Q)-mkdir -p libs.$(TARGET)
@@ -201,11 +201,11 @@ gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net
 
 decoders/%.so: src/decoders/%.c | decodersdir
 	@echo -e "Building \033[1m$@\033[0m from \033[1m$<\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS) $(DEC_$(*)_CFLAGS)
+	$(Q)$(CC) $(CFLAGS) $(DEC_$(*)_CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LIBS)
 
 decoders/%.o: src/decoders/%.c | decodersdir
 	@echo -e "Compiling \033[1m$<\033[0m"
-	$(Q)$(CC) -c -o $@ $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LFLAGS) $(DEC_$(*)_CFLAGS)
+	$(Q)$(CC) -c -o $@ $(CFLAGS) $(DEC_$(*)_CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LIBS)
 
 %.o: src/decoders/%.c
 	@echo -e "Compiling \033[1m$<\033[0m"
@@ -213,7 +213,7 @@ decoders/%.o: src/decoders/%.c | decodersdir
 
 frontends/sdl.so: $(PLUGIN_FE_sdl_OBJECTFILES) | frontendsdir
 	@echo -e "Linking \033[1m$@\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_sdl_OBJECTFILES)
+	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_sdl_OBJECTFILES) $(LIBS_SDLFE)
 
 frontends/log.so: log.o util.o | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
@@ -233,7 +233,7 @@ frontends/lirc.so: src/frontends/lirc.c | frontendsdir
 
 frontends/gmuhttp.so: $(PLUGIN_FE_gmuhttp_OBJECTFILES) | frontendsdir
 	@echo -e "Building \033[1m$@\033[0m"
-	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $(LFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread $(PLUGIN_FE_gmuhttp_OBJECTFILES)
+	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $(LFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) $(PLUGIN_FE_gmuhttp_OBJECTFILES) -lpthread
 
 tmp-felist.h:
 	@echo -e "Creating file \033[1mtmp-felist.h\033[0m"
