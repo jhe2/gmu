@@ -85,7 +85,7 @@ static int get_decoder_buffer_size(void)
 
 static const char* get_file_extensions(void)
 {
-	return ".ogg";
+	return ".ogg;.oga";
 }
 
 static int get_current_bitrate(void)
