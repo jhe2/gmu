@@ -120,7 +120,7 @@ static void metadata_callback(const FLAC__StreamDecoder  *decoder,
 				if (strstr(buf, "ALBUM=") == buf)
 					strncpy(ti->album, ptr+6, SIZE_ALBUM-1);
 				if (strstr(buf, "DATE=") == buf)
-					strncpy(ti->date, ptr+5, SIZE_ALBUM-1);
+					strncpy(ti->date, ptr+5, SIZE_DATE-1);
 				if (strstr(buf, "TRACKNUMBER=") == buf)
 					strncpy(ti->tracknr, ptr+12, SIZE_TRACKNR-1);
 				/* metadata->data.vorbis_comment.comments[i].entry (.length) */
