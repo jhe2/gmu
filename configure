@@ -429,13 +429,14 @@ fi
 # Tests
 includes_test="#include <SDL/SDL.h>"
 if [ $sdk_path ]; then
-		sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
-		sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
-	else
-		sdl_cflags=$(sdl-config --cflags)
-		sdl_libs=$(sdl-config --libs)
-	fi
+	sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
+	sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
+else
+	sdl_cflags=$(sdl-config --cflags)
+	sdl_libs=$(sdl-config --libs)
+fi
 libs_test=$sdl_libs
+includes_test_flags=$sdl_cflags
 code_test=""
 test_lib "SDL"
 if [ $? = 0 ]; then
@@ -445,13 +446,14 @@ fi
 
 includes_test="#include <SDL/SDL_rotozoom.h>"
 if [ $sdk_path ]; then
-		sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
-		sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
-	else
-		sdl_cflags=$(sdl-config --cflags)
-		sdl_libs=$(sdl-config --libs)
-	fi
+	sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
+	sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
+else
+	sdl_cflags=$(sdl-config --cflags)
+	sdl_libs=$(sdl-config --libs)
+fi
 libs_test="$sdl_libs -lSDL_gfx"
+includes_test_flags=$sdl_cflags
 code_test=""
 test_lib "SDL_gfx"
 if [ $? = 0 ]; then
@@ -553,9 +555,17 @@ fi
 
 
 if [ $fe_sdl != 0 ]; then
+	if [ $sdk_path ]; then
+		sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
+		sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
+	else
+		sdl_cflags=$(sdl-config --cflags)
+		sdl_libs=$(sdl-config --libs)
+	fi
 	includes_test="#include <SDL/SDL.h>
 #include <SDL/SDL_image.h>"
-	libs_test="-lSDL_image -lSDL"
+	libs_test="$sdl_libs -lSDL_image"
+	includes_test_flags=$sdl_cflags
 	code_test=""
 	test_lib "SDL + SDL_image"
 	fe_sdl=$?
