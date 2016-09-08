@@ -43,10 +43,9 @@ int oss_mixer_open(void)
 			int   i, p = 0;
 			char *dn[] = SOUND_DEVICE_NAMES;
 
-			wdprintf(V_INFO, "oss_mixer", "Available controls: ");
+			wdprintf(V_INFO, "oss_mixer", "Available controls:\n");
 			for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 				if (mask & (1 << i)) {
-					if (p) printf(", ");
 					wdprintf(V_INFO, "oss_mixer", "%s (%d)\n", dn[i], i);
 					p = 1;
 					available_mixers[i] = 1;
@@ -57,8 +56,13 @@ int oss_mixer_open(void)
 		}
 		ioctl(mixer_device, SOUND_MIXER_READ_PCM, &initial_volume_pcm);
 		ioctl(mixer_device, SOUND_MIXER_READ_VOLUME, &initial_volume_master);
-		wdprintf(V_DEBUG, "oss_mixer", "Volume settings: master=%d pcm=%d\n",
-		       initial_volume_master, initial_volume_pcm);
+		wdprintf(
+			V_DEBUG,
+			"oss_mixer",
+			"Volume settings: master=%d pcm=%d\n",
+			initial_volume_master,
+			initial_volume_pcm
+		);
 	}
 	return result;
 }
