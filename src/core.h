@@ -23,7 +23,7 @@
 #include "eventqueue.h"
 #include "medialib.h"
 
-#define VERSION_NUMBER "0.10.0"
+#define VERSION_NUMBER "0.10.1"
 
 #define DEFAULT_THREAD_STACK_SIZE (128 * 1024)
 

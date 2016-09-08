@@ -1,6 +1,6 @@
 The Gmu Music Player
 
-Version 0.10.0
+Version 0.10.1
 
 Copyright (c) 2006-2016 Johannes 'wej' Heimansberg
 http://wej.k.vu/projects/gmu/
