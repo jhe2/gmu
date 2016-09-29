@@ -228,7 +228,10 @@ int cfg_set_output_config_file(ConfigFile *cf, const char *filename)
 {
 	int res = CFG_ERROR;
 	size_t lf = strlen(filename);
-	if (cf->file) free(cf->file);
+	if (cf->file) {
+		free(cf->file);
+		cf->file = NULL;
+	}
 	if (lf > 0) cf->file = malloc(lf+1);
 	if (cf->file) {
 		memcpy(cf->file, filename, lf+1);
