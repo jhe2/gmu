@@ -1543,20 +1543,21 @@ static int process_cli_command(
 						break;
 					}
 					case STATE_CONNECTION_ESTABLISHED: {
-						int tmp;
+						int all_done;
 						if (!network_error) {
-							if (command != NO_COMMAND) {
-								execute_command(sock, command, params, NULL);
-							}
-							tmp = handle_data_in_ringbuffer_print_only(
+							/* handle_data_in_ringbuffer_print_only() does the actual login */
+							all_done = handle_data_in_ringbuffer_print_only(
 								&rb,
 								sock,
 								password,
 								&cur_dir,
 								format_str,
-								command != NO_COMMAND
+								command != NO_COMMAND /* Do not print anything, if an actual command has been submitted */
 							);
-							if (just_once || command != NO_COMMAND) quit = tmp;
+							if (all_done && command != NO_COMMAND) {
+								execute_command(sock, command, params, NULL);
+							}
+							if (just_once || command != NO_COMMAND) quit = all_done;
 						}
 						break;
 					}
