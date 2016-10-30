@@ -113,10 +113,11 @@ static struct _trackinfo_mapping tim_metaonly[] = {
 	{ NULL,           NULL,       0 }
 };
 
-static void read_tags(OggOpusFile *oof, int li, struct _trackinfo_mapping *tim)
+static int read_tags(OggOpusFile *oof, int li, struct _trackinfo_mapping *tim)
 {
 	const OpusTags *tags = op_tags(oof, li);
 	int             ci, i;
+	int             res = 0;
 	if (tags) {
 		for (ci = 0; ci < tags->comments; ci++) {
 			wdprintf(V_DEBUG, "opus", "metadata(%d): %s\n", ci, tags->user_comments[ci]);
@@ -126,10 +127,12 @@ static void read_tags(OggOpusFile *oof, int li, struct _trackinfo_mapping *tim)
 					wdprintf(V_INFO, "opus", "%s> %s\n", tim[i].key, tags->user_comments[ci]+len);
 					strncpy(tim[i].target, tags->user_comments[ci]+len, tim[i].maxlen);
 					tim[i].target[tim[i].maxlen-1] = '\0';
+					res = 1;
 				}
 			}
 		}
 	}
+	return res;
 }
 
 static int decode_data(char *target, size_t max_size)
@@ -141,7 +144,7 @@ static int decode_data(char *target, size_t max_size)
 
 	if (li != prev_li) {
 		prev_li = li;
-		read_tags(oof, li, tim);
+		if (read_tags(oof, li, tim)) trackinfo_set_updated(&ti);
 	}
 
 	if (seek_request && reader_is_seekable(r) && seek_to_sample_offset >= 0) {
