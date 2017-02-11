@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
  *
  * File: oss_mixer.h  Created: 090630
  *
@@ -13,10 +13,8 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
-#ifndef _OSS_MIXER_H
-#define _OSS_MIXER_H
-#include <sys/soundcard.h>
-
+#ifndef GMU_OSS_MIXER_H
+#define GMU_OSS_MIXER_H
 int  oss_mixer_open(void);
 void oss_mixer_close(void);
 void oss_mixer_set_volume(int mixer, int volume);

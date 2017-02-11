@@ -31,12 +31,15 @@ else
 CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif
 
-OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o oss_mixer.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o metadatareader.o dirparser.o gmuerror.o pthread_helper.o
+OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o metadatareader.o dirparser.o gmuerror.o pthread_helper.o
 ifeq ($(GMU_MEDIALIB),1)
 OBJECTFILES+=medialib.o
 endif
+ifneq ($(GMU_DISABLE_OSS_MIXER),1)
+OBJECTFILES+=oss_mixer.o
+endif
 ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu dingux.mk gp2xwiz.mk pandora.mk unknown.mk caanoo.mk dingoo-native.mk gp2x.mk nanonote.mk pre.mk zipit-z2.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmuinput.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
-BINARY=gmu.bin
+BINARY?=gmu.bin
 COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
 DISTFILES?=$(COMMON_DISTBIN_FILES)
 

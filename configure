@@ -176,6 +176,9 @@ set_feature()
 		debug)
 			feature_debug=$on_off
 			;;
+		oss-mixer)
+			feature_oss_mixer=$on_off
+			;;
 	esac
 }
 
@@ -188,7 +191,7 @@ print_features_and_write_config()
 	local frn=""
 
 	echo "# Generated Gmu config" >config.mk
-	echo "Enabled features:"
+	echo "Features:"
 	local TOOLS_TO_BUILD=
 	if [ $gmu_core != 0 ]; then
 		echo "Gmu core enabled"
@@ -206,6 +209,11 @@ print_features_and_write_config()
 	if [ $feature_debug = 1 ]; then
 		echo "Debug build enabled"
 		EXTRA_CFLAGS="$EXTRA_CFLAGS -DDEBUG"
+	fi
+	if [ $feature_oss_mixer = 0 ]; then
+		echo "OSS mixer disabled"
+		echo "GMU_DISABLE_OSS_MIXER=1" >>config.mk
+		EXTRA_CFLAGS="$EXTRA_CFLAGS -DGMU_DISABLE_OSS_MIXER=1"
 	fi
 	echo
 	echo "Decoders:"
@@ -319,6 +327,7 @@ fe_log=-2
 feature_medialib=0
 feature_sdl_gfx=-2
 feature_debug=0
+feature_oss_mixer=1
 target_device="unknown"
 sdk_path=
 includes=
