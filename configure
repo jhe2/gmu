@@ -167,6 +167,9 @@ set_feature()
 		log-frontend)
 			fe_log=$on_off
 			;;
+		notify-frontend)
+			fe_notify=$on_off
+			;;
 		medialib)
 			feature_medialib=$on_off
 			;;
@@ -275,6 +278,10 @@ print_features_and_write_config()
 		echo "Log frontend enabled"
 		frn="$frn frontends/log.so"
 	fi
+	if [ $fe_notify = 1 ]; then
+		echo "Notify frontend enabled"
+		frn="$frn frontends/notify.so"
+	fi
 	echo "CC=$CC" >>config.mk
 	if [ $sdk_path ]; then
 		echo "SDL_CFLAGS=$(sdl-config --prefix=$sdk_path --cflags)" >>config.mk
@@ -324,6 +331,7 @@ fe_sdl=-2
 fe_web=-2
 fe_lirc=-2
 fe_log=-2
+fe_notify=-2
 feature_medialib=0
 feature_sdl_gfx=-2
 feature_debug=0
@@ -618,6 +626,21 @@ if [ $fe_log != 0 ]; then
 	code_test=""
 	test_lib "log frontend dependencies"
 	fe_log=$?
+fi
+
+if [ $fe_notify != 0 ]; then
+	includes_test="#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <gio/gio.h>"
+
+	libs_test="`pkg-config --libs gio-2.0`"
+	includes_test_flags="`pkg-config --cflags gio-2.0`"
+	code_test=""
+	test_lib "notify frontend dependencies"
+	fe_notify=$?
 fi
 
 echo

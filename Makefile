@@ -66,6 +66,7 @@ endif
 PLUGIN_FE_sdl_OBJECTFILES=sdl.o kam.o skin.o textrenderer.o question.o filebrowser.o plbrowser.o about.o setup.o textbrowser.o coverimg.o coverviewer.o plmanager.o playerdisplay.o gmuwidget.o png.o jpeg.o bmp.o inputconfig.o help.o
 PLUGIN_FE_gmuhttp_OBJECTFILES=gmuhttp.o sha1.o base64.o httpd.o queue.o json.o websocket.o net.o
 PLUGIN_FE_log_OBJECTFILES=log.o
+PLUGIN_FE_notify_OBJECTFILES=notify.o
 
 # Decoder configs
 DEC_vorbis_LIBS=-lvorbisidec
@@ -225,6 +226,10 @@ frontends/log.so: log.o util.o | frontendsdir
 frontends/lirc.so: src/frontends/lirc.c | frontendsdir
 	@echo -e "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread -llirc_client
+
+frontends/notify.so: src/frontends/notify.c util.o | frontendsdir
+	@echo -e "Compiling \033[1m$<\033[0m"
+	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) `pkg-config --cflags gio-2.0` $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) util.o -lpthread `pkg-config --libs gio-2.0`
 
 %.o: src/frontends/web/%.c
 	@echo -e "Compiling \033[1m$<\033[0m"
