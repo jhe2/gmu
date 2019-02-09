@@ -77,20 +77,29 @@ function Connection()
 							case 0: // stop
 								document.getElementById("btn-play").className = "button";
 								document.getElementById("btn-pause").className = "button";
+								document.getElementById("display-play").style.visibility = "hidden";
+								document.getElementById("display-pause").style.visibility = "hidden";
 								break;
 							case 1: // play
 								document.getElementById("btn-play").className = "button-pressed";
 								document.getElementById("btn-pause").className = "button";
+								document.getElementById("display-play").style.visibility = "visible";
+								document.getElementById("display-pause").style.visibility = "hidden";
 								break;
 							case 2: // pause
 								document.getElementById("btn-pause").className = "button-pressed";
 								document.getElementById("btn-play").className = "button";
+								document.getElementById("display-play").style.visibility = "hidden";
+								document.getElementById("display-pause").style.visibility = "visible";
 								break;
 						}
 						break;
 					case 'trackinfo':
 						write_to_screen('Track:' + jmsg['artist'] + ' - ' + jmsg['title']);
 						set_trackinfo(jmsg['artist'], jmsg['title'], jmsg['album']);
+						break;
+					case 'track_change':
+						set_trackinfo_playlist_pos("" + jmsg['playlist_pos']);
 						break;
 					case 'playlist_info':
 					case 'playlist_change':
@@ -368,6 +377,11 @@ function set_trackinfo(artist, title, album)
 	document.getElementById('ti-album').innerHTML  = html_entity_encode(album);
 }
 
+function set_trackinfo_playlist_pos(pos)
+{
+	document.getElementById('ti-trackno').innerHTML  = html_entity_encode(pos);
+}
+
 function select_tab(tab_id)
 {
 	elem = document.getElementsByClassName('tab');
@@ -480,12 +494,12 @@ function handle_btn_playmode(e)
 		telem = e.srcElement;
 	if (telem.nodeType == 3) // Defeat Safari bug
 		telem = telem.parentNode;
+	if (telem.className == 'icon') telem = telem.parentNode;
 	bcont = document.getElementById('btn-pm-continue');
 	brand = document.getElementById('btn-pm-random');
 	brepa = document.getElementById('btn-pm-repeat');
 	brept = document.getElementById('btn-pm-repeat-track');
 	switch (telem) {
-		default:
 		case bcont:
 			mode = 0;
 			break;
