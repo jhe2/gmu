@@ -148,7 +148,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 	int       cpl = skin_textarea_get_characters_per_line(fb->skin);
 	int       i, pl, len = (cpl > FB_MAXIMUM_STR_LENGTH ? FB_MAXIMUM_STR_LENGTH : cpl);
 	const int chars_left = len - 15;
-	char      buf[FB_MAXIMUM_STR_LENGTH+1], *buf2 = alloca(chars_left+1), *path = dir_get_path(fb->dir);
+	char      buf[FB_MAXIMUM_STR_LENGTH+1], buf2[chars_left+1], *path = dir_get_path(fb->dir);
 	char     *bufptr, buf3[FB_MAXIMUM_STR_LENGTH];
 	int       number_of_visible_lines = skin_textarea_get_number_of_lines(fb->skin);
 	int       selected_entry_drawn = 0;
