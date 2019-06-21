@@ -13,7 +13,7 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
-#include "SDL/SDL.h"
+#include <SDL2/SDL.h>
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -74,7 +74,19 @@ static int               dev_close_asap; /* When true, the device isn't kept ope
 static void set_item_status(PB_Status status)
 {
 	pthread_mutex_lock(&item_status_mutex);
+	wdprintf(
+		V_DEBUG, "fileplayer", "Old item status: %s\n",
+		item_status == PLAYING  ? "PLAYING"  : 
+		item_status == FINISHED ? "FINISHED" : 
+		item_status == STOPPED  ? "STOPPED"  : "PAUSED"
+	);
 	item_status = status;
+	wdprintf(
+		V_DEBUG, "fileplayer", "New item status: %s\n",
+		item_status == PLAYING  ? "PLAYING"  : 
+		item_status == FINISHED ? "FINISHED" : 
+		item_status == STOPPED  ? "STOPPED"  : "PAUSED"
+	);
 	pthread_mutex_unlock(&item_status_mutex);
 }
 
@@ -161,7 +173,10 @@ void file_player_set_filename(char *filename)
 		int len = strlen(filename);
 		if (len > 0) {
 			file = realloc(file, len+1);
-			if (file) memcpy(file, filename, len+1);
+			if (file) {
+				memcpy(file, filename, len+1);
+				wdprintf(V_DEBUG, "fileplayer", "Filename set: %s\n", file);
+			}
 		}
 	}
 	pthread_mutex_unlock(&file_mutex);
@@ -268,6 +283,10 @@ static void *decode_audio_thread(void *udata)
 		char *filename = NULL;
 		int   len = 0, set_playing = 0;
 
+		pthread_mutex_lock(&mutex);  /* Wait for playback to be started */
+		pthread_mutex_unlock(&mutex);
+		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
+
 		pthread_mutex_lock(&file_mutex);
 		if (file) len = strlen(file);
 		if (len > 0) {
@@ -276,14 +295,19 @@ static void *decode_audio_thread(void *udata)
 				strncpy(filename, file, len);
 				filename[len] = '\0';
 				set_playing = 1;
+				wdprintf(V_DEBUG, "fileplayer", "set_playing=%d filename=%s\n", set_playing, filename);
+			} else {
+				wdprintf(V_ERROR, "fileplayer", "ERROR: malloc() failed!\n");
 			}
 			free(file); file = NULL;
+		} else {
+			wdprintf(V_WARNING, "fileplayer", "WARNING: Zero length filename detected!\n");
 		}
 		pthread_mutex_unlock(&file_mutex);
-		if (set_playing) set_item_status(PLAYING);
-		pthread_mutex_lock(&mutex);
-		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
-		pthread_mutex_unlock(&mutex);
+		if (set_playing)
+			set_item_status(PLAYING);
+		else
+			wdprintf(V_WARNING, "fileplayer", "Uh, no proper filename set. Not starting playback!\n");
 		r = NULL;
 		if (!file_player_check_shutdown() && filename && get_item_status() == PLAYING) {
 			const char *tmp = get_file_extension(filename);
@@ -494,6 +518,8 @@ static void *decode_audio_thread(void *udata)
 				trackinfo_release_lock(ti);
 			}
 			event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
+		} else {
+			wdprintf(V_DEBUG, "fileplayer", "wrong item status? %d\n", item_status);
 		}
 		if (filename) {
 			free(filename);
@@ -519,7 +545,7 @@ int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip
 	else
 		set_item_status(skip_current ? STOPPED : FINISHED);
 
-	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
+	wdprintf(V_INFO, "fileplayer", "Trying to play %s... (skip current: %d)\n", filename, skip_current);
 	file_player_set_filename(filename);
 	file_player_start_playback();
 	return 0;

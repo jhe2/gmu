@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include "SDL.h" /* For audio output */
+#include <SDL2/SDL.h> /* For audio output */
 #include "playlist.h"
 #include "pbstatus.h"
 #include "fileplayer.h"
@@ -1176,7 +1176,10 @@ int main(int argc, char **argv)
 	file_player_set_lyrics_file_pattern(cfg_get_key_value(config, "Gmu.LyricsFilePattern"));
 
 	if (cfg_get_boolean_value(config, "Gmu.AutoPlayOnProgramStart")) {
+		wdprintf(V_INFO, "gmu", "AutoPlay enabled.\n");
+		player_status = PLAYING;
 		global_command = NEXT;
+		file_player_request_playback_state_change(PBRQ_PLAY);
 	}
 
 	if (cfg_get_boolean_value(config, "Gmu.ResumePlayback")) {
@@ -1185,6 +1188,7 @@ int main(int argc, char **argv)
 		if (item > 0) {
 			global_command = NO_CMD;
 			file_player_seek(seekpos);
+			wdprintf(V_INFO, "gmu", "Resuming playback...\n");
 			gmu_core_play_pl_item(item-1);
 		}
 	}
@@ -1200,6 +1204,8 @@ int main(int argc, char **argv)
 
 		if (global_command == NO_CMD)
 			event_queue_wait_for_event(&event_queue, 500);
+		else
+			wdprintf(V_DEBUG, "gmu", "Processing global command %d\n", global_command);
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item;
 			int    fade_out_on_skip = check_fade_out_on_skip();
