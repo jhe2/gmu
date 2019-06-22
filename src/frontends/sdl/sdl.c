@@ -625,7 +625,7 @@ static void run_player(char *skin_name, char *decoders_str)
 		quit = QUIT_WITH_ERROR;
 		wdprintf(V_ERROR, "sdl_frontend", "skin_init() reported an error.\n");
 	} else {
-		skin_set_renderer(&skin, renderer);
+		skin_set_renderer(&skin, renderer, display);
 	}
 
 	if (quit == DONT_QUIT) {
@@ -749,7 +749,7 @@ static void run_player(char *skin_name, char *decoders_str)
 						wdprintf(V_FATAL, "sdl_frontend", "Unable to set new window size (back buffer re-creation failed).\n");
 						exit(-2); /* should not happen */
 					}
-
+					skin_set_renderer(&skin, renderer, display);
 					update = UPDATE_ALL;
 				}
 				break;
@@ -1033,7 +1033,7 @@ static void run_player(char *skin_name, char *decoders_str)
 								exit(-2); /* should not happen */
 							}
 							renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-							skin_set_renderer(&skin, renderer);
+							skin_set_renderer(&skin, renderer, display);
 						}
 						update = UPDATE_ALL;
 						break;

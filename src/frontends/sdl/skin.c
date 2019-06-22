@@ -218,12 +218,20 @@ int skin_init(Skin *skin, const char *skin_name)
 		if (res) skin_free(skin);
 		res = skin_init(skin, "default");
 	}
+	skin->tex = NULL;
 	return res;
 }
 
-void skin_set_renderer(Skin *skin, SDL_Renderer *renderer)
+void skin_set_renderer(Skin *skin, SDL_Renderer *renderer, SDL_Surface *display)
 {
 	skin->renderer = renderer;
+	if (skin->tex) SDL_DestroyTexture(skin->tex);
+	skin->tex = SDL_CreateTexture(
+		renderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING,
+		display->w, display->h
+	);	
 }
 
 void skin_free(Skin *skin)
@@ -239,6 +247,7 @@ void skin_free(Skin *skin)
 	gmu_widget_free(&(skin->header));
 	gmu_widget_free(&(skin->footer));
 	SDL_FreeSurface(skin->buffer);
+	if (skin->tex) SDL_DestroyTexture(skin->tex);
 }
 
 /* target is used to determine the necessary size and color depth for the offscreen */
@@ -292,19 +301,12 @@ static void skin_draw_widget(Skin *skin, GmuWidget *gw, SDL_Surface *buffer)
 	SDL_BlitSurface(skin->buffer, &srect, buffer, &drect);
 }
 
-void sdl_render(SDL_Renderer *renderer, SDL_Surface *display)
+void sdl_render(Skin *skin, SDL_Surface *display)
 {
-	SDL_Texture *tex = SDL_CreateTexture(
-		renderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STREAMING,
-		display->w, display->h
-	);
-	SDL_UpdateTexture(tex, NULL, display->pixels, display->w * sizeof(Uint32));
+	SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
 	//SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, tex, NULL, NULL);
-	SDL_RenderPresent(renderer);
-	SDL_DestroyTexture(tex);
+	SDL_RenderCopy(skin->renderer, skin->tex, NULL, NULL);
+	SDL_RenderPresent(skin->renderer);
 }
 
 static void skin_update_widget(Skin *skin, GmuWidget *gw, SDL_Surface *display, SDL_Surface *buffer)
@@ -319,7 +321,7 @@ static void skin_update_widget(Skin *skin, GmuWidget *gw, SDL_Surface *display, 
 	drect.y = srect.y;
 	SDL_BlitSurface(buffer, &srect, display, &drect);
 	//SDL_UpdateRects(display, 1, &drect);
-	sdl_render(skin->renderer, display);
+	sdl_render(skin, display);
 }
 
 void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer)

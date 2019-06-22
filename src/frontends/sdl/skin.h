@@ -71,8 +71,9 @@ typedef struct _Skin
 	SDL_Surface *display_symbols, *arrow_up, *arrow_down;
 
 	/* temporary storage */
-	SDL_Surface *buffer;
+	SDL_Surface  *buffer;
 	SDL_Renderer *renderer;
+	SDL_Texture  *tex;
 } Skin;
 
 typedef enum _SkinDisplaySymbol
@@ -81,7 +82,7 @@ typedef enum _SkinDisplaySymbol
 } SkinDisplaySymbol;
 
 int  skin_init(Skin *skin, const char *skin_file);
-void skin_set_renderer(Skin *skin, SDL_Renderer *renderer);
+void skin_set_renderer(Skin *skin, SDL_Renderer *renderer, SDL_Surface *display);
 void skin_free(Skin *skin);
 int  skin_create_background(Skin *skin);
 void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);
