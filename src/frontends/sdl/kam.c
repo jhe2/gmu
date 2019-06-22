@@ -14,7 +14,7 @@
  * for details.
  */
 #include <string.h>
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "kam.h"
 #include FILE_HW_H
 #include "wejconfig.h"

@@ -15,7 +15,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "util.h"
 #include "trackinfo.h"
 #include "textrenderer.h"

@@ -13,7 +13,7 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "kam.h"
 #include "skin.h"
 #include "setup.h"

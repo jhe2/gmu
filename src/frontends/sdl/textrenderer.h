@@ -13,8 +13,8 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
-#include "SDL.h"
-#include "SDL_image.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "charset.h"
 
 #ifndef GMU_TEXTRENDERER_H

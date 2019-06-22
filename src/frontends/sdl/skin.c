@@ -157,24 +157,21 @@ static int skin_config_load(Skin *skin, const char *skin_name)
 					if (val) {
 						snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, val);
 						if ((tmp_sf = IMG_Load(tmp))) {
-							skin->display_symbols = SDL_DisplayFormatAlpha(tmp_sf);
-							SDL_FreeSurface(tmp_sf);
+							skin->display_symbols = tmp_sf;
 						}
 					}
 					val = cfg_get_key_value(skinconf, "Icon.ArrowUp");
 					if (val) {
 						snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, val);
 						if ((tmp_sf = IMG_Load(tmp))) {
-							skin->arrow_up = SDL_DisplayFormatAlpha(tmp_sf);
-							SDL_FreeSurface(tmp_sf);
+							skin->arrow_up = tmp_sf;
 						}
 					}
 					val = cfg_get_key_value(skinconf, "Icon.ArrowDown");
 					if (val) {
 						snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, val);
 						if ((tmp_sf = IMG_Load(tmp))) {
-							skin->arrow_down = SDL_DisplayFormatAlpha(tmp_sf);
-							SDL_FreeSurface(tmp_sf);
+							skin->arrow_down = tmp_sf;
 						}
 					}
 				}
@@ -224,6 +221,11 @@ int skin_init(Skin *skin, const char *skin_name)
 	return res;
 }
 
+void skin_set_renderer(Skin *skin, SDL_Renderer *renderer)
+{
+	skin->renderer = renderer;
+}
+
 void skin_free(Skin *skin)
 {
 	if (skin->display_symbols) SDL_FreeSurface(skin->display_symbols);
@@ -245,15 +247,13 @@ static int skin_init_offscreen(Skin *skin, SDL_Surface *target)
 	int initialized = 0;
 
 	if (!skin->buffer) { /* new surface */
-		SDL_Surface *tmp = SDL_CreateRGBSurface(
+		skin->buffer = SDL_CreateRGBSurface(
 			SDL_SWSURFACE,
 			target->w,
 			target->h,
 			target->format->BitsPerPixel,
 			0, 0, 0, 0
 		);
-		if (tmp) skin->buffer = SDL_DisplayFormat(tmp); else skin->buffer = NULL;
-		SDL_FreeSurface(tmp);
 		initialized = 1;
 	} else if (skin->buffer->w != target->w || skin->buffer->h != target->h) { /* reinit surface */
 		SDL_Surface *tmp = SDL_CreateRGBSurface(
@@ -263,9 +263,10 @@ static int skin_init_offscreen(Skin *skin, SDL_Surface *target)
 			target->format->BitsPerPixel,
 			0, 0, 0, 0
 		);
-		SDL_FreeSurface(skin->buffer);
-		if (tmp) skin->buffer = SDL_DisplayFormat(tmp); else skin->buffer = NULL;
-		SDL_FreeSurface(tmp);
+		if (tmp) {
+			SDL_FreeSurface(skin->buffer);
+			skin->buffer = tmp;
+		}
 		initialized = 1;
 	}
 	return initialized;
@@ -291,6 +292,21 @@ static void skin_draw_widget(Skin *skin, GmuWidget *gw, SDL_Surface *buffer)
 	SDL_BlitSurface(skin->buffer, &srect, buffer, &drect);
 }
 
+void sdl_render(SDL_Renderer *renderer, SDL_Surface *display)
+{
+	SDL_Texture *tex = SDL_CreateTexture(
+		renderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING,
+		display->w, display->h
+	);
+	SDL_UpdateTexture(tex, NULL, display->pixels, display->w * sizeof(Uint32));
+	//SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, tex, NULL, NULL);
+	SDL_RenderPresent(renderer);
+	SDL_DestroyTexture(tex);
+}
+
 static void skin_update_widget(Skin *skin, GmuWidget *gw, SDL_Surface *display, SDL_Surface *buffer)
 {
 	SDL_Rect srect, drect;
@@ -302,7 +318,8 @@ static void skin_update_widget(Skin *skin, GmuWidget *gw, SDL_Surface *display, 
 	drect.x = srect.x;
 	drect.y = srect.y;
 	SDL_BlitSurface(buffer, &srect, display, &drect);
-	SDL_UpdateRects(display, 1, &drect);
+	//SDL_UpdateRects(display, 1, &drect);
+	sdl_render(skin->renderer, display);
 }
 
 void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer)
@@ -348,7 +365,7 @@ void skin_draw_footer_bg(Skin *skin, SDL_Surface *buffer)
 void skin_update_bg(const Skin *skin, SDL_Surface *display, SDL_Surface *buffer)
 {
 	SDL_BlitSurface(buffer, NULL, display, NULL);
-	SDL_UpdateRect(display, 0, 0, 0, 0);
+	//SDL_UpdateRect(display, 0, 0, 0, 0);
 }
 
 int skin_textarea_get_number_of_lines(const Skin *skin)

@@ -13,7 +13,7 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
-#include "SDL/SDL.h"
+#include <SDL2/SDL.h>
 #ifndef _GMUWIDGET_H
 #define _GMUWIDGET_H
 

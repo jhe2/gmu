@@ -14,7 +14,7 @@
  * for details.
  */
 #include <string.h>
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "playerdisplay.h"
 #include "textrenderer.h"
 #include "trackinfo.h"

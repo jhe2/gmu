@@ -15,9 +15,10 @@
  */
 #include <string.h>
 #include "textrenderer.h"
-#include "SDL.h"
-#include "SDL_image.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "charset.h"
+#include "debug.h"
 
 int textrenderer_init(TextRenderer *tr, char *chars_file, int chwidth, int chheight)
 {
@@ -26,12 +27,12 @@ int textrenderer_init(TextRenderer *tr, char *chars_file, int chwidth, int chhei
 
 	tr->chars = NULL;
 	if (tmp) {
-		if ((tr->chars = SDL_DisplayFormatAlpha(tmp))) {
-			tr->chwidth  = chwidth;
-			tr->chheight = chheight;
-			result = 1;
-		}
-		SDL_FreeSurface(tmp);
+		tr->chars = tmp;
+		tr->chwidth  = chwidth;
+		tr->chheight = chheight;
+		result = 1;
+	} else {
+		wdprintf(V_ERROR, "textrenderer", "Error initializing..\n");
 	}
 	return result;
 }

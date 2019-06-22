@@ -16,8 +16,8 @@
 #include <stdlib.h>
 #include "../../util.h"
 #include "gmuwidget.h"
-#include "SDL/SDL.h"
-#include "SDL/SDL_image.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 void gmu_widget_init(GmuWidget *gw, int x1, int y1, int x2, int y2)
 {
@@ -38,17 +38,13 @@ void gmu_widget_init(GmuWidget *gw, int x1, int y1, int x2, int y2)
 static int gmu_widget_image_add(GmuWidget *gw, char *image_file, GmuWidgetImagePosition pos)
 {
 	GmuWidgetImage *img = gw->first, *newimg = NULL;
-	SDL_Surface    *tmp, *tmp2 = NULL;
+	SDL_Surface    *tmp;
 	int             res = 0;
 
 	if (file_exists(image_file) && (tmp = IMG_Load(image_file))) {
-		tmp2 = SDL_DisplayFormat(tmp);
-		SDL_FreeSurface(tmp);
-	}
-	if (tmp2) {
 		newimg = malloc(sizeof(GmuWidgetImage));
 		newimg->position = pos;
-		newimg->image = tmp2;
+		newimg->image = tmp;
 		newimg->next = NULL;
 		gw->first = newimg;
 		if (img) newimg->next = img; else newimg->next = NULL;

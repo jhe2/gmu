@@ -13,6 +13,7 @@
  * the License. See the file COPYING in the Gmu's main directory
  * for details.
  */
+#include <SDL2/SDL.h>
 #include "textrenderer.h"
 #include "gmuwidget.h"
 
@@ -71,6 +72,7 @@ typedef struct _Skin
 
 	/* temporary storage */
 	SDL_Surface *buffer;
+	SDL_Renderer *renderer;
 } Skin;
 
 typedef enum _SkinDisplaySymbol
@@ -79,6 +81,7 @@ typedef enum _SkinDisplaySymbol
 } SkinDisplaySymbol;
 
 int  skin_init(Skin *skin, const char *skin_file);
+void skin_set_renderer(Skin *skin, SDL_Renderer *renderer);
 void skin_free(Skin *skin);
 int  skin_create_background(Skin *skin);
 void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);

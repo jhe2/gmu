@@ -284,11 +284,11 @@ print_features_and_write_config()
 	fi
 	echo "CC=$CC" >>config.mk
 	if [ $sdk_path ]; then
-		echo "SDL_CFLAGS=$(sdl-config --prefix=$sdk_path --cflags)" >>config.mk
-		echo "SDL_LIB=$(sdl-config --prefix=$sdk_path --libs)" >>config.mk
+		echo "SDL_CFLAGS=$(sdl2-config --prefix=$sdk_path --cflags)" >>config.mk
+		echo "SDL_LIB=$(sdl2-config --prefix=$sdk_path --libs) -pthread" >>config.mk
 	else
-		echo "SDL_CFLAGS=$(sdl-config --cflags)" >>config.mk
-		echo "SDL_LIB=$(sdl-config --libs)" >>config.mk
+		echo "SDL_CFLAGS=$(sdl2-config --cflags)" >>config.mk
+		echo "SDL_LIB=$(sdl2-config --libs) -lpthread" >>config.mk
 	fi
 	echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H $EXTRA_CFLAGS" >>config.mk
 	echo "LFLAGS=$LFLAGS -Wl,-export-dynamic" >>config.mk
@@ -444,30 +444,30 @@ if [ $? = 1 ]; then
 fi
 
 # Tests
-includes_test="#include <SDL/SDL.h>"
+includes_test="#include <SDL2/SDL.h>"
 if [ $sdk_path ]; then
-	sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
-	sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
+	sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
+	sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
 else
-	sdl_cflags=$(sdl-config --cflags)
-	sdl_libs=$(sdl-config --libs)
+	sdl_cflags=$(sdl2-config --cflags)
+	sdl_libs=$(sdl2-config --libs)
 fi
 libs_test=$sdl_libs
 includes_test_flags=$sdl_cflags
 code_test=""
-test_lib "SDL"
+test_lib "SDL2"
 if [ $? = 0 ]; then
-	echo "WARNING: Gmu depends on SDL. Cannot build the Gmu core without it."
+	echo "WARNING: Gmu depends on SDL2. Cannot build the Gmu core without it."
 	gmu_core=0
 fi
 
-includes_test="#include <SDL/SDL_rotozoom.h>"
+includes_test="#include <SDL2/SDL_rotozoom.h>"
 if [ $sdk_path ]; then
-	sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
-	sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
+	sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
+	sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
 else
-	sdl_cflags=$(sdl-config --cflags)
-	sdl_libs=$(sdl-config --libs)
+	sdl_cflags=$(sdl2-config --cflags)
+	sdl_libs=$(sdl2-config --libs)
 fi
 libs_test="$sdl_libs -lSDL_gfx"
 includes_test_flags=$sdl_cflags
@@ -573,18 +573,18 @@ fi
 
 if [ $fe_sdl != 0 ]; then
 	if [ $sdk_path ]; then
-		sdl_cflags=$(sdl-config --prefix=$sdk_path --cflags)
-		sdl_libs=$(sdl-config --prefix=$sdk_path --libs)
+		sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
+		sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
 	else
-		sdl_cflags=$(sdl-config --cflags)
-		sdl_libs=$(sdl-config --libs)
+		sdl_cflags=$(sdl2-config --cflags)
+		sdl_libs=$(sdl2-config --libs)
 	fi
-	includes_test="#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>"
-	libs_test="$sdl_libs -lSDL_image"
+	includes_test="#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>"
+	libs_test="$sdl_libs -lSDL2_image"
 	includes_test_flags=$sdl_cflags
 	code_test=""
-	test_lib "SDL + SDL_image"
+	test_lib "SDL2 + SDL2_image"
 	fe_sdl=$?
 fi
 

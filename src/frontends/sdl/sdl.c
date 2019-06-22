@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2019 Johannes Heimansberg (wej.k.vu)
  *
  * File: sdl.c  Created: 060929
  *
@@ -18,8 +18,8 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
-#include "SDL.h"
-#include "SDL_image.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "../../util.h"
 #include "../../gmufrontend.h"
 #include "../../core.h"
@@ -92,13 +92,13 @@ static SDL_Surface *gmu_icon;
 
 static void gmu_load_icon(void)
 {
-	Uint32 colorkey;
+//	Uint32 colorkey;
 
 	gmu_icon = SDL_LoadBMP("gmu.bmp");
 	if (gmu_icon) {
-		colorkey = SDL_MapRGB(gmu_icon->format, 255, 0, 255);
-		SDL_SetColorKey(gmu_icon, SDL_SRCCOLORKEY, colorkey);
-		SDL_WM_SetIcon(gmu_icon, NULL);
+//		colorkey = SDL_MapRGB(gmu_icon->format, 255, 0, 255);
+//		SDL_SetColorKey(gmu_icon, SDL_SRCCOLORKEY, colorkey);
+//		SDL_WM_SetIcon(gmu_icon, NULL);
 	} else {
 		wdprintf(V_WARNING, "sdl_frontend", "Window icon (gmu.bmp) not found or broken.\n");
 	}
@@ -116,11 +116,15 @@ static void input_device_config(void)
 	input_config_init(tmp);
 }
 
+static SDL_Window   *window = NULL;
+static SDL_Renderer *renderer = NULL;
+static SDL_Surface  *display = NULL;
+
 static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fullscreen)
 {
 	SDL_Surface         *display = NULL;
-	const SDL_VideoInfo *video_info;
-	int                  init_okay = 0;
+//	const SDL_VideoInfo *video_info;
+	int                 init_okay = 0;
 
 	if (!SDL_WasInit(SDL_INIT_VIDEO)) {
 		if (SDL_InitSubSystem(SDL_INIT_VIDEO | (with_joystick ? SDL_INIT_JOYSTICK : 0)) < 0) {
@@ -134,37 +138,45 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 	}
 
 	if (init_okay) {
-		video_info = SDL_GetVideoInfo();
-		if (video_info) {
+//		video_info = SDL_GetVideoInfo();
+		/*if (video_info) {
 			screen_max_width  = video_info->current_w;
 			screen_max_height = video_info->current_h;
 			screen_max_depth  = video_info->vfmt->BitsPerPixel;
 			wdprintf(V_INFO, "sdl_frontend", "Available screen real estate: %d x %d pixels @ %d bpp\n",
 					 screen_max_width, screen_max_height, screen_max_depth);
-		} else {
-			screen_max_width  = 0;
-			screen_max_height = 0;
-			screen_max_depth  = 0;
+		} else*/ {
+			screen_max_width  = 1280;
+			screen_max_height = 720;
+			screen_max_depth  = 32;
 			wdprintf(V_WARNING, "sdl_frontend", "Unable to determine screen resolution.\n");
 		}
 
 		width  = width  > screen_max_width  ? screen_max_width  : width;
 		height = height > screen_max_height ? screen_max_height : height;
-		width  = width  <= 0 ? 320 : width;
-		height = height <= 0 ? 240 : height;
+		width  = width  <= 0 ? 640 : width;
+		height = height <= 0 ? 480 : height;
 
 		if (fullscreen) {
-			fullscreen = SDL_FULLSCREEN;
+			fullscreen = SDL_WINDOW_FULLSCREEN_DESKTOP;
 			width = screen_max_width;
 			height = screen_max_height;
 		}
 
+		wdprintf(V_INFO, "sdl_frontend", "Initializing screen with %dx%d pixels (fullscreen = %d).\n", width, height, fullscreen ? 1 : 0);
+
 		gmu_load_icon();
-		display = SDL_SetVideoMode(width, height, screen_max_depth,
-#ifndef SDLFE_NO_HWACCEL
-								   SDL_HWSURFACE | SDL_HWACCEL |
-#endif
-								   SDL_RESIZABLE | fullscreen);
+
+		display = SDL_CreateRGBSurface(
+			0, width, height, screen_max_depth,
+			0x00FF0000,
+			0x0000FF00,
+			0x000000FF,
+			0xFF000000
+		);
+
+		SDL_CreateWindowAndRenderer(width, height, fullscreen | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN, &window, &renderer);
+
 		if (display == NULL) {
 			wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize screen: %s\n", SDL_GetError());
 			exit(1);
@@ -176,8 +188,6 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 			wdprintf(V_DEBUG, "sdl_frontend", "Opening joystick device.\n");
 			SDL_JoystickOpen(0);
 		}
-		SDL_WM_SetCaption("Gmu", NULL);
-		SDL_EnableUNICODE(1);
 #ifdef HW_SDL_POST_INIT
 		hw_sdl_post_init();
 #endif
@@ -549,8 +559,6 @@ static void m_draw(M *m, SDL_Surface *t)
 	}
 }
 
-static SDL_Surface *display = NULL;
-
 static void run_player(char *skin_name, char *decoders_str)
 {
 	SDL_Surface     *buffer = NULL;
@@ -568,7 +576,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	int              update_display = 1, display_inactive = 0;
 	int              button_repeat_timer = -1, items_skip = 1, frame_skip_counter = FRAME_SKIP;
 	int              seconds_until_backlight_poweroff = 0, backlight_poweroff_timer = -1;
-	int              backlight_poweron_on_track_change = 0;
+//	int              backlight_poweron_on_track_change = 0;
 	int              seek_step = 10;
 	int              trackinfo_change = 1;
 
@@ -579,7 +587,7 @@ static void run_player(char *skin_name, char *decoders_str)
 	gmu_core_config_acquire_lock();
 	auto_select_cur_item              = cfg_get_boolean_value(config, "SDL.AutoSelectCurrentPlaylistItem");
 	time_remaining                    = cfg_get_boolean_value(config, "SDL.TimeDisplay");
-	backlight_poweron_on_track_change = cfg_get_boolean_value(config, "SDL.BacklightPowerOnOnTrackChange");
+//	backlight_poweron_on_track_change = cfg_get_boolean_value(config, "SDL.BacklightPowerOnOnTrackChange");
 
 	old_view = view = FILE_BROWSER;
 	if (cfg_get_boolean_value(config, "Gmu.FirstRun")) view = HELP;
@@ -616,14 +624,14 @@ static void run_player(char *skin_name, char *decoders_str)
 	if (!skin_init(&skin, skin_name)) {
 		quit = QUIT_WITH_ERROR;
 		wdprintf(V_ERROR, "sdl_frontend", "skin_init() reported an error.\n");
+	} else {
+		skin_set_renderer(&skin, renderer);
 	}
 
 	if (quit == DONT_QUIT) {
-		SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, display->w,
-		                                        display->h, display->format->BitsPerPixel,
-		                                        0, 0, 0, 0);
-		buffer = SDL_DisplayFormat(tmp);
-		SDL_FreeSurface(tmp);
+		buffer = SDL_CreateRGBSurface(SDL_SWSURFACE, display->w,
+		                              display->h, display->format->BitsPerPixel,
+		                              0, 0, 0, 0);
 
 		question_init(&dlg, &skin);
 
@@ -703,32 +711,48 @@ static void run_player(char *skin_name, char *decoders_str)
 		wdprintf(V_DEBUG, "sdl_frontend", "Initialization successful.\n");
 	} else {
 		wdprintf(V_WARNING, "sdl_frontend", quit == QUIT_WITHOUT_ERROR ?
-		                                    "Strange. Exit was requested, shutting down." :
-		                                    "An error was detected, shutting down.");
+		                                    "Strange. Exit was requested, shutting down.\n" :
+		                                    "An error was detected, shutting down.\n");
 	}
 
 	while (quit == DONT_QUIT && SDL_WaitEvent(&event)) {
 		switch (event.type) {
-			case SDL_VIDEORESIZE: {
-				SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE,
-				                                        event.resize.w, event.resize.h,
-				                                        display->format->BitsPerPixel, 0, 0, 0, 0);
-				SDL_FreeSurface(buffer);
-				buffer = SDL_DisplayFormat(tmp);
-				SDL_FreeSurface(tmp);
-				display = SDL_SetVideoMode(event.resize.w, event.resize.h,
-				                           buffer->format->BitsPerPixel,
-#ifndef SDLFE_NO_HWACCEL
-				                           SDL_HWSURFACE | SDL_HWACCEL |
-#endif
-				                           SDL_RESIZABLE);
-				if (!display) {
-					wdprintf(V_FATAL, "sdl_frontend", "Unable to set new video mode.\n");
-					exit(-2); /* should not happen */
+			case SDL_WINDOWEVENT:
+				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+					// SDL_WINDOWEVENT_SIZE_CHANGED
+					wdprintf(V_DEBUG, "sdl_frontend", "Window resize event: %dx%d\n", 
+					         event.window.data1, event.window.data2);
+					SDL_FreeSurface(display);
+					display = SDL_CreateRGBSurface(
+						0,
+						event.window.data1, event.window.data2,
+						screen_max_depth,
+						0x00FF0000,
+						0x0000FF00,
+						0x000000FF,
+						0xFF000000
+					);
+					if (!display) {
+						wdprintf(V_FATAL, "sdl_frontend", "Unable to set new window size.\n");
+						exit(-2); /* should not happen */
+					}
+
+					SDL_FreeSurface(buffer);
+					buffer = SDL_CreateRGBSurface(
+						SDL_SWSURFACE,
+						display->w,
+						display->h,
+						display->format->BitsPerPixel,
+						0, 0, 0, 0
+					);
+					if (!buffer) {
+						wdprintf(V_FATAL, "sdl_frontend", "Unable to set new window size (back buffer re-creation failed).\n");
+						exit(-2); /* should not happen */
+					}
+
+					update = UPDATE_ALL;
 				}
-				update = UPDATE_ALL;
 				break;
-			}
 			case SDL_KEYUP:
 			case SDL_JOYBUTTONUP:
 				switch (event.type) {
@@ -774,8 +798,8 @@ static void run_player(char *skin_name, char *decoders_str)
 			case SDL_QUIT:
 				gmu_core_quit();
 				break;
-			case SDL_ACTIVEEVENT: {
-				/* Stop screen update when Gmu is invisible/minimized/whatever */
+/*			case SDL_ACTIVEEVENT: {
+				/-* Stop screen update when Gmu is invisible/minimized/whatever *-/
 				if (SDL_GetAppState() & SDL_APPACTIVE) {
 					display_inactive = 0;
 				} else {
@@ -783,7 +807,7 @@ static void run_player(char *skin_name, char *decoders_str)
 					backlight_poweroff_timer = seconds_until_backlight_poweroff * FPS;
 				}
 				break;
-			}
+			}*/
 			default:
 				break;
 		}
@@ -822,7 +846,7 @@ static void run_player(char *skin_name, char *decoders_str)
 				}
 				default: break;
 			}
-
+			wdprintf(V_DEBUG, "sdl_frontend", "button=%d\n", button);
 			/*printf("sdl_frontend: button=%d char=%c method=%d brt=%d\n", 
 			       button, event.key.keysym.unicode <= 127 && 
 			               event.key.keysym.unicode >= 32 ? event.key.keysym.unicode : '?',
@@ -871,7 +895,10 @@ static void run_player(char *skin_name, char *decoders_str)
 						update_display = 0;
 						/* Clear the whole screen: */
 						SDL_FillRect(display, NULL, 0);
-						SDL_UpdateRect(display, 0, 0, 0, 0);
+//						SDL_UpdateRect(display, 0, 0, 0, 0);
+						SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+						SDL_RenderClear(renderer);
+						SDL_RenderPresent(renderer);
 					} else {
 						/* Restore background: */
 						skin_update_bg(&skin, display, buffer);
@@ -957,33 +984,56 @@ static void run_player(char *skin_name, char *decoders_str)
 						time_remaining = !time_remaining;
 						break;
 					case GLOBAL_FULLSCREEN: {
-						int          w, h;
-						SDL_Surface *tmp;
-						static int   prev_w = 320, prev_h = 240;
+						int        w, h;
+						static int prev_w = 320, prev_h = 240;
 
 						fullscreen = !fullscreen;
 						if (fullscreen) {
 							prev_w = display->w;
 							prev_h = display->h;
-							w = screen_max_width;
-							h = screen_max_height;
+							w = 640;
+							h = 480;
 						} else {
 							w = prev_w;
 							h = prev_h;
 						}
-						tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h,
-				                                   display->format->BitsPerPixel, 0, 0, 0, 0);
 						SDL_FreeSurface(buffer);
-						buffer = SDL_DisplayFormat(tmp);
-						SDL_FreeSurface(tmp);
-						display = SDL_SetVideoMode(w, h, buffer->format->BitsPerPixel,
-#ifndef SDLFE_NO_HWACCEL
-												   SDL_HWSURFACE | SDL_HWACCEL |
-#endif
-												   SDL_RESIZABLE | (fullscreen ? SDL_FULLSCREEN : 0));
+						buffer = SDL_CreateRGBSurface(
+							SDL_SWSURFACE, w, h,
+							display->format->BitsPerPixel,
+							0, 0, 0, 0
+						);
+
+						SDL_FreeSurface(display);
+						display = SDL_CreateRGBSurface(
+							0, w, h, screen_max_depth,
+							0x00FF0000,
+							0x0000FF00,
+							0x000000FF,
+							0xFF000000
+						);
+
 						if (!display) {
 							wdprintf(V_FATAL, "sdl_frontend", "Unable to set new video mode.\n");
 							exit(-2); /* should not happen */
+						} else {
+							wdprintf(V_DEBUG, "sdl_frontend", "Flip fullscreen %d (%dx%d)\n", fullscreen, w, h);
+							SDL_DestroyRenderer(renderer);
+							SDL_DestroyWindow(window);
+							window = SDL_CreateWindow(
+								"Gmu",
+								SDL_WINDOWPOS_UNDEFINED,
+								SDL_WINDOWPOS_UNDEFINED,
+								w,
+								h,
+								(fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN
+							);
+							if (!window) {
+								wdprintf(V_FATAL, "sdl_frontend", "Unable to flip fullscreen mode.\n");
+								exit(-2); /* should not happen */
+							}
+							renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+							skin_set_renderer(&skin, renderer);
 						}
 						update = UPDATE_ALL;
 						break;
@@ -1120,8 +1170,11 @@ static void run_player(char *skin_name, char *decoders_str)
 				if (!display_inactive) {
 					hw_display_off();
 					/* Clear the whole screen: */
-					SDL_FillRect(display, NULL, 0);
-					SDL_UpdateRect(display, 0, 0, 0, 0);
+//					SDL_FillRect(display, NULL, 0);
+//					SDL_UpdateRect(display, 0, 0, 0, 0);
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+					SDL_RenderClear(renderer);
+					SDL_RenderPresent(renderer);
 					update_display = 0;
 					backlight_poweroff_timer = TIMER_ELAPSED;
 				}

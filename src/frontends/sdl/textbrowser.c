@@ -15,7 +15,7 @@
  */
 #include <string.h>
 #include "textbrowser.h"
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "skin.h"
 #include "textrenderer.h"
 #define MAX_LINE_LENGTH 256

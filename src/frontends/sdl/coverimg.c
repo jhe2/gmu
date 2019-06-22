@@ -15,9 +15,9 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include "SDL.h"
-#include "SDL_thread.h"
-#include "SDL_image.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_thread.h>
+#include <SDL2/SDL_image.h>
 #ifndef SDLFE_WITHOUT_SDL_GFX
 #include "SDL_rotozoom.h"
 #endif
@@ -193,7 +193,7 @@ void cover_image_load_image_from_file(CoverImage *ci, char *filename, int *ready
 	ci->loading = 1;
 	ci->ready_flag = ready_flag;
 	if (!ci->thread)
-		ci->thread = SDL_CreateThread(cover_image_thread, ci);
+		ci->thread = SDL_CreateThread(cover_image_thread, "cover_image_thread", ci);
 }
 
 void cover_image_load_image_from_memory(CoverImage *ci, char *image_data, int image_data_size, 
@@ -226,7 +226,7 @@ void cover_image_load_image_from_memory(CoverImage *ci, char *image_data, int im
 			ci->loading = 1;
 			ci->ready_flag = ready_flag;
 			if (!ci->thread)
-				ci->thread = SDL_CreateThread(cover_image_thread, ci);
+				ci->thread = SDL_CreateThread(cover_image_thread, "cover_image_thread", ci);
 		}
 	}
 }
