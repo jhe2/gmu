@@ -175,12 +175,34 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 			0xFF000000
 		);
 
-		SDL_CreateWindowAndRenderer(width, height, fullscreen | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN, &window, &renderer);
-
 		if (display == NULL) {
 			wdprintf(V_ERROR, "sdl_frontend", "ERROR: Could not initialize screen: %s\n", SDL_GetError());
 			exit(1);
 		}
+
+		window = SDL_CreateWindow(
+			"Gmu",
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			width,
+			height,
+			(fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN
+		);
+		if (!window) {
+			wdprintf(V_FATAL, "sdl_frontend", "Unable to setup window.\n");
+			exit(-2); /* should not happen */
+		}
+		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+		if (!renderer) {
+			wdprintf(V_FATAL, "sdl_frontend", "Unable to setup renderer.\n");
+			exit(-2); /* should not happen */
+		}
+
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		SDL_RenderClear(renderer);
+		SDL_RenderPresent(renderer);
+
 #ifndef SHOW_MOUSE_CURSOR
 		SDL_ShowCursor(0);
 #endif
@@ -846,7 +868,7 @@ static void run_player(char *skin_name, char *decoders_str)
 				}
 				default: break;
 			}
-			wdprintf(V_DEBUG, "sdl_frontend", "button=%d\n", button);
+			wdprintf(V_DEBUG, "sdl_frontend", "event.type=%d, button=%d\n", event.type, button);
 			/*printf("sdl_frontend: button=%d char=%c method=%d brt=%d\n", 
 			       button, event.key.keysym.unicode <= 127 && 
 			               event.key.keysym.unicode >= 32 ? event.key.keysym.unicode : '?',
@@ -1312,7 +1334,9 @@ static void *start_player(void *arg)
 	int             start = 1;
 	char            skin_name[128] = "";
 
-	if (!getcwd(base_dir, 255)) start = 0;
+	wdprintf(V_DEBUG, "sdl_frontend", "Starting SDL frontend main loop...\n");
+
+	//if (!getcwd(base_dir, 255)) start = 0;
 
 	/* Add default values for SDL frontend plugin config keys */
 	gmu_core_config_acquire_lock();
@@ -1348,6 +1372,8 @@ static void *start_player(void *arg)
 		char       *decoders_str = NULL;
 		GmuDecoder *gd = NULL;
 
+		wdprintf(V_DEBUG, "sdl_frontend", "Starting...\n");
+
 		gmu_core_config_acquire_lock();
 		if (skin_name[0] == '\0') {
 			const char *skinname = cfg_get_key_value(config, "SDL.DefaultSkin");
@@ -1357,6 +1383,8 @@ static void *start_player(void *arg)
 		gmu_core_config_release_lock();
 
 		/* SDL_EnableKeyRepeat(200, 80); */
+
+		wdprintf(V_DEBUG, "sdl_frontend", "Fetching decoders list...\n");
 
 		/* Prepare list of loaded decoders for the about dialog */
 		gd = decloader_decoder_list_get_next_decoder(1);
@@ -1383,11 +1411,14 @@ static void *start_player(void *arg)
 			}
 			gd = decloader_decoder_list_get_next_decoder(0);
 		}
+		wdprintf(V_DEBUG, "sdl_frontend", "Starting frontend mainloop...\n");
 		if (decoders_str == NULL)
 			run_player(skin_name, "No decoders have been loaded.");
 		else
 			run_player(skin_name, decoders_str);
 		if (decoders_str) free(decoders_str);
+	} else {
+		wdprintf(V_ERROR, "sdl_frontend", "ERROR: getcwd() call failed.\n");
 	}
 	wdprintf(V_DEBUG, "sdl_frontend", "start_player() done.\n");
 	return 0;
@@ -1449,6 +1480,10 @@ static int event_callback(GmuEvent event, int param)
 
 	/*printf("sdl_frontend: Got event: %d\n", event);*/
 	switch (event) {
+		case GMU_TICK:
+		case GMU_PLAYBACK_TIME_CHANGE:
+			skin_sdl_render(&skin, display);
+			break;
 		case GMU_QUIT:
 			quit = QUIT_WITHOUT_ERROR;
 			break;

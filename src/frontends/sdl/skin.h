@@ -74,6 +74,12 @@ typedef struct _Skin
 	SDL_Surface  *buffer;
 	SDL_Renderer *renderer;
 	SDL_Texture  *tex;
+	/* display_mutex is used to make sure the "display" SDL_Surface supplied to the
+	   various skin_ functions is only accessed by one function at a time. This 
+	   is necessary, since "display" is accessed from the SDL' frontends thread as
+	   well as Gmu's main thread (due to SDL2 requiring the actual rendering taking
+	   place inside the main thread only on certain platforms). */
+	SDL_mutex    *display_mutex;
 } Skin;
 
 typedef enum _SkinDisplaySymbol
@@ -83,6 +89,7 @@ typedef enum _SkinDisplaySymbol
 
 int  skin_init(Skin *skin, const char *skin_file);
 void skin_set_renderer(Skin *skin, SDL_Renderer *renderer, SDL_Surface *display);
+void skin_sdl_render(Skin *skin, SDL_Surface *display);
 void skin_free(Skin *skin);
 int  skin_create_background(Skin *skin);
 void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);

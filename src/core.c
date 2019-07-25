@@ -1203,9 +1203,12 @@ int main(int argc, char **argv)
 		if (signal_received) gmu_core_quit();
 
 		if (global_command == NO_CMD)
-			event_queue_wait_for_event(&event_queue, 500);
+			event_queue_wait_for_event(&event_queue, 50);
 		else
 			wdprintf(V_DEBUG, "gmu", "Processing global command %d\n", global_command);
+
+		event_queue_push(&event_queue, GMU_TICK);
+
 		if (global_command == PLAY_ITEM && global_param >= 0) {
 			Entry *tmp_item;
 			int    fade_out_on_skip = check_fade_out_on_skip();

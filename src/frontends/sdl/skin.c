@@ -22,6 +22,8 @@
 #include "gmuwidget.h"
 #include "debug.h"
 
+void sdl_render(Skin *skin, SDL_Surface *display);
+
 static int skin_init_widget(
 	const char *skin_name,
 	ConfigFile *skinconf,
@@ -195,7 +197,7 @@ static int skin_config_load(Skin *skin, const char *skin_name)
 					c = textrenderer_init(&skin->font2, tmp,
 					                      skin->font2_char_width, skin->font2_char_height);
 					if (a && b && c)
-						wdprintf(V_INFO, "skin", "skin: Skin data loaded successfully.\n");
+						wdprintf(V_INFO, "skin", "Skin data loaded successfully.\n");
 					else
 						result = 0;
 				}
@@ -219,12 +221,19 @@ int skin_init(Skin *skin, const char *skin_name)
 		res = skin_init(skin, "default");
 	}
 	skin->tex = NULL;
+	skin->display_mutex = SDL_CreateMutex();
+	if (!skin->display_mutex) {
+		wdprintf(V_ERROR, "skin", "ERROR: Could not create mutex.\n");
+		exit(-1);
+	}
 	return res;
 }
 
 void skin_set_renderer(Skin *skin, SDL_Renderer *renderer, SDL_Surface *display)
 {
 	skin->renderer = renderer;
+	wdprintf(V_DEBUG, "skin", "skin_set_renderer(): renderer ok: %d\n",
+	         skin->renderer == renderer ? 1 : 0);
 	if (skin->tex) SDL_DestroyTexture(skin->tex);
 	skin->tex = SDL_CreateTexture(
 		renderer,
@@ -248,6 +257,7 @@ void skin_free(Skin *skin)
 	gmu_widget_free(&(skin->footer));
 	SDL_FreeSurface(skin->buffer);
 	if (skin->tex) SDL_DestroyTexture(skin->tex);
+	if (skin->display_mutex) SDL_DestroyMutex(skin->display_mutex);
 }
 
 /* target is used to determine the necessary size and color depth for the offscreen */
@@ -301,11 +311,25 @@ static void skin_draw_widget(Skin *skin, GmuWidget *gw, SDL_Surface *buffer)
 	SDL_BlitSurface(skin->buffer, &srect, buffer, &drect);
 }
 
-void sdl_render(Skin *skin, SDL_Surface *display)
+void skin_sdl_render(Skin *skin, SDL_Surface *display)
 {
-	SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
-	//SDL_RenderClear(renderer);
-	SDL_RenderCopy(skin->renderer, skin->tex, NULL, NULL);
+	int a, d;
+	if (skin->tex) SDL_DestroyTexture(skin->tex);
+	skin->tex = SDL_CreateTexture(
+		skin->renderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING,
+		display->w, display->h
+	);
+	if (SDL_LockMutex(skin->display_mutex) == 0) {
+		a = SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
+		SDL_UnlockMutex(skin->display_mutex);
+	}
+	if (a) wdprintf(V_DEBUG, "skin", SDL_GetError());
+	SDL_SetRenderDrawColor(skin->renderer, 0, 0, 0, 255); /* black */
+	SDL_RenderClear(skin->renderer);
+	d = SDL_RenderCopy(skin->renderer, skin->tex, NULL, NULL);
+	if (d) wdprintf(V_DEBUG, "skin", SDL_GetError());
 	SDL_RenderPresent(skin->renderer);
 }
 
@@ -319,9 +343,10 @@ static void skin_update_widget(Skin *skin, GmuWidget *gw, SDL_Surface *display, 
 	srect.h = gmu_widget_get_height(gw, 0);
 	drect.x = srect.x;
 	drect.y = srect.y;
-	SDL_BlitSurface(buffer, &srect, display, &drect);
-	//SDL_UpdateRects(display, 1, &drect);
-	sdl_render(skin, display);
+	if (SDL_LockMutex(skin->display_mutex) == 0) {
+		SDL_BlitSurface(buffer, &srect, display, &drect);
+		SDL_UnlockMutex(skin->display_mutex);
+	}
 }
 
 void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer)
@@ -366,8 +391,10 @@ void skin_draw_footer_bg(Skin *skin, SDL_Surface *buffer)
 
 void skin_update_bg(const Skin *skin, SDL_Surface *display, SDL_Surface *buffer)
 {
-	SDL_BlitSurface(buffer, NULL, display, NULL);
-	//SDL_UpdateRect(display, 0, 0, 0, 0);
+	if (SDL_LockMutex(skin->display_mutex) == 0) {
+		SDL_BlitSurface(buffer, NULL, display, NULL);
+		SDL_UnlockMutex(skin->display_mutex);
+	}
 }
 
 int skin_textarea_get_number_of_lines(const Skin *skin)
