@@ -2,7 +2,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
+# Copyright (c) 2006-2019 Johannes Heimansberg (wej.k.vu)
 #
 # File: configure  Created: 130804
 #
@@ -89,6 +89,10 @@ _WEJTEST
 		res=0
 	fi
 	rm -f /tmp/test.o /tmp/test.wej.c /tmp/test.exe
+	if [ "${res}" -eq 0 ] && [ "${auto_detect}" -eq 0 ]; then
+		echo "ERROR: Dependencies failed. Aborting."
+		exit 2
+	fi
 	return $res
 }
 
@@ -307,6 +311,7 @@ help()
 	echo "Possible options:"
 	echo "  --enable <feature>"
 	echo "  --disable <feature>"
+	echo "  --noauto (disables feature auto-detection)"
 	echo "  --target-device <device name>"
 	echo "  --sdk-path </path/to/sdk/base/dir>"
 	echo "  --help"
@@ -314,32 +319,12 @@ help()
 	echo "  --libs </path/to/additional/libs>"
 }
 
-# Flags (possible values: 0=disabled, 1=enabled, -2=autodetect)
-# Set most flags to -2 (autodetect)
-gmu_core=-2
-tool_gmuc=-2
-dec_opus=-2
-dec_mpg123=-2
-dec_vorbis=-2
-dec_musepack=-2
-dec_flac=-2
-dec_speex=-2
-dec_modplug=-2
-dec_openmpt=-2
-dec_wavpack=-2
-fe_sdl=-2
-fe_web=-2
-fe_lirc=-2
-fe_log=-2
-fe_notify=-2
-feature_medialib=0
-feature_sdl_gfx=-2
-feature_debug=0
-feature_oss_mixer=1
 target_device="unknown"
 sdk_path=
 includes=
 libs=
+# Unless we are told otherwise (--noauto), we enable feature auto-detection:
+auto_detect=-2
 
 # Parse options
 file=""
@@ -351,28 +336,32 @@ do
 			help
 			exit 0
 			;;
+		-n | --noauto)
+			auto_detect=0
+			shift
+			;;
 		-e | --enable | --with)
-			enable=$2
-			if [ "$enable" = "" ]; then
+			enable="$2 $enable"
+			if [ "$2" = "" ]; then
 				echo "Invalid use of --enable"
-				break;
+				exit 1
 			fi
 			shift 2
 			;;
 		--enable=* | --with=*)
-			enable=${1#*=}
+			enable="${1#*=} $enable"
 			shift
 			;;
 		-d | --disable | --without)
-			disable=$2
-			if [ "$disable" = "" ]; then
+			disable="$2 $disable"
+			if [ "$2" = "" ]; then
 				echo "Invalid use of --disable"
-				break;
+				exit 1
 			fi
 			shift 2
 			;;
 		--disable=* | --without=*)
-			disable=${1#*=}
+			disable="${1#*=} $disable"
 			shift
 			;;
 		--target-device | -t)
@@ -419,12 +408,39 @@ do
 			break
 			;;
 	esac
-	
-	set_feature $enable 1
-	enable=
-	set_feature $disable 0
-	disable=
-	TARGET=$target_device
+done
+
+# Flags (possible values: 0=disabled, 1=enabled, -2=autodetect)
+# Set most flags to -2 (autodetect)
+gmu_core=1
+tool_gmuc=${auto_detect}
+dec_opus=${auto_detect}
+dec_mpg123=${auto_detect}
+dec_vorbis=${auto_detect}
+dec_musepack=${auto_detect}
+dec_flac=${auto_detect}
+dec_speex=${auto_detect}
+dec_modplug=${auto_detect}
+dec_openmpt=${auto_detect}
+dec_wavpack=${auto_detect}
+fe_sdl=${auto_detect}
+fe_web=${auto_detect}
+fe_lirc=${auto_detect}
+fe_log=${auto_detect}
+fe_notify=${auto_detect}
+feature_medialib=0
+feature_sdl_gfx=${auto_detect}
+feature_debug=0
+feature_oss_mixer=1
+
+TARGET=$target_device
+
+for i in ${enable}; do
+    set_feature $i 1
+done
+
+for i in ${disable}; do
+    set_feature $i 0
 done
 
 INCLUDE_PATHS="$INCLUDE_PATHS $includes"
@@ -461,23 +477,24 @@ if [ $? = 0 ]; then
 	gmu_core=0
 fi
 
-includes_test="#include <SDL2/SDL_rotozoom.h>"
-if [ $sdk_path ]; then
-	sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
-	sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
-else
-	sdl_cflags=$(sdl2-config --cflags)
-	sdl_libs=$(sdl2-config --libs)
+if [ "${feature_sdl_gfx}" -ne 0 ]; then
+	includes_test="#include <SDL2/SDL_rotozoom.h>"
+	if [ $sdk_path ]; then
+		sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
+		sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
+	else
+		sdl_cflags=$(sdl2-config --cflags)
+		sdl_libs=$(sdl2-config --libs)
+	fi
+	libs_test="$sdl_libs -lSDL_gfx"
+	includes_test_flags=$sdl_cflags
+	code_test=""
+	test_lib "SDL_gfx"
+	if [ $? = 0 ]; then
+		echo "SDL_gfx support disabled."
+		feature_sdl_gfx=0
+	fi
 fi
-libs_test="$sdl_libs -lSDL_gfx"
-includes_test_flags=$sdl_cflags
-code_test=""
-test_lib "SDL_gfx"
-if [ $? = 0 ]; then
-	echo "SDL_gfx support disabled."
-	feature_sdl_gfx=0
-fi
-
 
 includes_test="#ifndef _XOPEN_SOURCE_EXTENDED
 #define _XOPEN_SOURCE_EXTENDED
