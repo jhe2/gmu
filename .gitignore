@@ -1,0 +1,16 @@
+*.o
+*.ogg
+*.mp3
+*.flac
+*.bak
+*.m3u
+*.log
+*.tmp
+*.zip
+*.tar.gz
+tmp
+config.mk
+decoders/*
+frontends/*
+gmu.bin
+gmuc
