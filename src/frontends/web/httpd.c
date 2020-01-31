@@ -696,6 +696,7 @@ static int process_command(int rfd, Connection *c)
 					wdprintf(V_DEBUG, "httpd", "key=[%s] value=[%s]\n", key, value);
 					if (strcasecmp(key, "Host") == 0 && value[0]) {
 						int len = strlen(value);
+						if (host) free(host); /* Just in case we more than one Host key */
 						host = malloc(len+1);
 						if (host) memcpy(host, value, len+1);
 					}
@@ -732,7 +733,7 @@ static int process_command(int rfd, Connection *c)
 					if (host) { /* If no Host has been supplied, the query is invalid, thus repond with 400 */
 						if (websocket_key[0]) { /* Websocket connection upgrade */
 							const char *websocket_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-							char        str[61], str2[61];
+							char        str[128], str2[256];
 							SHA1_CTX    sha;
 							uint8_t     digest[SHA1_DIGEST_SIZE];
 							const char *hellostr;
@@ -744,9 +745,9 @@ static int process_command(int rfd, Connection *c)
 							str[60] = '\0';
 							wdprintf(V_DEBUG, "httpd", "Voodoo = '%s'\n", str);
 							SHA1_Init(&sha);
-							SHA1_Update(&sha, (const uint8_t *)str, strlen(str));
+							SHA1_Update(&sha, (uint8_t *)str, strlen(str));
 							SHA1_Final(&sha, digest);
-							memset(str, 0, 61);
+							memset(str, 0, 127);
 							base64_encode_data((unsigned char *)digest, 20, str, 30);
 							wdprintf(V_DEBUG, "httpd", "Calculated base 64 response value: '%s'\n", str);
 							/* 2) Send 101 response with appropriate data */
@@ -754,7 +755,7 @@ static int process_command(int rfd, Connection *c)
 							net_send_buf(rfd, "Server: Gmu http server\r\n");
 							net_send_buf(rfd, "Upgrade: websocket\r\n");
 							net_send_buf(rfd, "Connection: Upgrade\r\n");
-							snprintf(str2, 60, "Sec-WebSocket-Accept: %s\r\n", str);
+							snprintf(str2, 255, "Sec-WebSocket-Accept: %s\r\n", str);
 							wdprintf(V_DEBUG, "httpd", str2);
 							net_send_buf(rfd, str2);
 							net_send_buf(rfd, "\r\n");
@@ -1107,7 +1108,8 @@ static void gmu_http_medialib_browse_artists(Connection *c)
 }
 
 /**
- * Returns 1 if connection is still open and usable or 0 otherwise
+ * Returns 1 if connection is still open and usable or 0 if the
+ * connection must be considered dead and needs to be closed
  */
 static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 {
@@ -1119,7 +1121,6 @@ static int gmu_http_handle_websocket_message(const char *message, Connection *c)
 		if (cmd && strcmp(cmd, "login") == 0) {
 			char *password = json_get_string_value_for_key(json, "password");
 			if (!connection_authenticate(c, password)) {
-				connection_close(c);
 				wdprintf(V_DEBUG, "httpd", "Authentication failed.\n");
 				res = 0;
 			} else {

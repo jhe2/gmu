@@ -313,7 +313,7 @@ static void skin_draw_widget(Skin *skin, GmuWidget *gw, SDL_Surface *buffer)
 
 void skin_sdl_render(Skin *skin, SDL_Surface *display)
 {
-	int a, d;
+	int d;
 	if (skin->tex) SDL_DestroyTexture(skin->tex);
 	skin->tex = SDL_CreateTexture(
 		skin->renderer,
@@ -322,10 +322,10 @@ void skin_sdl_render(Skin *skin, SDL_Surface *display)
 		display->w, display->h
 	);
 	if (SDL_LockMutex(skin->display_mutex) == 0) {
-		a = SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
+		int a = SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
 		SDL_UnlockMutex(skin->display_mutex);
+		if (a) wdprintf(V_DEBUG, "skin", SDL_GetError());
 	}
-	if (a) wdprintf(V_DEBUG, "skin", SDL_GetError());
 	SDL_SetRenderDrawColor(skin->renderer, 0, 0, 0, 255); /* black */
 	SDL_RenderClear(skin->renderer);
 	d = SDL_RenderCopy(skin->renderer, skin->tex, NULL, NULL);
