@@ -97,16 +97,16 @@ DISTBIN_DEPS?=default_distbin
 TEMP_HEADER_FILES=tmp-felist.h tmp-declist.h
 
 all: $(DECODERS) $(FRONTENDS) $(TOOLS_TO_BUILD)
-	@echo -e "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
+	@echo "All done for target \033[1m$(TARGET)\033[0m. \033[1m$(BINARY)\033[0m binary, \033[1mfrontends\033[0m and \033[1mdecoders\033[0m ready."
 
 config.mk:
 	$(error ERROR: Please run the configure script first)
 
 decoders: $(DECODERS_TO_BUILD)
-	@echo -e "All \033[1mdecoders\033[0m have been built."
+	@echo "All \033[1mdecoders\033[0m have been built."
 
 frontends: $(FRONTENDS_TO_BUILD)
-	@echo -e "All \033[1mfrontends\033[0m have been built."
+	@echo "All \033[1mfrontends\033[0m have been built."
 
 frontendsdir:
 	$(Q)-mkdir -p frontends
@@ -115,7 +115,7 @@ decodersdir:
 	$(Q)-mkdir -p decoders
 
 $(BINARY): $(OBJECTFILES) $(PLUGIN_OBJECTFILES)
-	@echo -e "Linking \033[1m$(BINARY)\033[0m"
+	@echo "Linking \033[1m$(BINARY)\033[0m"
 	$(Q)$(CC) $(LFLAGS) $(LFLAGS_CORE) -o $(BINARY) $(OBJECTFILES) $(PLUGIN_OBJECTFILES) $(LIBS_CORE) $(LIBS)
 
 libs.$(TARGET):
@@ -125,19 +125,19 @@ ver=$(shell awk '/define VERSION_NUMBER/ { print $$3 }' src/core.h|cut -d '"' -f
 projname=gmu-${ver}
 
 %.o: src/%.c $(GENERATED_HEADER_FILES_STATIC)
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -c -o $@ $<
 
 %.o: src/frontends/sdl/%.c $(GENERATED_HEADER_FILES_STATIC)
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION)
 
 %.o: src/frontends/web/%.c $(GENERATED_HEADER_FILES_STATIC)
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION)
 
 dist: $(ALLFILES)
-	@echo -e "Creating \033[1m$(projname).tar.gz\033[0m"
+	@echo "Creating \033[1m$(projname).tar.gz\033[0m"
 	$(Q)-rm -rf $(projname)
 	$(Q)mkdir $(projname)
 	$(Q)mkdir $(projname)/frontends
@@ -149,7 +149,7 @@ dist: $(ALLFILES)
 distbin: $(DISTBIN_DEPS)
 
 default_distbin: $(DISTFILES)
-	@echo -e "Creating \033[1m$(projname)-$(TARGET).zip\033[0m"
+	@echo "Creating \033[1m$(projname)-$(TARGET).zip\033[0m"
 	$(Q)-rm -rf $(projname)-$(TARGET)
 	$(Q)-rm -rf $(projname)-$(TARGET).zip
 	$(Q)mkdir $(projname)-$(TARGET)
@@ -165,7 +165,7 @@ default_distbin: $(DISTFILES)
 	$(Q)-rm -rf $(projname)-$(TARGET)
 
 install: $(DISTFILES)
-	@echo -e "Installing Gmu: prefix=$(PREFIX) destdir=$(DESTDIR)"
+	@echo "Installing Gmu: prefix=$(PREFIX) destdir=$(DESTDIR)"
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/bin
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/etc/gmu
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/decoders
@@ -183,7 +183,7 @@ install: $(DISTFILES)
 	$(Q)cp *.keymap $(DESTDIR)$(PREFIX)/etc/gmu
 	$(Q)echo "#!/bin/sh">$(DESTDIR)$(PREFIX)/bin/gmu
 	$(Q)echo "cd $(PREFIX)/share/gmu">>$(DESTDIR)$(PREFIX)/bin/gmu
-	$(Q)echo "$(PREFIX)/bin/$(BINARY) -e -d $(PREFIX)/etc/gmu -c gmu.$(TARGET).conf ">>$(DESTDIR)$(PREFIX)/bin/gmu
+	$(Q)echo "$(PREFIX)/bin/$(BINARY) -d $(PREFIX)/etc/gmu -c gmu.$(TARGET).conf ">>$(DESTDIR)$(PREFIX)/bin/gmu
 	$(Q)chmod a+x $(DESTDIR)$(PREFIX)/bin/gmu
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/share/applications
 	$(Q)cp gmu.desktop $(DESTDIR)$(PREFIX)/share/applications/gmu.desktop
@@ -193,58 +193,58 @@ install: $(DISTFILES)
 clean:
 	$(Q)-rm -rf *.o $(BINARY) gmuc decoders/*.so decoders/*.o frontends/*.so frontends/*.o
 	$(Q)-rm -f $(TEMP_HEADER_FILES)
-	@echo -e "\033[1mAll clean.\033[0m"
+	@echo "\033[1mAll clean.\033[0m"
 
 gmuc: gmuc.o window.o listwidget.o websocket.o base64.o debug.o ringbuffer.o net.o json.o dir.o wejconfig.o ui.o charset.o nethelper.o util.o
-	@echo -e "Linking \033[1mgmuc\033[0m"
+	@echo "Linking \033[1mgmuc\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) -o gmuc gmuc.o wejconfig.o websocket.o base64.o debug.o ringbuffer.o net.o json.o window.o listwidget.o dir.o ui.o charset.o nethelper.o util.o -lncursesw
 
 %.o: src/tools/%.c
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 decoders/%.so: src/decoders/%.c | decodersdir
-	@echo -e "Building \033[1m$@\033[0m from \033[1m$<\033[0m"
+	@echo "Building \033[1m$@\033[0m from \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(DEC_$(*)_CFLAGS) $(LFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LIBS)
 
 decoders/%.o: src/decoders/%.c | decodersdir
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -c -o $@ $(CFLAGS) $(DEC_$(*)_CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) $(DEC_$(*)_LIBS)
 
 %.o: src/decoders/%.c
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -DGMU_REGISTER_DECODER=$(DECODER_PLUGIN_LOADER_FUNCTION) -Isrc/ -c -o $@ $<
 
 frontends/sdl.so: $(PLUGIN_FE_sdl_OBJECTFILES) | frontendsdir
-	@echo -e "Linking \033[1m$@\033[0m"
+	@echo "Linking \033[1m$@\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(LFLAGS) $(LFLAGS_SDLFE) -Isrc/ $(PLUGIN_CFLAGS) $(PLUGIN_FE_sdl_OBJECTFILES) $(LIBS_SDLFE)
 
 frontends/log.so: log.o util.o | frontendsdir
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) util.o -lpthread
 
 frontends/lirc.so: src/frontends/lirc.c | frontendsdir
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) -lpthread -llirc_client
 
 frontends/notify.so: src/frontends/notify.c util.o | frontendsdir
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) `pkg-config --cflags gio-2.0` $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) util.o -lpthread `pkg-config --libs gio-2.0`
 
 %.o: src/frontends/web/%.c
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $<
 
 %.o: src/frontends/%.c
-	@echo -e "Compiling \033[1m$<\033[0m"
+	@echo "Compiling \033[1m$<\033[0m"
 	$(Q)$(CC) -fPIC $(CFLAGS) -Isrc/ -c -o $@ $< -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION)
 
 frontends/gmuhttp.so: $(PLUGIN_FE_gmuhttp_OBJECTFILES) | frontendsdir
-	@echo -e "Building \033[1m$@\033[0m"
+	@echo "Building \033[1m$@\033[0m"
 	$(Q)$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) $(LFLAGS) -o frontends/gmuhttp.so src/frontends/web/gmuhttp.c -DGMU_REGISTER_FRONTEND=$(FRONTEND_PLUGIN_LOADER_FUNCTION) $(PLUGIN_FE_gmuhttp_OBJECTFILES) -lpthread
 
 tmp-felist.h:
-	@echo -e "Creating file \033[1mtmp-felist.h\033[0m"
+	@echo "Creating file \033[1mtmp-felist.h\033[0m"
 	$(Q)echo "/* Generated file. Do not edit. */">tmp-felist.h
 	$(Q)$(foreach i, $(FRONTENDS_TO_BUILD), echo "GmuFrontend *f`echo $(i)|md5sum|cut -d ' ' -f 1`(void);">>tmp-felist.h;)
 	$(Q)echo "GmuFrontend *(*feload_funcs[])(void) = {">>tmp-felist.h
@@ -252,7 +252,7 @@ tmp-felist.h:
 	$(Q)echo "NULL };">>tmp-felist.h
 
 tmp-declist.h:
-	@echo -e "Creating file \033[1mtmp-declist.h\033[0m"
+	@echo "Creating file \033[1mtmp-declist.h\033[0m"
 	$(Q)echo "/* Generated file. Do not edit. */">tmp-declist.h
 	$(Q)$(foreach i, $(DECODERS_TO_BUILD), echo "GmuDecoder *f`echo $(i)|md5sum|cut -d ' ' -f 1`(void);">>tmp-declist.h;)
 	$(Q)echo "GmuDecoder *(*decload_funcs[])(void) = {">>tmp-declist.h
