@@ -1620,6 +1620,7 @@ int main(int argc, char **argv)
 								printf("ERROR: Path too long.\n");
 								exit(1);
 							} else {
+								if (config_file_path) free(config_file_path);
 								config_file_path = malloc(len+1);
 								if (config_file_path)
 									strncpy(config_file_path, argv[i+1], len+1);

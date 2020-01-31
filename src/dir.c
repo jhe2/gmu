@@ -93,9 +93,9 @@ int dir_read(Dir *dir, const char *path, int directories_first)
 			if (dir->files > MAX_FILES) dir->files = MAX_FILES;
 			for (i = 0; i < dir->files; i++) {
 				struct stat attr;
-				char        tmp[256];
+				char        tmp[513];
 				
-				snprintf(tmp, 255, "%s/%s", dir->path, dir->ep[i]->d_name);
+				snprintf(tmp, 512, "%s/%s", dir->path, dir->ep[i]->d_name);
 				if (stat(tmp, &attr) != -1) {
 					if (S_ISREG(attr.st_mode))
 						dir->flag_tmp[i] = REG_FILE;

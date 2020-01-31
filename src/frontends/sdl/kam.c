@@ -435,12 +435,14 @@ void key_action_mapping_generate_help_string(KeyActionMapping *kam, char *target
 	for (i = 0; i <= GLOBAL_LOCK; i++) {
 		if ((kam[i].scope & view || kam[i].scope == ANY) &&
 		    kam[i].modifier == modifier && kam[i].button >= 0) {
+			const char *name = key_action_mapping_get_button_name(kam, i);
+			const char *desc = kam[i].description;
+			int length = 255;
+
 			if (!toggle)
-				snprintf(tmp2, 255, "%s**%s:**%s ", tmp1,
-				         key_action_mapping_get_button_name(kam, i), kam[i].description);
+				snprintf(tmp2, length, "%s**%s:**%s ", tmp1, name, desc);
 			else
-				snprintf(tmp1, 255, "%s**%s:**%s ", tmp2,
-				         key_action_mapping_get_button_name(kam, i), kam[i].description);
+				snprintf(tmp1, length, "%s**%s:**%s ", tmp2, name, desc);
 			toggle = !toggle;
 		}
 	}

@@ -206,6 +206,8 @@ JSON_Object *json_parse_alloc(const char *json_data)
 										if (current_key) {
 											current_key->type = JSON_STRING;
 											current_key->key_value_str = key_value;
+										} else {
+											free(key_value);
 										}
 										s = STATE_SEARCH_VALUE;
 									}
@@ -238,14 +240,13 @@ JSON_Object *json_parse_alloc(const char *json_data)
 											if (key_value[0] == 't' || key_value[0] == 'f') {
 												current_key->type = JSON_BOOLEAN;
 												current_key->key_value_boolean = key_value[0] == 't' ? 1 : 0;
-												free(key_value);
 											} else {
 												current_key->type = JSON_NUMBER;
 												current_key->key_value_number = atof(key_value);
 												current_key->key_value_integer = atoi(key_value);
-												free(key_value);
 											}
 										}
+										free(key_value);
 										s = STATE_SEARCH_VALUE;
 									}
 								}
