@@ -27,7 +27,7 @@ void wdprintf_set_verbosity(Verbosity v)
 	wdprintf_verbosity = v;
 }
 
-int wdprintf(Verbosity v, char *module, char *fmt, ...)
+int wdprintf(Verbosity v, const char *module, const char *fmt, ...)
 {
 	va_list    ap;
 	char       timestr[200];
