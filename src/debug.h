@@ -20,5 +20,5 @@ typedef enum Verbosity {
 } Verbosity;
 
 void wdprintf_set_verbosity(Verbosity v);
-int  wdprintf(Verbosity v, char *module, char *fmt, ...);
+int  wdprintf(Verbosity v, const char *module, const char *fmt, ...);
 #endif
