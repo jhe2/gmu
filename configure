@@ -22,11 +22,11 @@ if [ "$CC" = "" ]; then
 	CC=cc
 fi
 
-TMP_CC=`which $CC`
+TMP_CC=$(which $CC)
 
 LIBRARY_PATHS=
 if [ "$TMP_CC" != "" ]; then
-	BASE_DIR="`dirname $TMP_CC`/.."
+	BASE_DIR="$(dirname "$TMP_CC")/.."
 fi
 BASE_INCLUDE_PATH="$BASE_DIR/include"
 INCLUDE_PATHS="-I$BASE_INCLUDE_PATH"
@@ -46,9 +46,7 @@ int main(void)
   return 0;
 }
 _WEJTEST
-	$CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c
-
-	if [ $? = 0 ]; then
+	if $CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c; then
 		echo "Compiler $CC: okay";
 	else
 		echo "Compiler $CC: not working";
@@ -72,8 +70,7 @@ _WEJTEST
 	echo "Checking '$1'..."
 	res=1
 	echo -n "$1 header files: "
-	$CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall 2>/dev/null
-	if [ $? = 0 ]; then
+	if $CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall 2>/dev/null; then
 		echo "okay";
 	else
 		echo "failed";
@@ -81,8 +78,7 @@ _WEJTEST
 	fi
 
 	echo -n "$1 library: "
-	$CC $LFLAGS $LIBRARY_PATHS -o /tmp/test.exe /tmp/test.o $libs_test 2>/dev/null
-	if [ $? = 0 ]; then
+	if $CC $LFLAGS $LIBRARY_PATHS -o /tmp/test.exe /tmp/test.o $libs_test 2>/dev/null; then
 		echo "okay";
 	else
 		echo "failed";
@@ -107,8 +103,7 @@ int main(void)
   return 0;
 }
 _WEJTEST
-	$CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c 2>/dev/null
-	if [ $? != 0 ]; then
+	if ! $CC $CFLAGS $INCLUDE_PATHS -o /tmp/test.exe /tmp/test.wej.c 2>/dev/null; then
 		res=1
 	fi
 	return $res
@@ -200,109 +195,112 @@ print_features_and_write_config()
 	echo "# Generated Gmu config" >config.mk
 	echo "Features:"
 	local TOOLS_TO_BUILD=
-	if [ $gmu_core != 0 ]; then
+	if [ "$gmu_core" != 0 ]; then
 		echo "Gmu core enabled"
 		TOOLS_TO_BUILD="$TOOLS_TO_BUILD gmu.bin"
 	fi
-	if [ $tool_gmuc != 0 ]; then
+	if [ "$tool_gmuc" != 0 ]; then
 		echo "gmuc enabled"
 		TOOLS_TO_BUILD="$TOOLS_TO_BUILD gmuc"
 		EXTRA_CFLAGS="$EXTRA_CFLAGS -I$BASE_INCLUDE_PATH/ncursesw"
 	fi
-	if [ $feature_medialib = 1 ]; then
+	if [ "$feature_medialib" = 1 ]; then
 		echo "Media library enabled"
 		echo "GMU_MEDIALIB=1" >>config.mk
 	fi
-	if [ $feature_debug = 1 ]; then
+	if [ "$feature_debug" = 1 ]; then
 		echo "Debug build enabled"
 		EXTRA_CFLAGS="$EXTRA_CFLAGS -DDEBUG"
 	fi
-	if [ $feature_oss_mixer = 0 ]; then
+	if [ "$feature_oss_mixer" = 0 ]; then
 		echo "OSS mixer disabled"
 		echo "GMU_DISABLE_OSS_MIXER=1" >>config.mk
 		EXTRA_CFLAGS="$EXTRA_CFLAGS -DGMU_DISABLE_OSS_MIXER=1"
 	fi
 	echo
 	echo "Decoders:"
-	if [ $dec_opus = 1 ]; then
+	if [ "$dec_opus" = 1 ]; then
 		echo "Opus enabled"
 		dec="$dec decoders/opus.so"
 	fi
-	if [ $dec_mpg123 = 1 ]; then
+	if [ "$dec_mpg123" = 1 ]; then
 		echo "mpg123 enabled"
 		dec="$dec decoders/mpg123.so"
 	fi
-	if [ $dec_vorbis = 1 ]; then
+	if [ "$dec_vorbis" = 1 ]; then
 		echo "Vorbis enabled"
 		dec="$dec decoders/vorbis.so"
 	fi
-	if [ $dec_musepack = 1 ]; then
+	if [ "$dec_musepack" = 1 ]; then
 		echo "Musepack enabled"
 		dec="$dec decoders/musepack.so"
 	fi
-	if [ $dec_flac = 1 ]; then
+	if [ "$dec_flac" = 1 ]; then
 		echo "FLAC enabled"
 		dec="$dec decoders/flac.so"
 	fi
-	if [ $dec_speex = 1 ]; then
+	if [ "$dec_speex" = 1 ]; then
 		echo "Speex enabled"
 		dec="$dec decoders/speex.so"
 	fi
-	if [ $dec_modplug = 1 ]; then
+	if [ "$dec_modplug" = 1 ]; then
 		echo "ModPlug enabled"
 		dec="$dec decoders/modplug.so"
 	fi
-	if [ $dec_openmpt = 1 ]; then
+	if [ "$dec_openmpt" = 1 ]; then
 		echo "OpenMPT enabled"
 		dec="$dec decoders/openmpt.so"
 	fi
-	if [ $dec_wavpack = 1 ]; then
+	if [ "$dec_wavpack" = 1 ]; then
 		echo "WavPack enabled"
 		dec="$dec decoders/wavpack.so"
 	fi
 	echo
 	echo "Frontends:"
-	if [ $fe_sdl = 1 ]; then
+	if [ "$fe_sdl" = 1 ]; then
 		echo "SDL frontend enabled"
 		frn="$frn frontends/sdl.so"
 	fi
-	if [ $feature_sdl_gfx = 0 ]; then
+	if [ "$feature_sdl_gfx" = 0 ]; then
 		echo "SDL_gfx support disabled"
 		echo "SDLFE_WITHOUT_SDL_GFX=1" >> config.mk
 	fi
-	if [ $fe_web = 1 ]; then
+	if [ "$fe_web" = 1 ]; then
 		echo "Web frontend enabled"
 		frn="$frn frontends/gmuhttp.so"
 	fi
-	if [ $fe_lirc = 1 ]; then
+	if [ "$fe_lirc" = 1 ]; then
 		echo "LIRC frontend enabled"
 		frn="$frn frontends/lirc.so"
 	fi
-	if [ $fe_log = 1 ]; then
+	if [ "$fe_log" = 1 ]; then
 		echo "Log frontend enabled"
 		frn="$frn frontends/log.so"
 	fi
-	if [ $fe_notify = 1 ]; then
+	if [ "$fe_notify" = 1 ]; then
 		echo "Notify frontend enabled"
 		frn="$frn frontends/notify.so"
 	fi
 	echo "CC=$CC" >>config.mk
-	if [ $sdk_path ]; then
-		echo "SDL_CFLAGS=$(sdl2-config --prefix=$sdk_path --cflags)" >>config.mk
-		echo "SDL_LIB=$(sdl2-config --prefix=$sdk_path --libs) -pthread" >>config.mk
+	if [ "$sdk_path" ]; then
+		echo "SDL_CFLAGS=$(sdl2-config --prefix="$sdk_path" --cflags)" >>config.mk
+		echo "SDL_LIB=$(sdl2-config --prefix="$sdk_path" --libs) -pthread" >>config.mk
 	else
 		echo "SDL_CFLAGS=$(sdl2-config --cflags)" >>config.mk
 		echo "SDL_LIB=$(sdl2-config --libs) -lpthread" >>config.mk
 	fi
-	echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H $EXTRA_CFLAGS" >>config.mk
-	echo "LFLAGS=$LFLAGS -Wl,-export-dynamic" >>config.mk
-	echo "LFLAGS_CORE=$LFLAGS_CORE" >>config.mk
-	echo "LIBS_CORE=$LIBS_CORE" >>config.mk
-	echo "DECODERS_TO_BUILD=$dec" >>config.mk
-	echo "FRONTENDS_TO_BUILD=$frn" >>config.mk
-	echo "TARGET=$TARGET" >>config.mk
-	echo "TOOLS_TO_BUILD=$TOOLS_TO_BUILD" >>config.mk
-	echo "$BUILD_CONFIG_EXTRAS" >>config.mk
+
+	{
+		echo "CFLAGS=$CFLAGS \$(SDL_CFLAGS) -fsigned-char -D_REENTRANT -DUSE_MEMORY_H $EXTRA_CFLAGS"
+		echo "LFLAGS=$LFLAGS -Wl,-export-dynamic"
+		echo "LFLAGS_CORE=$LFLAGS_CORE"
+		echo "LIBS_CORE=$LIBS_CORE"
+		echo "DECODERS_TO_BUILD=$dec"
+		echo "FRONTENDS_TO_BUILD=$frn"
+		echo "TARGET=$TARGET"
+		echo "TOOLS_TO_BUILD=$TOOLS_TO_BUILD"
+		echo "$BUILD_CONFIG_EXTRAS"
+	}>>config.mk
 }
 
 help()
@@ -327,8 +325,6 @@ libs=
 auto_detect=-2
 
 # Parse options
-file=""
-
 while :
 do
 	case $1 in
@@ -436,11 +432,11 @@ feature_oss_mixer=1
 TARGET=$target_device
 
 for i in ${enable}; do
-    set_feature $i 1
+    set_feature "$i" 1
 done
 
 for i in ${disable}; do
-    set_feature $i 0
+    set_feature "$i" 0
 done
 
 INCLUDE_PATHS="$INCLUDE_PATHS $includes"
@@ -461,9 +457,9 @@ fi
 
 # Tests
 includes_test="#include <SDL2/SDL.h>"
-if [ $sdk_path ]; then
-	sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
-	sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
+if [ "$sdk_path" ]; then
+	sdl_cflags=$(sdl2-config --prefix="$sdk_path" --cflags)
+	sdl_libs=$(sdl2-config --prefix="$sdk_path" --libs)
 else
 	sdl_cflags=$(sdl2-config --cflags)
 	sdl_libs=$(sdl2-config --libs)
@@ -479,9 +475,9 @@ fi
 
 if [ "${feature_sdl_gfx}" -ne 0 ]; then
 	includes_test="#include <SDL2/SDL_rotozoom.h>"
-	if [ $sdk_path ]; then
-		sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
-		sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
+	if [ "$sdk_path" ]; then
+		sdl_cflags=$(sdl2-config --prefix="$sdk_path" --cflags)
+		sdl_libs=$(sdl2-config --prefix="$sdk_path" --libs)
 	else
 		sdl_cflags=$(sdl2-config --cflags)
 		sdl_libs=$(sdl2-config --libs)
@@ -588,10 +584,10 @@ if [ $feature_medialib != 0 ]; then
 fi
 
 
-if [ $fe_sdl != 0 ]; then
-	if [ $sdk_path ]; then
-		sdl_cflags=$(sdl2-config --prefix=$sdk_path --cflags)
-		sdl_libs=$(sdl2-config --prefix=$sdk_path --libs)
+if [ "$fe_sdl" != 0 ]; then
+	if [ "$sdk_path" ]; then
+		sdl_cflags=$(sdl2-config --prefix="$sdk_path" --cflags)
+		sdl_libs=$(sdl2-config --prefix="$sdk_path" --libs)
 	else
 		sdl_cflags=$(sdl2-config --cflags)
 		sdl_libs=$(sdl2-config --libs)
@@ -653,8 +649,8 @@ if [ $fe_notify != 0 ]; then
 #include <time.h>
 #include <gio/gio.h>"
 
-	libs_test="`pkg-config --libs gio-2.0`"
-	includes_test_flags="`pkg-config --cflags gio-2.0`"
+	libs_test="$(pkg-config --libs gio-2.0)"
+	includes_test_flags="$(pkg-config --cflags gio-2.0)"
 	code_test=""
 	test_lib "notify frontend dependencies"
 	fe_notify=$?
