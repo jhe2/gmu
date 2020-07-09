@@ -16,17 +16,16 @@
 #ifndef _M3U_H
 #define _M3U_H
 #include <stdio.h>
-
-#define MAX_PATH 256
+#include "consts.h"
 
 typedef struct M3u
 {
 	FILE  *pl_file;
-	char   m3u_path[MAX_PATH];
+	char   m3u_path[PATH_LEN_DIR_MAX];
 	short  extended;
 	char   current_item_title[256];
-	char   current_item_filename[MAX_PATH];
-	char   current_item_path[MAX_PATH];
+	char   current_item_filename[PATH_LEN_FILENAME_MAX];
+	char   current_item_path[PATH_LEN_MAX];
 	size_t current_item_length;
 } M3u;
 

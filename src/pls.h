@@ -16,18 +16,18 @@
 #ifndef _PLS_H
 #define _PLS_H
 #include <stdio.h>
+#include "consts.h"
 
-#define MAX_PATH 256
 #define MAX_LINE_LENGTH 256
 
 typedef struct PLS
 {
 	FILE  *pl_file;
-	char   pls_path[MAX_PATH];
+	char   pls_path[PATH_LEN_DIR_MAX];
 	short  version;
 	char   current_item_title[MAX_LINE_LENGTH];
-	char   current_item_filename[MAX_PATH];
-	char   current_item_path[MAX_PATH];
+	char   current_item_filename[PATH_LEN_FILENAME_MAX];
+	char   current_item_path[PATH_LEN_MAX];
 	size_t current_item_length;
 } PLS;
 

@@ -29,6 +29,7 @@
 #include "metadatareader.h"
 #include "dirparser.h"
 #include "pthread_helper.h"
+#include "consts.h"
 
 #define PLAYLIST_MAX_LENGTH 9999
 
@@ -108,18 +109,18 @@ int playlist_add_item(Playlist *pl, const char *file, const char *name)
 			entry->played = 0;
 			entry->next = NULL;
 			if (file[0] != '/' && strncmp(file, "http://", 7) != 0) {
-				char path[256];
-				if (getcwd(path, 253)) { /* do we still need this? */
-					snprintf(entry->filename, 255, "%s/%s", path, file);
+				char path[PATH_LEN_DIR_MAX];
+				if (getcwd(path, PATH_LEN_DIR_MAX)) { /* do we still need this? */
+					snprintf(entry->filename, PATH_LEN_MAX, "%s/%s", path, file);
 				} else {
 					entry->filename[0] = '\0';
 					result = 0;
 				}
 			} else {
-				strncpy(entry->filename, file, 255);
+				strncpy(entry->filename, file, PATH_LEN_MAX);
 			}
 			if (result) {
-				entry->filename[255] = '\0';
+				entry->filename[PATH_LEN_MAX] = '\0';
 				playlist_entry_set_name(entry, name);
 				entry->queue_pos = 0;
 				entry->next_in_queue = NULL;
