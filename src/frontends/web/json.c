@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2020 Johannes Heimansberg (wej.k.vu)
  *
  * File: json.c  Created: 120811
  *

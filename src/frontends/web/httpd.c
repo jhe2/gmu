@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2020 Johannes Heimansberg (wej.k.vu)
  *
  * File: httpd.c  Created: 111209
  *
@@ -696,7 +696,7 @@ static int process_command(int rfd, Connection *c)
 					wdprintf(V_DEBUG, "httpd", "key=[%s] value=[%s]\n", key, value);
 					if (strcasecmp(key, "Host") == 0 && value[0]) {
 						int len = strlen(value);
-						if (host) free(host); /* Just in case we more than one Host key */
+						if (host) free(host); /* Just in case we encounter more than one Host key */
 						host = malloc(len+1);
 						if (host) memcpy(host, value, len+1);
 					}
