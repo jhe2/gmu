@@ -230,18 +230,11 @@ int skin_init(Skin *skin, const char *skin_name)
 	return res;
 }
 
-void skin_set_renderer(Skin *skin, SDL_Renderer *renderer, SDL_Surface *display)
+void skin_set_renderer(Skin *skin, SDL_Renderer *renderer)
 {
 	skin->renderer = renderer;
 	wdprintf(V_DEBUG, "skin", "skin_set_renderer(): renderer ok: %d\n",
 	         skin->renderer == renderer ? 1 : 0);
-	if (skin->tex) SDL_DestroyTexture(skin->tex);
-	skin->tex = SDL_CreateTexture(
-		renderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STREAMING,
-		display->w, display->h
-	);	
 }
 
 void skin_free(Skin *skin)
@@ -312,25 +305,42 @@ static void skin_draw_widget(Skin *skin, GmuWidget *gw, SDL_Surface *buffer)
 	SDL_BlitSurface(skin->buffer, &srect, buffer, &drect);
 }
 
+/* skin_lock_renderer() is used to prevent skin_sdl_render() from
+ * accessing the renderer. Useful when replacing the renderer. The lock
+ * must be released with the skin_unlock_renderer() function as soon as
+ * possible. */
+int skin_lock_renderer(Skin *skin)
+{
+	return SDL_LockMutex(skin->display_mutex);
+}
+
+int skin_unlock_renderer(Skin *skin)
+{
+	return SDL_UnlockMutex(skin->display_mutex);
+}
+
 void skin_sdl_render(Skin *skin, SDL_Surface *display)
 {
-	int d;
-	if (skin->tex) SDL_DestroyTexture(skin->tex);
-	skin->tex = SDL_CreateTexture(
-		skin->renderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STREAMING,
-		display->w, display->h
-	);
-	if (SDL_LockMutex(skin->display_mutex) == 0) {
-		int a = SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
-		SDL_UnlockMutex(skin->display_mutex);
-		if (a) wdprintf(V_DEBUG, "skin", SDL_GetError());
+	int d = 1;
+	if (!skin->display_mutex) { /* skin data structure not initialized (yet) */
+		return;
 	}
-	SDL_SetRenderDrawColor(skin->renderer, 0, 0, 0, 255); /* black */
-	SDL_RenderClear(skin->renderer);
-	d = SDL_RenderCopy(skin->renderer, skin->tex, NULL, NULL);
-	if (d) wdprintf(V_DEBUG, "skin", SDL_GetError());
+	if (SDL_LockMutex(skin->display_mutex) == 0) {
+		if (skin->tex) SDL_DestroyTexture(skin->tex);
+		skin->tex = SDL_CreateTexture(
+			skin->renderer,
+			SDL_PIXELFORMAT_ARGB8888,
+			SDL_TEXTUREACCESS_STREAMING,
+			display->w, display->h
+		);
+		int a = SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
+		if (a) wdprintf(V_DEBUG, "skin", "%s\n", SDL_GetError());
+		SDL_SetRenderDrawColor(skin->renderer, 0, 0, 0, 255); /* black */
+		SDL_RenderClear(skin->renderer);
+		d = SDL_RenderCopy(skin->renderer, skin->tex, NULL, NULL);
+		SDL_UnlockMutex(skin->display_mutex);
+	}
+	if (d) wdprintf(V_DEBUG, "skin", "%s\n", SDL_GetError());
 	SDL_RenderPresent(skin->renderer);
 }
 
