@@ -582,6 +582,35 @@ static void m_draw(M *m, SDL_Surface *t)
 	}
 }
 
+static void execute_plmanager_action(PlaylistManager *pm)
+{
+	switch (plmanager_get_flag(pm)) {
+		char notice_msg[80], temp[PATH_LEN_MAX];
+
+		case PLMANAGER_SAVE_LIST:
+			plmanager_reset_flag(pm);
+			snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(pm));
+			wdprintf(V_INFO, "sdl_frontend", "Playlist file: %s\n", temp);
+			if (gmu_core_export_playlist(temp)) {
+				snprintf(notice_msg, 79, "SAVED AS %s\n", plmanager_get_selection(pm));
+			} else {
+				snprintf(notice_msg, 79, "FAILED SAVING %s\n", plmanager_get_selection(pm));
+			}
+			player_display_set_notice_message(notice_msg, NOTICE_DELAY);
+			break;
+		case PLMANAGER_LOAD_LIST:
+			gmu_core_playlist_clear();
+		case PLMANAGER_APPEND_LIST:
+			plmanager_reset_flag(pm);
+			snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(pm));
+			gmu_core_add_m3u_contents_to_playlist(temp);
+			player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
+			break;
+		default:
+			break;
+	}
+}
+
 static void run_player(char *skin_name, char *decoders_str)
 {
 	SDL_Surface     *buffer = NULL;
@@ -1096,7 +1125,7 @@ static void run_player(char *skin_name, char *decoders_str)
 				}
 				if (amethod == ACTIVATE_PRESS) view = m_enable(&m, button, view);
 
-				switch (view) { /* view specific actions */
+				switch (view) { /* view-specific actions */
 					case FILE_BROWSER:
 						update |= file_browser_process_action(&fb, &pb, ti, &cv, user_key_action, items_skip);
 						break;				
@@ -1124,31 +1153,7 @@ static void run_player(char *skin_name, char *decoders_str)
 						break;
 					case PLAYLIST_SAVE:
 						plmanager_process_action(&ps, &view, user_key_action);
-						switch(plmanager_get_flag(&ps)) {
-							char notice_msg[80], temp[PATH_LEN_MAX];
-
-							case PLMANAGER_SAVE_LIST:
-								plmanager_reset_flag(&ps);
-								snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(&ps));
-								wdprintf(V_INFO, "sdl_frontend", "Playlist file: %s\n", temp);
-								if (gmu_core_export_playlist(temp)) {
-									snprintf(notice_msg, 79, "SAVED AS %s\n", plmanager_get_selection(&ps));
-								} else {
-									snprintf(notice_msg, 79, "FAILED SAVING %s\n", plmanager_get_selection(&ps));
-								}
-								player_display_set_notice_message(notice_msg, NOTICE_DELAY);
-								break;
-							case PLMANAGER_LOAD_LIST:
-								gmu_core_playlist_clear();
-							case PLMANAGER_APPEND_LIST:
-								plmanager_reset_flag(&ps);
-								snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(&ps));
-								gmu_core_add_m3u_contents_to_playlist(temp);
-								player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
-								break;
-							default:
-								break;
-						}
+						execute_plmanager_action(&ps);
 						update = UPDATE_ALL;
 						break;
 					case EGG:
