@@ -20,6 +20,7 @@
 #include "m3u.h"
 #include "debug.h"
 #include "charset.h"
+#include "consts.h"
 
 int m3u_open_file(M3u *m3u, const char *filename)
 {
@@ -35,14 +36,14 @@ int m3u_open_file(M3u *m3u, const char *filename)
 	{
 		char  *c = strrchr(filename, '/');
 		size_t size = c ? c - filename + 1 : 0;
-		if (size >= MAX_PATH) size = 0;
+		if (size >= PATH_LEN_DIR_MAX) size = 0;
 		if (size > 0) strncpy(m3u->m3u_path, filename, size);
 		m3u->m3u_path[size] = '\0';
 	}
 
 	if (strlen(m3u->m3u_path) == 0) {
 		int len;
-		if (getcwd(m3u->m3u_path, MAX_PATH - 3)) {
+		if (getcwd(m3u->m3u_path, PATH_LEN_DIR_MAX - 3)) {
 			len = strlen(m3u->m3u_path);
 			m3u->m3u_path[len] = '/';
 			m3u->m3u_path[len+1] = '\0';
@@ -55,8 +56,8 @@ int m3u_open_file(M3u *m3u, const char *filename)
 	wdprintf(V_DEBUG, "m3u", "Path = %s\n", m3u->m3u_path); 
 
 	if ((m3u->pl_file = fopen(filename, "r")) != NULL) {
-		char buf[MAX_PATH] = "";
-		if (fgets(buf, MAX_PATH - 1, m3u->pl_file)) {
+		char buf[PATH_LEN_MAX] = "";
+		if (fgets(buf, PATH_LEN_MAX - 1, m3u->pl_file)) {
 			if (strncmp(buf, "#EXTM3U", 7) == 0) {
 				m3u->extended = 1;
 				wdprintf(V_INFO, "m3u", "Extended playlist found.\n");
@@ -114,7 +115,7 @@ int m3u_read_next_item(M3u *m3u)
 					*rn = '\0';
 				if ((rn = strrchr(m3u->current_item_title, '\r')) != NULL)
 					*rn = '\0';
-				if (fgets(m3u->current_item_filename, MAX_PATH - 1, m3u->pl_file)) {
+				if (fgets(m3u->current_item_filename, PATH_LEN_FILENAME_MAX - 1, m3u->pl_file)) {
 					if ((rn = strrchr(m3u->current_item_filename, '\n')) != NULL)
 						*rn = '\0';
 					if ((rn = strrchr(m3u->current_item_filename, '\r')) != NULL)
@@ -126,7 +127,7 @@ int m3u_read_next_item(M3u *m3u)
 	} else { /* Simple M3U */
 		m3u->current_item_title[0] = '\0';
 		m3u->current_item_length   = 0;
-		if (fgets(m3u->current_item_filename, MAX_PATH - 1, m3u->pl_file) != NULL) {
+		if (fgets(m3u->current_item_filename, PATH_LEN_FILENAME_MAX - 1, m3u->pl_file) != NULL) {
 			char *rn = NULL;
 			if ((rn = strrchr(m3u->current_item_filename, '\n')) != NULL)
 				*rn = '\0';
@@ -142,10 +143,10 @@ int m3u_read_next_item(M3u *m3u)
 	}
 
 	if (m3u->current_item_filename[0] != '/' && strncasecmp(m3u->current_item_filename, "http://", 7) != 0) {
-		snprintf(m3u->current_item_path, MAX_PATH - 1, "%s%s", 
+		snprintf(m3u->current_item_path, PATH_LEN_MAX - 1, "%s%s", 
 		         m3u->m3u_path, m3u->current_item_filename);
 	} else {
-		strncpy(m3u->current_item_path, m3u->current_item_filename, MAX_PATH - 1);
+		strncpy(m3u->current_item_path, m3u->current_item_filename, PATH_LEN_MAX - 1);
 	}
 	return result;
 }

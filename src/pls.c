@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include "pls.h"
 #include "debug.h"
+#include "consts.h"
 
 int pls_open_file(PLS *pls, const char *filename)
 {
@@ -33,14 +34,14 @@ int pls_open_file(PLS *pls, const char *filename)
 	{
 		char  *c = strrchr(filename, '/');
 		size_t size = c ? c - filename + 1 : 0;
-		if (size >= MAX_PATH) size = 0;
+		if (size >= PATH_LEN_DIR_MAX) size = 0;
 		if (size > 0) strncpy(pls->pls_path, filename, size);
 		pls->pls_path[size] = '\0';
 	}
 
 	if (strlen(pls->pls_path) == 0) {
 		size_t len;
-		if (getcwd(pls->pls_path, MAX_PATH - 3)) {
+		if (getcwd(pls->pls_path, PATH_LEN_DIR_MAX - 3)) {
 			len = strlen(pls->pls_path);
 			pls->pls_path[len] = '/';
 			pls->pls_path[len+1] = '\0';
@@ -54,8 +55,8 @@ int pls_open_file(PLS *pls, const char *filename)
 	wdprintf(V_DEBUG, "pls", "Path = %s\n", pls->pls_path); 
 
 	if ((pls->pl_file = fopen(filename, "r")) != NULL) {
-		char buf[MAX_PATH] = "";
-		if (fgets(buf, MAX_PATH - 1, pls->pl_file)) {
+		char buf[PATH_LEN_MAX] = "";
+		if (fgets(buf, PATH_LEN_MAX - 1, pls->pl_file)) {
 			if (strncmp(buf, "[playlist]", 10) == 0) {
 				wdprintf(V_INFO, "pls", "Looks like a PLS playlist file. Good.\n");
 				result = 1;
@@ -189,10 +190,10 @@ int pls_read_next_item(PLS *pls)
 	}
 
 	if (pls->current_item_filename[0] != '/' && strncasecmp(pls->current_item_filename, "http://", 7) != 0) {
-		snprintf(pls->current_item_path, MAX_PATH - 1, "%s%s", 
+		snprintf(pls->current_item_path, PATH_LEN_MAX - 1, "%s%s", 
 		         pls->pls_path, pls->current_item_filename);
 	} else {
-		strncpy(pls->current_item_path, pls->current_item_filename, MAX_PATH - 1);
+		strncpy(pls->current_item_path, pls->current_item_filename, PATH_LEN_MAX - 1);
 	}
 	return (state & PLS_STATE_FILE) ? 1 : 0;
 }

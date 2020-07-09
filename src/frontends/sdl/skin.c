@@ -21,6 +21,7 @@
 #include "core.h"
 #include "gmuwidget.h"
 #include "debug.h"
+#include "consts.h"
 
 void sdl_render(Skin *skin, SDL_Surface *display);
 
@@ -181,18 +182,18 @@ static int skin_config_load(Skin *skin, const char *skin_name)
 				/* fonts */
 				{
 					int  a, b, c;
-					char tmp[256];
+					char tmp[PATH_LEN_MAX];
 					
 					wdprintf(V_DEBUG, "skin", "Loading fonts...\n");
-					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font_display_name);
+					snprintf(tmp, PATH_LEN_MAX, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font_display_name);
 					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
 					a = textrenderer_init(&skin->font_display, tmp, 
 					                      skin->font_display_char_width, skin->font_display_char_height);
-					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font1_name);
+					snprintf(tmp, PATH_LEN_MAX, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font1_name);
 					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
 					b = textrenderer_init(&skin->font1, tmp, 
 								          skin->font1_char_width, skin->font1_char_height);
-					snprintf(tmp, 255, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font2_name);
+					snprintf(tmp, PATH_LEN_MAX, "%s/themes/%s/%s", gmu_core_get_base_dir(), skin->name, skin->font2_name);
 					wdprintf(V_DEBUG, "skin", "Loading %s\n", tmp);
 					c = textrenderer_init(&skin->font2, tmp,
 					                      skin->font2_char_width, skin->font2_char_height);

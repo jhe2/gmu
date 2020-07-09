@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2020 Johannes Heimansberg (wej.k.vu)
  *
  * File: util.c  Created: 060929
  *
@@ -28,6 +28,7 @@
 #include "charset.h"
 #include "debug.h"
 #include "util.h"
+#include "consts.h"
 
 void strtoupper(char *target, const char *src, size_t len)
 {
@@ -241,8 +242,8 @@ char *get_file_matching_given_pattern_alloc(
 	size_t       path_length = 0, filename_without_ext_length = 0;
 	char        *d = strrchr(original_file, '/');
 	char        *ext = (d ? strrchr(d, '.') : strrchr(original_file, '.'));
-	char         path[256] = "", filename_without_ext[256] = "";
-	char         new_file[256] = "";
+	char         path[PATH_LEN_DIR_MAX] = "", filename_without_ext[PATH_LEN_FILENAME_MAX] = "";
+	char         new_file[PATH_LEN_FILENAME_MAX] = "";
 	char        *pattern = NULL;
 	char        *res_str = NULL;
 
@@ -258,11 +259,11 @@ char *get_file_matching_given_pattern_alloc(
 		pattern = replace_char_with_string_alloc(file_pattern, '$', filename_without_ext);
 	}
 
-	if (get_first_matching_file_pattern_list(new_file, 256, path, pattern ? pattern : file_pattern)) {
-		res_str = malloc(256);
+	if (get_first_matching_file_pattern_list(new_file, PATH_LEN_FILENAME_MAX, path, pattern ? pattern : file_pattern)) {
+		res_str = malloc(PATH_LEN_MAX);
 		if (res_str) {
-			snprintf(res_str, 255, "%s/%s", path, new_file);
-			res_str[255] = '\0';
+			snprintf(res_str, PATH_LEN_MAX, "%s/%s", path, new_file);
+			res_str[PATH_LEN_MAX] = '\0';
 		}
 	}
 	if (filename_without_ext[0] != '\0') free(pattern);

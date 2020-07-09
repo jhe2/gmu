@@ -49,6 +49,7 @@
 #include "inputconfig.h"
 #include "help.h"
 #include "gmuerror.h"
+#include "consts.h"
 
 #define FPS          10
 #define FRAME_SKIP    1
@@ -1124,11 +1125,11 @@ static void run_player(char *skin_name, char *decoders_str)
 					case PLAYLIST_SAVE:
 						plmanager_process_action(&ps, &view, user_key_action);
 						switch(plmanager_get_flag(&ps)) {
-							char buf23[80], buf42[64], temp[256];
+							char buf23[80], buf42[64], temp[PATH_LEN_MAX];
 
 							case PLMANAGER_SAVE_LIST:
 								plmanager_reset_flag(&ps);
-								snprintf(temp, 255, "%s/%s", base_dir, plmanager_get_selection(&ps));
+								snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(&ps));
 								wdprintf(V_INFO, "sdl_frontend", "Playlist file: %s\n", temp);
 								strtoupper(buf42, plmanager_get_selection(&ps), 63);
 								if (gmu_core_export_playlist(temp)) {
@@ -1142,7 +1143,7 @@ static void run_player(char *skin_name, char *decoders_str)
 								gmu_core_playlist_clear();
 							case PLMANAGER_APPEND_LIST:
 								plmanager_reset_flag(&ps);
-								snprintf(temp, 255, "%s/%s", base_dir, plmanager_get_selection(&ps));
+								snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(&ps));
 								gmu_core_add_m3u_contents_to_playlist(temp);
 								player_display_set_notice_message("M3U ADDED TO PLAYLIST", NOTICE_DELAY);
 								break;

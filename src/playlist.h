@@ -16,6 +16,8 @@
 #ifndef _PLAYLIST_H
 #define _PLAYLIST_H
 #include <pthread.h>
+#include "consts.h"
+
 typedef enum PlayMode { 
 	PM_CONTINUE, PM_REPEAT_ALL, PM_REPEAT_1, PM_RANDOM, PM_RANDOM_REPEAT
 } PlayMode;
@@ -27,7 +29,7 @@ typedef struct _Entry Entry;
 struct _Entry
 {
 	Entry *next, *prev;
-	char   filename[256];
+	char   filename[PATH_LEN_MAX];
 	char   name[PL_ENTRY_NAME_MAX_LENGTH];
 	short  played;
 	size_t queue_pos;
