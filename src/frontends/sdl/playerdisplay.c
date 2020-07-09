@@ -170,7 +170,7 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 			}
 		} else {
 			int i;
-			strncpy(lcd_text, notice_message, len);
+			strtoupper(lcd_text, notice_message, len);
 			str_len = charset_utf8_len(lcd_text)+1;
 			lcd_text[len] = '\0';
 			lcd_text_cp_size = str_len+str_max_visible_len+1;

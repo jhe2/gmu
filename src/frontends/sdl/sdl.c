@@ -1125,19 +1125,18 @@ static void run_player(char *skin_name, char *decoders_str)
 					case PLAYLIST_SAVE:
 						plmanager_process_action(&ps, &view, user_key_action);
 						switch(plmanager_get_flag(&ps)) {
-							char buf23[80], buf42[64], temp[PATH_LEN_MAX];
+							char notice_msg[80], temp[PATH_LEN_MAX];
 
 							case PLMANAGER_SAVE_LIST:
 								plmanager_reset_flag(&ps);
 								snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(&ps));
 								wdprintf(V_INFO, "sdl_frontend", "Playlist file: %s\n", temp);
-								strtoupper(buf42, plmanager_get_selection(&ps), 63);
 								if (gmu_core_export_playlist(temp)) {
-									snprintf(buf23, 79, "SAVED AS %s\n", buf42);
+									snprintf(notice_msg, 79, "SAVED AS %s\n", plmanager_get_selection(&ps));
 								} else {
-									snprintf(buf23, 79, "FAILED SAVING %s\n", buf42);
+									snprintf(notice_msg, 79, "FAILED SAVING %s\n", plmanager_get_selection(&ps));
 								}
-								player_display_set_notice_message(buf23, NOTICE_DELAY);
+								player_display_set_notice_message(notice_msg, NOTICE_DELAY);
 								break;
 							case PLMANAGER_LOAD_LIST:
 								gmu_core_playlist_clear();
