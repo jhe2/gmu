@@ -89,17 +89,14 @@ static int         fullscreen = 0;
 static int         auto_select_cur_item = 1;
 static int         screen_max_width = 0, screen_max_height = 0, screen_max_depth = 0;
 
-static SDL_Surface *gmu_icon;
+static SDL_Surface *gmu_icon = NULL;
 
 static void gmu_load_icon(void)
 {
-//	Uint32 colorkey;
-
 	gmu_icon = SDL_LoadBMP("gmu.bmp");
 	if (gmu_icon) {
-//		colorkey = SDL_MapRGB(gmu_icon->format, 255, 0, 255);
-//		SDL_SetColorKey(gmu_icon, SDL_SRCCOLORKEY, colorkey);
-//		SDL_WM_SetIcon(gmu_icon, NULL);
+		Uint32 colorkey = SDL_MapRGB(gmu_icon->format, 255, 0, 255);
+		SDL_SetColorKey(gmu_icon, SDL_TRUE, colorkey);
 	} else {
 		wdprintf(V_WARNING, "sdl_frontend", "Window icon (gmu.bmp) not found or broken.\n");
 	}
@@ -193,6 +190,7 @@ static SDL_Surface *init_sdl(int with_joystick, int width, int height, int fulls
 			wdprintf(V_FATAL, "sdl_frontend", "Unable to setup window.\n");
 			exit(-2); /* should not happen */
 		}
+		SDL_SetWindowIcon(window, gmu_icon);
 		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 		if (!renderer) {
@@ -1084,6 +1082,7 @@ static void run_player(char *skin_name, char *decoders_str)
 								wdprintf(V_FATAL, "sdl_frontend", "Unable to flip fullscreen mode.\n");
 								exit(-2); /* should not happen */
 							}
+							SDL_SetWindowIcon(window, gmu_icon);
 							renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 							skin_set_renderer(&skin, renderer);
 							skin_unlock_renderer(&skin);
