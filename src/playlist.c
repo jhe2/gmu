@@ -120,7 +120,7 @@ int playlist_add_item(Playlist *pl, const char *file, const char *name)
 				strncpy(entry->filename, file, PATH_LEN_MAX);
 			}
 			if (result) {
-				entry->filename[PATH_LEN_MAX] = '\0';
+				entry->filename[PATH_LEN_MAX-1] = '\0';
 				playlist_entry_set_name(entry, name);
 				entry->queue_pos = 0;
 				entry->next_in_queue = NULL;
