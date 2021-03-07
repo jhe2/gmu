@@ -26,7 +26,7 @@
 #include "../tmp-felist.h"
 #endif
 
-union {
+static union {
 	void *ptr;
 	GmuFrontend * (*fptr) (void);
 } dlsymunion;
