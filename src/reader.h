@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: reader.h  Created: 110406
  *
@@ -65,4 +65,6 @@ int     reader_is_seekable(Reader *r);
 int     reader_seek(Reader *r, int byte_offset);
 long    reader_get_file_size(Reader *r);
 unsigned long reader_get_stream_position(Reader *r);
+/* Sets number of bytes in buffer to 0 */
+void    reader_clear_buffer(Reader *r);
 #endif

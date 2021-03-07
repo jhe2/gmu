@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: reader.c  Created: 110406
  *
@@ -537,4 +537,9 @@ int reader_seek(Reader *r, int byte_offset)
 		res = 0;
 	}
 	return res;
+}
+
+void reader_clear_buffer(Reader *r)
+{
+	r->buf_data_size = 0;
 }
