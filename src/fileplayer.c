@@ -285,7 +285,7 @@ static void *decode_audio_thread(void *udata)
 
 		pthread_mutex_lock(&mutex);  /* Wait for playback to be started */
 		pthread_mutex_unlock(&mutex);
-		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
+		wdprintf(V_DEBUG, "fileplayer", "decode_audio_thread(): Playback has been requested...\n");
 
 		pthread_mutex_lock(&file_mutex);
 		if (file) len = strlen(file);
@@ -294,12 +294,12 @@ static void *decode_audio_thread(void *udata)
 			if (filename) {
 				strncpy(filename, file, len);
 				filename[len] = '\0';
-				set_playing = 1;
-				wdprintf(V_DEBUG, "fileplayer", "set_playing=%d filename=%s\n", set_playing, filename);
+				set_playing = 1; /* Since the global file pointer points to a filename, we want play that file */
+				wdprintf(V_DEBUG, "fileplayer", "Preparing playback of: %s\n", filename);
 			} else {
 				wdprintf(V_ERROR, "fileplayer", "ERROR: malloc() failed!\n");
 			}
-			free(file); file = NULL;
+			free(file); file = NULL; /* Clear the global file pointer/memory */
 		} else {
 			wdprintf(V_WARNING, "fileplayer", "WARNING: Zero length filename detected!\n");
 		}
@@ -540,10 +540,16 @@ static void *decode_audio_thread(void *udata)
 
 int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip)
 {
-	if (skip_current && fade_out_on_skip && !audio_get_pause())
+	if (skip_current && fade_out_on_skip && !audio_get_pause()) {
 		audio_fade_out_step(20); /* Initiate fade-out and decrease volume by 20 % */
-	else
-		set_item_status(skip_current ? STOPPED : FINISHED);
+	} else {
+		/* If skipping the currently playing track has been requested, we
+		 * set the item status to STOPPED, so the playback thread knows
+		 * that it should stop the currently playing track. Otherwise,
+		 * we set it to PLAYING so that Gmu's mainloop doesn't try to skip
+		 * to the next track (it does so when the status is FINISHED) */
+		set_item_status(skip_current ? STOPPED : PLAYING);
+	}
 
 	wdprintf(V_INFO, "fileplayer", "Trying to play %s... (skip current: %d)\n", filename, skip_current);
 	file_player_set_filename(filename);
