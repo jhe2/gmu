@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: flac.c  Created: 081104
  *
@@ -19,6 +19,7 @@
 #include "../gmudecoder.h"
 #include "../trackinfo.h"
 #include "../util.h"
+#include "../reader.h"
 #include "../charset.h"
 #include "FLAC/stream_decoder.h"
 #include "../debug.h"
@@ -30,10 +31,11 @@ static int                  sample_rate, channels, track_length, bitrate, file_s
 static unsigned int         size = 1; /* size of decoded data */
 static char                 buf[BUF_SIZE];
 static TrackInfo            ti, ti_metaonly;
+static Reader              *r;
 
 static const char *get_name(void)
 {
-	return "FLAC decoder v0.5";
+	return "FLAC decoder v0.6";
 }
 
 static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder, 
@@ -74,6 +76,40 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 		wdprintf(V_DEBUG, "flac", "Sample size > buffer size: %d bytes\n", byte_count);
 	}
 	return 0;
+}
+
+static FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder *decoder, FLAC__byte buffer[], size_t *bytes, void *client_data)
+{
+	FLAC__StreamDecoderReadStatus res;
+	/*
+	 * When initializing the stream, some bytes may have been read already,
+	 * which we don't want to skip, so we first check if there is something
+	 * in the buffer already, otherwise we initiate a read operation with
+	 * the desired size.
+	 */
+	size_t bs = reader_get_number_of_bytes_in_buffer(r);
+
+	if (bs <= 0) {
+		if (reader_read_bytes(r, *bytes)) {
+			bs = reader_get_number_of_bytes_in_buffer(r);
+		} else {
+			bs = 0;
+		}
+	}
+	if (bs != *bytes) {
+		*bytes = bs;
+	}
+
+	if (bs != 0 && !reader_is_eof(r)) {
+		memcpy(buffer, reader_get_buffer(r), *bytes);
+		/* Clear the buffer, so we know that we have consumed the data: */
+		reader_clear_buffer(r);
+		res = FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
+	} else {
+		res = FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+		wdprintf(V_DEBUG, "flac", "read_callback(): End of stream!\n");
+	}
+	return res;
 }
 
 static void metadata_callback(const FLAC__StreamDecoder  *decoder,
@@ -137,10 +173,37 @@ static void error_callback(const FLAC__StreamDecoder      *decoder,
 {
 }
 
+static FLAC__StreamDecoderTellStatus tell_callback(const FLAC__StreamDecoder *decoder, FLAC__uint64 *absolute_byte_offset, void *client_data)
+{
+	*absolute_byte_offset = reader_get_stream_position(r);
+	return FLAC__STREAM_DECODER_TELL_STATUS_OK;
+}
+
+static FLAC__StreamDecoderLengthStatus length_callback(const FLAC__StreamDecoder *decoder, FLAC__uint64 *stream_length, void *client_data)
+{
+	*stream_length = reader_get_file_size(r);
+	return FLAC__STREAM_DECODER_LENGTH_STATUS_OK;
+}
+
+static FLAC__bool eof_callback(const FLAC__StreamDecoder *decoder, void *client_data)
+{
+	return reader_is_eof(r);
+}
+
+static FLAC__StreamDecoderSeekStatus seek_callback(const FLAC__StreamDecoder *decoder, FLAC__uint64 absolute_byte_offset, void *client_data)
+{
+	FLAC__StreamDecoderSeekStatus res;
+	if (reader_is_seekable(r)) {
+		res = reader_seek(r, absolute_byte_offset) ? FLAC__STREAM_DECODER_SEEK_STATUS_OK : FLAC__STREAM_DECODER_SEEK_STATUS_ERROR;
+	} else {
+		res = FLAC__STREAM_DECODER_SEEK_STATUS_UNSUPPORTED;
+	}
+	return res;
+}
+
 static int open_file(const char *filename)
 {
-	int   result = 1;
-	FILE *file;
+	int result = 1;
 
 	total_samples = 0;
 	seek_to_sample = 0;
@@ -150,26 +213,31 @@ static int open_file(const char *filename)
 
 	trackinfo_clear(&ti);
 
-	wdprintf(V_INFO, "flac", "Opening %s...\n", filename);
-	file = fopen(filename, "rb");
-	if (file) {
-		if (fseek(file, 0L, SEEK_END) == 0) {
-			file_size = ftell(file);
-			rewind(file);
-		}
+	if (!r) {
+		wdprintf(V_WARNING, "flac", "Unable to open stream: %s\n", filename);
+		return 0;
 	}
-	if (!file) {
-		wdprintf(V_WARNING, "flac", "Could not open file.\n");
-		result = 0;
-	} else if (FLAC__stream_decoder_init_FILE(fsd, file, &write_callback,
-	                                          &metadata_callback, &error_callback, &ti)
-	                                          != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
+
+	file_size = reader_get_file_size(r);
+
+	if (FLAC__stream_decoder_init_stream(fsd,
+		&read_callback,
+		&seek_callback,
+		&tell_callback,
+		&length_callback,
+		&eof_callback,
+		&write_callback,
+		&metadata_callback,
+		&error_callback,
+		&ti) != FLAC__STREAM_DECODER_INIT_STATUS_OK)  {
 		wdprintf(V_ERROR, "flac", "Could not initialize decoder.\n");
 		result = 0;
 	} else {
 		if (FLAC__stream_decoder_process_until_end_of_metadata(fsd) == false) {
 			wdprintf(V_ERROR, "flac", "Stream error.\n");
 			result = 0;
+		} else {
+			wdprintf(V_INFO, "flac", "Stream ready.\n");
 		}
 	}
 	return result;
@@ -345,6 +413,11 @@ static GmuCharset meta_data_get_charset(void)
 	return M_CHARSET_UTF_8;
 }
 
+static void set_reader_handle(Reader *reader)
+{
+	r = reader;
+}
+
 static GmuDecoder gd = {
 	"FLAC_decoder",
 	NULL,
@@ -370,7 +443,7 @@ static GmuDecoder gd = {
 	meta_data_close,
 	meta_data_get_charset,
 	NULL,
-	NULL,
+	set_reader_handle,
 	NULL
 };
 
