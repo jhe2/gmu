@@ -26,7 +26,7 @@
 #include "../tmp-declist.h"
 #endif
 
-union {
+static union {
 	void *ptr;
 	GmuDecoder * (*fptr) (void);
 } dlsymunion;
