@@ -263,7 +263,7 @@ char *get_file_matching_given_pattern_alloc(
 		res_str = malloc(PATH_LEN_MAX);
 		if (res_str) {
 			snprintf(res_str, PATH_LEN_MAX, "%s/%s", path, new_file);
-			res_str[PATH_LEN_MAX] = '\0';
+			res_str[PATH_LEN_MAX-1] = '\0';
 		}
 	}
 	if (filename_without_ext[0] != '\0') free(pattern);
