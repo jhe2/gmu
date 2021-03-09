@@ -38,7 +38,7 @@ endif
 ifneq ($(GMU_DISABLE_OSS_MIXER),1)
 OBJECTFILES+=oss_mixer.o
 endif
-ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu dingux.mk gp2xwiz.mk pandora.mk unknown.mk caanoo.mk dingoo-native.mk gp2x.mk nanonote.mk pre.mk zipit-z2.mk gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmuinput.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
+ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmuinput.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
 BINARY?=gmu.bin
 COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
 DISTFILES?=$(COMMON_DISTBIN_FILES)
