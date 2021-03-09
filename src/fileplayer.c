@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: fileplayer.c  Created: 070107
  *
@@ -74,7 +74,19 @@ static int               dev_close_asap; /* When true, the device isn't kept ope
 static void set_item_status(PB_Status status)
 {
 	pthread_mutex_lock(&item_status_mutex);
+	wdprintf(
+		V_DEBUG, "fileplayer", "Old item status: %s\n",
+		item_status == PLAYING  ? "PLAYING"  : 
+		item_status == FINISHED ? "FINISHED" : 
+		item_status == STOPPED  ? "STOPPED"  : "PAUSED"
+	);
 	item_status = status;
+	wdprintf(
+		V_DEBUG, "fileplayer", "New item status: %s\n",
+		item_status == PLAYING  ? "PLAYING"  : 
+		item_status == FINISHED ? "FINISHED" : 
+		item_status == STOPPED  ? "STOPPED"  : "PAUSED"
+	);
 	pthread_mutex_unlock(&item_status_mutex);
 }
 
@@ -161,7 +173,10 @@ void file_player_set_filename(char *filename)
 		int len = strlen(filename);
 		if (len > 0) {
 			file = realloc(file, len+1);
-			if (file) memcpy(file, filename, len+1);
+			if (file) {
+				memcpy(file, filename, len+1);
+				wdprintf(V_DEBUG, "fileplayer", "Filename set: %s\n", file);
+			}
 		}
 	}
 	pthread_mutex_unlock(&file_mutex);
@@ -268,6 +283,10 @@ static void *decode_audio_thread(void *udata)
 		char *filename = NULL;
 		int   len = 0, set_playing = 0;
 
+		pthread_mutex_lock(&mutex);  /* Wait for playback to be started */
+		pthread_mutex_unlock(&mutex);
+		wdprintf(V_DEBUG, "fileplayer", "decode_audio_thread(): Playback has been requested...\n");
+
 		pthread_mutex_lock(&file_mutex);
 		if (file) len = strlen(file);
 		if (len > 0) {
@@ -275,15 +294,20 @@ static void *decode_audio_thread(void *udata)
 			if (filename) {
 				strncpy(filename, file, len);
 				filename[len] = '\0';
-				set_playing = 1;
+				set_playing = 1; /* Since the global file pointer points to a filename, we want play that file */
+				wdprintf(V_DEBUG, "fileplayer", "Preparing playback of: %s\n", filename);
+			} else {
+				wdprintf(V_ERROR, "fileplayer", "ERROR: malloc() failed!\n");
 			}
-			free(file); file = NULL;
+			free(file); file = NULL; /* Clear the global file pointer/memory */
+		} else {
+			wdprintf(V_WARNING, "fileplayer", "WARNING: Zero length filename detected!\n");
 		}
 		pthread_mutex_unlock(&file_mutex);
-		if (set_playing) set_item_status(PLAYING);
-		pthread_mutex_lock(&mutex);
-		wdprintf(V_DEBUG, "fileplayer", "Here we go...\n");
-		pthread_mutex_unlock(&mutex);
+		if (set_playing)
+			set_item_status(PLAYING);
+		else
+			wdprintf(V_WARNING, "fileplayer", "Uh, no proper filename set. Not starting playback!\n");
 		r = NULL;
 		if (!file_player_check_shutdown() && filename && get_item_status() == PLAYING) {
 			const char *tmp = get_file_extension(filename);
@@ -494,6 +518,8 @@ static void *decode_audio_thread(void *udata)
 				trackinfo_release_lock(ti);
 			}
 			event_queue_push(gmu_core_get_event_queue(), GMU_TRACKINFO_CHANGE);
+		} else {
+			wdprintf(V_DEBUG, "fileplayer", "wrong item status? %d\n", item_status);
 		}
 		if (filename) {
 			free(filename);
@@ -514,12 +540,18 @@ static void *decode_audio_thread(void *udata)
 
 int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip)
 {
-	if (skip_current && fade_out_on_skip && !audio_get_pause())
+	if (skip_current && fade_out_on_skip && !audio_get_pause()) {
 		audio_fade_out_step(20); /* Initiate fade-out and decrease volume by 20 % */
-	else
-		set_item_status(skip_current ? STOPPED : FINISHED);
+	} else {
+		/* If skipping the currently playing track has been requested, we
+		 * set the item status to STOPPED, so the playback thread knows
+		 * that it should stop the currently playing track. Otherwise,
+		 * we set it to PLAYING so that Gmu's mainloop doesn't try to skip
+		 * to the next track (it does so when the status is FINISHED) */
+		set_item_status(skip_current ? STOPPED : PLAYING);
+	}
 
-	wdprintf(V_INFO, "fileplayer", "Trying to play %s...\n", filename);
+	wdprintf(V_INFO, "fileplayer", "Trying to play %s... (skip current: %d)\n", filename, skip_current);
 	file_player_set_filename(filename);
 	file_player_start_playback();
 	return 0;
