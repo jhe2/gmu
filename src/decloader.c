@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: decloader.c  Created: 081022
  *
@@ -75,7 +75,7 @@ GmuDecoder *decloader_load_decoder(const char *so_file)
 	void       *handle;
 	GmuDecoder *(*dec_load_func)(void);
 
-	handle = dlopen(so_file, RTLD_LAZY);
+	handle = dlopen(so_file, RTLD_LAZY | RTLD_DEEPBIND);
 	if (!handle) {
 		wdprintf(V_ERROR, "decloader", "%s\n", dlerror());
 		result = 0;
