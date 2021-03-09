@@ -1,8 +1,8 @@
 The Gmu Music Player
 
-Version 0.10.1
+Version 0.10.2-rc1
 
-Copyright (c) 2006-2016 Johannes 'wej' Heimansberg
+Copyright (c) 2006-2021 Johannes 'wej' Heimansberg
 http://wej.k.vu/projects/gmu/
 
 Gmu is a music player application. It was initially developed for the

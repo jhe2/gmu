@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: core.h  Created: 081115
  *
@@ -23,7 +23,7 @@
 #include "eventqueue.h"
 #include "medialib.h"
 
-#define VERSION_NUMBER "0.10.1"
+#define VERSION_NUMBER "0.10.2-RC1"
 
 #define DEFAULT_THREAD_STACK_SIZE (128 * 1024)
 
