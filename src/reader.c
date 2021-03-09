@@ -521,13 +521,13 @@ int reader_is_seekable(Reader *r)
 	return r->seekable;
 }
 
-int reader_seek(Reader *r, int byte_offset)
+int reader_seek_whence(Reader *r, long byte_offset, int whence)
 {
 	int res = 0;
 	if (r->file) {
-		if (fseek(r->file, byte_offset, SEEK_SET) == 0) {
+		if (fseek(r->file, byte_offset, whence) == 0) {
 			r->buf_data_size = 0;
-			r->stream_pos = byte_offset;
+			r->stream_pos = ftell(r->file);
 			res = 1;
 		} else {
 			wdprintf(V_INFO, "reader", "Seeking failed. :(\n");
@@ -537,6 +537,11 @@ int reader_seek(Reader *r, int byte_offset)
 		res = 0;
 	}
 	return res;
+}
+
+int reader_seek(Reader *r, long byte_offset)
+{
+	return reader_seek_whence(r, byte_offset, SEEK_SET);
 }
 
 void reader_clear_buffer(Reader *r)
