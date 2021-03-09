@@ -62,7 +62,8 @@ size_t  reader_get_number_of_bytes_in_buffer(Reader *r);
 /* Resets the stream to the beginning (if possible), returns 1 on success, 0 otherwise */
 int     reader_reset_stream(Reader *r);
 int     reader_is_seekable(Reader *r);
-int     reader_seek(Reader *r, int byte_offset);
+int     reader_seek_whence(Reader *r, long byte_offset, int whence);
+int     reader_seek(Reader *r, long byte_offset);
 long    reader_get_file_size(Reader *r);
 unsigned long reader_get_stream_position(Reader *r);
 /* Sets number of bytes in buffer to 0 */
