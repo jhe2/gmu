@@ -58,7 +58,8 @@ typedef struct _GmuDecoder {
 	/* Function to close the previously opened file, free memory etc. */
 	int          (*close_file)(void);
 	/* Decodes up to max_size bytes of audio data and writes it to target,
-	 * returns actual size */
+	 * returns actual size; Returns number of bytes decoded or 0 on EOF
+	 * a negative value in case of a permanent decoder error */
 	int          (*decode_data)(char *target, size_t max_size);
 	/* Seeks in the audio stream, can be NULL if seeking is not supported.
 	 * Returns TRUE on success. "second" is the second in the stream to seek to
