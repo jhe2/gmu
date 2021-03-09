@@ -447,7 +447,7 @@ static void *decode_audio_thread(void *udata)
 							}
 							while (ret > 0 && size < BUF_SIZE / 2 && item_status != STOPPED) {
 								ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
-								size += ret;
+								if (ret > 0) size += ret;
 							}
 							if (ret <= 0) SDL_Delay(50);
 							if (gd->get_current_bitrate) br = (*gd->get_current_bitrate)();
@@ -457,9 +457,9 @@ static void *decode_audio_thread(void *udata)
 									trackinfo_release_lock(ti);
 								}
 							}
-							if (ret == 0 && audio_buffer_get_fill() == 0) {
+							if (ret == 0 && audio_buffer_get_fill() == 0) { /* EOF while decoding data and no data lef in buffer */
 								break;
-							} else if (ret < 0) {
+							} else if (ret < 0) { /* Decoder error */
 								wdprintf(V_ERROR, "fileplayer", "Error. Code: %d\n", ret);
 								audio_set_pause(1);
 								break;
