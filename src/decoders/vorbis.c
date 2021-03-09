@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: vorbis.c  Created: 081022
  *
@@ -25,20 +25,80 @@
 
 static OggVorbis_File  vf, vf_metaonly;
 static vorbis_info    *vi;
+static Reader         *r;
 
 static const char *get_name(void)
 {
-	return "Tremor Vorbis decoder v1.0";
+	return "Tremor Vorbis decoder v1.1";
 }
+
+static size_t read_callback(void *buffer, size_t size, size_t nmemb, void *datasource)
+{
+	/*
+	 * When initializing the stream, some bytes may have been read already,
+	 * which we don't want to skip, so we first check if there is something
+	 * in the buffer already, otherwise we initiate a read operation with
+	 * the desired size.
+	 */
+	size_t bs = reader_get_number_of_bytes_in_buffer(r);
+
+	if (bs <= 0) {
+		if (reader_read_bytes(r, size * nmemb)) {
+			bs = reader_get_number_of_bytes_in_buffer(r);
+		} else {
+			bs = 0;
+		}
+	}
+
+	if (bs != 0 && !reader_is_eof(r)) {
+		memcpy(buffer, reader_get_buffer(r), bs);
+		/* Clear the buffer, so we know that we have consumed the data: */
+		reader_clear_buffer(r);
+	} else {
+		bs = 0;
+		wdprintf(V_DEBUG, "vorbis", "read_callback(): End of stream!\n");
+	}
+	return bs;
+}
+
+static long tell_callback(void *datasource)
+{
+	return reader_get_stream_position(r);
+}
+
+/* Returns 0 on success or -1 if seeking is unsupported or an error occured */
+static int seek_callback(void *datasource, ogg_int64_t offset, int whence)
+{
+	int     res = -1;
+	Reader *r = (Reader *)datasource;
+
+	if (reader_is_seekable(r)) {
+		res = reader_seek_whence(r, offset, whence) ? 0 : -1;
+	}
+	return res;
+}
+
+static ov_callbacks callbacks;
 
 static int open_file(const char *filename)
 {
-	FILE *file;
-	int   res = 0;
+	int res = 0;
 
-	if (!(file = fopen(filename, "r"))) {
-		wdprintf(V_WARNING, "vorbis", "Could not open file.\n");
-	} else if (ov_open(file, &vf, NULL, 0) < 0) {
+	callbacks.read_func = read_callback;
+	callbacks.tell_func = tell_callback;
+	callbacks.seek_func = seek_callback;
+
+	if (!r) {
+		wdprintf(V_WARNING, "flac", "Unable to open stream: %s\n", filename);
+		return 0;
+	}
+	/* We need to seek back to position 0, because Gmu might have already
+	 * read some bytes from the file/stream to determine mime type, which
+	 * upsets the Vorbis decoder, when it tries to do a relative seek at
+	 * the beginning and expects to be at absolute position 0: */
+	reader_seek(r, 0);
+
+	if (ov_open_callbacks(r, &vf, NULL, 0, callbacks) < 0) {
 		wdprintf(V_WARNING, "vorbis", "Input does not appear to be an Ogg bitstream.\n");
 	} else {
 		vi  = ov_info(&vf, -1);
@@ -55,15 +115,18 @@ static int close_file(void)
 
 static int decode_data(char *target, size_t max_size)
 {
-	int        size = 0, ret = 1;
+	int        size = -1;
 	static int current_section;
 
-	/*while (ret > 0 && size < max_size) {*/
-	if (256 <= max_size) {
-		ret = ov_read(&vf, target+size, 256, &current_section);
-		size += ret;
+	if (4096 <= max_size) {
+		int i;
+		/* In case of a (temporary) error (e.g. OV_HOLE), we retry a few times before giving up */
+		for (i = 0; i < 10 && size < 0; i++) {
+			size = ov_read(&vf, target, 4096, &current_section);
+			if (size > 0) break;
+		}
 	} else {
-		wdprintf(V_ERROR, "vorbis", "Target buffer too small: %d < 256\n", max_size);
+		wdprintf(V_ERROR, "vorbis", "Target buffer too small: %d < 4096\n", max_size);
 	}
 	return size;
 }
@@ -80,7 +143,7 @@ static int seek(int seconds)
 
 static int get_decoder_buffer_size(void)
 {
-	return 256;
+	return 4096;
 }
 
 static const char* get_file_extensions(void)
@@ -126,7 +189,7 @@ static const char *get_meta_data(GmuMetaDataType gmdt, int for_current_file)
 
 	while (*ptr) {
 		char buf[80];
-		strtoupper(buf, *ptr, 79);				
+		strtoupper(buf, *ptr, 79);
 		switch (gmdt) {
 			case GMU_META_ARTIST:
 				if (strstr(buf, "ARTIST=") == buf)
@@ -188,6 +251,11 @@ static GmuCharset meta_data_get_charset(void)
 	return M_CHARSET_UTF_8;
 }
 
+static void set_reader_handle(Reader *reader)
+{
+	r = reader;
+}
+
 static GmuDecoder gd = {
 	"vorbis_decoder",
 	NULL,
@@ -213,7 +281,7 @@ static GmuDecoder gd = {
 	meta_data_close,
 	meta_data_get_charset,
 	NULL,
-	NULL,
+	set_reader_handle,
 	NULL
 };
 
