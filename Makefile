@@ -19,6 +19,7 @@ include config.mk
 
 PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -pipe -Wall -Wcast-qual -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\"" -DGMU_INSTALL_PREFIX="\"$(PREFIX)\""
+LFLAGS+=-pthread
 
 LIBS_CORE+=$(SDL_LIB) -lrt
 ifeq ($(GMU_MEDIALIB),1)
