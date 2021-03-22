@@ -69,13 +69,28 @@ void decloader_free(void)
 	dc_free(dc_root);
 }
 
+/*
+ * RTLD_DEEPBIND is a GNU extension, so it is not available everywhere.
+ * The reason we use it at all is because there appear to be name
+ * collisions when the SDL library is compiled with Ogg Vorbis support
+ * and as such uses the orinary floating point vorbis decoder libvorbis,
+ * while Gmu's Vorbis decoder uses the fixed-point Tremor library, which
+ * seem to share some of the symbols. In that case RTLD_DEEPBIND makes
+ * sure Gmu's Vorbis decoder only uses the Tremor symbols.
+ */
+#ifdef RTLD_DEEPBIND
+#define DLOPEN_FLAGS RTLD_LAZY | RTLD_DEEPBIND
+#else
+#define DLOPEN_FLAGS RTLD_LAZY
+#endif
+
 GmuDecoder *decloader_load_decoder(const char *so_file)
 {
 	GmuDecoder *result = NULL;
 	void       *handle;
 	GmuDecoder *(*dec_load_func)(void);
 
-	handle = dlopen(so_file, RTLD_LAZY | RTLD_DEEPBIND);
+	handle = dlopen(so_file, DLOPEN_FLAGS);
 	if (!handle) {
 		wdprintf(V_ERROR, "decloader", "%s\n", dlerror());
 		result = 0;
