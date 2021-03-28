@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2017 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: notify.c  Created: 170311
  *
@@ -28,7 +28,7 @@ static int notify_enabled = 0;
 
 static const char *get_name(void)
 {
-	return "Gmu Notify Plugin v0.1";
+	return "Gmu Notify Plugin v0.2";
 }
 
 static int init(void)
@@ -58,21 +58,29 @@ static void notify_trackinfo(TrackInfo *ti)
 
 		if (trackinfo_get_channels(ti) > 0) {
 			application = g_application_new("gmu.music.player", G_APPLICATION_FLAGS_NONE);
-			icon = g_themed_icon_new("dialog-information");
+			if (application) {
+				icon = g_themed_icon_new("dialog-information");
 
-			snprintf(title, 256, "%s - %s", trackinfo_get_artist(ti), trackinfo_get_title(ti));
-			title[255] = '\0';
+				snprintf(title, 256, "%s - %s", trackinfo_get_artist(ti), trackinfo_get_title(ti));
+				title[255] = '\0';
 
-			notification = g_notification_new(title);
-			g_notification_set_body(notification, trackinfo_get_album(ti));
-			g_notification_set_icon(notification, icon);
-			g_notification_set_priority(notification, G_NOTIFICATION_PRIORITY_LOW);
+				notification = g_notification_new(title);
+				if (notification) {
+					g_notification_set_body(notification, trackinfo_get_album(ti));
+					if (icon) g_notification_set_icon(notification, icon);
+					g_notification_set_priority(notification, G_NOTIFICATION_PRIORITY_LOW);
 
-			g_application_register(application, NULL, NULL);
-			g_application_send_notification(application, NULL, notification);
-			g_object_unref(icon);
-			g_object_unref(notification);
-			g_object_unref(application);
+					g_application_register(application, NULL, NULL);
+					g_application_send_notification(application, NULL, notification);
+					g_object_unref(notification);
+				} else {
+					wdprintf(V_WARNING, "notify", "WARNING: Failed to create notification.");
+				}
+				if (icon) g_object_unref(icon);
+				g_object_unref(application);
+			} else {
+				wdprintf(V_WARNING, "notify", "WARNING: Failed to create notification.");
+			}
 		}
 		trackinfo_release_lock(ti);
 	}
