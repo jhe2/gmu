@@ -61,8 +61,7 @@ static void notify_trackinfo(TrackInfo *ti)
 			if (application) {
 				icon = g_themed_icon_new("dialog-information");
 
-				snprintf(title, 256, "%s - %s", trackinfo_get_artist(ti), trackinfo_get_title(ti));
-				title[255] = '\0';
+				trackinfo_get_full_title(ti, title, 256);
 
 				notification = g_notification_new(title);
 				if (notification) {
