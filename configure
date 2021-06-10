@@ -22,6 +22,8 @@ if [ "$CC" = "" ]; then
 	CC=cc
 fi
 
+DEBUG_OUTPUT="/dev/null"
+
 TMP_CC=$(which $CC)
 
 LIBRARY_PATHS=
@@ -70,7 +72,7 @@ _WEJTEST
 	echo "Checking '$1'..."
 	res=1
 	echo -n "$1 header files: "
-	if $CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall 2>/dev/null; then
+	if $CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall 2>${DEBUG_OUTPUT}; then
 		echo "okay";
 	else
 		echo "failed";
@@ -78,7 +80,7 @@ _WEJTEST
 	fi
 
 	echo -n "$1 library: "
-	if $CC $LFLAGS $LIBRARY_PATHS -o /tmp/test.exe /tmp/test.o $libs_test 2>/dev/null; then
+	if $CC $LFLAGS -o /tmp/test.exe /tmp/test.o $libs_test 2>${DEBUG_OUTPUT}; then
 		echo "okay";
 	else
 		echo "failed";
@@ -315,6 +317,7 @@ help()
 	echo "  --help"
 	echo "  --includes </path/to/additional/include-files>"
 	echo "  --libs </path/to/additional/libs>"
+	echo "  --verbose"
 }
 
 target_device="unknown"
@@ -390,6 +393,10 @@ do
 			;;
 		--libs=*)
 			libs="$libs -L${1#*=}"
+			shift
+			;;
+		--verbose)
+			DEBUG_OUTPUT="/dev/fd/2"
 			shift
 			;;
 		--) # End of all options
