@@ -24,7 +24,7 @@ fi
 
 DEBUG_OUTPUT="/dev/null"
 
-TMP_CC=$(which $CC)
+TMP_CC=$(which "$(echo "$CC" | grep -o '^\S*')")
 
 LIBRARY_PATHS=
 if [ "$TMP_CC" != "" ]; then
