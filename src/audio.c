@@ -14,7 +14,7 @@
  * for details.
  */
 #include <math.h>
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "ringbuffer.h"
 #include "audio.h"
 #include "fmath.h"
