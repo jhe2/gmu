@@ -41,6 +41,7 @@ EXTRA_CFLAGS=
 BUILD_CONFIG_EXTRAS=
 LFLAGS_CORE=
 LIBS_CORE=
+WARNINGS=
 
 test_compiler()
 {
@@ -75,19 +76,17 @@ _WEJTEST
 
 	echo "Checking '$1'..."
 	res=1
-	echo -n "$1 header files: "
 	if $CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall 2>${DEBUG_OUTPUT}; then
-		echo "okay";
+		echo "$1 header files: okay"
 	else
-		echo "failed";
+		echo "$1 header files: failed"
 		res=0
 	fi
 
-	echo -n "$1 library: "
 	if $CC $LFLAGS -o /tmp/test.exe /tmp/test.o $libs_test 2>${DEBUG_OUTPUT}; then
-		echo "okay";
+		echo "$1 library: okay"
 	else
-		echo "failed";
+		echo "$1 library: failed"
 		res=0
 	fi
 	rm -f /tmp/test.o /tmp/test.wej.c /tmp/test.exe
@@ -455,8 +454,7 @@ LIBRARY_PATHS="$LIBRARY_PATHS $libs"
 CFLAGS="$CFLAGS $INCLUDE_PATHS"
 LFLAGS="$LFLAGS $LIBRARY_PATHS"
 
-test_compiler
-if [ $? = 0 ]; then
+if test_compiler; then
 	exit 2
 fi
 
@@ -478,9 +476,8 @@ fi
 libs_test=$sdl_libs
 includes_test_flags=$sdl_cflags
 code_test=""
-test_lib "SDL2"
-if [ $? = 0 ]; then
-	echo "WARNING: Gmu depends on SDL2. Cannot build the Gmu core without it."
+if test_lib "SDL2"; then
+	WARNINGS="${WARNINGS}WARNING: Gmu depends on SDL2. Cannot build the Gmu core without it.\n"
 	gmu_core=0
 fi
 
@@ -496,8 +493,7 @@ if [ "${feature_sdl_gfx}" -ne 0 ]; then
 	libs_test="$sdl_libs -lSDL2_gfx"
 	includes_test_flags=$sdl_cflags
 	code_test=""
-	test_lib "SDL2_gfx"
-	if [ $? = 0 ]; then
+	if test_lib "SDL2_gfx"; then
 		echo "SDL2_gfx support disabled."
 		feature_sdl_gfx=0
 	fi
@@ -511,9 +507,7 @@ includes_test_flags="-I$BASE_INCLUDE_PATH/ncursesw"
 libs_test="-lncursesw"
 code_test="int testvar = WACS_VLINE;"
 test_lib "ncursesw"
-if [ $? = 0 ]; then
-	tool_gmuc=0
-fi
+tool_gmuc=$?
 
 if [ $dec_opus != 0 ]; then
 	includes_test="#include <opus/opus.h>
@@ -669,5 +663,6 @@ fi
 
 echo
 echo "Configuration complete!"
+echo "${WARNINGS}"
 echo "Target device: $target_device"
 print_features_and_write_config
