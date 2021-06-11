@@ -35,6 +35,7 @@ typedef struct CoverImage {
 	int          loading;
 	MimeType     mime_type;
 	int          thread_running;
+	SDL_mutex   *mutex_image;
 } CoverImage;
 
 void         cover_image_init(CoverImage *ci);
@@ -44,6 +45,8 @@ void         cover_image_load_image_from_file(CoverImage *ci, char *filename, in
 void         cover_image_load_image_from_memory(CoverImage *ci, char *image_data, int image_data_size, 
                                                 char *image_mime_type, int *ready_flag);
 SDL_Surface *cover_image_get_image(CoverImage *ci);
+void         cover_image_lock_image(CoverImage *ci);
+void         cover_image_unlock_image(CoverImage *ci);
 int          cover_image_free_image(CoverImage *ci);
 void         cover_image_set_target_size(CoverImage *ci, int width, int height);
 #endif

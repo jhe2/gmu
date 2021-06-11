@@ -160,6 +160,7 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 	int          aw = gmu_widget_get_width(&cv->skin->lv, 1);
 	int          ah = gmu_widget_get_height(&cv->skin->lv, 1);
 
+	cover_image_lock_image(&cv->ci);
 	if (cover != NULL && !cv->hide_cover && with_image) {
 		if (!cv->large) {
 			if (cv->small_cover_align == ALIGN_LEFT) {
@@ -207,7 +208,8 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 		text_browser_set_chars_per_line(&cv->tb, chars_per_line);
 		if (!cv->hide_text) text_browser_draw(&cv->tb, target);
 	}
-	
+	cover_image_unlock_image(&cv->ci);
+
 	/* Draw spectrum analyzer */
 	if (cv->spectrum_analyzer) {
 		Uint32   color = SDL_MapRGB(target->format, 0, 70, 255);
