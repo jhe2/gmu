@@ -182,8 +182,10 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 			SDL_FreeSurface(cv->cover);
 			cv->cover = NULL;
 		}
+		cover_image_lock_image(&cv->ci);
 		if (tmp_cover)
 			cv->cover = SDL_ConvertSurface(tmp_cover, format, 0);
+		cover_image_unlock_image(&cv->ci);
 		SDL_FreeFormat(format);
 		cv->image_updated = 0;
 	}

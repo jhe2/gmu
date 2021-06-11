@@ -109,24 +109,30 @@ static int cover_image_thread(void *udata)
 					ry = rx = (float)ci->target_width / cover_fullsize->w;
 				else if (ci->target_height > 0)
 					ry = rx = (float)ci->target_height / cover_fullsize->h;
+				SDL_LockMutex(ci->mutex_image);
 				if (ci->image) {
 					SDL_FreeSurface(ci->image);
 					ci->image = NULL;
 				}
+				SDL_UnlockMutex(ci->mutex_image);
 				tmp = zoomSurface(cover_fullsize, rx, ry, 1);
 				/*printf("coverimg: orig. size = %dx%d\t new size = %dx%d\n",
 						cover_fullsize->w, cover_fullsize->h, tmp->w, tmp->h);*/
 				SDL_FreeSurface(cover_fullsize);
 				if (tmp) {
+					SDL_LockMutex(ci->mutex_image);
 					ci->image = SDL_ConvertSurfaceFormat(tmp, SDL_PIXELFORMAT_RGB24, 0);
+					SDL_UnlockMutex(ci->mutex_image);
 					SDL_FreeSurface(tmp);
 					wdprintf(V_INFO, "coverimg", "Loaded and resized cover image successfully.\n");
 				}
 			} else {
+				SDL_LockMutex(ci->mutex_image);
 				if (ci->image) {
 					SDL_FreeSurface(ci->image);
 					ci->image = NULL;
 				}
+				SDL_UnlockMutex(ci->mutex_image);
 			}
 			if (ci->ready_flag) *ci->ready_flag = 1;
 			ci->loading = 0;
@@ -144,6 +150,7 @@ void cover_image_init(CoverImage *ci)
 {
 	ci->mutex1 = SDL_CreateMutex();
 	ci->mutex2 = SDL_CreateMutex();
+	ci->mutex_image = SDL_CreateMutex();
 	ci->visible_area_offset_x = 0;
 	ci->visible_area_offset_y = 0;
 	ci->visible_area_width = -1;
@@ -169,6 +176,7 @@ void cover_image_free(CoverImage *ci)
 {
 	SDL_DestroyMutex(ci->mutex1);
 	SDL_DestroyMutex(ci->mutex2);
+	SDL_DestroyMutex(ci->mutex_image);
 	if (ci->image) SDL_FreeSurface(ci->image);
 	if (ci->image_data) free(ci->image_data);
 }
@@ -176,11 +184,13 @@ void cover_image_free(CoverImage *ci)
 int cover_image_free_image(CoverImage *ci)
 {
 	int result = 0;
+	SDL_LockMutex(ci->mutex_image);
 	if (ci->image) {
 		SDL_FreeSurface(ci->image);
 		ci->image = NULL;
 		result = 1;
 	}
+	SDL_UnlockMutex(ci->mutex_image);
 	return result;
 }
 
@@ -238,6 +248,16 @@ SDL_Surface *cover_image_get_image(CoverImage *ci)
 		result = ci->image;
 	}
 	return result;
+}
+
+void cover_image_lock_image(CoverImage *ci)
+{
+	SDL_LockMutex(ci->mutex_image);
+}
+
+void cover_image_unlock_image(CoverImage *ci)
+{
+	SDL_UnlockMutex(ci->mutex_image);
 }
 
 void cover_image_set_target_size(CoverImage *ci, int width, int height)
