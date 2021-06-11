@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: coverviewer.c  Created: 061030
  *
@@ -35,6 +35,8 @@ void cover_viewer_init(CoverViewer *cv, const Skin *skin, int large, CoverAlign 
 	cv->hide_cover  = 0;
 	cv->hide_text   = 0;
 	cv->spectrum_analyzer = 0;
+	cv->image_updated = 0;
+	cv->cover = NULL;
 	cv->try_to_load_embedded_cover = embedded_cover;
 	text_browser_init(&cv->tb, skin);
 	text_browser_set_text(&cv->tb, "", "Track info");
@@ -45,6 +47,15 @@ void cover_viewer_free(CoverViewer *cv)
 {
 	cover_image_stop_thread(&cv->ci);
 	cover_image_free(&cv->ci);
+	if (cv->cover) {
+		SDL_FreeSurface(cv->cover);
+		cv->cover = NULL;
+	}
+}
+
+void cover_viewer_set_image_updated(CoverViewer *cv)
+{
+	cv->image_updated = 1;
 }
 
 void cover_viewer_load_artwork(
@@ -67,8 +78,10 @@ void cover_viewer_load_artwork(
 	/* Try to load image embedded in tag: */
 	if (trackinfo_acquire_lock(ti)) {
 		if (cv->try_to_load_embedded_cover == EMBEDDED_COVER_FIRST && ti->image.data != NULL) {
-			cover_image_load_image_from_memory(&cv->ci, ti->image.data, ti->image.data_size, 
-											 ti->image.mime_type, ready_flag);
+			cover_image_load_image_from_memory(
+				&cv->ci, ti->image.data, ti->image.data_size,
+				ti->image.mime_type, ready_flag
+			);
 			last_cover_path[0] = '\0';
 			ti->has_cover_artwork = 1;
 		} else if (audio_file != NULL && strlen(audio_file) < 256) {
@@ -91,9 +104,11 @@ void cover_viewer_load_artwork(
 					last_cover_path[0] = '\0';
 			}
 		} else if (cv->try_to_load_embedded_cover == EMBEDDED_COVER_LAST && ti->image.data != NULL) {
-			cover_image_load_image_from_memory(&cv->ci, ti->image.data, ti->image.data_size, 
-											   ti->image.mime_type, ready_flag);
-			last_cover_path[0] = '\0';	
+			cover_image_load_image_from_memory(
+				&cv->ci, ti->image.data, ti->image.data_size,
+				ti->image.mime_type, ready_flag
+			);
+			last_cover_path[0] = '\0';
 		}
 		trackinfo_release_lock(ti);
 	}
@@ -154,13 +169,26 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 	int          text_x_offset = 5;
 	int          chars_per_line = (skin_textarea_get_characters_per_line(cv->skin) < 256 ? 
 	                               skin_textarea_get_characters_per_line(cv->skin) : 255);
-	SDL_Surface *cover = cover_image_get_image(&cv->ci);
 	int          ax = gmu_widget_get_pos_x(&cv->skin->lv, 1);
 	int          ay = gmu_widget_get_pos_y(&cv->skin->lv, 1);
 	int          aw = gmu_widget_get_width(&cv->skin->lv, 1);
 	int          ah = gmu_widget_get_height(&cv->skin->lv, 1);
 
-	if (cover != NULL && !cv->hide_cover && with_image) {
+	/* We convert the original cover surface, so it is local to this thread */
+	if (cv->image_updated) {
+		SDL_Surface     *tmp_cover = cover_image_get_image(&cv->ci);
+		SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
+		if (cv->cover) {
+			SDL_FreeSurface(cv->cover);
+			cv->cover = NULL;
+		}
+		if (tmp_cover)
+			cv->cover = SDL_ConvertSurface(tmp_cover, format, 0);
+		SDL_FreeFormat(format);
+		cv->image_updated = 0;
+	}
+
+	if (cv->cover != NULL && !cv->hide_cover && with_image) {
 		if (!cv->large) {
 			if (cv->small_cover_align == ALIGN_LEFT) {
 				text_browser_set_pos_x(&cv->tb, ax + aw / 2);
@@ -173,23 +201,23 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 				switch (cv->small_cover_align) {
 					case ALIGN_LEFT:
 						drect.x = ax;
-						drect.y = ay + ah / 2 - cover->h / 2;
-						text_x_offset = cover->w + 5;
+						drect.y = ay + ah / 2 - cv->cover->h / 2;
+						text_x_offset = cv->cover->w + 5;
 						break;
 					case ALIGN_RIGHT:
-						drect.x = ax + aw - cover->w;
-						drect.y = ay + ah / 2 - cover->h / 2;
+						drect.x = ax + aw - cv->cover->w;
+						drect.y = ay + ah / 2 - cv->cover->h / 2;
 						text_x_offset = 0;
 						break;
 				}
 				text_browser_set_pos_x(&cv->tb, ax + text_x_offset);
 				text_browser_draw(&cv->tb, target);
 			} else {
-				drect.x = ax + aw / 2 - cover->w / 2;
-				drect.y = ay + ah / 2 - cover->h / 2;
+				drect.x = ax + aw / 2 - cv->cover->w / 2;
+				drect.y = ay + ah / 2 - cv->cover->h / 2;
 			}
-			if (cover->w <= aw && cover->h <= ah)
-				SDL_BlitSurface(cover, NULL, target, &drect);
+			if (cv->cover->w <= aw && cv->cover->h <= ah)
+				SDL_BlitSurface(cv->cover, NULL, target, &drect);
 		} else {
 			text_browser_set_pos_x(&cv->tb, ax);
 			text_browser_set_chars_per_line(&cv->tb, chars_per_line);
@@ -199,8 +227,8 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 			srect.y = cv->y_offset;
 			srect.w = aw;
 			srect.h = ah;
-			SDL_BlitSurface(cover, &srect, target, &drect);
-			if (!cv->hide_text)	text_browser_draw(&cv->tb, target);
+			SDL_BlitSurface(cv->cover, &srect, target, &drect);
+			if (!cv->hide_text) text_browser_draw(&cv->tb, target);
 		}
 	} else {
 		text_browser_set_pos_x(&cv->tb, ax);

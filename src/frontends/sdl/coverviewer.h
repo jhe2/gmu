@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
  *
  * File: coverviewer.h  Created: 061030
  *
@@ -40,6 +40,8 @@ typedef struct CoverViewer {
 	char         track_info_text[SIZE_TRACKINFO_TEXT];
 	CoverImage   ci;
 	int          spectrum_analyzer;
+	int          image_updated;
+	SDL_Surface *cover;
 } CoverViewer;
 
 void cover_viewer_init(CoverViewer *cv, const Skin *skin, int large, 
@@ -64,4 +66,5 @@ int  cover_viewer_toggle_text_visible(CoverViewer *cv);
 int  cover_viewer_is_spectrum_analyzer_enabled(CoverViewer *cv);
 void cover_viewer_enable_spectrum_analyzer(CoverViewer *cv);
 void cover_viewer_disable_spectrum_analyzer(CoverViewer *cv);
+void cover_viewer_set_image_updated(CoverViewer *cv);
 #endif

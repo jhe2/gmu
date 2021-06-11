@@ -27,7 +27,7 @@ LIBS_CORE+=-lsqlite3
 endif
 LIBS_SDLFE=$(SDL_LIB) -lSDL2_image
 ifneq ($(SDLFE_WITHOUT_SDL_GFX),1)
-LIBS_SDLFE+=-lSDL_gfx
+LIBS_SDLFE+=-lSDL2_gfx
 else
 CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif

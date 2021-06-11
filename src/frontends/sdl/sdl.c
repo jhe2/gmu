@@ -91,6 +91,8 @@ static int         screen_max_width = 0, screen_max_height = 0, screen_max_depth
 
 static SDL_Surface *gmu_icon = NULL;
 
+static int         cover_image_updated = 0;
+
 static void gmu_load_icon(void)
 {
 	gmu_icon = SDL_LoadBMP("gmu.bmp");
@@ -868,6 +870,12 @@ static void run_player(char *skin_name, char *decoders_str)
 			items_skip = 1;
 		}
 
+		if (cover_image_updated) {
+			update = UPDATE_DISPLAY;
+			cover_viewer_set_image_updated(&cv);
+			cover_image_updated = 0;
+		}
+
 		if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN ||
 		    event.type == SDL_KEYUP   || event.type == SDL_JOYBUTTONUP   ||
 		    event.type == SDL_JOYAXISMOTION ||
@@ -1504,7 +1512,7 @@ static int event_callback(GmuEvent event, int param)
 						ti,
 						trackinfo_get_file_name(ti), 
 						cfg_get_key_value(config, "SDL.CoverArtworkFilePattern"),
-						(int *)&update
+						&cover_image_updated
 					);
 				gmu_core_config_release_lock();
 				update_event = event;
