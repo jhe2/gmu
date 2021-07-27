@@ -32,7 +32,12 @@ TMP_CC=$(which "$(echo "$CC" | grep -o '^\S*')")
 
 LIBRARY_PATHS=
 if [ "$TMP_CC" != "" ]; then
-	BASE_DIR="$(dirname "$TMP_CC")/.."
+	SYSROOT=$("$TMP_CC" -print-sysroot)
+	if [ "$SYSROOT" ] ; then
+		BASE_DIR="$SYSROOT/usr"
+	else
+		BASE_DIR="$(dirname "$TMP_CC")/.."
+	fi
 fi
 BASE_INCLUDE_PATH="$BASE_DIR/include"
 INCLUDE_PATHS="-I$BASE_INCLUDE_PATH"
