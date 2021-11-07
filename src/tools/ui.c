@@ -170,25 +170,25 @@ void ui_draw_trackinfo(UI *ui)
 	mvwprintw(ui->win_ti->win, 0, 0, "Title:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, ui->ti_title);
+	wprintw(ui->win_ti->win, "%s", ui->ti_title);
 	wclrtoeol(ui->win_ti->win);
 	wattron(ui->win_ti->win, A_BOLD);
 	wprintw(ui->win_ti->win, "\nArtist:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, ui->ti_artist);
+	wprintw(ui->win_ti->win, "%s", ui->ti_artist);
 	wclrtoeol(ui->win_ti->win);
 	wattron(ui->win_ti->win, A_BOLD);
 	wprintw(ui->win_ti->win, "\nAlbum:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, ui->ti_album);
+	wprintw(ui->win_ti->win, "%s", ui->ti_album);
 	wclrtoeol(ui->win_ti->win);
 	wattron(ui->win_ti->win, A_BOLD);
 	wprintw(ui->win_ti->win, "\nDate:\n");
 	wclrtoeol(ui->win_ti->win);
 	wattroff(ui->win_ti->win, A_BOLD);
-	wprintw(ui->win_ti->win, ui->ti_date);
+	wprintw(ui->win_ti->win, "%s", ui->ti_date);
 	wclrtoeol(ui->win_ti->win);
 	wclrtobot(ui->win_ti->win);
 }
@@ -326,7 +326,7 @@ static void ui_draw_footer_button(UI *ui, char *key, char *name)
 {
 	if (ui->color) wattron(ui->win_footer->win, COLOR_PAIR(2));
 	wattron(ui->win_footer->win, A_BOLD);
-	wprintw(ui->win_footer->win, key);
+	wprintw(ui->win_footer->win, "%s", key);
 	wattroff(ui->win_footer->win, A_BOLD);
 	if (ui->color) wattroff(ui->win_footer->win, COLOR_PAIR(2));
 	if (ui->color) wattron(ui->win_footer->win, COLOR_PAIR(4));
