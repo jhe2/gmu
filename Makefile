@@ -21,6 +21,12 @@ PREFIX?=/usr/local
 CFLAGS+=$(COPTS) -pipe -Wall -Wcast-qual -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\"" -DGMU_INSTALL_PREFIX="\"$(PREFIX)\""
 LFLAGS+=-pthread
 
+# Release build compiler/linker flags
+ifeq ($(RELEASE_BUILD),1)
+# Strip binaries
+LFLAGS+=-s
+endif
+
 LIBS_CORE+=$(SDL_LIB) -lrt
 ifeq ($(GMU_MEDIALIB),1)
 LIBS_CORE+=-lsqlite3

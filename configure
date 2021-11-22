@@ -195,6 +195,7 @@ print_features_and_write_config()
 	local frn=""
 
 	echo "# Generated Gmu config" >config.mk
+	echo "RELEASE_BUILD=${release_build}" >>config.mk
 	echo "Features:"
 	local TOOLS_TO_BUILD=
 	if [ "$gmu_core" != 0 ]; then
@@ -311,6 +312,7 @@ help()
 	echo "Possible options:"
 	echo "  --enable <feature>"
 	echo "  --disable <feature>"
+	echo "  --release (enables release build flags)"
 	echo "  --target-device <device name>"
 	echo "  --sdk-path </path/to/sdk/base/dir>"
 	echo "  --help"
@@ -345,6 +347,7 @@ target_device="unknown"
 sdk_path=
 includes=
 libs=
+release_build=0
 
 # Parse options
 while :
@@ -412,6 +415,10 @@ do
 			;;
 		--verbose)
 			DEBUG_OUTPUT="/dev/fd/2"
+			shift
+			;;
+		--release)
+			release_build=1
 			shift
 			;;
 		--) # End of all options
@@ -570,7 +577,6 @@ if [ $feature_medialib != 0 ]; then
 		feature_medialib=0
 	fi
 fi
-
 
 if [ $fe_sdl != 0 ]; then
 	if [ "$sdk_path" ]; then
