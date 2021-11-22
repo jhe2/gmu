@@ -39,9 +39,9 @@ endif
 ifneq ($(GMU_DISABLE_OSS_MIXER),1)
 OBJECTFILES+=oss_mixer.o
 endif
-ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu gmu.png themes README.txt BUILD.txt COPYING *.keymap gmuinput.*.conf gmuinput.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
+ALLFILES=src/ htdocs/ Makefile configure *.sh *.dge *.gpu gmu.png themes README.md BUILD.txt COPYING *.keymap gmuinput.*.conf gmuinput.conf gmu.*.conf gmu.bmp gmu.desktop PXML.xml
 BINARY?=gmu.bin
-COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.txt libs.$(TARGET) COPYING gmu.bmp gmu.desktop
+COMMON_DISTBIN_FILES=$(BINARY) frontends decoders themes gmu.png README.md libs.$(TARGET) COPYING gmu.bmp gmu.desktop
 DISTFILES?=$(COMMON_DISTBIN_FILES)
 
 ifeq (0,$(STATIC))
@@ -175,7 +175,7 @@ install: $(DISTFILES)
 	$(Q)-mkdir -p $(DESTDIR)$(PREFIX)/share/gmu/themes
 	$(Q)cp $(BINARY) $(DESTDIR)$(PREFIX)/bin
 	$(Q)-cp gmuc $(DESTDIR)$(PREFIX)/bin/gmuc
-	$(Q)cp README.txt $(DESTDIR)$(PREFIX)/share/gmu/README.txt
+	$(Q)cp README.md $(DESTDIR)$(PREFIX)/share/gmu/README.md
 	$(Q)cp -R frontends/* $(DESTDIR)$(PREFIX)/share/gmu/frontends
 	$(Q)cp -R decoders/* $(DESTDIR)$(PREFIX)/share/gmu/decoders
 	$(Q)cp -R themes/* $(DESTDIR)$(PREFIX)/share/gmu/themes
