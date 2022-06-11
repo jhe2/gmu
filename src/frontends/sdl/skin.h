@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2022 Johannes Heimansberg (wej.k.vu)
  *
  * File: skin.h  Created: 061107
  *
@@ -70,6 +70,9 @@ typedef struct _Skin
 	GmuWidget    header, display, lv, footer;
 	SDL_Surface *display_symbols, *arrow_up, *arrow_down;
 
+	/* Target surface */
+	SDL_Surface *target;
+
 	/* temporary storage */
 	SDL_Surface  *buffer;
 	SDL_Renderer *renderer;
@@ -90,8 +93,10 @@ typedef enum _SkinDisplaySymbol
 int  skin_init(Skin *skin, const char *skin_file);
 int  skin_lock_renderer(Skin *skin);
 int  skin_unlock_renderer(Skin *skin);
+void skin_set_target_surface(Skin *skin, SDL_Surface *target);
 void skin_set_renderer(Skin *skin, SDL_Renderer *renderer);
-void skin_sdl_render(Skin *skin, SDL_Surface *display);
+void skin_unset_renderer(Skin *skin);
+void skin_sdl_render(Skin *skin);
 void skin_free(Skin *skin);
 int  skin_create_background(Skin *skin);
 void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);

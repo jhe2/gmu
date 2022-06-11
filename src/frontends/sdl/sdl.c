@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2020 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2022 Johannes Heimansberg (wej.k.vu)
  *
  * File: sdl.c  Created: 060929
  *
@@ -384,7 +384,7 @@ static int playlist_browser_process_action(PlaylistBrowser *pb, TrackInfo *ti,
 			pl_browser_playlist_clear(pb);
 			player_display_set_notice_message("PLAYLIST CLEARED", NOTICE_DELAY);
 			update = UPDATE_ALL;
-			break;					
+			break;
 		case PL_REMOVE_ITEM:
 			if (pl_browser_are_selection_and_current_entry_equal(pb)) {
 				if (!gmu_core_next()) {
@@ -677,6 +677,7 @@ static void run_player(char *skin_name, char *decoders_str)
 		quit = QUIT_WITH_ERROR;
 		wdprintf(V_ERROR, "sdl_frontend", "skin_init() reported an error.\n");
 	} else {
+		skin_set_target_surface(&skin, display);
 		skin_set_renderer(&skin, renderer);
 	}
 
@@ -774,6 +775,7 @@ static void run_player(char *skin_name, char *decoders_str)
 					// SDL_WINDOWEVENT_SIZE_CHANGED
 					wdprintf(V_DEBUG, "sdl_frontend", "Window resize event: %dx%d\n", 
 					         event.window.data1, event.window.data2);
+					skin_lock_renderer(&skin);
 					SDL_FreeSurface(display);
 					display = SDL_CreateRGBSurface(
 						0,
@@ -788,6 +790,7 @@ static void run_player(char *skin_name, char *decoders_str)
 						wdprintf(V_FATAL, "sdl_frontend", "Unable to set new window size.\n");
 						exit(-2); /* should not happen */
 					}
+					skin_set_target_surface(&skin, display);
 
 					SDL_FreeSurface(buffer);
 					buffer = SDL_CreateRGBSurface(
@@ -801,6 +804,7 @@ static void run_player(char *skin_name, char *decoders_str)
 						wdprintf(V_FATAL, "sdl_frontend", "Unable to set new window size (back buffer re-creation failed).\n");
 						exit(-2); /* should not happen */
 					}
+					skin_unlock_renderer(&skin);
 					update = UPDATE_ALL;
 				}
 				break;
@@ -1054,12 +1058,15 @@ static void run_player(char *skin_name, char *decoders_str)
 							w = prev_w;
 							h = prev_h;
 						}
+						skin_lock_renderer(&skin);
 						SDL_FreeSurface(buffer);
 						buffer = SDL_CreateRGBSurface(
 							SDL_SWSURFACE, w, h,
 							display->format->BitsPerPixel,
 							0, 0, 0, 0
 						);
+
+						skin_unset_renderer(&skin);
 
 						SDL_FreeSurface(display);
 						display = SDL_CreateRGBSurface(
@@ -1069,13 +1076,13 @@ static void run_player(char *skin_name, char *decoders_str)
 							0x000000FF,
 							0xFF000000
 						);
+						skin_set_target_surface(&skin, display);
 
 						if (!display) {
 							wdprintf(V_FATAL, "sdl_frontend", "Unable to set new video mode.\n");
 							exit(-2); /* should not happen */
 						} else {
 							wdprintf(V_DEBUG, "sdl_frontend", "Flip fullscreen %d (%dx%d)\n", fullscreen, w, h);
-							skin_lock_renderer(&skin);
 							SDL_DestroyRenderer(renderer);
 							SDL_DestroyWindow(window);
 							window = SDL_CreateWindow(
@@ -1093,8 +1100,8 @@ static void run_player(char *skin_name, char *decoders_str)
 							SDL_SetWindowIcon(window, gmu_icon);
 							renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 							skin_set_renderer(&skin, renderer);
-							skin_unlock_renderer(&skin);
 						}
+						skin_unlock_renderer(&skin);
 						update = UPDATE_ALL;
 						break;
 					}
@@ -1136,7 +1143,7 @@ static void run_player(char *skin_name, char *decoders_str)
 				switch (view) { /* view-specific actions */
 					case FILE_BROWSER:
 						update |= file_browser_process_action(&fb, &pb, ti, &cv, user_key_action, items_skip);
-						break;				
+						break;
 					case PLAYLIST:
 						update |= playlist_browser_process_action(&pb, ti, &cv, user_key_action, items_skip);
 						break;
@@ -1495,7 +1502,7 @@ static int event_callback(GmuEvent event, int param)
 	switch (event) {
 		case GMU_TICK:
 		case GMU_PLAYBACK_TIME_CHANGE:
-			skin_sdl_render(&skin, display);
+			skin_sdl_render(&skin);
 			break;
 		case GMU_QUIT:
 			quit = QUIT_WITHOUT_ERROR;

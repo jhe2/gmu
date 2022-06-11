@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2020 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2022 Johannes Heimansberg (wej.k.vu)
  *
  * File: skin.c  Created: 061107
  *
@@ -230,11 +230,27 @@ int skin_init(Skin *skin, const char *skin_name)
 	return res;
 }
 
+void skin_set_target_surface(Skin *skin, SDL_Surface *target)
+{
+	skin->target = target;
+}
+
 void skin_set_renderer(Skin *skin, SDL_Renderer *renderer)
 {
 	skin->renderer = renderer;
 	wdprintf(V_DEBUG, "skin", "skin_set_renderer(): renderer ok: %d\n",
 	         skin->renderer == renderer ? 1 : 0);
+}
+
+/* skin_unset_renderer removes the current renderer so it can be replaced.
+ * This must be called before destroying the renderer elsewhere. */
+void skin_unset_renderer(Skin *skin)
+{
+	if (skin->tex) {
+		SDL_DestroyTexture(skin->tex);
+		skin->tex = NULL;
+	}
+	skin->renderer = NULL;
 }
 
 void skin_free(Skin *skin)
@@ -250,7 +266,7 @@ void skin_free(Skin *skin)
 	gmu_widget_free(&(skin->header));
 	gmu_widget_free(&(skin->footer));
 	SDL_FreeSurface(skin->buffer);
-	if (skin->tex) SDL_DestroyTexture(skin->tex);
+	if (skin->renderer && skin->tex) SDL_DestroyTexture(skin->tex);
 	if (skin->display_mutex) SDL_DestroyMutex(skin->display_mutex);
 }
 
@@ -319,29 +335,34 @@ int skin_unlock_renderer(Skin *skin)
 	return SDL_UnlockMutex(skin->display_mutex);
 }
 
-void skin_sdl_render(Skin *skin, SDL_Surface *display)
+/* skin_sdl_render() renders everything onto the target surface */
+void skin_sdl_render(Skin *skin)
 {
 	int d = 1;
 	if (!skin->display_mutex) { /* skin data structure not initialized (yet) */
 		return;
 	}
 	if (SDL_LockMutex(skin->display_mutex) == 0) {
+		if (!skin->target || !skin->renderer) {
+			SDL_UnlockMutex(skin->display_mutex);
+			return;
+		}
 		if (skin->tex) SDL_DestroyTexture(skin->tex);
 		skin->tex = SDL_CreateTexture(
 			skin->renderer,
 			SDL_PIXELFORMAT_ARGB8888,
 			SDL_TEXTUREACCESS_STREAMING,
-			display->w, display->h
+			skin->target->w, skin->target->h
 		);
-		int a = SDL_UpdateTexture(skin->tex, NULL, display->pixels, display->w * sizeof(Uint32));
+		int a = SDL_UpdateTexture(skin->tex, NULL, skin->target->pixels, skin->target->w * sizeof(Uint32));
 		if (a) wdprintf(V_DEBUG, "skin", "%s\n", SDL_GetError());
 		SDL_SetRenderDrawColor(skin->renderer, 0, 0, 0, 255); /* black */
 		SDL_RenderClear(skin->renderer);
 		d = SDL_RenderCopy(skin->renderer, skin->tex, NULL, NULL);
+		if (d) wdprintf(V_DEBUG, "skin", "%s\n", SDL_GetError());
+		SDL_RenderPresent(skin->renderer);
 		SDL_UnlockMutex(skin->display_mutex);
 	}
-	if (d) wdprintf(V_DEBUG, "skin", "%s\n", SDL_GetError());
-	SDL_RenderPresent(skin->renderer);
 }
 
 static void skin_update_widget(Skin *skin, GmuWidget *gw, SDL_Surface *display, SDL_Surface *buffer)
