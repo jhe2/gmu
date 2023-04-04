@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2023 Johannes Heimansberg (wej.k.vu)
  *
  * File: core.c  Created: 081115
  *
@@ -60,6 +60,11 @@ static int             shutdown_timer = 0;
 static int             remaining_time;
 static char            base_dir[256], *config_dir;
 static volatile sig_atomic_t signal_received = 0;
+static char           *config_file_path;
+
+/* cmdline stores a copy of the command line that's used to run Gmu */
+#define CMDLINE_SIZE 256
+static char cmdline[CMDLINE_SIZE];
 
 #ifdef GMU_MEDIALIB
 static GmuMedialib     gm;
@@ -781,6 +786,16 @@ char *gmu_core_get_config_dir(void)
 	return config_dir;
 }
 
+char *gmu_core_get_config_file_path(void)
+{
+	return config_file_path;
+}
+
+char *gmu_core_get_command_line(void)
+{
+	return cmdline;
+}
+
 #ifdef GMU_MEDIALIB
 static void medialib_refresh_finish_callback(void)
 {
@@ -934,7 +949,7 @@ static void file_extensions_free(void)
 int main(int argc, char **argv)
 {
 	char        *skin_file = "";
-	char        *config_file = "gmu.conf", *config_file_path, *sys_config_dir = NULL;
+	char        *config_file = "gmu.conf", *sys_config_dir = NULL;
 	char         temp[512];
 	int          disksync = 0;
 	size_t       i;
@@ -957,6 +972,12 @@ int main(int argc, char **argv)
 	if (!getcwd(base_dir, 255)) snprintf(base_dir, 255, ".");
 	sys_config_dir = base_dir;
 	config_dir = base_dir;
+
+	/* Store the entire command line as a string */
+	for (i = 0; i < argc; i++) {
+		strncat(cmdline, argv[i], CMDLINE_SIZE-1);
+		strncat(cmdline, " ", CMDLINE_SIZE-1);
+	}
 
 	for (i = 1; argv[i]; i++) {
 		if (argv[i][0] == '-') {
@@ -1074,7 +1095,6 @@ int main(int argc, char **argv)
 	if (config_file_path && cfg_read_config_file(config, config_file_path) != 0) {
 		wdprintf(V_WARNING, "gmu", "Could not read %s. Assuming defaults.\n", config_file_path);
 	}
-	free(config_file_path);
 
 	/* Set output path for gmu.conf file, based on XDG spec, usually ~/.config/gmu/gmu.conf */
 	{
@@ -1421,6 +1441,7 @@ int main(int argc, char **argv)
 	}
 	cfg_free(config);
 	gmu_core_config_release_lock();
+	free(config_file_path);
 	pthread_mutex_destroy(&config_mutex);
 	pthread_mutex_destroy(&gmu_running_mutex);
 	SDL_Quit();

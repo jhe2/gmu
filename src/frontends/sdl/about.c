@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2023 Johannes Heimansberg (wej.k.vu)
  *
  * File: about.c  Created: 061223
  *
@@ -25,14 +25,14 @@ static const char *text_about_gmu =
 	"libraries for decoding.\n\n"
 	"Program written by\n"
 	"Johannes Heimansberg (**wej.k.vu**)\n\n"
-	"Please take a look at the README.txt\n"
+	"Please take a look at the README.md\n"
 	"file for more details and\n"
 	"configuration hints. You also might\n"
 	"want to check the in-program help\n"
 	"screen.\n\n"
 	"Project website:\n"
 	"**http://wej.k.vu/projects/gmu/**\n\n"
-	"Gmu is free software: you can\n"
+	"Gmu is free software: You can\n"
 	"redistribute it and/or modify it under\n"
 	"the terms of the GNU General Public\n"
 	"License version 2.\n";
@@ -69,24 +69,38 @@ int about_process_action(TextBrowser *tb_about, View *view, View old_view, int u
 	return update;
 }
 
-void about_init(TextBrowser *tb_about, Skin *skin, char *decoders)
+void about_init(TextBrowser *tb_about, Skin *skin, const char *decoders)
 {
 	static char txt[1024];
+	SDL_version compiled;
+	const SDL_version *linked;
 
-	snprintf(txt, 1023, "This is the Gmu music player.\n\n"
-	                    "Version.........: **"VERSION_NUMBER"**\n"
-	                    "Built on........: "__DATE__" "__TIME__"\n"
-	                    "Detected device.: %s\n"
-	                    "Config directory: %s\n\n"
-	                    "Gmu supports various file formats\n"
-	                    "through decoder plugins.\n\n"
-	                    "%s decoders:\n\n%s\n"
-	                    "%s",
-	                    gmu_core_get_device_model_name(),
-	                    gmu_core_get_config_dir(),
-	                    STATIC ? "Static build with built-in" : "Loaded",
-	                    decoders,
-	                    text_about_gmu);
+	SDL_VERSION(&compiled);
+	linked = SDL_Linked_Version();
+
+	snprintf(
+		txt, 1023, "This is the Gmu music player.\n\n"
+		"Version.........: **"VERSION_NUMBER"**\n"
+		"Built on........: "__DATE__" "__TIME__"\n"
+		"SDL version.....: %u.%u.%u (runtime: %u.%u.%u)\n"
+		"Detected device.: %s\n"
+		"Config directory: %s\n"
+		"Config file.....: %s\n"
+		"Command line....: %s\n\n"
+		"Gmu supports various file formats\n"
+		"through decoder plugins.\n\n"
+		"%s decoders:\n\n%s\n"
+		"%s",
+		compiled.major, compiled.minor, compiled.patch,
+		linked->major, linked->minor, linked->patch,
+		gmu_core_get_device_model_name(),
+		gmu_core_get_config_dir(),
+		gmu_core_get_config_file_path(),
+		gmu_core_get_command_line(),
+		STATIC ? "Static build with built-in" : "Loaded",
+		decoders,
+		text_about_gmu
+	);
 
 	text_browser_init(tb_about, skin);
 	text_browser_set_text(tb_about, txt, "About Gmu");

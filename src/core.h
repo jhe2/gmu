@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2023 Johannes Heimansberg (wej.k.vu)
  *
  * File: core.h  Created: 081115
  *
@@ -94,6 +94,8 @@ void             gmu_core_add_m3u_contents_to_playlist(const char *filename);
 void             gmu_core_add_pls_contents_to_playlist(const char *filename);
 char            *gmu_core_get_base_dir(void);
 char            *gmu_core_get_config_dir(void);
+char            *gmu_core_get_config_file_path(void);
+char            *gmu_core_get_command_line(void);
 int              gmu_core_playlist_is_recursive_directory_add_in_progress(void);
 Entry           *gmu_core_playlist_get_next(Entry *entry);
 Entry           *gmu_core_playlist_get_prev(Entry *entry);
