@@ -531,7 +531,7 @@ static int handle_data_in_ringbuffer(RingBuffer *rb, UI *ui, int sock, char *pas
 			}
 		} else if (size > 0) {
 			wprintw(ui->win_cmd->win,
-					"Not enough data available. Need %d bytes, but only %d avail.\n",
+					"Not enough data available. Need %d bytes, but only %ld avail.\n",
 					size, ringbuffer_get_fill(rb));
 			ringbuffer_unread(rb);
 			loop = 0;
@@ -1202,7 +1202,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 											wprintw(ui.win_cmd->win, " with parameters '%s'", params);
 											free(params);
 										}
-										wprintw(ui.win_cmd->win, ".\n", cmd);
+										wprintw(ui.win_cmd->win, ".\n");
 										free(input);
 										input = NULL;
 										ui_cursor_text_input(&ui, NULL);
@@ -1265,7 +1265,7 @@ static int run_gmuc_ui(int color, char *host, char *password)
 						memset(buffer, 0, BUF); /* we don't need that later */
 						size = recv(sock, buffer, BUF-1, 0);
 						if (size <= 0) {
-							wprintw(ui.win_cmd->win, "Network Error: Data size = %d Error: %s\n", size, strerror(errno));
+							wprintw(ui.win_cmd->win, "Network Error: Data size = %ld Error: %s\n", size, strerror(errno));
 							if (size == -1) wprintw(ui.win_cmd->win, "Error: %s\n", strerror(errno));
 							ui_update_trackinfo(&ui, "Gmu Network Error", strerror(errno), NULL, NULL);
 							ui_draw_header(&ui);
