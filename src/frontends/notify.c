@@ -57,7 +57,7 @@ static void notify_trackinfo(TrackInfo *ti)
 		GIcon         *icon;
 
 		if (trackinfo_get_channels(ti) > 0) {
-			application = g_application_new("gmu.music.player", G_APPLICATION_FLAGS_NONE);
+			application = g_application_new("gmu.music.player", G_APPLICATION_DEFAULT_FLAGS);
 			if (application) {
 				icon = g_themed_icon_new("dialog-information");
 
