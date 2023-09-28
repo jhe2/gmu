@@ -43,6 +43,8 @@ void key_action_mapping_init(KeyActionMapping *kam)
 	kam[FB_INSERT_FILE_INTO_PL].description =     "Insert file";
 	kam[FB_PLAY_FILE].scope =                FILE_BROWSER;
 	kam[FB_PLAY_FILE].description =               "Play file";
+	kam[FB_PLAY_FILE_OR_CHDIR].scope =       FILE_BROWSER;
+	kam[FB_PLAY_FILE_OR_CHDIR].description =      "Play file/Ch.dir";
 	kam[FB_DELETE_FILE].scope =              FILE_BROWSER;
 	kam[FB_DELETE_FILE].description =             "Delete file";
 	kam[FB_NEW_PL_FROM_DIR].scope =          FILE_BROWSER;
@@ -302,6 +304,10 @@ int key_action_mapping_load_config(KeyActionMapping *kam, char *keymap_file)
 			button_name = cfg_get_key_value(keymapconf, "FileBrowserPlayFile");
 			get_button(button_name, &kam[FB_PLAY_FILE].button, &kam[FB_PLAY_FILE].modifier, &kam[FB_PLAY_FILE].method);
 			if (button_name) strncpy(kam[FB_PLAY_FILE].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
+
+			button_name = cfg_get_key_value(keymapconf, "FileBrowserPlayFileOrChDir");
+			get_button(button_name, &kam[FB_PLAY_FILE_OR_CHDIR].button, &kam[FB_PLAY_FILE_OR_CHDIR].modifier, &kam[FB_PLAY_FILE_OR_CHDIR].method);
+			if (button_name) strncpy(kam[FB_PLAY_FILE_OR_CHDIR].button_name, button_name, BUTTON_NAME_MAX_LENGTH-1);
 
 			button_name = cfg_get_key_value(keymapconf, "FileBrowserAddFileToPlaylistOrChDir");
 			get_button(button_name, &kam[FB_ADD_FILE_TO_PL_OR_CHDIR].button, &kam[FB_ADD_FILE_TO_PL_OR_CHDIR].modifier, &kam[FB_ADD_FILE_TO_PL_OR_CHDIR].method);
