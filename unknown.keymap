@@ -3,7 +3,8 @@
 # Down, Pause, ProgramInfo, Exit,
 # PlaylistPlayItem, PlaylistClear,
 # FileBrowserAddFileToPlaylistOrChDir
-# Buttons names are defined in gmuinput.conf.
+# Button names are defined in gmuinput.conf.
+# Lines starting with a # sign are comments and will be ignored.
 
 Modifier=Alt
 # Global mappings:
@@ -35,7 +36,10 @@ ProgramInfoOkay=Enter
 #FileBrowserDirUp=LEFT
 #FileBrowserChDir=RIGHT
 
-FileBrowserPlayFile=A
+# You probably want to use exactly one of the following two options:
+#FileBrowserPlayFile=A
+FileBrowserPlayFileOrChDir=A
+
 FileBrowserAddFileToPlaylistOrChDir=Enter
 FileBrowserAddDirToPlaylist=Y
 FileBrowserInsertFileIntoPlaylist=Mod+B

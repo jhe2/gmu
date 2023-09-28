@@ -245,8 +245,19 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 	char  *path = NULL;
 
 	switch (user_key_action) {
+		case FB_PLAY_FILE_OR_CHDIR:
+		case FB_CHDIR:
+			if (file_browser_selection_is_dir(fb)) { /* Change directory */
+				if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
+					wdprintf(V_WARNING, "sdl_frontend", "Failed to change directory. Even fallbacks did not work.\n");
+				}
+				update = UPDATE_ALL;
+			}
+			if (user_key_action == FB_CHDIR)
+				break;
+			/* Fall-through */
 		case FB_PLAY_FILE:
-			if (!file_browser_selection_is_dir(fb)) {
+			if (!file_browser_selection_is_dir(fb)) { /* Play file */
 				gmu_core_playlist_set_current(NULL);
 				path = file_browser_get_selected_file_full_path_alloc(fb);
 				if (path) {
@@ -284,14 +295,6 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 		case FB_DIR_UP:
 			file_browser_change_dir(fb, "..");
 			update = UPDATE_ALL;
-			break;
-		case FB_CHDIR:
-			if (file_browser_selection_is_dir(fb)) {
-				if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
-					wdprintf(V_WARNING, "sdl_frontend", "Failed to change directory. Even fallbacks did not work.\n");
-				}
-				update = UPDATE_ALL;
-			}
 			break;
 		case FB_ADD_FILE_TO_PL_OR_CHDIR:
 		case FB_INSERT_FILE_INTO_PL:
