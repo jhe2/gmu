@@ -24,6 +24,9 @@
 #include "../debug.h"
 #include <gio/gio.h>
 
+#if !GLIB_CHECK_VERSION(2, 74, 0)
+#define G_APPLICATION_DEFAULT_FLAGS G_APPLICATION_FLAGS_NONE
+#endif
 static int notify_enabled = 0;
 
 static const char *get_name(void)
