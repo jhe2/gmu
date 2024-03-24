@@ -166,6 +166,7 @@ default_distbin: $(DISTFILES)
 	$(Q)-cp gmu.$(TARGET).conf $(projname)-$(TARGET)/gmu.$(TARGET).conf
 	$(Q)-cp $(TARGET).keymap $(projname)-$(TARGET)/$(TARGET).keymap
 	$(Q)-cp gmuinput.$(TARGET).conf $(projname)-$(TARGET)/gmuinput.conf
+	$(Q)-cp gmu-$(TARGET).sh $(projname)-$(TARGET)/gmu.sh
 	$(Q)zip -r $(projname)-$(TARGET).zip $(projname)-$(TARGET)
 	$(Q)-rm -rf $(projname)-$(TARGET)
 
