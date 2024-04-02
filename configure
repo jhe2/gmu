@@ -289,8 +289,8 @@ print_features_and_write_config()
 		echo "SDL_CFLAGS=$(sdl-config --prefix="$sdk_path" --cflags)" >>config.mk
 		echo "SDL_LIB=$(sdl-config --prefix="$sdk_path" --libs)" >>config.mk
 	else
-		echo "SDL_CFLAGS=$(sdl-config --cflags)" >>config.mk
-		echo "SDL_LIB=$(sdl-config --libs)" >>config.mk
+		echo "SDL_CFLAGS=$("$SYSROOT"/usr/bin/sdl-config --cflags)" >>config.mk
+		echo "SDL_LIB=$("$SYSROOT"/usr/bin/sdl-config --libs)" >>config.mk
 	fi
 
 	{
@@ -462,8 +462,8 @@ if [ "$sdk_path" ]; then
 	sdl_cflags=$(sdl-config --prefix="$sdk_path" --cflags)
 	sdl_libs=$(sdl-config --prefix="$sdk_path"--libs)
 else
-	sdl_cflags=$(sdl-config --cflags)
-	sdl_libs=$(sdl-config --libs)
+	sdl_cflags=$("$SYSROOT"/usr/bin/sdl-config --cflags)
+	sdl_libs=$("$SYSROOT"/usr/bin/sdl-config --libs)
 fi
 libs_test=$sdl_libs
 includes_test_flags=$sdl_cflags
@@ -478,8 +478,8 @@ if [ "$sdk_path" ]; then
 	sdl_cflags=$(sdl-config --prefix="$sdk_path" --cflags)
 	sdl_libs=$(sdl-config --prefix="$sdk_path" --libs)
 else
-	sdl_cflags=$(sdl-config --cflags)
-	sdl_libs=$(sdl-config --libs)
+	sdl_cflags=$("$SYSROOT"/usr/bin/sdl-config --cflags)
+	sdl_libs=$("$SYSROOT"/usr/bin/sdl-config --libs)
 fi
 libs_test="$sdl_libs -lSDL_gfx"
 includes_test_flags=$sdl_cflags
@@ -583,8 +583,8 @@ if [ $fe_sdl != 0 ]; then
 		sdl_cflags=$(sdl-config --prefix="$sdk_path" --cflags)
 		sdl_libs=$(sdl-config --prefix="$sdk_path" --libs)
 	else
-		sdl_cflags=$(sdl-config --cflags)
-		sdl_libs=$(sdl-config --libs)
+		sdl_cflags=$("$SYSROOT"/usr/bin/sdl-config --cflags)
+		sdl_libs=$("$SYSROOT"/usr/bin/sdl-config --libs)
 	fi
 	includes_test="#include <SDL/SDL.h>
 #include <SDL/SDL_image.h>"
