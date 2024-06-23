@@ -28,7 +28,7 @@
 
 static mpg123_handle *player;
 static int            init = 0;
-static long           seek_to_sample_offset;
+static off_t          seek_to_sample_offset;
 static int            sample_rate, channels = 0, bitrate = 0;
 static TrackInfo      ti, ti_metaonly;
 static Reader        *r;
@@ -180,7 +180,7 @@ static int mpg123_play_file(const char *mpeg_file)
 				int   status;
 				int   size = reader_get_number_of_bytes_in_buffer(r); /* There are some bytes in the buffer already, that should be used first */
 				char *metaint_str = cfg_get_key_value(r->streaminfo, "icy-metaint");
-				long  file_size = reader_get_file_size(r);
+				off_t file_size = reader_get_file_size(r);
 				int   need_more_debug = 0;
 				
 				if (file_size > 0) mpg123_set_filesize(player, file_size);
