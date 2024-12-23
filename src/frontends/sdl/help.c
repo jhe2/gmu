@@ -56,6 +56,7 @@ static const char *text_help =
 "\n"
 "**File browser functions**\n\n"
 "Add file/Change dir.....: **%s **\n"
+"Add file................: **%s **\n"
 "Add directory...........: **%s **\n"
 "Play single file........: **%s **\n"
 "New playlist from dir...: **%s **\n"
@@ -110,6 +111,7 @@ void help_init(TextBrowser *tb_help, Skin *skin, KeyActionMapping *kam)
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_LOCK),
 	                    key_action_mapping_get_full_button_name(kam, GLOBAL_UNLOCK),
 	                    key_action_mapping_get_full_button_name(kam, FB_ADD_FILE_TO_PL_OR_CHDIR),
+	                    key_action_mapping_get_full_button_name(kam, FB_ADD_FILE_TO_PL),
 	                    key_action_mapping_get_full_button_name(kam, FB_ADD_DIR_TO_PL),
 	                    key_action_mapping_get_full_button_name(kam, FB_PLAY_FILE),
 	                    key_action_mapping_get_full_button_name(kam, FB_NEW_PL_FROM_DIR),

@@ -27,6 +27,7 @@ typedef enum _View
 typedef enum _UserAction
 {
 	FB_ADD_FILE_TO_PL_OR_CHDIR,
+	FB_ADD_FILE_TO_PL,
 	FB_ADD_DIR_TO_PL,
 	FB_INSERT_FILE_INTO_PL,
 	FB_PLAY_FILE,

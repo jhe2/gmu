@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2022 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2024 Johannes Heimansberg (wej.k.vu)
  *
  * File: sdl.c  Created: 060929
  *
@@ -297,12 +297,15 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 			update = UPDATE_ALL;
 			break;
 		case FB_ADD_FILE_TO_PL_OR_CHDIR:
+		case FB_ADD_FILE_TO_PL:
 		case FB_INSERT_FILE_INTO_PL:
 			if (file_browser_selection_is_dir(fb)) {
-				if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
-					wdprintf(V_WARNING, "sdl_frontend", "Failed to change directory. Even fallbacks did not work.\n");
+				if (user_key_action == FB_ADD_FILE_TO_PL_OR_CHDIR) {
+					if (!file_browser_change_dir(fb, file_browser_get_selected_file(fb))) {
+						wdprintf(V_WARNING, "sdl_frontend", "Failed to change directory. Even fallbacks did not work.\n");
+					}
+					update = UPDATE_ALL;
 				}
-				update = UPDATE_ALL;
 			} else {
 				char *sel_file = file_browser_get_selected_file(fb);
 				if (sel_file) {
