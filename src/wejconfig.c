@@ -340,6 +340,21 @@ int cfg_get_int_value(ConfigFile *cf, const char *key)
 }
 
 /**
+ * Interprets the value of the given key as an integer. If undefined or
+ * value is not a number, the supplied default value will be used instead.
+ */
+int cfg_get_int_value_or_default(ConfigFile *cf, const char *key, int default_value)
+{
+	int         res = 0;
+	const char *v = cfg_get_key_value(cf, key);
+	if (v)
+		res = atoi(v);
+	else
+		res = default_value;
+	return res;
+}
+
+/**
  * Compares the value of the given key with the supplied string and
  * returns 1 if it matches or 0 otherwise. If ignore_case is true, the
  * letter's case will be ignored when comparing. If the key does not

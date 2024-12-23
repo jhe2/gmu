@@ -46,6 +46,7 @@ char       *cfg_get_key_value(ConfigFile *cf, const char *key);
 char       *cfg_get_key_value_ignore_case(ConfigFile *cf, const char *key);
 int         cfg_get_boolean_value(ConfigFile *cf, const char *key);
 int         cfg_get_int_value(ConfigFile *cf, const char *key);
+int         cfg_get_int_value_or_default(ConfigFile *cf, const char *key, int default_value);
 int         cfg_compare_value(ConfigFile *cf, const char *key, const char *cmp_val, int ignore_case);
 int         cfg_check_config_file(const char *filename);
 char       *cfg_get_path_to_config_file(const char *filename);
