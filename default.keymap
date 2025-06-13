@@ -38,6 +38,7 @@ ProgramInfoOkay=Enter
 FileBrowserPlayFile=A
 FileBrowserAddFileToPlaylistOrChDir=Enter
 FileBrowserAddDirToPlaylist=Y
+FileBrowserAddFileToPlaylist=J
 FileBrowserInsertFileIntoPlaylist=Mod+B
 FileBrowserNewPlFromDir=Mod+Y
 #FileBrowserDeleteFile=Mod+X
