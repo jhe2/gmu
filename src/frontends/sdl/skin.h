@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2022 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: skin.h  Created: 061107
  *
@@ -19,6 +19,11 @@
 
 #ifndef _SKIN_H
 #define _SKIN_H
+
+typedef enum _SkinFontType
+{
+	BITMAP, TRUETYPE
+} SkinFontType;
 
 typedef struct _Skin
 {
@@ -73,8 +78,13 @@ typedef struct _Skin
 	/* Target surface */
 	SDL_Surface *target;
 
-	/* temporary storage */
+	/* buffer is used to store a rendered version of the theme's visuals
+	 * without any text, so it can quickly be redrawn when things change
+	 * on screen, without having to redraw individual elements.
+	 * All elements that frequently change (such as text) are not drawn
+	 * onto this surface. */
 	SDL_Surface  *buffer;
+
 	SDL_Renderer *renderer;
 	SDL_Texture  *tex;
 	/* display_mutex is used to make sure the "display" SDL_Surface supplied to the
@@ -83,6 +93,15 @@ typedef struct _Skin
 	   well as Gmu's main thread (due to SDL2 requiring the actual rendering taking
 	   place inside the main thread only on certain platforms). */
 	SDL_mutex    *display_mutex;
+
+	SkinFontType  font1_type, font2_type, font_display_type;
+#ifndef SDLFE_WITHOUT_SDL_TTF
+	TTF_Font *ttf_font1, *ttf_font2, *ttf_font_display;
+	int ttf_font1_size, ttf_font2_size, ttf_font_display_size;
+	int ttf_font1_color_r, ttf_font1_color_g, ttf_font1_color_b;
+	int ttf_font2_color_r, ttf_font2_color_g, ttf_font2_color_b;
+	int ttf_font_display_color_r, ttf_font_display_color_g, ttf_font_display_color_b;
+#endif
 } Skin;
 
 typedef enum _SkinDisplaySymbol
@@ -99,22 +118,22 @@ void skin_unset_renderer(Skin *skin);
 void skin_sdl_render(Skin *skin);
 void skin_free(Skin *skin);
 int  skin_create_background(Skin *skin);
-void skin_update_display(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);
-void skin_draw_display_bg(Skin *skin, SDL_Surface *buffer);
-void skin_update_header(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);
-void skin_draw_header_bg(Skin *skin, SDL_Surface *buffer);
-void skin_update_textarea(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);
-void skin_draw_textarea_bg(Skin *skin, SDL_Surface *buffer);
-void skin_update_footer(Skin *skin, SDL_Surface *display, SDL_Surface *buffer);
-void skin_draw_footer_bg(Skin *skin, SDL_Surface *buffer);
-void skin_update_bg(const Skin *skin, SDL_Surface *display, SDL_Surface *buffer);
+void skin_update_display(Skin *skin);
+void skin_draw_display_bg(Skin *skin);
+void skin_update_header(Skin *skin);
+void skin_draw_header_bg(Skin *skin);
+void skin_update_textarea(Skin *skin);
+void skin_draw_textarea_bg(Skin *skin);
+void skin_update_footer(Skin *skin);
+void skin_draw_footer_bg(Skin *skin);
+void skin_update_bg(const Skin *skin);
 
 int  skin_textarea_get_number_of_lines(const Skin *skin);
 int  skin_textarea_get_characters_per_line(const Skin *skin);
-void skin_draw_header_text(const Skin *skin, const char *text, SDL_Surface *target);
-void skin_draw_footer_text(const Skin *skin, const char *text, SDL_Surface *target);
+void skin_draw_header_text(const Skin *skin, const char *text);
+void skin_draw_footer_text(const Skin *skin, const char *text);
 
-void skin_draw_scroll_arrow_up(const Skin *skin, SDL_Surface *target);
-void skin_draw_scroll_arrow_down(const Skin *skin, SDL_Surface *target);
-void skin_draw_display_symbol(const Skin *skin, SDL_Surface *target, SkinDisplaySymbol symbol);
+void skin_draw_scroll_arrow_up(const Skin *skin);
+void skin_draw_scroll_arrow_down(const Skin *skin);
+void skin_draw_display_symbol(const Skin *skin, SkinDisplaySymbol symbol);
 #endif

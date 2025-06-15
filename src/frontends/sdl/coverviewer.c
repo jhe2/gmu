@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2021 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: coverviewer.c  Created: 061030
  *
@@ -267,19 +267,19 @@ void cover_viewer_show(CoverViewer *cv, SDL_Surface *target, int with_image)
 	}
 
 	if (cv->hide_text && !cv->hide_cover &&  !cv->spectrum_analyzer)
-		skin_draw_header_text(cv->skin, "Track info (Cover only)", target);
+		skin_draw_header_text(cv->skin, "Track info (Cover only)");
 	else if (cv->hide_cover && !cv->hide_text && !cv->spectrum_analyzer)
-		skin_draw_header_text(cv->skin, "Track info (Text only)", target);
+		skin_draw_header_text(cv->skin, "Track info (Text only)");
 	else if (cv->hide_cover && cv->hide_text && cv->spectrum_analyzer)
-		skin_draw_header_text(cv->skin, "Track info (Spectrum analyzer only)", target);
+		skin_draw_header_text(cv->skin, "Track info (Spectrum analyzer only)");
 	else if (cv->hide_text && cv->hide_cover && !cv->spectrum_analyzer)
-		skin_draw_header_text(cv->skin, "Track info (showing nothing)", target);
+		skin_draw_header_text(cv->skin, "Track info (showing nothing)");
 	else if (cv->hide_text && !cv->hide_cover && cv->spectrum_analyzer)
-		skin_draw_header_text(cv->skin, "Track info (Cover + Spectrum analyzer)", target);
+		skin_draw_header_text(cv->skin, "Track info (Cover + Spectrum analyzer)");
 	else if (!cv->hide_text && cv->hide_cover && cv->spectrum_analyzer)
-		skin_draw_header_text(cv->skin, "Track info (Text + Spectrum analyzer)", target);
+		skin_draw_header_text(cv->skin, "Track info (Text + Spectrum analyzer)");
 	else if (!cv->hide_text && !cv->hide_cover && !cv->spectrum_analyzer)
-		skin_draw_header_text(cv->skin, "Track info (Text + Cover)", target);
+		skin_draw_header_text(cv->skin, "Track info (Text + Cover)");
 }
 
 void cover_viewer_scroll_down(CoverViewer *cv)

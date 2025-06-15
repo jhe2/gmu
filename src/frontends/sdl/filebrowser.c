@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2016 Johannes Heimansberg (wej.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: filebrowser.c  Created: 061011
  *
@@ -167,7 +167,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 	}
 
 	snprintf(buf, FB_MAXIMUM_STR_LENGTH, "File browser (%s)", buf2);
-	skin_draw_header_text(fb->skin, buf, sdl_target);
+	skin_draw_header_text(fb->skin, buf);
 
 	fb->longest_line_so_far = 0;
 
@@ -193,7 +193,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		textrenderer_draw_string(font, buf, sdl_target, 
 		                         gmu_widget_get_pos_x(&fb->skin->lv, 1), 
 		                         gmu_widget_get_pos_y(&fb->skin->lv, 1) + 1
-		                         + (i-fb->offset)*(fb->skin->font2_char_height+1));
+		                         + (i-fb->offset) * textrenderer_get_line_height(&fb->skin->font2));
 
 		snprintf(buf, FB_MAXIMUM_STR_LENGTH, "%s", dir_get_filename(fb->dir, i));
 		if (fb->charset != UTF_8) {
@@ -211,7 +211,7 @@ void file_browser_draw(FileBrowser *fb, SDL_Surface *sdl_target)
 		                                        gmu_widget_get_pos_x(&fb->skin->lv, 1)
 		                                        + fb->skin->font1_char_width * 7,
 		                                        gmu_widget_get_pos_y(&fb->skin->lv, 1)+ 1
-		                                        + (i-fb->offset) * (fb->skin->font2_char_height + 1),
+		                                        + (i-fb->offset) * textrenderer_get_line_height(&fb->skin->font2),
 		                                        cpl-6, RENDER_ARROW);
 		if (i == fb->selection) selected_entry_drawn = 1;
 	}

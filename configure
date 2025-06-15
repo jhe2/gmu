@@ -189,6 +189,9 @@ set_feature()
 		SDL_gfx)
 			feature_sdl_gfx=$on_off
 			;;
+		SDL_ttf)
+			feature_sdl_ttf=$on_off
+			;;
 		debug)
 			feature_debug=$on_off
 			;;
@@ -279,6 +282,10 @@ print_features_and_write_config()
 	if [ "$feature_sdl_gfx" = 0 ]; then
 		echo "SDL_gfx support disabled"
 		echo "SDLFE_WITHOUT_SDL_GFX=1" >> config.mk
+	fi
+	if [ "$feature_sdl_ttf" = 0 ]; then
+		echo "SDL_ttf support disabled"
+		echo "SDLFE_WITHOUT_SDL_TTF=1" >> config.mk
 	fi
 	if [ "$fe_web" = 1 ]; then
 		echo "Web frontend enabled"
@@ -452,6 +459,7 @@ fe_log=${auto_detect}
 fe_notify=${auto_detect}
 feature_medialib=0
 feature_sdl_gfx=${auto_detect}
+feature_sdl_ttf=${auto_detect}
 feature_debug=0
 feature_oss_mixer=1
 
@@ -512,6 +520,24 @@ if [ "${feature_sdl_gfx}" -ne 0 ]; then
 	if test_lib "SDL2_gfx"; then
 		echo "SDL2_gfx support disabled."
 		feature_sdl_gfx=0
+	fi
+fi
+
+if [ "${feature_sdl_ttf}" -ne 0 ]; then
+	includes_test="#include <SDL2/SDL_ttf.h>"
+	if [ "$sdk_path" ]; then
+		sdl_cflags=$(${SDL2CONFIG} --prefix="$sdk_path" --cflags)
+		sdl_libs=$(${SDL2CONFIG} --prefix="$sdk_path" --libs)
+	else
+		sdl_cflags=$(${SDL2CONFIG} --cflags)
+		sdl_libs=$(${SDL2CONFIG} --libs)
+	fi
+	libs_test="$sdl_libs -lSDL2_ttf"
+	includes_test_flags=$sdl_cflags
+	code_test=""
+	if test_lib "SDL2_ttf"; then
+		echo "SDL2_ttf support disabled."
+		feature_sdl_ttf=0
 	fi
 fi
 

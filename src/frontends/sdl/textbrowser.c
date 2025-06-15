@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2010 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: textbrowser.c  Created: 061104
  *
@@ -95,7 +95,7 @@ void text_browser_draw(TextBrowser *tb, SDL_Surface *sdl_target)
 	tb->pos_x = gmu_widget_get_pos_x(&tb->skin->lv, 1);
 	tb->pos_y = gmu_widget_get_pos_y(&tb->skin->lv, 1);
 
-	skin_draw_header_text(tb->skin, tb->title, sdl_target);
+	skin_draw_header_text(tb->skin, tb->title);
 	for (i = 0; i < nol && char_offset < tlen; i++) {
 		char  line[MAX_LINE_LENGTH], line_break_char = '\0';
 		size_t line_length = 0, red = 0;
@@ -129,15 +129,17 @@ void text_browser_draw(TextBrowser *tb, SDL_Surface *sdl_target)
 		strncpy(line, tb->text+char_offset, line_length);
 		line[line_length] = '\0';
 
-		textrenderer_draw_string_with_highlight(&tb->skin->font1, &tb->skin->font2,
-		                                        line, tb->offset_x, sdl_target,
-		                                        tb->pos_x + indent, tb->pos_y + yo,
-		                                        tb->chars_per_line-1, RENDER_ARROW);
-		yo += tb->skin->font1_char_height+1;
+		textrenderer_draw_string_with_highlight(
+			&tb->skin->font1, &tb->skin->font2,
+			line, tb->offset_x, sdl_target,
+			tb->pos_x + indent, tb->pos_y + yo,
+			tb->chars_per_line-1, RENDER_ARROW
+		);
+		yo += textrenderer_get_line_height(&tb->skin->font1);
 		char_offset += line_length + 1;
 	}
 	if (tb->char_offset > 0)
-		skin_draw_scroll_arrow_up(tb->skin, sdl_target);
+		skin_draw_scroll_arrow_up(tb->skin);
 	if (!tb->end_reached)
-		skin_draw_scroll_arrow_down(tb->skin, sdl_target);
+		skin_draw_scroll_arrow_down(tb->skin);
 }

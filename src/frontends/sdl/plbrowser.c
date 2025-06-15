@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2013 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: plbrowser.c  Created: 061025
  *
@@ -121,7 +121,7 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 	pl_length = gmu_core_playlist_get_length();
 	snprintf(buf, 63, "Playlist (%d %s, mode: %s)", pl_length,
 	         pl_length != 1 ? "entries" : "entry", mode);
-	skin_draw_header_text(pb->skin, buf, sdl_target);
+	skin_draw_header_text(pb->skin, buf);
 
 	if (pb->first_visible_item == -1 || pb->offset == 0) {
 		if (pl_length > 0)
@@ -137,10 +137,10 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 	     i < pb->offset + number_of_visible_lines && 
 	     i < pl_length && pl_entry != NULL;
 	     i++) {
-		char          c = (gmu_core_playlist_get_played(pl_entry) ? 'o' : ' ');
-		char         *entry_name = gmu_core_playlist_get_entry_name(pl_entry);
-		char         *format = "%c%3d";
-		int           line_length = strlen(entry_name);
+		char                c = (gmu_core_playlist_get_played(pl_entry) ? 'o' : ' ');
+		char               *entry_name = gmu_core_playlist_get_entry_name(pl_entry);
+		char               *format = "%c%3d";
+		int                 line_length = strlen(entry_name);
 		const TextRenderer *font, *font_inverted;
 
 		if (line_length > pb->longest_line_so_far)
@@ -152,25 +152,31 @@ void pl_browser_draw(PlaylistBrowser *pb, SDL_Surface *sdl_target)
 		if (gmu_core_playlist_entry_get_queue_pos(pl_entry) == 0)
 			snprintf(buf, len, format, (pl_entry == gmu_core_playlist_get_current() ? '*' : c), i + 1);
 		else
-			snprintf(buf, len, "%cQ:%d", (pl_entry == gmu_core_playlist_get_current() ? '*' : c),
-			         gmu_core_playlist_entry_get_queue_pos(pl_entry));
+			snprintf(
+				buf, len, "%cQ:%d", (pl_entry == gmu_core_playlist_get_current() ? '*' : c),
+				gmu_core_playlist_entry_get_queue_pos(pl_entry)
+			);
 
 		if (i == pb->offset + number_of_visible_lines - 1 && !selected_entry_drawn)
 			pb->selection = i;
 
+		/* Highlight the currently selected item */
 		font =          (i == pb->selection ? &pb->skin->font2 : &pb->skin->font1);
 		font_inverted = (i == pb->selection ? &pb->skin->font1 : &pb->skin->font2);
 
 		if (i == pb->selection) selected_entry_drawn = 1;
-		textrenderer_draw_string(font, buf, sdl_target, gmu_widget_get_pos_x(&pb->skin->lv, 1),
-		                         gmu_widget_get_pos_y(&pb->skin->lv, 1) + 1
-		                         + (i-pb->offset) * (pb->skin->font2_char_height + 1));
-		textrenderer_draw_string_with_highlight(font, font_inverted, entry_name, pb->horiz_offset, sdl_target, 
-		                                        gmu_widget_get_pos_x(&pb->skin->lv, 1)
-		                                        + pb->skin->font1_char_width * 7,
-		                                        gmu_widget_get_pos_y(&pb->skin->lv, 1) + 1
-		                                        + (i-pb->offset)*(pb->skin->font2_char_height+1),
-		skin_textarea_get_characters_per_line(pb->skin)-6, RENDER_ARROW);
+		textrenderer_draw_string(
+			font, buf, sdl_target,
+			gmu_widget_get_pos_x(&pb->skin->lv, 1),
+			gmu_widget_get_pos_y(&pb->skin->lv, 1) + 1 + (i-pb->offset) * textrenderer_get_line_height(&pb->skin->font2)
+		);
+		textrenderer_draw_string_with_highlight(
+			font, font_inverted, entry_name, pb->horiz_offset, sdl_target,
+			gmu_widget_get_pos_x(&pb->skin->lv, 1) + pb->skin->font1_char_width * 7,
+			gmu_widget_get_pos_y(&pb->skin->lv, 1) + 1 + (i-pb->offset) * textrenderer_get_line_height(&pb->skin->font2),
+			skin_textarea_get_characters_per_line(pb->skin)-6,
+			RENDER_ARROW
+		);
 		pl_entry = gmu_core_playlist_get_next(pl_entry);
 	}
 	gmu_core_playlist_release_lock();

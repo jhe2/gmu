@@ -1,11 +1,11 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2012 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: textrenderer.c  Created: 060929
  *
- * Description: Bitmap font renderer
+ * Description: Bitmap/TrueType font renderer
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,23 +17,58 @@
 #include "textrenderer.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#ifndef SDLFE_WITHOUT_SDL_TTF
+#include <SDL2/SDL_ttf.h>
+#endif
 #include "charset.h"
 #include "debug.h"
 
-int textrenderer_init(TextRenderer *tr, char *chars_file, int chwidth, int chheight)
+int textrenderer_init(TextRenderer *tr, const char *chars_file, int chwidth, int chheight)
 {
 	int          result = 0;
-	SDL_Surface *tmp = IMG_Load(chars_file);
+	SDL_Surface *bitmap_font = IMG_Load(chars_file);
 
 	tr->chars = NULL;
-	if (tmp) {
-		tr->chars = tmp;
+#ifndef SDLFE_WITHOUT_SDL_TTF
+	tr->ttf_font = NULL;
+#endif
+	tr->renderer_type = RENDERER_BITMAP;
+	if (bitmap_font) {
+		tr->chars = bitmap_font;
 		tr->chwidth  = chwidth;
 		tr->chheight = chheight;
+		tr->line_height = chheight+1;
 		result = 1;
 	} else {
-		wdprintf(V_ERROR, "textrenderer", "Error initializing..\n");
+		wdprintf(V_ERROR, "textrenderer", "Error initializing bitmap font renderer: %s size=%dx%d\n", chars_file, chwidth, chheight);
 	}
+	return result;
+}
+
+int textrenderer_init_ttf(TextRenderer *tr, const char *ttf_file, int fontsize_points, SDL_Color ttf_color)
+{
+	int result = 0;
+
+#ifndef SDLFE_WITHOUT_SDL_TTF
+	if (!TTF_WasInit() && TTF_Init() == -1) {
+		wdprintf(V_ERROR, "textrenderer", "TTF_Init: %s\n", TTF_GetError());
+		return result;
+	}
+
+	tr->renderer_type = RENDERER_TRUETYPE;
+	tr->chars = NULL;
+	tr->ttf_font = TTF_OpenFont(ttf_file, fontsize_points);
+	if (tr->ttf_font) {
+		tr->line_height = TTF_FontLineSkip(tr->ttf_font);
+		tr->ttf_color = ttf_color;
+		result = 1;
+	} else {
+		tr->line_height = -1;
+		wdprintf(V_ERROR, "textrenderer", "Error opening TTF file: %s\n", ttf_file);
+	}
+#else
+	wdprintf(V_ERROR, "textrenderer", "ERROR: TTF support has been disabled at compile-time.\n");
+#endif
 	return result;
 }
 
@@ -43,6 +78,11 @@ void textrenderer_free(TextRenderer *tr)
 		SDL_FreeSurface(tr->chars);
 		tr->chars = NULL;
 	}
+#ifndef SDLFE_WITHOUT_SDL_TTF
+	if (tr->ttf_font != NULL) {
+		TTF_CloseFont(tr->ttf_font);
+	}
+#endif
 }
 
 void textrenderer_draw_char(const TextRenderer *tr, UCodePoint ch, SDL_Surface *target, int target_x, int target_y)
@@ -72,15 +112,36 @@ void textrenderer_draw_string_codepoints(const TextRenderer *tr, const UCodePoin
 		textrenderer_draw_char(tr, str[i], target, target_x + i * (tr->chwidth + 1), target_y);
 }
 
+/*
+ * textrenderer_draw_string() renders a string of text (single line)
+ * onto the supplied SDL_Surface. Depending on the renderer type
+ * the text is either rendered with a bitmap font or a truetype font.
+ */
 void textrenderer_draw_string(const TextRenderer *tr, const char *str, SDL_Surface *target, int target_x, int target_y)
 {
 	int utf8_chars = charset_utf8_len(str)+1;
-	UCodePoint *ustr = utf8_chars > 0 ? malloc(sizeof(UCodePoint) * (utf8_chars+1)) : NULL;
+	switch (tr->renderer_type) {
+		case RENDERER_BITMAP: {
+			UCodePoint *ustr = utf8_chars > 0 ? malloc(sizeof(UCodePoint) * (utf8_chars+1)) : NULL;
 
-	if (ustr && charset_utf8_to_codepoints(ustr, str, utf8_chars)) {
-		textrenderer_draw_string_codepoints(tr, ustr, utf8_chars, target, target_x, target_y);
+			if (ustr && charset_utf8_to_codepoints(ustr, str, utf8_chars)) {
+				textrenderer_draw_string_codepoints(tr, ustr, utf8_chars, target, target_x, target_y);
+			}
+			if (ustr) free(ustr);
+			break;
+		}
+		case RENDERER_TRUETYPE: {
+			SDL_Rect     drect;
+			SDL_Surface *surface = TTF_RenderUTF8_Solid(tr->ttf_font, str, tr->ttf_color);
+			drect.x = target_x;
+			drect.y = target_y;
+			drect.w = 1;
+			drect.h = 1;
+			SDL_BlitSurface(surface, NULL, target, &drect);
+			SDL_FreeSurface(surface);
+			break;
+		}
 	}
-	if (ustr) free(ustr);
 }
 
 int textrenderer_get_string_length(const char *str)
@@ -94,10 +155,19 @@ int textrenderer_get_string_length(const char *str)
 	return utf8_chars;
 }
 
-void textrenderer_draw_string_with_highlight(const TextRenderer *tr1, const TextRenderer *tr2,
-                                             const char *str, int str_offset,
-                                             SDL_Surface *target, int target_x, int target_y,
-                                             int max_length, Render_Mode rm)
+/*
+ * textrenderer_draw_string_with_highlight() renders a string similar
+ * to textrenderer_draw_string(). In addition this function supports
+ * highlighting pieces of the text in a different color. Parts to be
+ * highlighted need to be enclosed in two '*' characters, e.g.
+ * "This is **important**.".
+ */
+void textrenderer_draw_string_with_highlight(
+	const TextRenderer *tr1, const TextRenderer *tr2,
+	const char *str, int str_offset,
+	SDL_Surface *target, int target_x, int target_y,
+	int max_length, Render_Mode rm
+)
 {
 	int highlight = 0;
 	int i, j;
@@ -126,21 +196,41 @@ void textrenderer_draw_string_with_highlight(const TextRenderer *tr1, const Text
 		}
 	}
 
-	if (ustr && charset_utf8_to_codepoints(ustr, str, utf8_chars)) {
-		for (i = 0, j = 0; i < utf8_chars && j - str_offset < max_length; i++, j++) {
-			if (str[i] == '*' && i+1 < utf8_chars && str[i+1] == '*') {
-				highlight = !highlight;
-				i+=2;
+	switch (tr1->renderer_type) {
+		case RENDERER_BITMAP: {
+			if (ustr && charset_utf8_to_codepoints(ustr, str, utf8_chars)) {
+				for (i = 0, j = 0; i < utf8_chars && j - str_offset < max_length; i++, j++) {
+					if (str[i] == '*' && i+1 < utf8_chars && str[i+1] == '*') {
+						highlight = !highlight;
+						i+=2;
+					}
+					if (j >= str_offset && (j != str_offset || str_offset == 0)) {
+						if (!highlight)
+							textrenderer_draw_char(
+								tr1, ustr[i], target,
+								target_x + (j-str_offset) * (tr1->chwidth + 1), target_y
+							);
+						else
+							textrenderer_draw_char(
+								tr2, ustr[i], target,
+								target_x + (j-str_offset) * (tr2->chwidth + 1), target_y
+							);
+					}
+				}
 			}
-			if (j >= str_offset && (j != str_offset || str_offset == 0)) {
-				if (!highlight)
-					textrenderer_draw_char(tr1, ustr[i], target, 
-										   target_x + (j-str_offset) * (tr1->chwidth + 1), target_y);
-				else
-					textrenderer_draw_char(tr2, ustr[i], target, 
-										   target_x + (j-str_offset) * (tr2->chwidth + 1), target_y);
-			}
+			break;
+		}
+		case RENDERER_TRUETYPE: {
+			printf("stub: [ttf] textrenderer_draw_string_with_highlight(): %s\n", str);
+			/* TODO: Implement highlight rendering */
+			textrenderer_draw_string(tr1, str, target, target_x, target_y);
+			break;
 		}
 	}
 	if (ustr) free(ustr);
+}
+
+int textrenderer_get_line_height(const TextRenderer *tr)
+{
+	return tr->line_height;
 }

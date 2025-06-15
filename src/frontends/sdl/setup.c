@@ -1,7 +1,7 @@
 /* 
  * Gmu GP2X Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: setup.c  Created: 141102
  *
@@ -176,7 +176,7 @@ static void draw_item(SetupDialog *setup_dlg, SDL_Surface *sdl_target,
 void setup_draw(SetupDialog *setup_dlg, SDL_Surface *sdl_target)
 {
 	int i, y, h;
-	skin_draw_header_text(setup_dlg->skin, "Gmu Setup", sdl_target);
+	skin_draw_header_text(setup_dlg->skin, "Gmu Setup");
 	h = gmu_widget_get_height((GmuWidget *)&setup_dlg->skin->lv, 1);
 	setup_dlg->visible_lines = h / (setup_dlg->skin->font1_char_height + 2);
 	for (i = setup_dlg->offset, y = 0;

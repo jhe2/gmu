@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2014 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: playerdisplay.c  Created: 061109
  *
@@ -109,12 +109,12 @@ void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_statu
 		                            player_status == PAUSED  ? SYMBOL_PAUSE : SYMBOL_NONE);
 		if (symbol != SYMBOL_NONE) {
 			if ((playback_symbol_blinking && blink_state < BLINK_DELAY / 2) || !playback_symbol_blinking)
-				skin_draw_display_symbol(&skin, buffer, symbol);
+				skin_draw_display_symbol(&skin, symbol);
 		}
 
 		if (trackinfo_acquire_lock(ti)) {
 			if (trackinfo_get_channels(ti) > 1)
-				skin_draw_display_symbol(&skin, buffer, SYMBOL_STEREO);
+				skin_draw_display_symbol(&skin, SYMBOL_STEREO);
 			trackinfo_release_lock(ti);
 		}
 

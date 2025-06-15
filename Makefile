@@ -37,6 +37,11 @@ LIBS_SDLFE+=-lSDL2_gfx
 else
 CFLAGS+=-DSDLFE_WITHOUT_SDL_GFX=1
 endif
+ifneq ($(SDLFE_WITHOUT_SDL_TTF),1)
+LIBS_SDLFE+=-lSDL2_ttf
+else
+CFLAGS+=-DSDLFE_WITHOUT_SDL_TTF=1
+endif
 
 OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o metadatareader.o dirparser.o gmuerror.o pthread_helper.o
 ifeq ($(GMU_MEDIALIB),1)
