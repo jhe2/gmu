@@ -167,7 +167,7 @@ static void draw_item(SetupDialog *setup_dlg, SDL_Surface *sdl_target,
 		sdl_target,
 		gmu_widget_get_pos_x((GmuWidget *)&setup_dlg->skin->lv, 1) + 2,
 		gmu_widget_get_pos_y((GmuWidget *)&setup_dlg->skin->lv, 1) + 1 +
-		row * (textrenderer_get_line_height(&setup_dlg->skin->font1) + 2),
+		row * textrenderer_get_line_height(&setup_dlg->skin->font1),
 		skin_textarea_get_characters_per_line(setup_dlg->skin),
 		RENDER_ARROW
 	);
@@ -178,7 +178,7 @@ void setup_draw(SetupDialog *setup_dlg, SDL_Surface *sdl_target)
 	int i, y, h;
 	skin_draw_header_text(setup_dlg->skin, "Gmu Setup");
 	h = gmu_widget_get_height((GmuWidget *)&setup_dlg->skin->lv, 1);
-	setup_dlg->visible_lines = h / (setup_dlg->skin->font1_char_height + 2);
+	setup_dlg->visible_lines = h / textrenderer_get_line_height(&setup_dlg->skin->font1);
 	for (i = setup_dlg->offset, y = 0;
 	     y < setup_dlg->visible_lines && i < setup_dlg->key_count && setup_dlg->keys[i];
 	     i++, y++) {
