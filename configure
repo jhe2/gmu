@@ -434,6 +434,7 @@ gmu_core=1
 tool_gmuc=${auto_detect}
 dec_opus=${auto_detect}
 dec_mpg123=${auto_detect}
+dec_gme=${auto_detect}
 dec_vorbis=${auto_detect}
 dec_musepack=${auto_detect}
 dec_flac=${auto_detect}
@@ -546,6 +547,14 @@ if [ $dec_flac != 0 ]; then
 	code_test=""
 	test_lib "libFLAC"
 	dec_flac=$?
+fi
+
+if [ $dec_gme != 0 ]; then
+	includes_test="#include <gme/gme.h>"
+	libs_test="-lgme"
+	code_test=""
+	test_lib "libgme"
+	dec_gme=$?
 fi
 
 if [ $dec_vorbis != 0 ]; then
