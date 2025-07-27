@@ -155,6 +155,9 @@ set_feature()
 		speex-decoder)
 			dec_speex=$on_off
 			;;
+		gme-decoder)
+			dec_gme=$on_off
+			;;
 		modplug-decoder)
 			dec_modplug=$on_off
 			;;
@@ -249,6 +252,10 @@ print_features_and_write_config()
 	if [ "$dec_flac" = 1 ]; then
 		echo "FLAC enabled"
 		dec="$dec decoders/flac.so"
+	fi
+	if [ "$dec_gme" = 1 ]; then
+		echo "GME enabled"
+		dec="$dec decoders/gme.so"
 	fi
 	if [ "$dec_speex" = 1 ]; then
 		echo "Speex enabled"
@@ -438,6 +445,7 @@ dec_gme=${auto_detect}
 dec_vorbis=${auto_detect}
 dec_musepack=${auto_detect}
 dec_flac=${auto_detect}
+dec_gme=${auto_detect}
 dec_speex=${auto_detect}
 dec_modplug=${auto_detect}
 dec_openmpt=${auto_detect}
