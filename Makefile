@@ -87,6 +87,7 @@ DEC_modplug_LIBS=-lmodplug
 DEC_openmpt_LIBS=-lopenmpt
 DEC_opus_LIBS=-lopus -logg -lopusfile
 DEC_wavpack_LIBS=-lwavpack
+DEC_gme_LIBS=-lgme
 
 ifeq (1,$(STATIC))
 LIBS+=$(foreach i, $(DECODERS_TO_BUILD), $(DEC_$(subst decoders/,,$(basename $(i)))_LIBS))

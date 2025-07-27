@@ -78,7 +78,7 @@ _WEJTEST
 	echo "Checking '$1'..."
 	res=1
 	if $CC $CFLAGS $INCLUDE_PATHS $includes_test_flags -c -o /tmp/test.o /tmp/test.wej.c -Wall 2>${DEBUG_OUTPUT}; then
-		echo echo "$1 header files: okay"
+		echo "$1 header files: okay"
 	else
 		echo "$1 header files: failed"
 		res=0
@@ -146,6 +146,9 @@ set_feature()
 			;;
 		speex-decoder)
 			dec_speex=$on_off
+			;;
+		gme-decoder)
+			dec_gme=$on_off
 			;;
 		modplug-decoder)
 			dec_modplug=$on_off
@@ -242,6 +245,10 @@ print_features_and_write_config()
 		echo "FLAC enabled"
 		dec="$dec decoders/flac.so"
 	fi
+	if [ "$dec_gme" = 1 ]; then
+		echo "GME enabled"
+		dec="$dec decoders/gme.so"
+	fi
 	if [ "$dec_speex" = 1 ]; then
 		echo "Speex enabled"
 		dec="$dec decoders/speex.so"
@@ -327,6 +334,7 @@ gmu_core=-2
 tool_gmuc=-2
 dec_opus=-2
 dec_mpg123=-2
+dec_gme=-2
 dec_vorbis=-2
 dec_musepack=-2
 dec_flac=-2
@@ -524,6 +532,14 @@ if [ "$dec_flac" != 0 ]; then
 	code_test=""
 	test_lib "libFLAC"
 	dec_flac=$?
+fi
+
+if [ "$dec_gme" != 0 ]; then
+	includes_test="#include <gme/gme.h>"
+	libs_test="-lgme"
+	code_test=""
+	test_lib "libgme"
+	dec_gme=$?
 fi
 
 if [ "$dec_vorbis" != 0 ]; then
