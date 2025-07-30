@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <gme.h>
+#include <gme/gme.h>
 
 #include "../gmudecoder.h"
 #include "../trackinfo.h"
