@@ -445,7 +445,6 @@ dec_gme=${auto_detect}
 dec_vorbis=${auto_detect}
 dec_musepack=${auto_detect}
 dec_flac=${auto_detect}
-dec_gme=${auto_detect}
 dec_speex=${auto_detect}
 dec_modplug=${auto_detect}
 dec_openmpt=${auto_detect}
