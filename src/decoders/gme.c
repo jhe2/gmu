@@ -1,6 +1,6 @@
 /*
- * GMU Music Player - Decodificador Game Music Emu (libgme)
- * Soporte multitrack implementado como funciones auxiliares fuera del struct
+ * GMU Music Player - Decoder Game Music Emu (libgme)
+ * Multitrack support implemented as helper functions outside the struct (experimental)
  */
 
 #include <stdio.h>
@@ -27,7 +27,7 @@ static TrackInfo ti;
 
 static const char *get_name(void)
 {
-    return "Game Music Emu decoder v0.7";
+    return "Game Music Emu decoder v0.6.4";
 }
 
 static const char *get_file_extensions(void)
@@ -166,10 +166,10 @@ static GmuCharset meta_data_get_charset(void)
 
 static void set_reader_handle(Reader *r)
 {
-    (void)r; // No implementado
+    (void)r; // Not implemented
 }
 
-// Funciones auxiliares para multitrack (NO van en struct)
+// Helper functions for multitrack (DO NOT go in struct)
 
 int gme_get_num_tracks(void)
 {
