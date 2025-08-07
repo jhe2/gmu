@@ -549,15 +549,17 @@ if [ "${feature_sdl_ttf}" -ne 0 ]; then
 	fi
 fi
 
-includes_test="#ifndef _XOPEN_SOURCE_EXTENDED
-#define _XOPEN_SOURCE_EXTENDED
-#endif
-#include <curses.h>"
-includes_test_flags="-I$BASE_INCLUDE_PATH/ncursesw"
-libs_test="-lncursesw"
-code_test="int testvar = WACS_VLINE;"
-test_lib "ncursesw"
-tool_gmuc=$?
+if [ "$tool_gmuc" != 0 ]; then
+	includes_test="#ifndef _XOPEN_SOURCE_EXTENDED
+	#define _XOPEN_SOURCE_EXTENDED
+	#endif
+	#include <curses.h>"
+	includes_test_flags="-I$BASE_INCLUDE_PATH/ncursesw"
+	libs_test="-lncursesw"
+	code_test="int testvar = WACS_VLINE;"
+	test_lib "ncursesw"
+	tool_gmuc=$?
+fi
 
 if [ "$dec_opus" != 0 ]; then
 	includes_test="#include <opus/opus.h>
