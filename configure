@@ -51,6 +51,7 @@ BUILD_CONFIG_EXTRAS=
 LFLAGS_CORE=
 LIBS_CORE=
 WARNINGS=
+PREFIX=
 
 test_compiler()
 {
@@ -214,6 +215,9 @@ print_features_and_write_config()
 
 	echo "# Generated Gmu config" >config.mk
 	echo "RELEASE_BUILD=${release_build}" >>config.mk
+	if [ "${PREFIX}" != "" ]; then
+		echo "PREFIX=${PREFIX}" >>config.mk
+	fi
 	echo "Features:"
 	local TOOLS_TO_BUILD=
 	if [ "$gmu_core" != 0 ]; then
@@ -426,6 +430,14 @@ do
 			;;
 		--verbose)
 			DEBUG_OUTPUT="/dev/fd/2"
+			shift
+			;;
+		--prefix)
+			PREFIX="$2"
+			shift 2
+			;;
+		--prefix=*)
+			PREFIX="${1#*=}"
 			shift
 			;;
 		--release)
