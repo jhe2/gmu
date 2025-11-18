@@ -36,7 +36,7 @@
 static size_t http_cache_size           = 512 * 1024;
 static size_t http_cache_prebuffer_size = 256 * 1024;
 
-int reader_set_cache_size_kb(size_t size, size_t prebuffer_size)
+size_t reader_set_cache_size_kb(size_t size, size_t prebuffer_size)
 {
 	size = size < HTTP_CACHE_SIZE_MIN_KB ? HTTP_CACHE_SIZE_MIN_KB : size;
 	size = size > HTTP_CACHE_SIZE_MAX_KB ? HTTP_CACHE_SIZE_MAX_KB : size;
@@ -49,7 +49,7 @@ int reader_set_cache_size_kb(size_t size, size_t prebuffer_size)
 	return size;
 }
 
-int reader_get_cache_fill(Reader *r)
+size_t reader_get_cache_fill(Reader *r)
 {
 	return ringbuffer_get_fill(&(r->rb_http));
 }
@@ -62,7 +62,7 @@ static void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-static int http_url_split_alloc(const char *url, char **hostname, int *port, char **path)
+static int http_url_split_alloc(const char *url, char **hostname, unsigned short *port, char **path)
 {
 	size_t len = url ? strlen(url) : 0;
 
@@ -73,13 +73,13 @@ static int http_url_split_alloc(const char *url, char **hostname, int *port, cha
 		size_t       path_len = 0, host_len;
 
 		if (port_begin) {
-			*port = atoi(port_begin+1);
+			*port = (short unsigned)atoi(port_begin+1);
 		} else {
 			port_begin = strchr(host_begin, '/');
 			*port = 80; /* default http port */
 		}
 		if (port_begin) path_tmp = strchr(port_begin, '/');
-		host_len = (port_begin ? port_begin - host_begin : len-7);
+		host_len = (port_begin ? (size_t)(port_begin - host_begin) : len-7);
 
 		*hostname = malloc(host_len+1);
 		if (*hostname) {
@@ -90,7 +90,7 @@ static int http_url_split_alloc(const char *url, char **hostname, int *port, cha
 		path_len = strlen(path_tmp);
 		*path = malloc(path_len+1);
 		if (*path) {
-			strncpy(*path, path_tmp, path_len);
+			strncpy(*path, path_tmp, path_len+1);
 			(*path)[path_len] = '\0';
 		}
 	}
@@ -100,7 +100,8 @@ static int http_url_split_alloc(const char *url, char **hostname, int *port, cha
 static void *http_reader_thread(void *arg)
 {
 	Reader *r = (Reader *)arg;
-	int     numbytes = 1, err = 0;
+	ssize_t numbytes = 1;
+	int     err = 0;
 	char    buf[4096];
 
 	while (numbytes != -1 && numbytes > 0 && !r->eof) {
@@ -111,7 +112,7 @@ static void *http_reader_thread(void *arg)
 				int write_okay = 0;
 				while (!write_okay && !r->eof) {
 					pthread_mutex_lock(&(r->mutex));
-					write_okay = ringbuffer_write(&(r->rb_http), buf, numbytes);
+					write_okay = ringbuffer_write(&(r->rb_http), buf, (size_t)numbytes);
 					pthread_mutex_unlock(&(r->mutex));
 					usleep(1500);
 				}
@@ -160,8 +161,8 @@ static Reader *_reader_open(const char *url, int max_redirects)
 		r->streaminfo = cfg_init();
 
 		if (strncasecmp(url, "http://", 7) == 0) { /* Got a HTTP URL */
-			char *hostname = NULL, *path = NULL;
-			int   port = 80;
+			char          *hostname = NULL, *path = NULL;
+			unsigned short port = 80;
 			/* open http stream... */
 			/* 1) Split URL into host, port and path */
 			http_url_split_alloc(url, &hostname, &port, &path);
@@ -174,7 +175,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 				char   s[INET6_ADDRSTRLEN];
 				char   port_str[6];
 
-				snprintf(port_str, 5, "%d", port);
+				snprintf(port_str, 5, "%hu", port);
 				memset(&hints, 0, sizeof hints);
 				hints.ai_family = AF_UNSPEC;
 				hints.ai_socktype = SOCK_STREAM;
@@ -330,7 +331,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 							if (header_end_found) {
 								char *val = cfg_get_key_value_ignore_case(r->streaminfo, "Content-Length");
 								if (val) {
-									r->file_size = atol(val);
+									r->file_size = (size_t)atol(val);
 									wdprintf(V_DEBUG, "reader", "Stream size = %d bytes.\n", r->file_size);
 								}
 							}
@@ -349,7 +350,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 					char  *vc = NULL;
 					
 					if (len > 0 && (vc = malloc(len+1))) {
-						strncpy(vc, v, len);
+						strncpy(vc, v, len+1);
 						vc[len] = '\0';
 					}
 					wdprintf(V_INFO, "reader", "302 Redirect found: %s\n", vc ? vc : "unknown");
@@ -370,7 +371,7 @@ static Reader *_reader_open(const char *url, int max_redirects)
 				struct stat st;
 				r->seekable = 1;
 				if (stat(url, &st) == 0) {
-					r->file_size = st.st_size;
+					r->file_size = (size_t)st.st_size;
 					wdprintf(V_DEBUG, "reader", "File size = %d bytes.\n", r->file_size);
 				}
 				r->is_ready = 1;
@@ -494,12 +495,12 @@ char *reader_get_buffer(Reader *r)
 	return r->buf;
 }
 
-long reader_get_file_size(Reader *r)
+size_t reader_get_file_size(Reader *r)
 {
 	return r->file_size;
 }
 
-unsigned long reader_get_stream_position(Reader *r)
+size_t reader_get_stream_position(Reader *r)
 {
 	return r->stream_pos;
 }
@@ -526,9 +527,14 @@ int reader_seek_whence(Reader *r, long byte_offset, int whence)
 	int res = 0;
 	if (r->file) {
 		if (fseek(r->file, byte_offset, whence) == 0) {
+			long int ftres = ftell(r->file);
 			r->buf_data_size = 0;
-			r->stream_pos = ftell(r->file);
-			res = 1;
+			if (ftres > 0) {
+				r->stream_pos = (size_t)ftres;
+				res = 1;
+			} else {
+				wdprintf(V_INFO, "reader", "Seeking failed during ftell(). :(\n");
+			}
 		} else {
 			wdprintf(V_INFO, "reader", "Seeking failed. :(\n");
 		}

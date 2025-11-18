@@ -55,7 +55,7 @@ void hw_set_volume(int volume)
 {
 #ifndef GMU_DISABLE_OSS_MIXER
 	if (selected_mixer >= 0) {
-		if (volume >= 0) oss_mixer_set_volume(selected_mixer, volume);
+		if (volume >= 0) oss_mixer_set_volume((unsigned int)selected_mixer, volume);
 	} else {
 		wdprintf(V_INFO, "hw_unknown", "No suitable mixer available.\n");
 	}

@@ -56,10 +56,11 @@ int audio_fill_buffer(char *data, size_t size)
 
 static void calculate_dft(int16_t *input_signal, int input_signal_size, int *rex, int *imx)
 {
-	int res_size = input_signal_size / 2 + 1;
+	size_t res_size = (size_t)input_signal_size / 2 + 1;
 
 	if (rex && imx) {
-		int i, j, rs = res_size * sizeof(int);
+		int i, j;
+		size_t rs = res_size * sizeof(int);
 		memset(rex, 0, rs);
 		memset(imx, 0, rs);
 		for (j = 0; j < res_size; j++) {
@@ -102,13 +103,14 @@ void audio_spectrum_read_unlock(void)
 	SDL_UnlockMutex(spectrum_mutex);
 }
 
+/* len has to be of type int here, because SDL expects this. */
 static void fill_audio(void *udata, Uint8 *stream, int len)
 {
 	static Uint8 buf[65536];
 	size_t       add = 0;
 
-	if (ringbuffer_read(&audio_rb, (char *)buf, len)) {
-		add = len;
+	if (ringbuffer_read(&audio_rb, (char *)buf, (size_t)len)) {
+		add = (size_t)len;
 	} else {
 		size_t avail = ringbuffer_get_fill(&audio_rb);
 		memset(buf, 0, 65536);
@@ -120,8 +122,8 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 		buf_read_counter += add;
 		SDL_UnlockMutex(audio_mutex2);
 	}
-	SDL_memset(stream, 0, len);
-	SDL_MixAudio(stream, buf, len, volume * volume_fade_percent / 100);
+	SDL_memset(stream, 0, (size_t)len);
+	SDL_MixAudio(stream, buf, (Uint32)len, (int)(volume * volume_fade_percent) / 100);
 
 	/* When requested, run DFT on a few samples of each block of data for visualization purposes */
 	if (spectrum_reg > 0) {
@@ -136,7 +138,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 		}
 
 		if (channels > 0) {
-			for (i = 0, j = 0; j < 16; i += (2 * channels), j++) {
+			for (i = 0, j = 0; j < 16; i += (2 * (unsigned)channels), j++) {
 				samples_l[j] = (buf[i+1] << 8) + buf[i];
 			}
 			calculate_dft(samples_l, 16, rex, imx);
@@ -169,7 +171,7 @@ int audio_device_open(int samplerate, int channels)
 			wdprintf(V_INFO, "audio", "Opening audio device...\n");
 			wanted.freq     = samplerate;
 			wanted.format   = AUDIO_S16;
-			wanted.channels = channels; /* 1 = mono, 2 = stereo */
+			wanted.channels = (Uint8)channels; /* 1 = mono, 2 = stereo */
 			wanted.samples  = SAMPLE_BUFFER_SIZE;
 			wanted.callback = fill_audio;
 			wanted.userdata = NULL;
@@ -263,11 +265,11 @@ int audio_get_pause(void)
 	return res;
 }
 
-int audio_get_playtime(void)
+size_t audio_get_playtime(void)
 {
-	int res = 0;
+	size_t res = 0;
 	if (SDL_LockMutex(audio_mutex2) != -1) {
-		res = buf_read_counter / (have_samplerate * 2 * have_channels) * 1000;
+		res = buf_read_counter / (size_t)(have_samplerate * 2 * have_channels) * 1000;
 		SDL_UnlockMutex(audio_mutex2);
 	}
 	return res;
@@ -333,9 +335,9 @@ void audio_device_close(void)
 	}
 }
 
-static const int volume_array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 24, 32, 48, 64, 96, 128 };
+static const unsigned int volume_array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 24, 32, 48, 64, 96, 128 };
 
-void audio_set_volume(int vol) /* 0..AUDIO_MAX_SW_VOLUME */
+void audio_set_volume(unsigned int vol) /* 0..AUDIO_MAX_SW_VOLUME */
 {
 	volume_internal = (vol < AUDIO_MAX_SW_VOLUME ? vol : AUDIO_MAX_SW_VOLUME-1);
 	volume_internal = (volume_internal > 0 ? volume_internal : 0);
@@ -343,43 +345,43 @@ void audio_set_volume(int vol) /* 0..AUDIO_MAX_SW_VOLUME */
 	wdprintf(V_DEBUG, "audio", "volume=%d (%d/%d)\n", volume, SDL_MIX_MAXVOLUME, AUDIO_MAX_SW_VOLUME);
 }
 
-int audio_get_volume(void)
+unsigned int audio_get_volume(void)
 {
 	return volume_internal;
 }
 
-long audio_set_sample_counter(long sample)
+size_t audio_set_sample_counter(size_t sample)
 {
-	long res = 0;
+	size_t res = 0;
 	if (SDL_LockMutex(audio_mutex2) != -1) {
-		res = buf_read_counter = (sample * 2 * have_channels);
+		res = buf_read_counter = (sample * 2 * (size_t)have_channels);
 		SDL_UnlockMutex(audio_mutex2);
 	}
 	return res;
 }
 
-long audio_increase_sample_counter(long sample_offset)
+size_t audio_increase_sample_counter(size_t sample_offset)
 {
-	long res = 0;
+	size_t res = 0;
 	if (SDL_LockMutex(audio_mutex2) != -1) {
-		buf_read_counter += (sample_offset * 2 * have_channels);
+		buf_read_counter += (sample_offset * 2 * (size_t)have_channels);
 		res = buf_read_counter;
 		SDL_UnlockMutex(audio_mutex2);
 	}
 	return res;
 }
 
-long audio_get_sample_count(void)
+size_t audio_get_sample_count(void)
 {
-	long res = 0;
+	size_t res = 0;
 	if (SDL_LockMutex(audio_mutex2) != -1) {
-		res = buf_read_counter / (2 * have_channels);
+		res = buf_read_counter / (2 * (size_t)have_channels);
 		SDL_UnlockMutex(audio_mutex2);
 	}
 	return res;
 }
 
-void audio_set_fade_volume(int percent)
+void audio_set_fade_volume(unsigned int percent)
 {
 	SDL_LockAudio();
 	if (percent >= 0 && percent <= 100)

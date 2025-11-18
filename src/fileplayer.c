@@ -122,7 +122,7 @@ void file_player_set_lyrics_file_pattern(const char *pattern)
 	strncpy(lyrics_file_pattern, pattern ? pattern : "", 255);
 }
 
-int file_player_playback_get_time(void)
+size_t file_player_playback_get_time(void)
 {
  	return audio_get_playtime();
 }
@@ -170,7 +170,7 @@ void file_player_set_filename(char *filename)
 	locked = 1;
 	pthread_mutex_lock(&file_mutex);
 	if (filename) {
-		int len = strlen(filename);
+		size_t len = strlen(filename);
 		if (len > 0) {
 			file = realloc(file, len+1);
 			if (file) {
@@ -259,7 +259,7 @@ static int update_metadata(GmuDecoder *gd, TrackInfo *ti, GmuCharset charset)
 					trackinfo_set_image(
 						ti,
 						((*gd->get_meta_data)(GMU_META_IMAGE_DATA, 1)),
-						(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
+						(size_t)(*gd->get_meta_data_int)(GMU_META_IMAGE_DATA_SIZE, 1),
 						((*gd->get_meta_data)(GMU_META_IMAGE_MIME_TYPE, 1))
 					);
 				}
@@ -280,8 +280,9 @@ static void *decode_audio_thread(void *udata)
 	wdprintf(V_INFO, "fileplayer", "File player thread initialized.\n");
 	seek_second = -1;
 	while (!file_player_check_shutdown()) {
-		char *filename = NULL;
-		int   len = 0, set_playing = 0;
+		char  *filename = NULL;
+		size_t len = 0;
+		int    set_playing = 0;
 
 		pthread_mutex_lock(&mutex);  /* Wait for playback to be started */
 		pthread_mutex_unlock(&mutex);
@@ -361,12 +362,12 @@ static void *decode_audio_thread(void *udata)
 						if (*gd->get_channels)
 							ti->channels   = (*gd->get_channels)();
 						if (*gd->get_bitrate)
-							ti->bitrate    = (*gd->get_bitrate)();
+							ti->bitrate    = (size_t)(*gd->get_bitrate)();
 						if (*gd->get_length)
-							ti->length     = (*gd->get_length)();
+							ti->length     = (size_t)(*gd->get_length)();
 						if (*gd->get_file_type)
 							strncpy_charset_conv(ti->file_type, (*gd->get_file_type)(),
-												 SIZE_FILE_TYPE-1, 0, charset);
+								SIZE_FILE_TYPE-1, 0, charset);
 						channels = ti->channels;
 						trackinfo_release_lock(ti);
 					}
@@ -404,12 +405,13 @@ static void *decode_audio_thread(void *udata)
 						if (get_pb_request() == PBRQ_PLAY) audio_set_pause(0);
 
 						if (r && !reader_is_ready(r)) {
-							int check_count = 20, prev_buf_fill = 0;
+							int    check_count = 20;
+							size_t prev_buf_fill = 0;
 							/* Wait for the reader to pre-buffer the requested amount of data (if necessary) */
 							wdprintf(V_DEBUG, "fileplayer", "Prebuffering...\n");
 							event_queue_push(gmu_core_get_event_queue(), GMU_BUFFERING);
 							while (r && !reader_is_ready(r) && !reader_is_eof(r) && get_item_status() == PLAYING && check_count > 0) {
-								int buf_fill = reader_get_cache_fill(r);
+								size_t buf_fill = reader_get_cache_fill(r);
 								if (prev_buf_fill != buf_fill) {
 									prev_buf_fill = buf_fill;
 									check_count = 20;
@@ -433,12 +435,13 @@ static void *decode_audio_thread(void *udata)
 							|| (item_status != STOPPED && audio_buffer_get_fill() > 0) )
 							&& !file_player_check_shutdown()
 						) {
-							int size = 0, br = 0;
+							size_t size = 0;
+							int    br = 0;
 
 							if (seek_second >= 0) {
 								if (get_item_status() == PLAYING && (!gd->set_reader_handle || reader_is_seekable(r))) {
 									if (*gd->seek && (*gd->seek)(seek_second))
-										audio_set_sample_counter(seek_second * ti->samplerate);
+										audio_set_sample_counter((size_t)(seek_second * ti->samplerate));
 								}
 								seek_second = -1;
 							}
@@ -447,7 +450,7 @@ static void *decode_audio_thread(void *udata)
 							}
 							while (ret > 0 && size < BUF_SIZE / 2 && item_status != STOPPED) {
 								ret = (*gd->decode_data)(pcmout+size, BUF_SIZE-size);
-								if (ret > 0) size += ret;
+								if (ret > 0) size += (size_t)ret;
 							}
 							if (ret <= 0) SDL_Delay(50);
 							if (gd->get_current_bitrate) br = (*gd->get_current_bitrate)();
@@ -564,7 +567,7 @@ int file_player_play_file(char *filename, int skip_current, int fade_out_on_skip
  */
 int file_player_seek(long offset)
 {
-	seek_second = audio_get_playtime() / 1000 + offset;
+	seek_second = (long int)audio_get_playtime() / 1000 + offset;
 	if (seek_second < 0) seek_second = 0;
 	return 0;
 }

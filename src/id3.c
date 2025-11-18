@@ -80,16 +80,16 @@ int id3_read_id3v1(FILE *file, TrackInfo *ti, const char *file_type)
 	return result;
 }
 
-static int calc_size_unsync(const unsigned char *four_bytes)
+static size_t calc_size_unsync(const unsigned char *four_bytes)
 {
-	return (four_bytes[3])       + (four_bytes[2] << 7) + 
-	       (four_bytes[1] << 14) + (four_bytes[0] << 21);
+	return (size_t)(four_bytes[3]) + (four_bytes[2] << 7) + 
+		(four_bytes[1] << 14) + (four_bytes[0] << 21);
 }
 
-static int calc_size(const unsigned char *four_bytes)
+static size_t calc_size(const unsigned char *four_bytes)
 {
-	return (four_bytes[3])       + (four_bytes[2] << 8) + 
-	       (four_bytes[1] << 16) + (four_bytes[0] << 24);
+	return (size_t)(four_bytes[3]) + (four_bytes[2] << 8) + 
+		(four_bytes[1] << 16) + (four_bytes[0] << 24);
 }
 
 typedef enum {
@@ -171,7 +171,7 @@ static void set_cover_art(TrackInfo *ti, char *data, size_t data_size, Charset c
 static void set_lyrics(TrackInfo *ti, const char *str, size_t str_size, Charset charset)
 {
 	if (str[0] != '\0') {
-		int i = 0;
+		size_t i = 0;
 		/* skip lyrics description */
 		if (charset == UTF_16 || charset == UTF_16_BOM)
 			for (i = 0; !(str[i] == '\0' && str[i+1] == '\0') && i < str_size; i++);
@@ -185,18 +185,18 @@ static void set_lyrics(TrackInfo *ti, const char *str, size_t str_size, Charset 
 	}
 }
 
-static int fread_unsync(char *frame_data, size_t fsize, FILE *file)
+static size_t fread_unsync(char *frame_data, size_t fsize, FILE *file)
 {
 	size_t j;
 
 	for (j = 0; j < fsize; j++) {
-		unsigned char uc = fgetc(file);
-		frame_data[j] = (char)uc;
-		if (uc == 0xFF) {
-			uc = fgetc(file);
-			if (uc != 0) {
+		char c = (char)fgetc(file);
+		frame_data[j] = c;
+		if ((unsigned char)c == 0xFF) {
+			c = (char)fgetc(file);
+			if (c != 0) {
 				j++;
-				frame_data[j] = (char)uc;
+				frame_data[j] = c;
 			}
 		}
 	}
@@ -212,9 +212,9 @@ int id3_read_id3v2(FILE *file, TrackInfo *ti, const char *file_type)
 	if (fread(id, 3, 1, file) && strncmp(id, "ID3", 3) == 0) {
 		unsigned char ver_major, ver_minor, flags, size[4];
 
-		ver_major = fgetc(file);
-		ver_minor = fgetc(file);
-		flags     = fgetc(file);
+		ver_major = (unsigned char)fgetc(file);
+		ver_minor = (unsigned char)fgetc(file);
+		flags     = (unsigned char)fgetc(file);
 		if (fread(size, 4, 1, file)) {
 			wdprintf(V_INFO, "id3", "ID3v2.%d.%d detected!\n", ver_major, ver_minor);
 			snprintf(ti->file_type, SIZE_FILE_TYPE, "%s (ID3v2.%d.%d)",

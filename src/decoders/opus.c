@@ -41,8 +41,8 @@ static int read_func(void *_stream, unsigned char *_ptr, int _nbytes)
 {
 	int     res = -1;
 	Reader *r = (Reader *)_stream;
-	if (reader_read_bytes(r, _nbytes)) {
-		memcpy(_ptr, reader_get_buffer(r), _nbytes);
+	if (reader_read_bytes(r, (size_t)_nbytes)) {
+		memcpy(_ptr, reader_get_buffer(r), (size_t)_nbytes);
 		res = _nbytes;
 	}
 	return res;
@@ -51,7 +51,8 @@ static int read_func(void *_stream, unsigned char *_ptr, int _nbytes)
 /* Returns 0 on success or -1 if seeking is unsupported or an error occured */
 static int seek_func(void *_stream, opus_int64 _offset, int _whence)
 {
-	int res = -1, start;
+	int res = -1;
+	size_t start;
 	Reader *r = (Reader *)_stream;
 	wdprintf(V_DEBUG, "opus", "seek_func() called: %d / %d\n", _offset, _whence);
 	if (reader_is_seekable(r)) {
