@@ -23,7 +23,7 @@ static int current_track = 0;
 static int sample_rate = 44100;
 static int total_tracks = 1;
 static int track_ended = 0;
-static TrackInfo ti;
+static TrackInfo ti, ti_metaonly;
 
 static const char *get_name(void)
 {
@@ -128,29 +128,60 @@ static const char *get_meta_data(GmuMetaDataType type, int for_current_file)
 {
 	static char meta[256];
 	gme_info_t *info = NULL;
-	if (!emu) return NULL;
-	if (gme_track_info(emu, &info, current_track)) return NULL;
 
-	switch (type) {
-		case GMU_META_TITLE:
-			strncpy(meta, info->song ? info->song : "", sizeof(meta) - 1);
-			break;
-		case GMU_META_ARTIST:
-			strncpy(meta, info->author ? info->author : "", sizeof(meta) - 1);
-			break;
-		case GMU_META_ALBUM:
-			strncpy(meta, info->game ? info->game : "", sizeof(meta) - 1);
-			break;
-		default:
-			meta[0] = 0;
+	if (for_current_file) {
+		if (!emu) return NULL;
+		if (gme_track_info(emu, &info, current_track)) return NULL;
+		switch (type) {
+			case GMU_META_TITLE:
+				strncpy(meta, info->song ? info->song : "", sizeof(meta) - 1);
+				break;
+			case GMU_META_ARTIST:
+				strncpy(meta, info->author ? info->author : "", sizeof(meta) - 1);
+				break;
+			case GMU_META_ALBUM:
+				strncpy(meta, info->game ? info->game : "", sizeof(meta) - 1);
+				break;
+			default:
+				meta[0] = 0;
+		}
+		gme_free_info(info);
+	} else {
+		switch (type) {
+			case GMU_META_TITLE:
+				strncpy(meta, ti_metaonly.title, sizeof(meta) - 1);
+				break;
+			case GMU_META_ARTIST:
+				strncpy(meta, ti_metaonly.artist, sizeof(meta) - 1);
+				break;
+			case GMU_META_ALBUM:
+				strncpy(meta, ti_metaonly.album, sizeof(meta) - 1);
+				break;
+			default:
+				meta[0] = 0;
+		}
 	}
-	gme_free_info(info);
 	return meta;
 }
 
 static int meta_data_load(const char *filename)
 {
-	(void)filename;
+	Music_Emu  *meta_emu = NULL;
+	gme_info_t *info = NULL;
+
+	if (gme_open_file(filename, &meta_emu, sample_rate) != NULL) {
+		return 0;
+	}
+
+	if (!meta_emu) return 0;
+	if (gme_track_info(meta_emu, &info, 0)) return 0;
+
+	strncpy(ti_metaonly.title,  info->song   ? info->song   : "", sizeof(ti_metaonly.title) - 1);
+	strncpy(ti_metaonly.artist, info->author ? info->author : "", sizeof(ti_metaonly.artist) - 1);
+	strncpy(ti_metaonly.album,  info->game   ? info->game   : "", sizeof(ti_metaonly.album) - 1);
+	ti_metaonly.length = (info->length > 0 ? info->length / 1000 : 0);
+	gme_free_info(info);
+	gme_delete(meta_emu);
 	return 1;
 }
 
