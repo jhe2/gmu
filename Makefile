@@ -1,7 +1,7 @@
 # 
 # Gmu Music Player
 #
-# Copyright (c) 2006-2016 Johannes Heimansberg (wejp.k.vu)
+# Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
 #
 # File: Makefile  Created: 060904
 #
@@ -18,8 +18,25 @@ STATIC?=0
 include config.mk
 
 PREFIX?=/usr/local
-CFLAGS+=$(COPTS) -pipe -Wall -Wcast-qual -Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations -DFILE_HW_H="\"hw_$(TARGET).h\"" -DGMU_INSTALL_PREFIX="\"$(PREFIX)\""
-LFLAGS+=-pthread
+
+# Most flags recommended by the Compiler Options Hardening Guide at
+# https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html
+# have been enabled.
+# The -Wl,-z,nodlopen flag can't be used, since Gmu needs to be able to
+# load its plugins via dlopen().
+# The -Wconversion and -Wsign-conversion flags create too much noise right
+# now, so neither is enabled by default. One of them will be enabled later
+# when most conversion issues in the code-base have been resolved.
+CFLAGS+=$(COPTS) -O2 -pipe -Wall -Wformat -Wformat=2 -Wimplicit-fallthrough -Wcast-qual
+CFLAGS+=-Wno-variadic-macros -Wuninitialized -Wcast-align -Wredundant-decls -Wmissing-declarations
+CFLAGS+=-Werror=implicit -Werror=format-security -Werror=incompatible-pointer-types -Werror=int-conversion
+CFLAGS+=-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fexceptions -fno-delete-null-pointer-checks
+CFLAGS+=-fno-strict-aliasing -fno-strict-overflow -fstack-clash-protection
+CFLAGS+=-fstack-protector-strong -fstrict-flex-arrays=3
+# GCC-only flags:
+#CFLAGS+=-Wtrampolines -Wbidi-chars=any,ucn
+CFLAGS+=-DFILE_HW_H="\"hw_$(TARGET).h\"" -DGMU_INSTALL_PREFIX="\"$(PREFIX)\"" -DGMU_SYSCONFDIR="\"$(SYSCONFDIR)\""
+LFLAGS+=-pthread -Wl,-z,noexecstack -Wl,-z,relro
 
 # Release build compiler/linker flags
 ifeq ($(RELEASE_BUILD),1)
