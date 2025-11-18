@@ -1,8 +1,8 @@
 # The Gmu Music Player
 
-Copyright (c) 2006-2021 Johannes Heimansberg
+Copyright (c) 2006-2025 Johannes Heimansberg
 
-http://wej.k.vu/projects/gmu/
+https://wej.k.vu/projects/gmu/
 
 ## Introduction
 
@@ -12,7 +12,7 @@ variety of other devices, including ordinary computers and lots of
 handheld devices.
 
 Gmu is built in a modular way and supports various frontends and
-decoders for supports of different user interfaces and file formats
+decoders for support of different user interfaces and file formats
 respectively.
 
 Gmu's most used frontend is the SDL based frontend which gives the
