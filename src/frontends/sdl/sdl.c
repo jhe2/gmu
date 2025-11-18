@@ -50,6 +50,7 @@
 #include "help.h"
 #include "gmuerror.h"
 #include "consts.h"
+#include "fallthrough.h"
 
 #define FPS          10
 #define FRAME_SKIP    1
@@ -263,7 +264,7 @@ static int file_browser_process_action(FileBrowser *fb, PlaylistBrowser *pb,
 			}
 			if (user_key_action == FB_CHDIR)
 				break;
-			/* Fall-through */
+			fallthrough();
 		case FB_PLAY_FILE:
 			if (!file_browser_selection_is_dir(fb)) { /* Play file */
 				gmu_core_playlist_set_current(NULL);
@@ -614,6 +615,7 @@ static void execute_plmanager_action(PlaylistManager *pm)
 			break;
 		case PLMANAGER_LOAD_LIST:
 			gmu_core_playlist_clear();
+			fallthrough();
 		case PLMANAGER_APPEND_LIST:
 			plmanager_reset_flag(pm);
 			snprintf(temp, PATH_LEN_MAX, "%s/%s", base_dir, plmanager_get_selection(pm));
@@ -866,13 +868,13 @@ static void run_player(char *skin_name, char *decoders_str)
 			switch (event.type) {
 				case SDL_KEYUP:
 					amethod = ACTIVATE_RELEASE;
-					/* fall through */
+					fallthrough();
 				case SDL_KEYDOWN:
 					button = event.key.keysym.sym;
 					break;
 				case SDL_JOYBUTTONUP:
 					amethod = ACTIVATE_RELEASE;
-					/* fall through */
+					fallthrough();
 				case SDL_JOYBUTTONDOWN:
 					button = event.jbutton.button;
 					break;

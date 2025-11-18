@@ -71,7 +71,8 @@ int setup_process_action(SetupDialog *setup_dlg, View *view, View old_view, int 
 
 void setup_init(SetupDialog *setup_dlg, Skin *skin)
 {
-	int i, c;
+	size_t i;
+	int c;
 	char *k;
 	setup_dlg->key_count = 0;
 	setup_dlg->skin = skin;
@@ -86,7 +87,7 @@ void setup_init(SetupDialog *setup_dlg, Skin *skin)
 		char **presets = cfg_key_get_presets(setup_dlg->config, k);
 		setup_dlg->selected_value[c] = -1; /* Default to no selection */
 		if (presets) {
-			int len = strlen(k);
+			size_t len = strlen(k);
 			for (j = 0; j < MAX_PRESETS_PER_KEY; j++) {
 				setup_dlg->keys[c][j] = NULL;
 			}
@@ -121,18 +122,18 @@ static void draw_item(SetupDialog *setup_dlg, SDL_Surface *sdl_target,
                       char **key, int active_item, int cursor_item,
                       int row)
 {
-	int  i, size = 255;
-	char str[256];
+	size_t i, size = 255;
+	char   str[256];
 
 	memset(str, ' ', 32);
 	str[32] = '\0';
 	if (key[0]) {
 		i = strlen(key[0]);
 		if (i > 31) i = 31;
-		strncpy(str, key[0], i);
+		strncpy(str, key[0], 255);
 
 		for (i = 1; key[i] != NULL; i++) {
-			int len = strlen(key[i]);
+			size_t len = strlen(key[i]);
 			if (cursor_item >= 0 && cursor_item+1 == i && size > 0) {
 				strncat(str, "**", size);
 				size-=2;
@@ -180,7 +181,7 @@ void setup_draw(SetupDialog *setup_dlg, SDL_Surface *sdl_target)
 	h = gmu_widget_get_height((GmuWidget *)&setup_dlg->skin->lv, 1);
 	setup_dlg->visible_lines = h / textrenderer_get_line_height(&setup_dlg->skin->font1);
 	for (i = setup_dlg->offset, y = 0;
-	     y < setup_dlg->visible_lines && i < setup_dlg->key_count && setup_dlg->keys[i];
+	     y < setup_dlg->visible_lines && i < setup_dlg->key_count && setup_dlg->keys[i][0];
 	     i++, y++) {
 		draw_item(
 			setup_dlg,

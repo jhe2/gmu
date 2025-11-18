@@ -82,9 +82,11 @@ static void player_display_show_volume(TextRenderer *tr, SDL_Surface *target, in
 	}*/
 }
 
-void player_display_draw(TextRenderer *tr, TrackInfo *ti, PB_Status player_status,
-                         int ptime_msec, int ptime_remaining, int volume,
-                         int busy, int shutdown_time, SDL_Surface *buffer)
+void player_display_draw(
+	TextRenderer *tr, TrackInfo *ti, PB_Status player_status,
+	int ptime_msec, int ptime_remaining, int volume,
+	int busy, char shutdown_time, SDL_Surface *buffer
+)
 {
 	int  min = 0, sec = 0;
 	char buf[MAX_LENGTH+1];

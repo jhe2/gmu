@@ -106,7 +106,7 @@ int input_config_init(char *inputconf_file)
 				hw_button_type[j] = INPUT_JOYSTICK;
 				if (hw_button_name[j]) {
 					has_joystick = 1;
-					strncpy(hw_button_name[j], name, namelen);
+					strcpy(hw_button_name[j], name);
 					hw_button_name[j][namelen] = '\0';
 					hw_button_val[j] = val_int;
 					/*printf("%03d: '%s' = %d\n", j, hw_button_name[j], hw_button_val[j]);*/
@@ -138,7 +138,7 @@ int input_config_init(char *inputconf_file)
 				hw_button_type[ja] = INPUT_JOYSTICK;
 				if (hw_button_name[ja]) {
 					has_joystick = 1;
-					strncpy(hw_button_name[ja], name, namelen);
+					strcpy(hw_button_name[ja], name);
 					hw_button_name[ja][namelen] = '\0';
 					hw_button_val[ja] = val_int;
 					hw_button_method[ja] = ACTIVATE_JOYAXIS_MOVE;
