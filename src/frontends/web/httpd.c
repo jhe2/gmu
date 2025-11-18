@@ -37,6 +37,7 @@
 #include "trackinfo.h"
 #include "wejconfig.h"
 #include "charset.h"
+#include "fallthrough.h"
 #include <assert.h>
 
 #define OKAY 0
@@ -728,6 +729,7 @@ static int process_command(int rfd, Connection *c)
 			switch (get_command(command)) {
 				case HEAD:
 					head_only = 1;
+					fallthrough();
 				case GET: {
 					int file_okay = 0;
 					if (host) { /* If no Host has been supplied, the query is invalid, thus repond with 400 */

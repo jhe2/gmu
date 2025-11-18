@@ -44,7 +44,7 @@ struct ConnectionStruct {
 	char           *http_request_header;
 	RingBuffer      rb_receive;
 	int             authentication_okay;
-	char            client_ip[INET6_ADDRSTRLEN];
+	char            client_ip[INET6_ADDRSTRLEN+1];
 	Connection     *prev, *next;
 };
 
@@ -53,8 +53,8 @@ typedef enum HTTPCommand {
 } HTTPCommand;
 
 typedef struct HTTPD_Init_Params {
-	int   local_only;
-	char *webserver_root;
+	int         local_only;
+	const char *webserver_root;
 } HTTPD_Init_Params;
 
 void *httpd_run_server(void *webserver_root);
