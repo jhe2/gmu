@@ -35,7 +35,7 @@ int m3u_open_file(M3u *m3u, const char *filename)
 	/* Extract path component from filename, if possible */
 	{
 		char  *c = strrchr(filename, '/');
-		size_t size = c ? c - filename + 1 : 0;
+		size_t size = c ? (size_t)(c - filename + 1) : 0;
 		if (size >= PATH_LEN_DIR_MAX) size = 0;
 		if (size > 0) strncpy(m3u->m3u_path, filename, size);
 		m3u->m3u_path[size] = '\0';
@@ -100,10 +100,10 @@ int m3u_read_next_item(M3u *m3u)
 				char *rn = NULL;
 				char  tmp_filename[256];
 				strncpy(mini_buffer, buf+8, i-8);
-				m3u->current_item_length = atoi(mini_buffer);
+				m3u->current_item_length = (size_t)atoi(mini_buffer);
 				strncpy(tmp_filename, buf+i+1, 255-i);
 				if (charset_is_valid_utf8_string(tmp_filename)) {
-					strncpy(m3u->current_item_title, tmp_filename, 255);
+					strncpy(m3u->current_item_title, tmp_filename, 256);
 				} else {
 					int r;
 					wdprintf(V_DEBUG, "m3u", "Invalid UTF-8 string found! Trying to interpret as ISO-8859-1...\n");

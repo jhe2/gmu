@@ -28,7 +28,7 @@ GmuDecoder *decloader_load_decoder(const char *so_file);
 int         decloader_load_all(const char *directory);
 GmuDecoder *decloader_get_decoder_for_extension(const char *file_extension);
 GmuDecoder *decloader_get_decoder_for_mime_type(const char *mime_type);
-GmuDecoder *decloader_get_decoder_for_data_chunk(const char *data, int size);
+GmuDecoder *decloader_get_decoder_for_data_chunk(const char *data, size_t size);
 char       *decloader_get_all_extensions(void);
 GmuDecoder *decloader_decoder_list_get_next_decoder(int getfirst);
 void        decloader_free(void);

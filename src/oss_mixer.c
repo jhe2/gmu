@@ -73,7 +73,7 @@ void oss_mixer_close(void)
 	close(mixer_device);
 }
 
-void oss_mixer_set_volume(int mixer, int volume)
+void oss_mixer_set_volume(unsigned int mixer, int volume)
 {
 	int l = volume < 0 ? 0 : (volume > 100 ? 100 : volume);
 	int r = volume < 0 ? 0 : (volume > 100 ? 100 : volume);
@@ -87,7 +87,7 @@ void oss_mixer_set_volume(int mixer, int volume)
 	}
 }
 
-int oss_mixer_get_volume(int mixer)
+int oss_mixer_get_volume(unsigned int mixer)
 {
 	int val = 0;
 
@@ -96,7 +96,7 @@ int oss_mixer_get_volume(int mixer)
 	return val;
 }
 
-int oss_mixer_is_mixer_available(int mixer)
+int oss_mixer_is_mixer_available(unsigned int mixer)
 {
 	return (mixer < SOUND_MIXER_NRDEVICES ? available_mixers[mixer] : 0);
 }

@@ -141,7 +141,7 @@ int decloader_load_all(const char *directory)
 						wdprintf(V_INFO, "decloader", "Loading %s was successful.\n", dir_get_filename(dir, i));
 						wdprintf(V_INFO, "decloader", "%s: Name: %s\n", gd->identifier, (*gd->get_name)());
 						if (gd->get_file_extensions) {
-							int len = strlen(extensions);
+							size_t len = strlen(extensions);
 							wdprintf(V_INFO, "decloader", "%s: File extensions: %s\n", gd->identifier, (*gd->get_file_extensions)());
 							snprintf(extensions+len, 1023-len, "%s;", (*gd->get_file_extensions)());
 						}
@@ -210,7 +210,7 @@ GmuDecoder *decloader_get_decoder_for_mime_type(const char *mime_type)
 }
 
 
-GmuDecoder *decloader_get_decoder_for_data_chunk(const char *data, int size)
+GmuDecoder *decloader_get_decoder_for_data_chunk(const char *data, size_t size)
 {
 	DecoderChain *dc = dc_root;
 	GmuDecoder   *gd = NULL;

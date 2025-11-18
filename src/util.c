@@ -35,7 +35,7 @@ void strtoupper(char *target, const char *src, size_t len)
 	size_t i, srclen = strlen(src);
 
 	for (i = 0; i < (srclen < len - 1 ? srclen : len - 1); i++)
-		target[i] = toupper(src[i]);
+		target[i] = (char)toupper(src[i]);
 	target[i] = '\0';
 }
 
@@ -44,7 +44,7 @@ void strtolower(char *target, const char *src, size_t len)
 	size_t i, srclen = strlen(src);
 
 	for (i = 0; i < (srclen < len - 1 ? srclen : len - 1); i++)
-		target[i] = tolower(src[i]);
+		target[i] = (char)tolower(src[i]);
 	target[i] = '\0';
 }
 
@@ -71,7 +71,7 @@ int file_copy(const char *destination_file, const char *source_file)
 		ouf = fopen(destination_file, "wb");
 		if (ouf) {
 			while (!feof(inf)) {
-				char ch = fgetc(inf);
+				char ch = (char)fgetc(inf);
 				if (!feof(inf)) {
 					if (fputc(ch, ouf) == EOF) {
 						result = 0;
@@ -169,7 +169,7 @@ static int check_pattern(
 	if (pattern_length > 0) {
 		char *pattern = calloc(1, pattern_length + 1);
 		if (pattern) {
-			int k;
+			size_t k;
 			for (k = pattern_offset; k < pattern_length + pattern_offset; k++)
 				pattern[k-pattern_offset] = pattern_list[k];
 			pattern[k-pattern_offset] = '\0';
@@ -221,8 +221,8 @@ static char *replace_char_with_string_alloc(
 	if (res_str) {
 		for (i = 0, k = 0; i < len && k < MAX_REPLACE_STR_LENGTH; i++)
 			if (str[i] == char_to_replace) {
-				int copy_len = len_str_to_insert > MAX_REPLACE_STR_LENGTH - k ?
-												   MAX_REPLACE_STR_LENGTH - k : len_str_to_insert;
+				size_t copy_len = len_str_to_insert > MAX_REPLACE_STR_LENGTH - k ?
+					MAX_REPLACE_STR_LENGTH - k : len_str_to_insert;
 				strncpy(res_str+k, str_to_insert, copy_len);
 				k += copy_len;
 			} else {
@@ -252,8 +252,8 @@ char *get_file_matching_given_pattern_alloc(
 		if (ext != NULL)
 			filename_without_ext_length = ext - d - 1;
 		strncpy(filename_without_ext, d+1, filename_without_ext_length);
+		strncpy(path, original_file, path_length);
 	}
-	strncpy(path, original_file, path_length);
 
 	if (filename_without_ext[0] != '\0') {
 		pattern = replace_char_with_string_alloc(file_pattern, '$', filename_without_ext);
@@ -302,7 +302,7 @@ int strncpy_charset_conv(
 			res = charset_utf16_to_utf8(target, target_size, source, source_size, LE);
 			break;
 		case M_CHARSET_AUTODETECT:
-			wdprintf(V_DEBUG, "fileplayer", "Charset autodetect!\n");
+			wdprintf(V_DEBUG, "util", "Charset autodetect!\n");
 			if (charset_is_valid_utf8_string(source)) {
 				strncpy(target, source, target_size);
 				res = 1;
@@ -322,11 +322,14 @@ char *expand_path_alloc(const char *path)
 	if (home && path) {
 		size_t len_p = strlen(path);
 		size_t len_h = strlen(home);
-		res = malloc(len_p + (path[0] == '~' ? len_h : 0) + 1);
+		size_t total_len = len_p + (path[0] == '~' ? len_h : 0);
+		res = malloc(total_len + 1);
 		if (res) {
-			snprintf(res, len_p + len_h + 1, "%s%s",
-			         path[0] == '~' ? home : "",
-			         path[0] == '~' ? path + 1 : path);
+			snprintf(
+				res, total_len+1, "%s%s",
+				path[0] == '~' ? home : "",
+				path[0] == '~' ? path + 1 : path
+			);
 		}
 	}
 	return res;
@@ -352,7 +355,7 @@ int rmkdir(const char *dir, mode_t mode)
 	size_t len, size = sizeof(tmp);
 	errno = 0;
 
-	len = snprintf(tmp, size, "%s", dir);
+	len = (size_t)snprintf(tmp, size, "%s", dir);
 	if (len > 0 && len < size) {
 		if (tmp[len - 1] == '/')
 			tmp[len - 1] = 0;

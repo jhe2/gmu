@@ -17,7 +17,7 @@
 #define GMU_OSS_MIXER_H
 int  oss_mixer_open(void);
 void oss_mixer_close(void);
-void oss_mixer_set_volume(int mixer, int volume);
-int  oss_mixer_get_volume(int mixer);
-int  oss_mixer_is_mixer_available(int mixer);
+void oss_mixer_set_volume(unsigned int mixer, int volume);
+int  oss_mixer_get_volume(unsigned int mixer);
+int  oss_mixer_is_mixer_available(unsigned int mixer);
 #endif

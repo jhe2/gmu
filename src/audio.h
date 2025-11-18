@@ -21,7 +21,7 @@
 
 int      audio_device_open(int samplerate, int channels);
 int      audio_fill_buffer(char *data, size_t size);
-int      audio_get_playtime(void);
+size_t   audio_get_playtime(void);
 void     audio_buffer_init(void);
 void     audio_buffer_clear(void);
 void     audio_buffer_free(void);
@@ -32,14 +32,14 @@ int      audio_get_status(void);
 void     audio_force_pause(int pause);
 int      audio_set_pause(int pause_state);
 int      audio_get_pause(void);
-void     audio_set_volume(int vol); /* 0..15 */
-int      audio_get_volume(void);
-long     audio_set_sample_counter(long sample);
-long     audio_increase_sample_counter(long sample_offset);
-long     audio_get_sample_count(void);
+void     audio_set_volume(unsigned int vol); /* 0..15 */
+unsigned int audio_get_volume(void);
+size_t   audio_set_sample_counter(size_t sample);
+size_t   audio_increase_sample_counter(size_t sample_offset);
+size_t   audio_get_sample_count(void);
 void     audio_wait_until_more_data_is_needed(void);
 void     audio_set_done(void);
-void     audio_set_fade_volume(int percent);
+void     audio_set_fade_volume(unsigned int percent);
 int      audio_fade_out_step(unsigned int step_size);
 void     audio_reset_fade_volume(void);
 int      audio_fade_out_in_progress(void);

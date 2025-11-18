@@ -581,7 +581,7 @@ void gmu_core_playlist_clear(void)
 	event_queue_push(&event_queue, GMU_PLAYLIST_CHANGE);
 }
 
-Entry *gmu_core_playlist_get_entry(int item)
+Entry *gmu_core_playlist_get_entry(unsigned item)
 {
 	Entry *e;
 	e = playlist_get_entry(&pl, item);
@@ -595,11 +595,11 @@ int gmu_core_playlist_entry_delete(Entry *entry)
 	return res;
 }
 
-Entry *gmu_core_playlist_item_delete(int item)
+Entry *gmu_core_playlist_item_delete(unsigned item)
 {
 	Entry *next = NULL;
 	next = playlist_item_delete(&pl, item);
-	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, item);
+	event_queue_push_with_parameter(&event_queue, GMU_PLAYLIST_CHANGE, (int)item);
 	return next;
 }
 
@@ -711,11 +711,11 @@ void gmu_core_set_volume(int vol)
 				audio_set_volume(GMU_CORE_SW_VOLUME_MAX-1);
 				hw_set_volume(vol-GMU_CORE_SW_VOLUME_MAX+2);
 			} else {
-				audio_set_volume(vol);
+				audio_set_volume((unsigned)vol);
 				hw_set_volume(1);
 			}
 		} else if (strncmp(vc, "Software", 8) == 0) {
-			audio_set_volume(vol);
+			audio_set_volume((unsigned)vol);
 		} else if (strncmp(vc, "Hardware", 8) == 0) {
 			hw_set_volume(vol);
 		}
@@ -744,7 +744,7 @@ char **gmu_core_get_file_extensions(void)
 	return file_extensions;
 }
 
-int gmu_core_get_status(void)
+unsigned gmu_core_get_status(void)
 {
 	return player_status == PLAYING ? file_player_get_item_status() : STOPPED;
 }
@@ -776,12 +776,12 @@ int gmu_core_get_shutdown_time_total(void)
 	return shutdown_timer;
 }
 
-char *gmu_core_get_base_dir(void)
+const char *gmu_core_get_base_dir(void)
 {
 	return base_dir;
 }
 
-char *gmu_core_get_config_dir(void)
+const char *gmu_core_get_config_dir(void)
 {
 	return config_dir;
 }
@@ -1127,11 +1127,11 @@ int main(int argc, char **argv)
 
 	/* Reader cache size */
 	{
-		int size = cfg_get_int_value(config, "Gmu.ReaderCache");
-		int prebuffer_size;
+		size_t size = (size_t)cfg_get_int_value(config, "Gmu.ReaderCache");
+		size_t prebuffer_size;
 		
 		if (size < 64) size = 64; /* Assume a minimum buffer size of 64 KB */
-		prebuffer_size = cfg_get_int_value(config, "Gmu.ReaderCachePrebufferSize");
+		prebuffer_size = (size_t)cfg_get_int_value(config, "Gmu.ReaderCachePrebufferSize");
 		if (prebuffer_size <= 0) prebuffer_size = size / 2;
 		reader_set_cache_size_kb(size, prebuffer_size);
 	}
@@ -1258,7 +1258,7 @@ int main(int argc, char **argv)
 			int    fade_out_on_skip = check_fade_out_on_skip();
 
 			playlist_get_lock(&pl);
-			tmp_item = playlist_get_entry(&pl, global_param);
+			tmp_item = playlist_get_entry(&pl, (size_t)global_param);
 			wdprintf(V_DEBUG, "gmu", "Playing item %d from current playlist!\n", global_param);
 			if (tmp_item != NULL) {
 				playlist_set_current(&pl, tmp_item);
@@ -1313,7 +1313,7 @@ int main(int argc, char **argv)
 			event_queue_push_with_parameter(
 				&event_queue,
 				GMU_PLAYBACK_STATE_CHANGE,
-				gmu_core_get_status()
+				(int)gmu_core_get_status()
 			);
 		}
 
@@ -1373,7 +1373,7 @@ int main(int argc, char **argv)
 
 	if (file_player_get_item_status() == PLAYING) {
 		unsigned int item_time = file_player_playback_get_time() / 1000;
-		snprintf(temp, 10, "%d", gmu_core_playlist_get_current_position()+1);
+		snprintf(temp, 12, "%d", gmu_core_playlist_get_current_position()+1);
 		gmu_core_config_acquire_lock();
 		cfg_add_key(config, "Gmu.LastPlayedPlaylistItem", temp);
 		snprintf(temp, 10, "%d", item_time);

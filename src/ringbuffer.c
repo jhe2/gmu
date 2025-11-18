@@ -1,7 +1,7 @@
 /* 
  * Gmu Music Player
  *
- * Copyright (c) 2006-2015 Johannes Heimansberg (wejp.k.vu)
+ * Copyright (c) 2006-2025 Johannes Heimansberg (wej.k.vu)
  *
  * File: ringbuffer.c  Created: 060928
  *
@@ -109,7 +109,7 @@ size_t ringbuffer_get_size(RingBuffer *rb)
 /* Remembers current ringbuffer read position for possible unrolling with unread. */
 void ringbuffer_set_unread_pos(RingBuffer *rb)
 {
-	rb->unread_ptr = rb->read_ptr;
+	rb->unread_ptr = (ssize_t)rb->read_ptr;
 	rb->unread_fill = rb->buffer_fill;
 }
 
@@ -120,7 +120,7 @@ int ringbuffer_unread(RingBuffer *rb)
 	int res = 0;
 	if (rb->unread_ptr > -1) {
 		rb->buffer_fill = rb->unread_fill;
-		rb->read_ptr = rb->unread_ptr;
+		rb->read_ptr = (size_t)rb->unread_ptr;
 		rb->unread_ptr = -1;
 		res = 1;
 	}

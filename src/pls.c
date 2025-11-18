@@ -33,7 +33,7 @@ int pls_open_file(PLS *pls, const char *filename)
 	/* Extract path component from filename, if possible */
 	{
 		char  *c = strrchr(filename, '/');
-		size_t size = c ? c - filename + 1 : 0;
+		size_t size = c ? (size_t)(c - filename + 1) : 0;
 		if (size >= PATH_LEN_DIR_MAX) size = 0;
 		if (size > 0) strncpy(pls->pls_path, filename, size);
 		pls->pls_path[size] = '\0';
@@ -146,12 +146,18 @@ int pls_read_next_item(PLS *pls)
 	if (pls->pl_file) {
 		int read_ok = 1;
 
-		pls->current_item_length = -1;
+		pls->current_item_length = 0;
 		pls->current_item_title[0] = '\0';
 		pls->current_item_filename[0] = '\0';
 		while (!(state == PLS_STATE_FILE + PLS_STATE_TITLE + PLS_STATE_LENGTH) && read_ok) {
 			size_t size;
-			pos = ftell(pls->pl_file);
+			long ftres = ftell(pls->pl_file);
+			if (ftres > 0) {
+				pos = (size_t)ftres;
+			} else {
+				/* Error */
+				return 0;
+			}
 			read_ok = read_key_value_pair(pls, key_buffer, MAX_LINE_LENGTH, value_buffer, MAX_LINE_LENGTH);
 			if (strncasecmp(key_buffer, "File", 4) == 0) { /* Playlist entry found */
 				if (!(state & PLS_STATE_FILE)) {
@@ -161,7 +167,7 @@ int pls_read_next_item(PLS *pls)
 					pls->current_item_filename[size] = '\0';
 					state |= PLS_STATE_FILE;
 				} else {
-					fseek(pls->pl_file, pos, SEEK_SET);
+					fseek(pls->pl_file, (long)pos, SEEK_SET);
 					break;
 				}
 			}
@@ -173,16 +179,16 @@ int pls_read_next_item(PLS *pls)
 					pls->current_item_title[size] = '\0';
 					state |= PLS_STATE_TITLE;
 				} else {
-					fseek(pls->pl_file, pos, SEEK_SET);
+					fseek(pls->pl_file, (long)pos, SEEK_SET);
 					break;
 				}
 			}
 			if (strncasecmp(key_buffer, "Length", 5) == 0) {
 				if (!(state & PLS_STATE_LENGTH)) {
-					pls->current_item_length = atoi(value_buffer);
+					pls->current_item_length = (size_t)atoi(value_buffer);
 					state |= PLS_STATE_LENGTH;
 				} else {
-					fseek(pls->pl_file, pos, SEEK_SET);
+					fseek(pls->pl_file, (long)pos, SEEK_SET);
 					break;
 				}
 			}
