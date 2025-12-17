@@ -631,6 +631,14 @@ if [ "$dec_musepack" != 0 ]; then
 	dec_musepack=$?
 fi
 
+if [ "$dec_wavpack" != 0 ]; then
+	includes_test="#include <wavpack/wavpack.h>"
+	libs_test="-lwavpack"
+	code_test=""
+	test_lib "libwavpack"
+	dec_wavpack=$?
+fi
+
 if [ "$feature_medialib" != 0 ]; then
 	includes_test="#include <sqlite3.h>"
 	libs_test="-lsqlite3"
