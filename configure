@@ -647,6 +647,14 @@ if [ "$dec_speex" != 0 ]; then
 	[ $dec_speex = 1 ] && add_config "DEC_speex_CFLAGS=$includes_test_flags"
 fi
 
+if [ "$dec_musepack" != 0 ]; then
+	includes_test="#include \"mpcdec/mpcdec.h\""
+	libs_test="-lmpcdec"
+	code_test=""
+	test_lib "libmpcdec"
+	dec_musepack=$?
+fi
+
 if [ "$feature_medialib" != 0 ]; then
 	includes_test="#include <sqlite3.h>"
 	libs_test="-lsqlite3"
