@@ -76,7 +76,7 @@ int net_send_buf(int sock, const char *buf)
 
 	if (sock) {
 		while (rlen > 0) {
-			if ((len = send(sock, r, strlen(r), 0)) == -1)
+			if ((len = send(sock, r, rlen, 0)) == -1)
 				return 0;
 			rlen -= len;
 			r += len;
