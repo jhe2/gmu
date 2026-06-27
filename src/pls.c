@@ -194,8 +194,7 @@ int pls_read_next_item(PLS *pls)
 			}
 		}
 	}
-
-	if (pls->current_item_filename[0] != '/' && strncasecmp(pls->current_item_filename, "http://", 7) != 0) {
+	if (pls->current_item_filename[0] != '/' && !IS_URL(pls->current_item_filename)) {
 		snprintf(pls->current_item_path, PATH_LEN_MAX - 1, "%s%s", 
 		         pls->pls_path, pls->current_item_filename);
 	} else {

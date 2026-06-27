@@ -46,6 +46,11 @@ typedef struct
 	size_t          stream_pos;
 
 	int             is_ready;
+#ifdef URL_WITH_CURL
+	int		header_end_found;
+	pthread_cond_t  cond;
+	char            url[1024]; // ZIPIT_Z2
+#endif
 } Reader;
 
 /* Opens a local file or HTTP URL for reading */
