@@ -59,10 +59,16 @@ LIBS_SDLFE+=-lSDL2_ttf
 else
 CFLAGS+=-DSDLFE_WITHOUT_SDL_TTF=1
 endif
+ifeq ($(GMU_LIBCURL),1)
+LIBS_CORE+=-lcurl
+endif
 
 OBJECTFILES=core.o ringbuffer.o util.o dir.o trackinfo.o playlist.o wejconfig.o m3u.o pls.o audio.o charset.o fileplayer.o decloader.o feloader.o eventqueue.o debug.o reader.o hw_$(TARGET).o fmath.o id3.o metadatareader.o dirparser.o gmuerror.o pthread_helper.o
 ifeq ($(GMU_MEDIALIB),1)
 OBJECTFILES+=medialib.o
+endif
+ifeq ($(GMU_LIBCURL),1)
+OBJECTFILES+=reader_curl.o
 endif
 ifneq ($(GMU_DISABLE_OSS_MIXER),1)
 OBJECTFILES+=oss_mixer.o

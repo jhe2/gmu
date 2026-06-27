@@ -108,7 +108,7 @@ int playlist_add_item(Playlist *pl, const char *file, const char *name)
 		if (entry) {
 			entry->played = 0;
 			entry->next = NULL;
-			if (file[0] != '/' && strncmp(file, "http://", 7) != 0) {
+			if (file[0] != '/' && !IS_URL(file)) {
 				char path[PATH_LEN_DIR_MAX];
 				if (getcwd(path, PATH_LEN_DIR_MAX)) { /* do we still need this? */
 					snprintf(entry->filename, PATH_LEN_MAX, "%s/%s", path, file);

@@ -202,6 +202,9 @@ set_feature()
 		oss-mixer)
 			feature_oss_mixer=$on_off
 			;;
+		libcurl)
+			feature_libcurl=$on_off
+			;;
 	esac
 }
 
@@ -241,6 +244,10 @@ print_features_and_write_config()
 		echo "OSS mixer disabled"
 		echo "GMU_DISABLE_OSS_MIXER=1" >>config.mk
 		EXTRA_CFLAGS="$EXTRA_CFLAGS -DGMU_DISABLE_OSS_MIXER=1"
+	fi
+	if [ "$feature_libcurl" = 1 ]; then
+		echo "curl library enabled"
+		echo "GMU_LIBCURL=1" >>config.mk
 	fi
 	echo
 	echo "Decoders:"
@@ -482,6 +489,7 @@ feature_sdl_gfx=${auto_detect}
 feature_sdl_ttf=${auto_detect}
 feature_debug=0
 feature_oss_mixer=1
+feature_libcurl=0
 
 TARGET=$target_device
 
@@ -673,6 +681,19 @@ if [ "$feature_medialib" != 0 ]; then
 		EXTRA_CFLAGS="$EXTRA_CFLAGS -DGMU_MEDIALIB=1"
 	else
 		feature_medialib=0
+	fi
+fi
+
+if [ "$feature_libcurl" != 0 ]; then
+	includes_test="#include <curl/curl.h>"
+	libs_test="-lcurl"
+	code_test=""
+	test_lib "curl library dependency: libcurl"
+	if [ $? = 1 ]; then
+		feature_libcurl=1
+		EXTRA_CFLAGS="$EXTRA_CFLAGS -DURL_WITH_CURL=1"
+	else
+		feature_libcurl=0
 	fi
 fi
 

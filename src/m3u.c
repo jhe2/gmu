@@ -141,8 +141,7 @@ int m3u_read_next_item(M3u *m3u)
 				charset_iso8859_1_to_utf8(m3u->current_item_title, m3u->current_item_filename, 255);
 		}
 	}
-
-	if (m3u->current_item_filename[0] != '/' && strncasecmp(m3u->current_item_filename, "http://", 7) != 0) {
+	if (m3u->current_item_filename[0] != '/' && !IS_URL(m3u->current_item_filename)) {
 		snprintf(m3u->current_item_path, PATH_LEN_MAX - 1, "%s%s", 
 		         m3u->m3u_path, m3u->current_item_filename);
 	} else {
